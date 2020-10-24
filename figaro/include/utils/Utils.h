@@ -9,14 +9,12 @@
 //
 #undef I
 #include <nlohmann/json.hpp>
-#include <string>
-#include <fstream>
 #include "utils/Logger.h"
 
 namespace Figaro 
 {
     typedef nlohmann::json json;
-    typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixT;
+    typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixT;
 
     uint32_t getNumberOfLines(const std::string& filePath);
 

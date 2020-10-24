@@ -1,4 +1,8 @@
 #include "database/Database.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+
 
 namespace Figaro
 {

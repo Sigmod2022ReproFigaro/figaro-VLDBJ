@@ -30,7 +30,7 @@ namespace Figaro
         uint32_t row = 0;
         uint32_t col = 0;
 
-        out <<  matrix.rows() << " " << matrix.cols() << std::endl;
+        out <<  "Matrix dimensions: " << matrix.rows() << " " << matrix.cols() << std::endl;
         for (uint32_t row = 0; row < matrix.rows(); row ++)
         {
             for (uint32_t col = 0; col < matrix.cols(); col++)

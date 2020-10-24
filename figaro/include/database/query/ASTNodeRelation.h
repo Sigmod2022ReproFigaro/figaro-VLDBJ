@@ -2,7 +2,6 @@
 #define _FIGARO_AST_NODE_RELATION_H_
 
 #include "ASTNode.h"
-#include "database/Relation.h"
 
 namespace Figaro
 {

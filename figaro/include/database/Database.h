@@ -1,13 +1,8 @@
 #ifndef _FIGARO_DATABASE_H_
 #define _FIGARO_DATABASE_H_
 
-#include <map>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <nlohmann/json.hpp>
-#include "utils/Logger.h"
-#include "database/Relation.h"
+#include "utils/Utils.h"
+#include "Relation.h"
 
 namespace Figaro
 {
