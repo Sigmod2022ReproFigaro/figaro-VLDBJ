@@ -24,15 +24,17 @@ set(FIGARO_INCLUDE ${FIGARO_ROOT}/include)
 
 include_directories(${FIGARO_INCLUDE})
 # TODO: Remove GLOB. Add include directories to remove this clutter. 
-file(GLOB_RECURSE SRCFILES src/*.cpp)
-list(FILTER SRCFILES EXCLUDE REGEX ".*src/main.cpp$")
+file(GLOB_RECURSE SRC_FILES src/*.cpp)
+list(FILTER SRC_FILES EXCLUDE REGEX ".*src/main.cpp$")
 if (FIGARO_RUN)
-  add_executable(figaro src/main.cpp ${SRCFILES})
+  add_executable(figaro src/main.cpp ${SRC_FILES})
 endif()
 
 if (FIGARO_TEST)
+  file(GLOB_RECURSE TEST_SRC_FILES tests/*.cpp)
+  list(FILTER TEST_SRC_FILES EXCLUDE REGEX ".*tests/main.cpp$")
   # Test environment.
-  add_executable(figaro_test ${FIGARO_TEST_PATH}/test.cpp ${SRCFILES})
+  add_executable(figaro_test tests/main.cpp ${SRC_FILES} ${TEST_SRC_FILES})
   target_include_directories(figaro_test PRIVATE ${FIGARO_TEST_PATH})
 endif()
 
@@ -48,6 +50,7 @@ if (FIGARO_RUN)
 endif()
 
 if (FIGARO_TEST)
+  add_compile_definitions(FIGARO_LOG_LEVEL=1)
   # Take care of Gtest library.
   find_package(GTest REQUIRED)
   target_include_directories(figaro_test PRIVATE ${GTEST_INCLUDE_DIRS})
@@ -57,5 +60,5 @@ endif()
 
 #Builds static library which will be loaded in runtime.
 if (FIGARO_LIB)
-  add_library(figarolib STATIC ${SRCFILES} )
+  add_library(figarolib STATIC ${SRC_FILES} )
 endif()

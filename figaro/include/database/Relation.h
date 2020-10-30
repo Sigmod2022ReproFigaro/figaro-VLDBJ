@@ -4,13 +4,14 @@
 #include "utils/Utils.h"
 #include <vector>
 
+// TODO: Optimize tuple instanciated Relation based on number of attributes. 
 namespace Figaro
 {
     /** 
      * @class Relation
      * 
      * @brief We prevent attributes with the same name. The order of attributes
-     * reprsenst the order in which they are stored in the corresponding 
+     * represent the order in which they are stored in the corresponding 
      * csf file. In the constructor, the relation schema is initalized from
      * json object. The data is not loaded until requested 
      * with function @see loadData.   
@@ -20,11 +21,13 @@ namespace Figaro
         static constexpr char DELIMITER = ',';
     public:
         // By default we will map strings to int
-        enum class Type 
+        enum class AttributeType 
         {
             FLOAT, INTEGER, CATEGORY
         };
-
+        // key: PK values -> value: corresponding aggregate
+        typedef std::map<std::vector<double>, double> GroupByT;
+        typedef std::vector<std::vector<double>> VectorOfVectorsT;
         /**
          * @struct Attribute 
          * 
@@ -35,16 +38,16 @@ namespace Figaro
         struct Attribute 
         {
             std::string m_name = "";
-            Type m_type = Type::FLOAT; 
+            AttributeType m_type = AttributeType::FLOAT; 
             bool m_isPrimaryKey = false;
-            Attribute(json jsonAttributeInfo)
+            Attribute(const json& jsonAttributeInfo)
             {
                 std::string strType;
-                const static std::map<std::string, Type> mapStrTypeToType =
+                const static std::map<std::string, AttributeType> mapStrTypeToType =
                 {
-                    std::make_pair("int", Type::INTEGER),
-                    std::make_pair("float", Type::FLOAT),
-                    std::make_pair("category", Type::CATEGORY)
+                    std::make_pair("int", AttributeType::INTEGER),
+                    std::make_pair("float", AttributeType::FLOAT),
+                    std::make_pair("category", AttributeType::CATEGORY)
                 };
                 m_name = jsonAttributeInfo["name"];
                 strType = jsonAttributeInfo["type"];
@@ -53,16 +56,22 @@ namespace Figaro
         };
     private:
         std::string m_name;
+        ErrorCode initalizationErrorCode = ErrorCode::NO_ERROR;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
         MatrixT m_data; 
-        uint32_t getAttributeIdx(const std::string& attributeName);
+        VectorOfVectorsT m_dataVectorOfVectors;
+        Relation::GroupByT m_countAggregates;
+        
+        uint32_t getAttributeIdx(const std::string& attributeName) const;
+
+        uint32_t getNumberOfAttributePKs(void) const;
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
         Relation(json jsonRelationSchema);
 
-        const std::vector<Attribute>& getAttribute() const 
+        const std::vector<Attribute>& getAttribute(void) const 
         {
             return m_attributes;
         }
@@ -87,8 +96,64 @@ namespace Figaro
          * attribute types of lodaded data need to agree with the relational 
          * schema in this class. 
          */
-        void loadData(void);
-           
+        ErrorCode loadData(void);
+
+        /**
+         * Sorts the data stored in @p m_dataVectorOfVectors in ascending 
+         * order of PKs. For now, we assume PKs are leading attributes in
+         * the relation schema. 
+         */
+        void sortData(void);
+        
+
+        void computeCountAggregates(void);
+
+        /**
+         * Returns associative data structure whose keys are values group
+         * byed on and values are the corresponding counts. 
+         */ 
+        const Relation::GroupByT& getCountAggregates(void) const;
+
+        /**
+         * It will copy the underlying data and apply head transformation onto it.  
+         * The Head transformation will be applied as if we had:
+         * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes)
+         * GROUP BY PK.  
+         */
+        void computeHead(void);
+
+        /**
+         * It will copy the underlying data and apply head transformation onto it.  
+         * The Head transformation will be applied as if we had:
+         * SELECT attrNames[0], attrtNames[1], ... attrNames[n] HEAD(remaining attributes)
+         * GROUP BY attrNames.  
+         */
+        void computeHead(const std::vector<std::string>& attrNames);
+
+         /**
+         * It will copy the underlying data and apply head transformation onto it.  
+         * The Head transformation will be applied as if we had:
+         * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes, v)
+         * GROUP BY PK.  
+         */
+        void computeHead(const VectorT& v);
+
+        /**
+         * It will copy the underlying data and apply head transformation onto it.  
+         * The Head transformation will be applied as if we had:
+         * SELECT attrNames[0], attrtNames[1], ... attrNames[n] HEAD(remaining attributes, v)
+         * GROUP BY attrNames.  
+         */
+        void computeHead(const std::vector<std::string> attrNames, const VectorT& v);
+
+        /**
+         * It will copy the underlying data and apply head transformation onto it.  
+         * The Head transformation will be applied as if we had:
+         * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes)
+         * GROUP BY PK.  
+         */
+        void computeTail(void);
+
     };
         
 }

@@ -6,7 +6,12 @@
 #define FIGARO_LOG_LEVEL_BENCH 2
 #define FIGARO_LOG_LEVEL_WARNING 3
 #define FIGARO_LOG_LEVEL_ERROR 4
+
+// In the case if log level is defined by CmakeLists.txt we do not want
+// want to redefine it. 
+#ifndef FIGARO_LOG_LEVEL 
 #define FIGARO_LOG_LEVEL 0
+#endif 
 
 #include <iostream>
 

@@ -9,7 +9,8 @@ namespace Figaro
     class ASTNode 
     {
         friend class ASTVisitor;
-        virtual void accept(ASTVisitor *pVisitor) = 0;
+    public:
+        virtual void accept(ASTVisitor* pVisitor) = 0;
         virtual ~ASTNode() = 0;
     };
 }

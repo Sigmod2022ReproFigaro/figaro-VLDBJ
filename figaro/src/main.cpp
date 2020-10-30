@@ -8,10 +8,11 @@ int main()
 {
     Figaro::Database database(DB_CONFIG_PATH);
     database.loadData();
+    database.sortData();
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
-    query.evaluateQuery();
+    //query.evaluateQuery();
 
     return 0;
 }

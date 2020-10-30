@@ -1,12 +1,12 @@
 #ifndef _FIGARO_AST_NODE_JOIN_H_
 #define _FIGARO_AST_NODE_JOIN_H_
 
-#include "ASTNode.h"
+#include "ASTNodeAbsRelation.h"
 
 namespace Figaro
 {
     class ASTVisitor;
-    class ASTNodeJoin : public ASTNode
+    class ASTNodeJoin : public ASTNodeAbsRelation
     {
         friend class ASTVisitor;
         ASTNode* m_pLeftChild;
@@ -17,7 +17,7 @@ namespace Figaro
         ASTNodeJoin(const json& jsonJoinOperands);
         virtual ~ASTNodeJoin() override;
         
-        void accept(ASTVisitor *pVisitor) override;
+        void accept(ASTVisitor* pVisitor) override;
     };
 }
 
