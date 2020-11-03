@@ -6,16 +6,14 @@ set(CMKAKE_CXX_STANDARD 17)
 set(CMKAKE_CXX_STANDARD REQUIRED)
 
 #TODO: Replace flags with compiler options. 
+# Checking compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -pthread -g -Wall -Wextra -Og")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++17 -pthread -Ofast -mtune=native -fassociative-math -freciprocal-math -fno-signed-zeros -frename-registers -fopenmp")
-else()
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -pthread -g -Wall -Wextra -O0")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++17  -Ofast")
 endif()
-set(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_RELEASE} -DBENCH")
+#set(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_RELEASE} -DBENCH")
 # Set to Debug, Benchmark or Release.
-set(CMAKE_BUILD_TYPE Benchmark)
+set(CMAKE_BUILD_TYPE Debug)
 
 # TODO: Clean this. 
 set(FIGARO_ROOT .)
@@ -50,7 +48,7 @@ if (FIGARO_RUN)
 endif()
 
 if (FIGARO_TEST)
-  add_compile_definitions(FIGARO_LOG_LEVEL=1)
+  add_compile_definitions(FIGARO_LOG_LEVEL=0)
   # Take care of Gtest library.
   find_package(GTest REQUIRED)
   target_include_directories(figaro_test PRIVATE ${GTEST_INCLUDE_DIRS})

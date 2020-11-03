@@ -47,6 +47,7 @@ namespace Figaro
                 {
                     std::make_pair("int", AttributeType::INTEGER),
                     std::make_pair("float", AttributeType::FLOAT),
+                    std::make_pair("double", AttributeType::FLOAT),
                     std::make_pair("category", AttributeType::CATEGORY)
                 };
                 m_name = jsonAttributeInfo["name"];
@@ -65,18 +66,40 @@ namespace Figaro
         
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
+        /**
+         * For each attribute denoted by name stored in vector @p vAttributeNames, return
+         * the corresponding column index stored in @p vAttributeIdx. 
+         * The computed  order of indices is the same as the order of attribute names
+         * provided by @p vAttributeNames. 
+         */
+        void getAttributesIdxs(const std::vector<std::string>& vAttributeNames, 
+        std::vector<uint32_t>& vAttributeIdxs) const;
+
         uint32_t getNumberOfAttributePKs(void) const;
+        
+        /**
+         * For each part of a composite PK compute the corresponding column index. The
+         * order of returned indices is the same as specified initially by the 
+         * relational schema. 
+         */
+        void getAttributeNamesOfAttributePKs(std::vector<std::string>& vAttributeNamesPKs);
+
+        
+        // TODO: Update this to return vector.
+        uint32_t getNonPKAttributeIdx(void) const;
+
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
         Relation(json jsonRelationSchema);
 
-        const std::vector<Attribute>& getAttribute(void) const 
+        const std::vector<Attribute>& getAttributes(void) const 
         {
             return m_attributes;
         }
 
         const std::string& getName(void) const { return m_name; }
+
 
         uint32_t numberOfAttributes() const 
         {
@@ -87,6 +110,7 @@ namespace Figaro
         {
             return m_attributes.at(attributedIdx).m_name;
         }   
+
 
         
         /**
@@ -104,6 +128,8 @@ namespace Figaro
          * the relation schema. 
          */
         void sortData(void);
+
+        void sortData(const std::vector<std::string>& vAttributeNames);
         
 
         void computeCountAggregates(void);
@@ -113,6 +139,9 @@ namespace Figaro
          * byed on and values are the corresponding counts. 
          */ 
         const Relation::GroupByT& getCountAggregates(void) const;
+
+        void joinRelation(const Relation& relation,
+             const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames);
 
         /**
          * It will copy the underlying data and apply head transformation onto it.  
@@ -129,6 +158,8 @@ namespace Figaro
          * GROUP BY attrNames.  
          */
         void computeHead(const std::vector<std::string>& attrNames);
+
+        void computeHead(const std::string& attrName);
 
          /**
          * It will copy the underlying data and apply head transformation onto it.  
@@ -153,6 +184,8 @@ namespace Figaro
          * GROUP BY PK.  
          */
         void computeTail(void);
+
+        void computeTail(const std::string& attrName);
 
     };
         

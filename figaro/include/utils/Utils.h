@@ -22,6 +22,15 @@ namespace Figaro
     uint32_t getNumberOfLines(const std::string& filePath);
 
     std::ostream& printMatrix(std::ostream& out, const MatrixT& matrix, char sep = ' ');
+    template<typename T>
+    std::ostream& printVector(std::ostream& out, const std::vector<T>& v, char sep = ' ')
+    {
+        for (uint32_t idx = 0; idx < v.size(); idx ++)
+        {
+            out << v.at(idx) << sep;
+        }
+        return out << std::endl; 
+    }
 }
 
 #endif

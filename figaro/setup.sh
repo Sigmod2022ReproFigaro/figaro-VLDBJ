@@ -7,4 +7,4 @@ cmake ../. -D FIGARO_TEST=ON
 #cmake ../. -D FIGARO_RUN=ON -D FIGARO_TEST=ON -D FIGARO_LIB=ON
 make -j8
 #./figaro
-./figaro_test
+./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > ../log/log.txt

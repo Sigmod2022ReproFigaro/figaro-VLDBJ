@@ -60,9 +60,22 @@ namespace Figaro
         }
     }
 
+    void Database::sortRelation(const std::string& relationName, const std::vector<std::string> vSortAttributeNames)
+    {
+        Relation& relation = m_relations.at(relationName);
+        relation.sortData(vSortAttributeNames);
+        // TODO: Test this. 
+    }
+
     MatrixT* Database::computeHead(const std::string& relName)
     {
-        //m_relations[relName].compu;
+        return nullptr;
+    }
+
+    MatrixT* Database::computeHead(const std::string& relName, const std::string& attrName)
+    {
+        Relation& relation = m_relations.at(relName);//[relName];
+        relation.computeHead(attrName);
         return nullptr;
     }
 
@@ -75,6 +88,14 @@ namespace Figaro
             std::array<Eigen::VectorXd, 2> vectors)
     {
         
+    }
+
+    void  Database::joinRelations(std::vector<std::string> vRelationNames,
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames)
+    {
+        Relation& relation1= m_relations.at(vRelationNames[0]);
+        Relation& relation2 = m_relations.at(vRelationNames[1]);
+        relation1.joinRelation(relation2, vJoinAttributeNames);
     }
 
         

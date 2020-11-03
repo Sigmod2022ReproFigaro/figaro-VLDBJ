@@ -34,7 +34,14 @@ namespace Figaro
          */
         void sortData(void);
 
+        void sortRelation(const std::string& relationName, const std::vector<std::string> vSortAttributeNames);
+
+        void joinRelations(std::vector<std::string> vRelationNames,
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames);
+        
         MatrixT* computeHead(const std::string& relationName);
+
+        MatrixT* computeHead(const std::string& relName, const std::string& attrName);
 
         MatrixT* computeTail(const std::string& relationName);
 
