@@ -14,6 +14,48 @@
 #endif 
 
 #include <iostream>
+#include <vector>
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
+{   
+    out << "Vector" << std::endl;
+    out << "Vector dimensions" << v.size() << std::endl;
+    for (uint32_t idx = 0; idx < v.size(); idx ++)
+    {
+        out << v.at(idx) << ' ';
+    }
+    out << std::endl;
+    return out; 
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& matrix)
+{
+    uint32_t rowNum;
+    uint32_t colNum;
+
+    colNum = matrix.at(0).size();
+    rowNum = matrix.size(); 
+
+    out << "Matrix" << std::endl;
+    out <<  "Matrix dimensions: " << rowNum << " " << colNum << std::endl;
+    
+    for (uint32_t row = 0; row < rowNum; row ++)
+    {
+        for (uint32_t col = 0; col < colNum; col++)
+        {
+
+            out << matrix[row][col];
+            if (col != (colNum - 1))
+            {
+                out << " ";
+            }
+        }
+        out << std::endl;
+    }
+    return out;
+}
 
 // TODO:
 // 1) Add module definition for benchmark

@@ -98,6 +98,22 @@ namespace Figaro
         relation1.joinRelation(relation2, vJoinAttributeNames);
     }
 
+
+    
+    void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
+    {
+        Relation& rel1 = m_relations.at(aRelationNames.at(0));
+        Relation& rel2 = m_relations.at(aRelationNames.at(1));
+        std::unordered_map<double, uint32_t> hashTabAttrCnts1;
+        std::unordered_map<double, uint32_t> hashTabAttrCnts2;
+
+        rel1.getAttributeValuesCountAggregates(attrIterName, hashTabAttrCnts1);
+        rel1.getAttributeValuesCountAggregates(attrIterName, hashTabAttrCnts2);
+
+        FIGARO_LOG_DBG("Passed hash count computation");
+        rel1.computeAndScaleGeneralizedHeadAndTail(attrIterName, hashTabAttrCnts2);
+        rel2.computeAndScaleGeneralizedHeadAndTail(attrIterName, hashTabAttrCnts1);
+    }
         
 
 

@@ -22,29 +22,24 @@ namespace Figaro
         }
         return cntLines;
     }
+}
 
-    std::ostream& printMatrix(std::ostream& out, const MatrixT& matrix, char sep)
+std::ostream& operator<<(std::ostream& out, const Figaro::MatrixT& matrix)
+{
+    out << "Matrix Eigen" << std::endl;
+    out <<  "Matrix dimensions: " << matrix.rows() << " " << matrix.cols() << std::endl;
+    for (uint32_t row = 0; row < matrix.rows(); row ++)
     {
-        uint32_t rowNum = 0;
-        uint32_t colNum = 0;
-        uint32_t row = 0;
-        uint32_t col = 0;
-
-        out <<  "Matrix dimensions: " << matrix.rows() << " " << matrix.cols() << std::endl;
-        for (uint32_t row = 0; row < matrix.rows(); row ++)
+        for (uint32_t col = 0; col < matrix.cols(); col++)
         {
-            for (uint32_t col = 0; col < matrix.cols(); col++)
-            {
 
-                out << matrix(row, col);
-                if (col != (matrix.cols() - 1))
-                {
-                    out << sep;
-                }
+            out << matrix(row, col);
+            if (col != (matrix.cols() - 1))
+            {
+                out << ' ';
             }
-            out << std::endl;
         }
-        return out;
+        out << std::endl;
     }
-    
+    return out;
 }

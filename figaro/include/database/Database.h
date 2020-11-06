@@ -48,6 +48,9 @@ namespace Figaro
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);
 
+        void computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, 
+                        const std::string& attrIterName);
+
         
     };
 }

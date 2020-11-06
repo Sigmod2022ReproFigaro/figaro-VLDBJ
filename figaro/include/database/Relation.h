@@ -3,6 +3,7 @@
 
 #include "utils/Utils.h"
 #include <vector>
+#include <unordered_map>
 
 // TODO: Optimize tuple instanciated Relation based on number of attributes. 
 namespace Figaro
@@ -60,6 +61,7 @@ namespace Figaro
         ErrorCode initalizationErrorCode = ErrorCode::NO_ERROR;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
+        
         MatrixT m_data; 
         VectorOfVectorsT m_dataVectorOfVectors;
         Relation::GroupByT m_countAggregates;
@@ -85,8 +87,8 @@ namespace Figaro
         void getAttributeNamesOfAttributePKs(std::vector<std::string>& vAttributeNamesPKs);
 
         
-        // TODO: Update this to return vector.
-        uint32_t getNonPKAttributeIdx(void) const;
+        void getNonPKAttributeIdx(std::vector<uint32_t>& nonPkAttrIdxs) const;
+
 
     public:
         Relation(const Relation&) = delete;
@@ -111,8 +113,17 @@ namespace Figaro
             return m_attributes.at(attributedIdx).m_name;
         }   
 
+        uint32_t getDistinctValuesCount(const std::string& attributeName) const;
 
-        
+        void getAttributeDistinctValues(const std::string& attributeName, 
+                std::vector<double>& vDistinctValues) const;
+
+        void getAttributeValuesCountAggregates(const std::string& attributeName, 
+            std::unordered_map<double, uint32_t>& htCnts) const;
+
+        void getDistinctValuesRowPositions(const std::string& attributeName,
+             std::vector<uint32_t>& vDistinctValuesRowPositions) const;
+
         /**
          * Fills the table data from the file path specified by @p filePath . 
          * The data should be formated in CSV format where the separator is |  
@@ -157,9 +168,14 @@ namespace Figaro
          * SELECT attrNames[0], attrtNames[1], ... attrNames[n] HEAD(remaining attributes)
          * GROUP BY attrNames.  
          */
-        void computeHead(const std::vector<std::string>& attrNames);
+        void computeHead(const std::vector<std::string>& attributeNames);
 
-        void computeHead(const std::string& attrName);
+        void computeHead(const std::string& attributeName);
+
+
+        void computeAndScaleGeneralizedHeadAndTail(
+            const std::string& attributeName,
+            const std::unordered_map<double, uint32_t>& hashTabAttributeCounts);
 
          /**
          * It will copy the underlying data and apply head transformation onto it.  

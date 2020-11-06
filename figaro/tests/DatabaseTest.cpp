@@ -28,16 +28,27 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
     Figaro::ErrorCode loadError;
-    std::vector<std::string> vRelationNames{"S", "R"};
-    std::vector<std::tuple<std::string, std::string> > vJoinAttributes
-    { std::tuple<std::string, std::string>{"A", "A"} };
 
     initError = database.getInitializationErrorCode();
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
     loadError = database.loadData();
     EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
     
+    database.sortRelation("R", {"A"});
     database.computeHead("R", "A");
+
+    database.sortRelation("S", {"A", "B"});
     database.computeHead("S", "A");
-    database.joinRelations(vRelationNames, vJoinAttributes);
+    
+
+    database.sortRelation("T", {"C", "B"});
+    database.computeHead("T", "C");
+    
+    database.sortRelation("U", {"C"});
+    database.computeHead("U", "C");
+
+    database.joinRelations({"S", "R"}, {{"A", "A"}} );
+    database.joinRelations({"T", "U"}, {{"C", "C"}} );
+
+    database.computeScaledCartesianProduct({"S", "T"}, "B");
 }
