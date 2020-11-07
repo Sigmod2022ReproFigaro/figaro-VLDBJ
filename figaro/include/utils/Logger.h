@@ -20,7 +20,7 @@ template<typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
 {   
     out << "Vector" << std::endl;
-    out << "Vector dimensions" << v.size() << std::endl;
+    out << "Vector dimensions " << v.size() << std::endl;
     for (uint32_t idx = 0; idx < v.size(); idx ++)
     {
         out << v.at(idx) << ' ';

@@ -431,11 +431,13 @@ namespace Figaro
         std::vector<uint32_t> vDistinctValuesRowPositions; 
         std::unordered_map<double, uint32_t> htCnts;
         std::vector<uint32_t> vnonPKAttrIdxs;
+        double pkOffset;
 
         distinctValuesCounter = getDistinctValuesCount(attributeName);
         vDistinctValues.resize(distinctValuesCounter);
         vDistinctValuesRowPositions.resize(distinctValuesCounter + 1);
         getNonPKAttributeIdx(vnonPKAttrIdxs);
+        pkOffset = m_attributes.size() - vnonPKAttrIdxs.size();
 
         getAttributeDistinctValues(attributeName, vDistinctValues);
         getDistinctValuesRowPositions(attributeName, vDistinctValuesRowPositions);
@@ -446,33 +448,36 @@ namespace Figaro
             uint32_t headRowIdx = vDistinctValuesRowPositions[distCnt] + 1;
             uint32_t aggregateCnt = vDistinctValuesRowPositions[distCnt + 1] 
                                   - vDistinctValuesRowPositions[distCnt]; 
-            std::vector<double> vCurRowSum(vnonPKAttrIdxs.size()); 
+            std::vector<double> vCurRowSum(vnonPKAttrIdxs.size(), 0.0); 
             double attrVal = vDistinctValues[distCnt];
             double scalarCnt = hashTabAttributeCounts.at(attrVal);
 
-            for (uint32_t rowIdx = headRowIdx;
+            for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
+            {
+                vCurRowSum[nonPKAttrIdx - pkOffset] = m_dataVectorOfVectors[headRowIdx][nonPKAttrIdx];
+            }
+            for (uint32_t rowIdx = headRowIdx + 1;
                 rowIdx <= vDistinctValuesRowPositions[distCnt + 1]; rowIdx ++)
             {
                 double i = rowIdx - headRowIdx + 1;
-                if (i > 1)
-                {
-                    for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
-                    {
-                        m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] = 
-                            (m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] * (i - 1) - 
-                            vCurRowSum[nonPKAttrIdx]) * scalarCnt / std::sqrt(i * (i - 1) );
-                    }
-                }
+                FIGARO_LOG_DBG("rowIDx:", rowIdx, "i:", i);
+
                 for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
                 {
-                    vCurRowSum[nonPKAttrIdx] += m_dataVectorOfVectors[rowIdx][nonPKAttrIdx];
+                    double prevRowSum = vCurRowSum[nonPKAttrIdx - pkOffset];
+                    vCurRowSum[nonPKAttrIdx - pkOffset] += m_dataVectorOfVectors[rowIdx][nonPKAttrIdx];
+                    m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] = 
+                        (m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] * (i - 1) - 
+                        prevRowSum) * scalarCnt / 
+                        std::sqrt(i * (i - 1) );
                 }
                 FIGARO_LOG_DBG(m_dataVectorOfVectors);
+                FIGARO_LOG_DBG("vCurRowSum", vCurRowSum);
             }
             for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
             {
                 m_dataVectorOfVectors[headRowIdx][nonPKAttrIdx] = 
-                    vCurRowSum[nonPKAttrIdx] * scalarCnt/ std::sqrt(aggregateCnt);
+                    vCurRowSum[nonPKAttrIdx - pkOffset] * scalarCnt / std::sqrt(aggregateCnt);
             }
         }
     }
