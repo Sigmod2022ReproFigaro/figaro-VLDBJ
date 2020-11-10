@@ -41,6 +41,13 @@ namespace Figaro
             std::string m_name = "";
             AttributeType m_type = AttributeType::FLOAT; 
             bool m_isPrimaryKey = false;
+            const std::map<AttributeType, std::string> mapTypeToStr =
+            {
+                std::make_pair(AttributeType::INTEGER, "int"),
+                std::make_pair(AttributeType::FLOAT, "float"),
+                std::make_pair(AttributeType::FLOAT, "double"),
+                std::make_pair(AttributeType::CATEGORY, "category")
+            };
             Attribute(const json& jsonAttributeInfo)
             {
                 std::string strType;
@@ -65,7 +72,9 @@ namespace Figaro
         MatrixT m_data; 
         VectorOfVectorsT m_dataVectorOfVectors;
         Relation::GroupByT m_countAggregates;
-        
+
+        void copyVectorOfVectorsToEigenData(void);
+
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
         /**
@@ -74,21 +83,33 @@ namespace Figaro
          * The computed  order of indices is the same as the order of attribute names
          * provided by @p vAttributeNames. 
          */
-        void getAttributesIdxs(const std::vector<std::string>& vAttributeNames, 
-        std::vector<uint32_t>& vAttributeIdxs) const;
+        void getAttributesIdxs(
+            const std::vector<std::string>& vAttributeNames, 
+            std::vector<uint32_t>& vAttributeIdxs) const;
 
-        uint32_t getNumberOfAttributePKs(void) const;
+        uint32_t getNumberOfPKAttributes(void) const;
+
+        uint32_t getNumberOfNonPKAttributes(void) const;
+
         
         /**
          * For each part of a composite PK compute the corresponding column index. The
          * order of returned indices is the same as specified initially by the 
          * relational schema. 
          */
-        void getAttributeNamesOfAttributePKs(std::vector<std::string>& vAttributeNamesPKs);
+        void getPKAttributeNames(
+            std::vector<std::string>& vAttributeNamesPKs) const;
 
+        void getPKAttributeIndices(std::vector<uint32_t>& vPkAttrIdxs) const;
         
-        void getNonPKAttributeIdx(std::vector<uint32_t>& nonPkAttrIdxs) const;
+        /**
+         * Returns a vector of indices of the attributes that are not part 
+         * of composite primary key for this relation. Indexing of attributes
+         * starts from 0. 
+         */
+        void getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const;
 
+        void schemaJoin(const Relation& relation);
 
     public:
         Relation(const Relation&) = delete;
@@ -122,7 +143,8 @@ namespace Figaro
             std::unordered_map<double, uint32_t>& htCnts) const;
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
-             std::vector<uint32_t>& vDistinctValuesRowPositions) const;
+             std::vector<uint32_t>& vDistinctValuesRowPositions,
+             bool preallocated = true) const;
 
         /**
          * Fills the table data from the file path specified by @p filePath . 
@@ -177,6 +199,11 @@ namespace Figaro
             const std::string& attributeName,
             const std::unordered_map<double, uint32_t>& hashTabAttributeCounts);
 
+
+        static void extend(std::array<Relation*, 2>& aRelations, const std::string& attrIterName);
+
+        void extend(const Relation& rel, const std::string& attrIterName);
+
          /**
          * It will copy the underlying data and apply head transformation onto it.  
          * The Head transformation will be applied as if we had:
@@ -203,7 +230,13 @@ namespace Figaro
 
         void computeTail(const std::string& attrName);
 
+        
+        friend std::ostream& operator<<(
+            std::ostream& out, 
+            const Relation& relation);
+
     };
+
         
 }
 #endif

@@ -9,6 +9,17 @@
 
 namespace Figaro
 {
+    void Relation::copyVectorOfVectorsToEigenData(void)
+    {
+        for (uint32_t row = 0; row < m_dataVectorOfVectors.size(); row ++)
+        {
+            for (uint32_t col = 0; col < m_attributes.size(); col ++)
+            {
+                m_data(row, col) =  m_dataVectorOfVectors[row][col]; 
+            }
+        }
+    }
+
     uint32_t Relation::getAttributeIdx(const std::string& attributeName) const
     {
         for (uint32_t idx = 0; idx < m_attributes.size(); idx ++)
@@ -23,9 +34,9 @@ namespace Figaro
         return UINT32_MAX;
     }
 
-    uint32_t Relation::getNumberOfAttributePKs(void) const
+    uint32_t Relation::getNumberOfPKAttributes(void) const
     {
-        uint32_t partsPK = 0;
+        uint32_t pKAttributes = 0;
         /*
         std::reduce(std::execution::par, m_attributes.begin(), 
                     m_attributes.end(), 0.0,
@@ -34,15 +45,34 @@ namespace Figaro
                         return ; 
                     })
         */
-       partsPK = std::accumulate(m_attributes.begin(), m_attributes.end(), 0.0,
+       pKAttributes = std::accumulate(m_attributes.begin(), m_attributes.end(), 0.0,
                      [](int curCnt, const Attribute& nextAtr) 
                      {
                          return nextAtr.m_isPrimaryKey ? (curCnt+1) : curCnt;
                      });
-        return partsPK;
+        return pKAttributes;
     }
 
-    void Relation::getAttributeNamesOfAttributePKs(std::vector<std::string>& vAttributeNamesPKs)
+    uint32_t Relation::getNumberOfNonPKAttributes(void) const
+    {
+         uint32_t nokPKAttributes = 0;
+        /*
+        std::reduce(std::execution::par, m_attributes.begin(), 
+                    m_attributes.end(), 0.0,
+                     [const& auto sum, const& auto T2]()
+                    {
+                        return ; 
+                    })
+        */
+       nokPKAttributes = std::accumulate(m_attributes.begin(), m_attributes.end(), 0.0,
+                     [](int curCnt, const Attribute& nextAtr) 
+                     {
+                         return nextAtr.m_isPrimaryKey ? curCnt : (curCnt + 1);
+                     });
+        return nokPKAttributes;
+    }
+
+    void Relation::getPKAttributeNames(std::vector<std::string>& vAttributeNamesPKs) const
     {
         for (const auto& attribute: m_attributes)
         {
@@ -53,6 +83,38 @@ namespace Figaro
         }
     }
 
+    void Relation::getPKAttributeIndices(std::vector<uint32_t>& vPkAttrIdxs) const
+    {
+        for (uint32_t idx = 0; idx < m_attributes.size(); idx++)
+        {
+            if (m_attributes[idx].m_isPrimaryKey)
+            {
+                vPkAttrIdxs.push_back(idx);
+            }
+        }
+    }   
+
+    void Relation::getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const
+    {
+        for (uint32_t idx = 0; idx < m_attributes.size(); idx++)
+        {
+            if (!m_attributes[idx].m_isPrimaryKey)
+            {
+                vNonPkAttrIdxs.push_back(idx);
+            }
+        }
+    }
+
+    void Relation::schemaJoin(const Relation& relation)
+    {
+        std::vector<uint32_t> vNonPKAttributeIdxs;
+        relation.getNonPKAttributeIdxs(vNonPKAttributeIdxs);
+        for (const auto nonPKAttributeIdx: vNonPKAttributeIdxs)
+        {
+            m_attributes.push_back(relation.m_attributes[nonPKAttributeIdx]);
+        }
+    }
+
     Relation::Relation(json jsonRelationSchema)
     {
         m_name = jsonRelationSchema["name"];
@@ -60,10 +122,8 @@ namespace Figaro
         FIGARO_LOG_INFO("Relation", m_name)
         for (const auto& jsonRelationAttribute: jsonRelationAttribute)
         {
-            FIGARO_LOG_DBG("WTF BEGIN")
             Attribute attribute(jsonRelationAttribute);
             m_attributes.push_back(attribute);
-            FIGARO_LOG_DBG("WTF END")
             
         }
         json jsonRelationPKs = jsonRelationSchema["primary_key"];
@@ -111,7 +171,6 @@ namespace Figaro
         for (uint32_t row = 0; row < cntLines; row ++)
         {
             std::getline(fileTable, str);
-            FIGARO_LOG_DBG("STRING", str)
             strStream.clear();
             strStream.str(str);
             
@@ -171,15 +230,15 @@ namespace Figaro
     void Relation::sortData(void)
     {
         std::vector<std::string> vAttrNamesPKs;
-        getAttributeNamesOfAttributePKs(vAttrNamesPKs);
+        getPKAttributeNames(vAttrNamesPKs);
         FIGARO_LOG_DBG(vAttrNamesPKs);
         sortData(vAttrNamesPKs);
     }
 
     void Relation::computeCountAggregates(void)
     {
-        uint32_t partsPK = getNumberOfAttributePKs();
-        m_countAggregates.clear();
+        //uint32_t partsPK = getNumberOfPKAttributes();
+        //m_countAggregates.clear();
     }
 
     const Relation::GroupByT& Relation::getCountAggregates(void) const
@@ -259,7 +318,6 @@ namespace Figaro
         std::unordered_map<double, uint32_t>& htCnts) const
     {
         uint32_t attrIdx; 
-        FIGARO_LOG_DBG("Count Aggregates for attribute", attrName)
         attrIdx = getAttributeIdx(attrName);
         for (uint32_t rowIdx = 0; rowIdx < m_data.rows(); rowIdx++)
         {
@@ -276,11 +334,13 @@ namespace Figaro
     }
     void Relation::getDistinctValuesRowPositions(
         const std::string& attributeName,
-        std::vector<uint32_t>& vDistinctValuesRowPositions) const
+        std::vector<uint32_t>& vDistinctValuesRowPositions,
+        bool  preallocated) const
     {
         uint32_t attrIdx; 
         double prevAttrVal;
-        uint32_t distCnt; 
+        uint32_t distCnt;
+        double pushVal; 
 
         attrIdx = getAttributeIdx(attributeName);
         prevAttrVal = std::numeric_limits<double>::max();
@@ -292,13 +352,28 @@ namespace Figaro
             double curAttrVal = m_data(rowIdx, attrIdx);
             if (prevAttrVal != curAttrVal)
             {
-                vDistinctValuesRowPositions[distCnt] = rowIdx - 1;
+                pushVal = rowIdx - 1;
+                if (preallocated)
+                {
+                    vDistinctValuesRowPositions[distCnt] = pushVal;
+                }
+                else 
+                {
+                    vDistinctValuesRowPositions.push_back(pushVal);
+                }
                 prevAttrVal = curAttrVal;
                 distCnt++;
             }
         } 
-        FIGARO_LOG_DBG("distCnt", distCnt);
-        vDistinctValuesRowPositions[distCnt] = m_data.rows() - 1;
+        pushVal = m_data.rows() - 1;
+        if (preallocated)
+        {
+            vDistinctValuesRowPositions[distCnt] = pushVal;
+        }
+        else
+        {
+            vDistinctValuesRowPositions.push_back(pushVal);
+        }
     }
 
     static void storeUniqueAndLimits(MatrixT mat, uint32_t colIdx, 
@@ -313,28 +388,16 @@ namespace Figaro
             double curAttrVal = mat(rowIdx, colIdx);
             if (prevAttrVal != curAttrVal)
             {
-                FIGARO_LOG_DBG("PrevAttrVal", prevAttrVal, "curAttrVal", curAttrVal, "distCnt", distCnt);
-                FIGARO_LOG_DBG("rowIdx", rowIdx);
                 vDistinctVals[distCnt] = curAttrVal;
                 vLimitEnds[distCnt] = rowIdx - 1;
                 prevAttrVal = curAttrVal;
                 distCnt++;
             }
         } 
-        FIGARO_LOG_DBG("distCnt", distCnt);
         vLimitEnds[distCnt] = mat.rows() - 1;
     }
 
-    void Relation::getNonPKAttributeIdx(std::vector<uint32_t>& nonPkAttrIdxs) const
-    {
-        for (uint32_t idx = 0; idx < m_attributes.size(); idx++)
-        {
-            if (!m_attributes[idx].m_isPrimaryKey)
-            {
-                nonPkAttrIdxs.push_back(idx);
-            }
-        }
-    }
+
 
     void Relation::computeHead(const std::string& attributeName)
     {
@@ -349,7 +412,7 @@ namespace Figaro
         std::vector<uint32_t> vLimitEnds; 
 
         attrIdx = getAttributeIdx(attributeName);
-        getNonPKAttributeIdx(vnonPKAttrIdxs); 
+        getNonPKAttributeIdxs(vnonPKAttrIdxs); 
         // TODO: Clean hardcoding. 
         nonPKAttrIdx = vnonPKAttrIdxs[0];
         prevAttrVal = std::numeric_limits<double>::max();
@@ -359,20 +422,20 @@ namespace Figaro
         vDistinctVals.resize(numDistinctValues);
         vLimitEnds.resize(numDistinctValues + 1);
         storeUniqueAndLimits(m_data, attrIdx, vDistinctVals, vLimitEnds);
-        FIGARO_LOG_DBG("RelatioN", m_name, "Attribute", attributeName)
-        FIGARO_LOG_DBG("vDistinctVals", vDistinctVals);
-        FIGARO_LOG_DBG("vLimitEnds", vLimitEnds);
+        //FIGARO_LOG_DBG("RelatioN", m_name, "Attribute", attributeName)
+        //FIGARO_LOG_DBG("vDistinctVals", vDistinctVals);
+        //FIGARO_LOG_DBG("vLimitEnds", vLimitEnds);
         for (uint32_t limIdx = 0; limIdx < vDistinctVals.size(); limIdx++)
         {
            for (uint32_t rowIdx = vLimitEnds[limIdx] + 1; rowIdx <= vLimitEnds[limIdx+1]; rowIdx++)
            {
-               FIGARO_LOG_DBG("FOR", "limIdx", limIdx, "rowIdx", rowIdx);
+               //FIGARO_LOG_DBG("FOR", "limIdx", limIdx, "rowIdx", rowIdx);
                // For now we assume only one column is added.
                // add non primary keys
                aggregateByAttribute[limIdx] += m_data(rowIdx, nonPKAttrIdx);   
            } 
         }
-        FIGARO_LOG_DBG("Successful head computation");
+        //FIGARO_LOG_DBG("Successful head computation");
     }
 
     void Relation::joinRelation(const Relation& relation, 
@@ -391,12 +454,12 @@ namespace Figaro
         
         numAttributes1 = m_attributes.size();
         numAttributes2 = relation.m_attributes.size();
-        FIGARO_LOG_DBG("Attribute Idxs", joinAttrIdx1, joinAttrIdx2);
+        //FIGARO_LOG_DBG("Attribute Idxs", joinAttrIdx1, joinAttrIdx2);
 
         for (uint32_t rowIdx = 0; rowIdx < relation.m_data.rows(); rowIdx ++)
         {
             // TODO: Remove hardcoding. 
-            FIGARO_LOG_DBG("Second relation data", relation.m_data(rowIdx, joinAttrIdx1), relation.m_data(rowIdx, numAttributes2-1));
+            //FIGARO_LOG_DBG("Second relation data", relation.m_data(rowIdx, joinAttrIdx1), relation.m_data(rowIdx, numAttributes2-1));
             hashTableVals[relation.m_data(rowIdx, joinAttrIdx2)] = relation.m_data(rowIdx, numAttributes2-1);
         }
         m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_data.cols() + 1);
@@ -407,12 +470,13 @@ namespace Figaro
             m_dataVectorOfVectors[rowIdx].resize(m_data.cols());
             double joinAttrVal = m_data(rowIdx, joinAttrIdx1);
             double nonjoinAttrVal = hashTableVals[joinAttrVal]; 
-            m_data(rowIdx, m_data.cols() - 1) = nonjoinAttrVal;
+            //m_data(rowIdx, m_data.cols() - 1) = nonjoinAttrVal;
             m_dataVectorOfVectors[rowIdx][m_data.cols()-1] = nonjoinAttrVal;
         }
-        FIGARO_LOG_DBG("Relation join", m_name, relation.m_name);
-        FIGARO_LOG_DBG("m_data", m_data);
+        //FIGARO_LOG_DBG("Relation join", m_name, relation.m_name);
+        //FIGARO_LOG_DBG("m_data", m_data);
         m_attributes.push_back(relation.m_attributes.back());
+        copyVectorOfVectorsToEigenData();
     }
 
     void Relation::computeTail(const std::string& attrName)
@@ -426,17 +490,18 @@ namespace Figaro
         )
     {
         uint32_t distinctValuesCounter;
-        sortData({attributeName});
         std::vector<double> vDistinctValues;
         std::vector<uint32_t> vDistinctValuesRowPositions; 
         std::unordered_map<double, uint32_t> htCnts;
         std::vector<uint32_t> vnonPKAttrIdxs;
         double pkOffset;
 
+        sortData({attributeName});
+        //FIGARO_LOG_DBG("VV", m_dataVectorOfVectors);
         distinctValuesCounter = getDistinctValuesCount(attributeName);
         vDistinctValues.resize(distinctValuesCounter);
         vDistinctValuesRowPositions.resize(distinctValuesCounter + 1);
-        getNonPKAttributeIdx(vnonPKAttrIdxs);
+        getNonPKAttributeIdxs(vnonPKAttrIdxs);
         pkOffset = m_attributes.size() - vnonPKAttrIdxs.size();
 
         getAttributeDistinctValues(attributeName, vDistinctValues);
@@ -448,7 +513,7 @@ namespace Figaro
             uint32_t headRowIdx = vDistinctValuesRowPositions[distCnt] + 1;
             uint32_t aggregateCnt = vDistinctValuesRowPositions[distCnt + 1] 
                                   - vDistinctValuesRowPositions[distCnt]; 
-            std::vector<double> vCurRowSum(vnonPKAttrIdxs.size(), 0.0); 
+            std::vector<double> vCurRowSum(vnonPKAttrIdxs.size()); 
             double attrVal = vDistinctValues[distCnt];
             double scalarCnt = hashTabAttributeCounts.at(attrVal);
 
@@ -456,11 +521,12 @@ namespace Figaro
             {
                 vCurRowSum[nonPKAttrIdx - pkOffset] = m_dataVectorOfVectors[headRowIdx][nonPKAttrIdx];
             }
+            //FIGARO_LOG_DBG("scalarCnt", scalarCnt);
             for (uint32_t rowIdx = headRowIdx + 1;
                 rowIdx <= vDistinctValuesRowPositions[distCnt + 1]; rowIdx ++)
             {
                 double i = rowIdx - headRowIdx + 1;
-                FIGARO_LOG_DBG("rowIDx:", rowIdx, "i:", i);
+                //FIGARO_LOG_DBG("rowIDx:", rowIdx, "i:", i);
 
                 for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
                 {
@@ -468,18 +534,110 @@ namespace Figaro
                     vCurRowSum[nonPKAttrIdx - pkOffset] += m_dataVectorOfVectors[rowIdx][nonPKAttrIdx];
                     m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] = 
                         (m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] * (i - 1) - 
-                        prevRowSum) * scalarCnt / 
-                        std::sqrt(i * (i - 1) );
+                        prevRowSum) * std::sqrt(scalarCnt / (i * (i - 1)) );
                 }
-                FIGARO_LOG_DBG(m_dataVectorOfVectors);
-                FIGARO_LOG_DBG("vCurRowSum", vCurRowSum);
+                //FIGARO_LOG_DBG(m_dataVectorOfVectors);
+                //FIGARO_LOG_DBG("vCurRowSum", vCurRowSum);
             }
             for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
             {
                 m_dataVectorOfVectors[headRowIdx][nonPKAttrIdx] = 
-                    vCurRowSum[nonPKAttrIdx - pkOffset] * scalarCnt / std::sqrt(aggregateCnt);
+                    vCurRowSum[nonPKAttrIdx - pkOffset] * std::sqrt(scalarCnt / aggregateCnt);
             }
         }
+        copyVectorOfVectorsToEigenData();
+        FIGARO_LOG_INFO(*this);
     }
 
+    void Relation::extend(const Relation& relation, const std::string& attrIterName)
+    {
+        constexpr uint32_t NUM_RELS = 2; 
+        std::array<const Relation*, NUM_RELS> apRelations
+        { this, &relation};
+        std::array<std::vector<uint32_t>, NUM_RELS> avDistinctValuesRowPositions;
+        std::vector<uint32_t> vNonPkAttrIdxsRel;
+        uint32_t distValCnt;
+        uint32_t addRowsCnt;
+        uint32_t colOffset; 
+        uint32_t numPKAttributesRel;
+        uint32_t appIdx;
+
+        
+        colOffset = m_attributes.size();
+        numPKAttributesRel  = relation.getNumberOfPKAttributes();
+        relation.getNonPKAttributeIdxs(vNonPkAttrIdxsRel);
+        appIdx = m_data.rows();
+        for (uint32_t idxRel = 0; idxRel < apRelations.size(); idxRel ++)
+        {
+            apRelations[idxRel]->getDistinctValuesRowPositions(
+                attrIterName, avDistinctValuesRowPositions[idxRel], false);
+        }
+        distValCnt = avDistinctValuesRowPositions[1].size() - 1; 
+        addRowsCnt = relation.m_data.rows() - distValCnt; 
+
+        m_data.conservativeResize(m_data.rows() + addRowsCnt, 
+            m_attributes.size() + vNonPkAttrIdxsRel.size());
+        schemaJoin(relation);
+        
+        for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
+        {
+            uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
+            m_data.col(colOffset + colOffsetRel).setZero();
+        }
+
+        // TODO: reorder column first order. 
+        for (uint32_t distCnt = 0; distCnt < distValCnt; distCnt ++)
+        {
+            std::array<uint32_t, NUM_RELS> aHeadRowIdx;
+            uint32_t precNextRowIdx;
+            for (uint32_t idx = 0; idx < NUM_RELS; idx++)
+            {
+                aHeadRowIdx[idx] = avDistinctValuesRowPositions[idx][distCnt] + 1;
+            }
+            
+            // Appends computed heads from the second relation to the end of rows. 
+            // 
+            for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
+            {
+                uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
+                //FIGARO_LOG_DBG("HeadRowIdx", headRowIdx, "colIdx", colOffset + colOffsetRel,
+                //"colOffsetRel", colOffsetRel);
+                m_data(aHeadRowIdx[0], colOffset + colOffsetRel)
+                = relation.m_data(aHeadRowIdx[1], nonPKAttrIdx);
+            }
+
+            // Appends computed tails from the second relation to the end of 
+            // the first relation. 
+            // 
+            precNextRowIdx = avDistinctValuesRowPositions[1][distCnt+1];
+            for (uint32_t rowIdx = aHeadRowIdx[1] + 1; rowIdx <= precNextRowIdx; rowIdx++ )
+            {
+                m_data.row(appIdx).setZero();
+                for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
+                {
+                    uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
+                    m_data(appIdx, colOffset  + colOffsetRel)
+                    = relation.m_data(rowIdx, nonPKAttrIdx);
+                }
+                appIdx++;
+            }
+        }
+        FIGARO_LOG_INFO(*this);
+    }
+    std::ostream& operator<<(std::ostream& out, const Relation& relation)
+    {
+        out << std::endl;
+        out << "Relation " << relation.m_name << std::endl;
+        out << "[ ";
+        for (const auto& attribute: relation.m_attributes)
+        {
+            std::string strPk = attribute.m_isPrimaryKey ? "PK, " : "";
+            std::string strType = attribute.mapTypeToStr.at(attribute.m_type);
+            out << attribute.m_name  << " (" << strPk  
+                << strType << ")" << "; ";
+        }
+        out << "]" << std::endl;
+        out << relation.m_data;
+        return out;
+    }
 }

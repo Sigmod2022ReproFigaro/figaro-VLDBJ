@@ -102,17 +102,26 @@ namespace Figaro
     
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
     {
-        Relation& rel1 = m_relations.at(aRelationNames.at(0));
-        Relation& rel2 = m_relations.at(aRelationNames.at(1));
-        std::unordered_map<double, uint32_t> hashTabAttrCnts1;
-        std::unordered_map<double, uint32_t> hashTabAttrCnts2;
+        constexpr uint32_t NUM_RELATIONS = 2;
+        std::array<Relation*, NUM_RELATIONS> aRelations
+        {&m_relations.at(aRelationNames.at(0)), 
+         &m_relations.at(aRelationNames.at(1))};
+        std::array<std::unordered_map<double, uint32_t>, NUM_RELATIONS> 
+         aHashTabAttrCnt;
+        
+        for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
+        {
+            Relation* pRelation = aRelations[idxRel];
+            pRelation->getAttributeValuesCountAggregates(attrIterName, 
+                        aHashTabAttrCnt[idxRel]);
+            FIGARO_LOG_DBG(aHashTabAttrCnt[idxRel]);
+        }
 
-        rel1.getAttributeValuesCountAggregates(attrIterName, hashTabAttrCnts1);
-        rel1.getAttributeValuesCountAggregates(attrIterName, hashTabAttrCnts2);
-
-        FIGARO_LOG_DBG("Passed hash count computation");
-        rel1.computeAndScaleGeneralizedHeadAndTail(attrIterName, hashTabAttrCnts2);
-        rel2.computeAndScaleGeneralizedHeadAndTail(attrIterName, hashTabAttrCnts1);
+        aRelations[0]->computeAndScaleGeneralizedHeadAndTail(
+            attrIterName, aHashTabAttrCnt[1]);
+        aRelations[1]->computeAndScaleGeneralizedHeadAndTail(
+            attrIterName, aHashTabAttrCnt[0]);
+        aRelations[0]->extend(*aRelations[1], attrIterName);
     }
         
 

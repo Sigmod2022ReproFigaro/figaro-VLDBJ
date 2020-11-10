@@ -10,11 +10,18 @@
 // In the case if log level is defined by CmakeLists.txt we do not want
 // want to redefine it. 
 #ifndef FIGARO_LOG_LEVEL 
-#define FIGARO_LOG_LEVEL 0
+#define FIGARO_LOG_LEVEL 1
 #endif 
 
+#if FIGARO_LOG_LEVEL > FIGARO_LOG_LEVEL_DEBUG
+#define NDEBUG
+#endif 
+
+#include <cassert>
 #include <iostream>
 #include <vector>
+
+#define FIGARO_LOG_ASSERT(ASSERT_CHECK) assert(ASSERT_CHECK)
 
 template<typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
@@ -55,6 +62,21 @@ std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& 
         out << std::endl;
     }
     return out;
+}
+
+
+template<typename KeyType, typename ValType>
+std::ostream& operator<<(std::ostream& out, 
+    const std::unordered_map<KeyType, ValType>& ht)
+{   
+    out << "Hash table" << std::endl;
+    out << "Hash table size " << ht.size() << std::endl;
+    for (const auto& [key, value]: ht)
+    {
+        out << key << ":" << value << " ";
+    }
+    out << std::endl;
+    return out; 
 }
 
 // TODO:
