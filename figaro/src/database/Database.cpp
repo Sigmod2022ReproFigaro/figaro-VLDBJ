@@ -122,6 +122,7 @@ namespace Figaro
         aRelations[1]->computeAndScaleGeneralizedHeadAndTail(
             attrIterName, aHashTabAttrCnt[0]);
         aRelations[0]->extend(*aRelations[1], attrIterName);
+        aRelations[0]->applyEigenQR();
     }
         
 

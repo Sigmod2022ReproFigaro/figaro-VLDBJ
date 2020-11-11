@@ -51,4 +51,5 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
+
 }
