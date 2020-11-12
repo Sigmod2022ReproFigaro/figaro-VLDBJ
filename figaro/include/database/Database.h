@@ -51,7 +51,7 @@ namespace Figaro
         void computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, 
                         const std::string& attrIterName);
 
-        
+        void computeQRDecompositionHouseholder(const std::string& relationName, MatrixT* pR = nullptr);
     };
 }
 #endif 

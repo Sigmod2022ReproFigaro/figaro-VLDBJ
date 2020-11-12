@@ -625,17 +625,18 @@ namespace Figaro
         FIGARO_LOG_INFO(*this);
     }
 
-    void Relation::applyEigenQR(void)
+    void Relation::applyEigenQR(MatrixT* pR)
     {
         uint32_t numNonPKAttributes = getNumberOfNonPKAttributes();
         const auto& rVals {m_data.rightCols(numNonPKAttributes)};
         Eigen::HouseholderQR<MatrixT> qr{};
         // TODO: think how to avoid copy constructor. 
         qr.compute(rVals);
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-              R = qr.matrixQR().triangularView<Eigen::Upper>();
+        if (nullptr != pR)
+        {
+            *pR = qr.matrixQR().triangularView<Eigen::Upper>();
+        }
 
-        FIGARO_LOG_DBG(R);
     }
 
     std::ostream& operator<<(std::ostream& out, const Relation& relation)

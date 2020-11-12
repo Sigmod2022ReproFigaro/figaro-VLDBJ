@@ -230,7 +230,7 @@ namespace Figaro
 
         void computeTail(const std::string& attrName);
 
-        void applyEigenQR(void);
+        void applyEigenQR(MatrixT* pR = nullptr);
         
         friend std::ostream& operator<<(
             std::ostream& out, 
