@@ -8,3 +8,4 @@ cmake ../. -D FIGARO_TEST=ON
 make -j8
 #./figaro
 ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > ../log/log.txt 2>&1
+#valgrind --leak-check=yes ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > ../log/log.txt 2>&1

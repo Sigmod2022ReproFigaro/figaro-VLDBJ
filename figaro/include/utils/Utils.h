@@ -17,6 +17,7 @@ namespace Figaro
     typedef nlohmann::json json;
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixT;
     typedef Eigen::VectorXd VectorT;
+    typedef Eigen::ArrayXd ArrayT;
     
     // TODO: move to Utils namespace
     uint32_t getNumberOfLines(const std::string& filePath);   

@@ -38,7 +38,7 @@ void readMatrixDense(const std::string& sPath, Figaro::MatrixT& rmA, char sep)
         while (std::getline(lineStream, cell, sep))
         {
             double val = std::stod(cell);
-            FIGARO_LOG_DBG("RowNum:", row, "ColNum:", col, "Val:", val);
+            //FIGARO_LOG_DBG("RowNum:", row, "ColNum:", col, "Val:", val);
             rmA(row, col) = val;
             col ++;
         }

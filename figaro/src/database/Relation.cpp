@@ -625,6 +625,15 @@ namespace Figaro
         FIGARO_LOG_INFO(*this);
     }
 
+    static void makeDiagonalElementsPositiveInR(MatrixT& matR)
+    {
+        ArrayT&& aDiag = matR.diagonal().array().sign();
+        for (uint32_t rowIdx = 0; rowIdx < matR.cols(); rowIdx ++)
+        {
+            matR.row(rowIdx) *= aDiag(rowIdx);
+        }
+    }
+
     void Relation::applyEigenQR(MatrixT* pR)
     {
         uint32_t numNonPKAttributes = getNumberOfNonPKAttributes();
@@ -635,6 +644,8 @@ namespace Figaro
         if (nullptr != pR)
         {
             *pR = qr.matrixQR().triangularView<Eigen::Upper>();
+            makeDiagonalElementsPositiveInR(*pR);
+            FIGARO_LOG_DBG("R",*pR);
         }
 
     }
