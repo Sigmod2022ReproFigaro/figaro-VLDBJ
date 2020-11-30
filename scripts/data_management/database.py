@@ -9,6 +9,7 @@ class Database:
         self.load_db_schema()
 
     def load_db_schema(self):
+        self.name = self.json_db_schema["name"]
         json_relations = self.json_db_schema["relations"]
         relations = []
         for json_relation in json_relations:
@@ -20,10 +21,18 @@ class Database:
     def get_relations(self):
         return self.relations
 
+
+    def get_relation_names(self):
+        relation_names = [relation.name for relation in self.relations]
+        return relation_names
+
     
     def get_relation(self, name):
         for relation in self.relations:
             if relation.name == name:
                 return relation
         return None
+
+
+    
                 

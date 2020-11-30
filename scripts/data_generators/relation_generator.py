@@ -7,9 +7,6 @@ import argparse
 from data_management.relation import Relation
 
 class RelationGeneratedSpecs:
-    # name 
-    # attributes 
-    # num_tuples
     def __init__(self, json_relation_generated_specs):
         self.distribution = json_relation_generated_specs["distribution"]
         self.attribute_domains = json_relation_generated_specs["attribute_domains"]
@@ -21,27 +18,14 @@ class RelationGeneratedSpecs:
 class RelationGenerator:
     def __init__(self, relation: Relation):
         self.name = relation.name
-        self.attributes = relation.attributes 
-
-    def getSetPKs(self):
-        setPKs = set()
-        print(self.attributes)
-        for attribute_info in self.attributes:
-            attribute_name = attribute_info["name"]
-            if attribute_info["PK"]:
-                setPKs.add(attribute_name)
-        
-        return setPKs
-
-    def getAttributeNamesOrdered(self):
-        return [attribute_info["name"] for attribute_info in self.attributes]
+        self.setPks = relation.get_set_pk_attribute_names()
+        self.attribute_names = relation.get_attribute_names() 
 
     # attribute_domains [{"name": "A", "start": 1, "end": 10}]
     # PKs are unique
     # We assume the same order as defined by schema
     #def generate(self, attribute_domains, num_tuples: int, pandas_format=True):
     def generate(self, rel_specs: RelationGeneratedSpecs, pandas_format=True):
-        setPKs = self.getSetPKs()
         all_tuples_in_domain = None
         generated_relation = []
         first_non_PK_idx = None
@@ -50,7 +34,7 @@ class RelationGenerator:
             dom_start = attr_domain["start"]
             dom_end = attr_domain["end"]
             domain_expanded = [i for i in range(dom_start, dom_end+1)]
-            if (attr_domain["name"] in setPKs):
+            if (attr_domain["name"] in self.setPks):
                 domains.append(domain_expanded)
         all_tuples_in_domain = [list(tup) for tup in it.product(*domains)]
         random.shuffle(all_tuples_in_domain)
@@ -59,12 +43,12 @@ class RelationGenerator:
         for attr_idx, attr_domain in enumerate(rel_specs.attribute_domains):
             dom_start = attr_domain["start"]
             dom_end = attr_domain["end"]
-            if (attr_domain["name"] not in setPKs):
+            if (attr_domain["name"] not in self.setPks):
                 generated_tuples = [[*tuples, np.random.uniform(dom_start, dom_end)] \
                                     for tuples in generated_tuples]
         if pandas_format:
             generated_tuples = pd.DataFrame(generated_tuples, 
-                                        columns=self.getAttributeNamesOrdered())
+                                        columns=self.attribute_names)
         
         return self.name, generated_tuples
 
