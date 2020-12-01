@@ -181,6 +181,6 @@ if __name__ == "__main__":
     database_psql.drop_database()
     database_psql.create_database(database)
     database_psql.evaluate_join(database.get_relations())
-    database_psql.dump_join(args.dump_path, database.get_relations())
+    database_psql.dump_join(database.get_relations(), args.dump_path)
 
     
