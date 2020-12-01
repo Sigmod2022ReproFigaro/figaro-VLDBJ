@@ -40,17 +40,27 @@ class SystemTest:
 
 
     def __init__(self, path_log: str, path_dump: str, 
-    performance: Performance, precision: Precision, database: Database):
+    performance: Performance, precision: Precision, database: Database,
+    test_type = TestDataType.PERFORMANCE):
         self.prec = precision
         self.perf = performance
         self.path_log = path_log
         self.path_dump = path_dump
         self.database = database
-        self.test_type = SystemTest.TestDataType.PERFORMANCE
+        self.test_type = test_type
+
+
+    @staticmethod
+    def create_dir_with_name(path, dir_name):
+        dir_abs_path = os.path.join(path, dir_name)
+        if not os.path.exists(dir_abs_path):
+            os.makedirs(dir_abs_path)
+
+        return dir_abs_path
 
 
     @classmethod
-    def from_specs_path(cls, system_test_specs_path: str):
+    def from_specs_path(cls, system_test_specs_path: str, *args, **kwargs):
         database = None
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
@@ -67,12 +77,15 @@ class SystemTest:
                 #TODO:  Add
                 pass
         
-        path_log = system_json["system"]["log"]["path"]
-        path_dump = system_json["system"]["dump"]["path"]
-                
-        return cls(path_log=path_log, path_dump=path_dump,
-            precision=Precision(""), performance=Performance(""),
-            database=database)
+        path_log = SystemTest.create_dir_with_name(
+            system_json["system"]["log"]["path"], database.name)
+        path_dump = SystemTest.create_dir_with_name(
+            system_json["system"]["dump"]["path"], database.name)
+
+
+        return cls(path_log, path_dump, Precision(""), 
+                Performance(""), database, 
+                *args, **kwargs)
 
 
 
@@ -108,7 +121,6 @@ class SystemTest:
     
 
 class SystemTestPython(SystemTest):
-
     def set_join_path(self, join_path):
         self.join_path = join_path
 
@@ -124,14 +136,17 @@ class SystemTestPython(SystemTest):
         
 
 class SystemTestPsql(SystemTest):
-    #def __init__(self, password):
-    #    self.password = password
-    #    super.__init__("", "", "", "")
-
-    def set_password(self, password):
+    def __init__(self, path_log: str, path_dump: str, 
+    performance: Performance, precision: Precision, database: Database,
+    password: str):
+        super().__init__(path_log=path_log, path_dump=path_dump, 
+                    performance=performance, precision = precision, 
+                    database = database)
         self.password = password
 
+
     def run(self):
+        print("FUCK")
         if self.test_type == SystemTest.TestDataType.DEBUG or \
         self.test_type == SystemTest.TestDataType.DUMP or \
         self.test_type == SystemTest.TestDataType.PRECISION:
@@ -140,27 +155,30 @@ class SystemTestPsql(SystemTest):
             database_psql.drop_database()
             database_psql.create_database(self.database)
             
-            database_psql.evaluate_join(self.database.get_relation_names())
+            database_psql.evaluate_join(self.database.get_relations())
             dump_file_path = os.path.join(self.path_dump, JOIN_TABLE_NAME)+".csv"
-            print(dump_file_path)
-            database_psql.dump_join(dump_file_path)
+            print("DMP", dump_file_path)
+            database_psql.dump_join(self.database.get_relations(), dump_file_path)
             self.join_path = dump_file_path
 
 
+#TODO: Define order of columns by order of relations joined
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",  
                         dest="password", required=True)
     args = parser.parse_args()
+
     SYSTEM_PY_TEST_PATH = "/home/popina/Figaro/figaro-code/system_tests/test1/systems/system_python.conf"
     SYSTEM_PSQL_TEST_PATH = "/home/popina/Figaro/figaro-code/system_tests/test1/systems/system_psql.conf"
     ROOT_PATH = "/home/popina/Figaro/figaro-code"
-    system_psql = SystemTestPsql.from_specs_path(SYSTEM_PSQL_TEST_PATH)
+    
+    system_psql = SystemTestPsql.from_specs_path(SYSTEM_PSQL_TEST_PATH,
+    password=args.password)
     system_py = SystemTestPython.from_specs_path(SYSTEM_PY_TEST_PATH)
     
     system_psql.setTestDataType(SystemTest.TestDataType.DEBUG)
-    system_psql.set_password(args.password)
     system_py.setTestDataType(SystemTest.TestDataType.DEBUG)
     system_psql.run()
     system_py.set_join_path(system_psql.join_path)

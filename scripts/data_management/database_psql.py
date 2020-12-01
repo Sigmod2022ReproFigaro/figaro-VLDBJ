@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2 import sql
+from typing import List
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import argparse
 
@@ -53,11 +54,10 @@ class DatabasePsql:
             sql_attribute = "{} {}" 
             sql_attribute = sql_attribute.format(attribute.name, attribute.type)
             sql_attributes += sql_attribute + ","
-            print(sql_attributes)
         
         sql_pks = "PRIMARY KEY({})"
         sql_pk_attributes = ""
-        for attribute_name in relation.get_set_pk_attribute_names():
+        for attribute_name in relation.get_pk_attribute_names():
             sql_pk_attributes += attribute_name + ","
         sql_pks = sql_pks.format(sql_pk_attributes[:-1])
         
@@ -65,8 +65,8 @@ class DatabasePsql:
         sql_query = "CREATE TABLE {} ({});"
         sql_query = sql_query.format(relation.name, sql_attributes)
         
-        cursor = self.connection.cursor()
         print(sql_query)
+        cursor = self.connection.cursor()
         cursor.execute(sql_query)
         cursor.close()
 
@@ -82,17 +82,45 @@ class DatabasePsql:
     
     def drop_table(self, relation):
         pass
+    
+
+    @staticmethod
+    def get_non_pk_order_of_attributes(relations: List[Relation]):
+        non_pk_attribute_names = []
+        for relation in relations:
+            non_pk_attribute_names += relation.get_non_pk_attribute_names()
         
+        return non_pk_attribute_names
 
 
-    def evaluate_join(self, table_names: list = None):
-        sql_join = "CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT * FROM {});"
+    @staticmethod
+    def get_order_of_attributes(relations: List[Relation]):
+        pk_attribute_names = []
+        non_pk_attribute_names = DatabasePsql.get_non_pk_order_of_attributes(relations)
+        
+        for relation in relations:
+            pk_attribute_names += relation.get_pk_attribute_names() 
+        
+        pk_atrr_names_unique = list(dict.fromkeys(pk_attribute_names))
+        return pk_atrr_names_unique + non_pk_attribute_names
+    
+
+    def evaluate_join(self, relations):
+        sql_join = "CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
         sql_from_natural_join = ""
-        for idx, table_name in enumerate(table_names):
-            sql_from_table_name = table_name if idx == 0 \
-                else  " NATURAL JOIN " + table_name
+
+        sql_select = ""
+        ord_attr_names = self.get_order_of_attributes(relations)
+
+        for attribute_name in ord_attr_names:
+            sql_select += attribute_name + ","
+        
+        sql_select = sql_select[:-1]
+        for idx, relation in enumerate(relations):
+            sql_from_table_name = relation.name if idx == 0 \
+                else  " NATURAL JOIN " + relation.name
             sql_from_natural_join += sql_from_table_name
-        sql_join = sql_join.format(sql_from_natural_join)
+        sql_join = sql_join.format(sql_select, sql_from_natural_join)
 
         print (sql_join)
         cursor = self.connection.cursor()
@@ -100,10 +128,12 @@ class DatabasePsql:
         cursor.close()
 
 
-    def dump_join(self, output_file_path):
+    def dump_join(self, relations, output_file_path):
+        non_pk_attribute_names = DatabasePsql.get_non_pk_order_of_attributes(relations)
         cursor = self.connection.cursor()
         with open(output_file_path, 'w') as file_csv:
-            cursor.copy_to(file_csv, JOIN_TABLE_NAME, sep=',')
+            cursor.copy_to(file_csv, JOIN_TABLE_NAME, sep=',',
+            columns=non_pk_attribute_names)
 
 
     # Passes database spec to be created, 
@@ -150,7 +180,7 @@ if __name__ == "__main__":
                                 password, database_name=database_name)
     database_psql.drop_database()
     database_psql.create_database(database)
-    database_psql.evaluate_join(database.get_relation_names())
-    database_psql.dump_join(args.dump_path)
+    database_psql.evaluate_join(database.get_relations())
+    database_psql.dump_join(args.dump_path, database.get_relations())
 
     

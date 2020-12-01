@@ -1,5 +1,5 @@
 import json
-
+from typing import List
 
 class Attribute:
     def __init__(self, name, type, primary_key):
@@ -32,17 +32,16 @@ class Relation:
     def get_attributes(self):
         return self.attributes
 
-    def get_attribute_names(self):
+    def get_attribute_names(self) -> List[str]:
         return [attribute.name for attribute in self.attributes]
 
 
-    def get_set_pk_attribute_names(self):
-        setPks = set()
-        for attribute in self.attributes:
-            if attribute.primary_key:
-                setPks.add(attribute.name)
-        
-        return setPks
+    def get_pk_attribute_names(self)-> List[str]:
+        return [attribute.name for attribute in self.attributes if attribute.primary_key]
+
+
+    def get_non_pk_attribute_names(self)-> List[str]:
+         return [attribute.name for attribute in self.attributes if not attribute.primary_key]
 
     def load_data(self):
         pass
