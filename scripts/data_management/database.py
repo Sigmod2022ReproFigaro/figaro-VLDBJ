@@ -8,6 +8,7 @@ class Database:
             self.json_db_schema = json.load(json_file)["database"]
         self.load_db_schema()
 
+
     def load_db_schema(self):
         self.name = self.json_db_schema["name"]
         json_relations = self.json_db_schema["relations"]

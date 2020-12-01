@@ -6,6 +6,8 @@ import argparse
 from data_management.database import Database
 from data_management.relation import Relation
 
+JOIN_TABLE_NAME = "join_table"
+
 class DatabasePsql:
     def __init__(self, host_name, user_name, password, database_name = None):
         self.host_name = host_name
@@ -80,10 +82,11 @@ class DatabasePsql:
     
     def drop_table(self, relation):
         pass
+        
 
 
     def evaluate_join(self, table_names: list = None):
-        sql_join = "CREATE TABLE join_table AS (SELECT * FROM {});"
+        sql_join = "CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT * FROM {});"
         sql_from_natural_join = ""
         for idx, table_name in enumerate(table_names):
             sql_from_table_name = table_name if idx == 0 \
@@ -96,6 +99,11 @@ class DatabasePsql:
         cursor.execute(sql_join)
         cursor.close()
 
+
+    def dump_join(self, output_file_path):
+        cursor = self.connection.cursor()
+        with open(output_file_path, 'w') as file_csv:
+            cursor.copy_to(file_csv, JOIN_TABLE_NAME, sep=',')
 
 
     # Passes database spec to be created, 
@@ -133,6 +141,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",  
                         dest="password", required=True)
+    parser.add_argument("-d", "--dump_path", action="store", dest="dump_path")
     args = parser.parse_args()
     db_specs_path = "/home/popina/Figaro/figaro-code/system_tests/test1/database_specs.conf"
     database = Database(db_specs_path)
@@ -142,5 +151,6 @@ if __name__ == "__main__":
     database_psql.drop_database()
     database_psql.create_database(database)
     database_psql.evaluate_join(database.get_relation_names())
+    database_psql.dump_join(args.dump_path)
 
     
