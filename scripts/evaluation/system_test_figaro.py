@@ -6,6 +6,7 @@ import json
 from data_management.database import Database
 from evaluation.system_test import SystemTest
 
+
 class SystemTestFigaro(SystemTest):
     def run(self):
         args = ["/bin/bash", "setup.sh", "--log_path={}".format(self.path_log)]

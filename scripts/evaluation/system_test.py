@@ -60,29 +60,19 @@ class SystemTest:
 
 
     @classmethod
-    def from_specs_path(cls, system_test_specs_path: str, *args, **kwargs):
+    def from_specs_path(cls, system_test_specs_path: str,
+        database_specs_path: str, *args, **kwargs):
         database = None
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
-            #print(system_json)
-            #print(system_json["data"])
             for key in system_json:
                 print(key)
-            if "database_conf_path" in system_json["data"]:
-                print("HEJ")
-                database_conf_path = system_json["data"]["database_conf_path"]
-                database = Database(database_conf_path)
-            else:
-                print("NO HEY")
-                #TODO:  Add
-                pass
-        
+            
+        database = Database(database_specs_path)
         path_log = SystemTest.create_dir_with_name(
             system_json["system"]["log"]["path"], database.name)
         path_dump = SystemTest.create_dir_with_name(
             system_json["system"]["dump"]["path"], database.name)
-
-
         return cls(path_log, path_dump, Precision(""), 
                 Performance(""), database, 
                 *args, **kwargs)
@@ -102,8 +92,6 @@ class SystemTest:
         elif self.test_type == SystemTest.TestDataType.PERFORMANCE:
             pass
 
-        result = subprocess.run(["ls", "-l"], capture_output=True, text=True)
-        print(result.stdout)
         
     
     # Deletes all the auxilary data from the correpsonding path

@@ -20,7 +20,6 @@ class SystemTestPsql(SystemTest):
 
 
     def run(self):
-        print("FUCK")
         if self.test_type == SystemTest.TestDataType.DEBUG or \
         self.test_type == SystemTest.TestDataType.DUMP or \
         self.test_type == SystemTest.TestDataType.PRECISION:
