@@ -7,7 +7,10 @@
 # 
 
 from enum import Enum, auto
+from abc import ABC, abstractmethod
+import abc
 import subprocess
+import logging
 import os
 import json
 import argparse
@@ -27,7 +30,7 @@ class Precision:
         self.path = path
 
 
-class SystemTest:
+class SystemTest(ABC):
     # Log test is only for debugging 
     # Dump is used for performacne where data is later compared
     # Performance evaluate speed of the algorithm 
@@ -83,16 +86,42 @@ class SystemTest:
         self.test_type = test_type
 
     def run(self):
+        logging.info("Starting of test")
         if self.test_type == SystemTest.TestDataType.DEBUG:
-            pass
+            logging.info("Run debug")
+            self.run_debug()
         elif self.test_type == SystemTest.TestDataType.DUMP:
-            pass
+            logging.info("Run dump")
+            self.run_dump()
         elif self.test_type == SystemTest.TestDataType.PRECISION:
-            pass
+            logging.info("Run precision")
+            self.run_precision()
         elif self.test_type == SystemTest.TestDataType.PERFORMANCE:
-            pass
+            logging.info("Run performance")
+            self.run_performance()
+        else:
+            logging.error('This type of system test does not exist')
+        logging.info("End of test")
+    
+    @abstractmethod
+    def run_debug(self):
+        pass
 
-        
+
+    @abstractmethod
+    def run_dump(self):
+        pass
+
+
+    @abstractmethod
+    def run_precision(self):
+        pass
+
+    
+    @abstractmethod
+    def run_performance(self):
+        pass
+
     
     # Deletes all the auxilary data from the correpsonding path
     def clean_data(self, test_data_type: TestDataType):

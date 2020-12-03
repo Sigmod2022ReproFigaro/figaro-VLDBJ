@@ -3,7 +3,7 @@ from psycopg2 import sql
 from typing import List
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import argparse
-
+import logging
 from data_management.database import Database
 from data_management.relation import Relation
 
@@ -65,7 +65,7 @@ class DatabasePsql:
         sql_query = "CREATE TABLE {} ({});"
         sql_query = sql_query.format(relation.name, sql_attributes)
         
-        print(sql_query)
+        logging.debug(sql_query)
         cursor = self.connection.cursor()
         cursor.execute(sql_query)
         cursor.close()
@@ -122,7 +122,7 @@ class DatabasePsql:
             sql_from_natural_join += sql_from_table_name
         sql_join = sql_join.format(sql_select, sql_from_natural_join)
 
-        print (sql_join)
+        logging.debug(sql_join)
         cursor = self.connection.cursor()
         cursor.execute(sql_join)
         cursor.close()

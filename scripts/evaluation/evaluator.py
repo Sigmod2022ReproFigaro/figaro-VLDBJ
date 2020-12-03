@@ -1,5 +1,7 @@
 import argparse
 import json
+import logging
+import sys
 from evaluation.system_test import SystemTest
 from evaluation.system_test_figaro import SystemTestFigaro
 from evaluation.system_test_psql import SystemTestPsql
@@ -57,12 +59,25 @@ class SystemTestsEvaluator:
                 database_conf_path = data_set_json["database_conf_path"]
             else:
                 print("TODO")
+            
+            #We assume someone is smart to use the correct order in conf files.
+            join_result_path = None
             for system_test_json in system_tests_json:
                 if "system_conf_path" in system_test_json:
                     system_conf_path = system_test_json["system_conf_path"]
                     system_test_type = system_test_json["type"]
                     class_type = SystemTestsEvaluator.map_type_to_class[system_test_type]
-                    system_test = class_type.from_specs_path(system_conf_path,  database_conf_path, self.password)
+                    system_test = class_type.from_specs_path(system_conf_path,  database_conf_path, password=self.password)
+                    print("Type is", system_test_type)
+                    print("Created type", type(system_test))
+                    if hasattr(class_type, 'get_join_result_path') and \
+                        callable(getattr(class_type, 'get_join_result_path')):
+                        join_result_path = system_test.get_join_result_path()
+                    
+                    if hasattr(class_type, 'set_join_result_path') and \
+                        callable(getattr(class_type, 'set_join_result_path')):
+                        system_test.set_join_result_path(join_result_path)
+                    
                     test.append(system_test)
                 else: 
                     print("TODO")
@@ -81,10 +96,27 @@ def eval_tests(password):
     system_tests_evaluator.eval_tests()
 
 
+def init_logging():
+    formatter_str = '------- %(levelname)5s ----- [%(filename)s:%(lineno)s - %(funcName)20s()] %(message)s'
+    formatter = logging.Formatter(formatter_str)
 
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    stdout_handler.setLevel(logging.INFO)
+    
+    file_handler = logging.FileHandler('log.txt', mode='w')
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
+    
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    root.addHandler(stdout_handler)
+    root.addHandler(file_handler)
 
+    
 if __name__ == "__main__":
     ROOT_PATH = "/home/popina/Figaro/figaro-code"
+    init_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",  
                         dest="password", required=True)
