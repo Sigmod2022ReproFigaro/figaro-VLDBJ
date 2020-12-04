@@ -7,26 +7,6 @@ from evaluation.system_test_figaro import SystemTestFigaro
 from evaluation.system_test_psql import SystemTestPsql
 from evaluation.system_test_python import SystemTestPython
 from data_management.database import Database
-
-def normal_test(password):
-    SYSTEM_PY_TEST_PATH = "/home/popina/Figaro/figaro-code/system_tests/test1/systems/system_test_python.conf"
-    SYSTEM_PSQL_TEST_PATH = "/home/popina/Figaro/figaro-code/system_tests/test1/systems/system_test_psql.conf"
-    
-    system_psql = SystemTestPsql.from_specs_path(SYSTEM_PSQL_TEST_PATH,
-                        password=password)
-    system_py = SystemTestPython.from_specs_path(SYSTEM_PY_TEST_PATH)
-    
-    system_psql.setTestDataType(SystemTest.TestDataType.DEBUG)
-    system_py.setTestDataType(SystemTest.TestDataType.DEBUG)
-    system_psql.run()
-    system_py.set_join_path(system_psql.join_path)
-    system_py.run()
-
-
-def figaro_test():
-     SYSTEM_FIGARO_TEST_PATH = "/home/popina/Figaro/figaro-code/system_tests/test1/systems/system_test_figaro.conf"
-     system_figaro = SystemTestFigaro.from_specs_path(SYSTEM_FIGARO_TEST_PATH)
-     system_figaro.run()
     
 class SystemTestsEvaluator:
     def __init__(self, tests_conf: str, password: str = None):
@@ -34,54 +14,93 @@ class SystemTestsEvaluator:
             tests_json = json.load(json_file)
         
         self.password = password
-        self.load_system_tests(tests_json)
+        self.load_tests(tests_json)
 
 
-    def load_system_tests(self, tests_json):
+    def load_tests(self, tests_json):
         tests = []
         for test_json in tests_json["tests"]:
             print(test_json.keys())
             system_tests_json = test_json["systems"]
             data_set_json = test_json["data_sets"]
-            test = self.load_system_test_data(system_tests_json, data_set_json)
+            test = self.load_system_tests_data_sets(
+                        system_tests_json, data_set_json)
             tests += test
         
         self.tests = tests
 
 
-    map_type_to_class = {'psql': SystemTestPsql, 'python': SystemTestPython,
+    map_category_to_class = {'psql': SystemTestPsql, 'python': SystemTestPython,
                         'figaro': SystemTestFigaro}
 
-    def load_system_test_data(self, system_tests_json, data_sets_json):
+    map_mode_to_enum = {
+        'dump': SystemTest.TestMode.DUMP, 
+        'precision': SystemTest.TestMode.PRECISION, 
+        'performance': SystemTest.TestMode.PERFORMANCE, 
+        'debug': SystemTest.TestMode.DEBUG}
+
+
+    def load_system_tests_data_sets(self, system_tests_json, data_sets_json):
         test = []
         for data_set_json in  data_sets_json:
             if "database_conf_path" in data_set_json:
                 database_conf_path = data_set_json["database_conf_path"]
             else:
-                print("TODO")
+                logging.error("TODO")
             
-            #We assume someone is smart to use the correct order in conf files.
-            join_result_path = None
-            for system_test_json in system_tests_json:
-                if "system_conf_path" in system_test_json:
-                    system_conf_path = system_test_json["system_conf_path"]
-                    system_test_type = system_test_json["type"]
-                    class_type = SystemTestsEvaluator.map_type_to_class[system_test_type]
-                    system_test = class_type.from_specs_path(system_conf_path,  database_conf_path, password=self.password)
-                    print("Type is", system_test_type)
-                    print("Created type", type(system_test))
-                    if hasattr(class_type, 'get_join_result_path') and \
-                        callable(getattr(class_type, 'get_join_result_path')):
-                        join_result_path = system_test.get_join_result_path()
-                    
-                    if hasattr(class_type, 'set_join_result_path') and \
-                        callable(getattr(class_type, 'set_join_result_path')):
-                        system_test.set_join_result_path(join_result_path)
-                    
-                    test.append(system_test)
-                else: 
-                    print("TODO")
+            test += self.load_system_tests(system_tests_json, 
+                database_conf_path)
+        
         return test
+
+
+    def load_system_tests(self, system_tests_json, database_conf_path):
+        join_result_path = None
+        system_test_paper = None
+        batch_of_tests = []
+        for system_test_json in system_tests_json:
+            if "system_conf_path" in system_test_json:
+                system_test_disable = system_test_json.get("disable", False)
+                if system_test_disable:
+                    continue
+                system_test = self.create_system_test(system_test_json, 
+                                    database_conf_path)
+                if system_test.is_dbms():
+                    join_result_path = system_test.get_join_result_path()
+                if system_test.is_paper_algorithm():
+                    system_test_paper = system_test
+            else: 
+                logging.error("TODO")
+            
+            batch_of_tests.append(system_test)
+            
+        for system_test in batch_of_tests:
+            if system_test.requires_dbms_result():
+                system_test.set_join_result_path(join_result_path)
+            
+            if not system_test.is_paper_algorithm():
+                system_test.set_paper_system_test(system_test_paper)
+        
+        return batch_of_tests
+
+
+    def create_system_test(self, system_test_json, database_conf_path: str):
+        system_conf_path = system_test_json["system_conf_path"]
+        system_test_cat = system_test_json["category"]
+        system_test_mode = system_test_json["mode"]
+        class_type = SystemTestsEvaluator.map_category_to_class[system_test_cat]
+        enum_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
+
+        system_test = class_type.from_specs_path(system_conf_path,
+                                         database_conf_path, 
+        test_mode=enum_mode, password=self.password)
+
+        logging.debug("Category is{}".format(system_test_cat))
+        logging.debug("Created category {}".format(type(system_test)))
+        logging.debug("Mode is{}".format(system_test_mode))
+        logging.debug("Create mode{}".format(system_test_mode))
+        
+        return system_test
 
 
     def eval_tests(self):
@@ -97,7 +116,7 @@ def eval_tests(password):
 
 
 def init_logging():
-    formatter_str = '------- %(levelname)5s ----- [%(filename)s:%(lineno)s - %(funcName)20s()] %(message)s'
+    formatter_str = '-- %(levelname)5s -- [%(filename)20s:%(lineno)3s - %(funcName)20s()] %(message)s'
     formatter = logging.Formatter(formatter_str)
 
     stdout_handler = logging.StreamHandler(sys.stdout)

@@ -12,11 +12,11 @@ from data_management.database_psql import JOIN_TABLE_NAME
 class SystemTestPsql(SystemTest):
     def __init__(self, path_log: str, path_dump: str, 
             performance: Performance, precision: Precision, database: Database,
-            test_type: SystemTest.TestDataType=SystemTest.TestDataType.PERFORMANCE, 
-            password: str = None):
-        super().__init__(path_log=path_log, path_dump=path_dump, 
+            test_mode: SystemTest.TestMode, 
+            password: str, *args, **kwargs):
+        super().__init__("PSQL", path_log=path_log, path_dump=path_dump, 
                     performance=performance, precision = precision, 
-                    database = database)
+                    database = database, test_mode=test_mode)
         self.password = password
         self.join_path = os.path.join(self.path_dump, JOIN_TABLE_NAME) + ".csv"
 
@@ -46,6 +46,10 @@ class SystemTestPsql(SystemTest):
     
     def run_precision(self):
         self.eval()
+
+
+    def is_dbms(self):
+        return True
 
     def get_join_result_path(self):
         return self.join_path

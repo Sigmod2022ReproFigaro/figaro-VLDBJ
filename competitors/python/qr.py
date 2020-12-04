@@ -22,5 +22,4 @@ if __name__ == "__main__":
     r = np.linalg.qr(data, mode='r')
     print(r)
     if dump_file is not None:
-        print(type(r))
         dump_qr(dump_file, r)
