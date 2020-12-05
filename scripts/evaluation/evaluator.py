@@ -9,6 +9,17 @@ from evaluation.system_test_python import SystemTestPython
 from data_management.database import Database
     
 class SystemTestsEvaluator:
+    map_category_to_class = {
+        'psql': SystemTestPsql, 'python': SystemTestPython,
+        'figaro': SystemTestFigaro}
+
+    map_mode_to_enum = {
+        'dump': SystemTest.TestMode.DUMP,
+        'precision': SystemTest.TestMode.PRECISION,
+        'performance': SystemTest.TestMode.PERFORMANCE,
+        'debug': SystemTest.TestMode.DEBUG}
+
+
     def __init__(self, tests_conf: str, password: str = None):
         with open(tests_conf) as json_file:
             tests_json = json.load(json_file)
@@ -28,16 +39,6 @@ class SystemTestsEvaluator:
             tests += test
         
         self.tests = tests
-
-
-    map_category_to_class = {'psql': SystemTestPsql, 'python': SystemTestPython,
-                        'figaro': SystemTestFigaro}
-
-    map_mode_to_enum = {
-        'dump': SystemTest.TestMode.DUMP, 
-        'precision': SystemTest.TestMode.PRECISION, 
-        'performance': SystemTest.TestMode.PERFORMANCE, 
-        'debug': SystemTest.TestMode.DEBUG}
 
 
     def load_system_tests_data_sets(self, system_tests_json, data_sets_json):
@@ -89,11 +90,10 @@ class SystemTestsEvaluator:
         system_test_cat = system_test_json["category"]
         system_test_mode = system_test_json["mode"]
         class_type = SystemTestsEvaluator.map_category_to_class[system_test_cat]
-        enum_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
-
+        test_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
         system_test = class_type.from_specs_path(system_conf_path,
                                          database_conf_path, 
-        test_mode=enum_mode, password=self.password)
+        test_mode=test_mode, password=self.password)
 
         logging.debug("Category is{}".format(system_test_cat))
         logging.debug("Created category {}".format(type(system_test)))
@@ -105,12 +105,13 @@ class SystemTestsEvaluator:
 
     def eval_tests(self):
         for system_test in self.tests:
+            logging.debug("system_test {}".format(system_test))
             system_test.run()
 
 
 
 def eval_tests(password):
-    TEST_CONF_PATH = "/home/popina/Figaro/figaro-code/system_tests/test1/tests_specs.conf"
+    TEST_CONF_PATH = "/home/popina/Figaro/figaro-code/system_tests/test3/tests_specs.conf"
     system_tests_evaluator = SystemTestsEvaluator(TEST_CONF_PATH, password)
     system_tests_evaluator.eval_tests()
 

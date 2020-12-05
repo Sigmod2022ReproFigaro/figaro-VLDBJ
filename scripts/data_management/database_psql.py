@@ -33,10 +33,14 @@ class DatabasePsql:
                             password=self.password, database_name='postgres')
         return connection
 
+    
 
-    def open_connection(self):
-        self.connection = self.open_connection_static(self.host_name, self.user_name, 
-                                    self.password, self.database_name)
+    def open_connection(self, check_db: bool = True):
+        if check_db and not self.check_if_db_exists(self.database_name):
+            self.connection = None
+        else:
+            self.connection = self.open_connection_static(self.host_name, self.user_name, 
+                     self.password, self.database_name)
         return self.connection
     
 
@@ -44,6 +48,18 @@ class DatabasePsql:
         if self.connection is not None:
             self.connection.close()
         self.connection = None
+
+
+    def check_if_db_exists(self, db_name: str):
+        connection_admin = self.open_connection_admin()
+        cursor = connection_admin.cursor()
+        sql_query = "SELECT * FROM pg_database WHERE datname='{}';"
+        sql_query = sql_query.format(db_name)
+        cursor.execute(sql_query)
+        db_exists = True if cursor.fetchall().__len__() > 0 else False
+        connection_admin.close()
+        
+        return db_exists
 
 
     def create_table(self, relation: Relation):
@@ -141,12 +157,12 @@ class DatabasePsql:
         self.close_connection()
         self.database_name = database.name
 
-        connection = self.open_connection_admin()
-        cursor = connection.cursor()
+        connection_admin = self.open_connection_admin()
+        cursor = connection_admin.cursor()
         cursor.execute(sql.SQL("CREATE DATABASE {}").format(
                             sql.Identifier(self.database_name)))
         cursor.close()
-        connection.close()
+        connection_admin.close()
         self.open_connection()
 
         relations = database.get_relations()
@@ -157,12 +173,12 @@ class DatabasePsql:
 
     def drop_database(self):
         self.close_connection()
-        connection = self.open_connection_admin()
-        cursor = connection.cursor()
-        cursor.execute(sql.SQL("DROP DATABASE {}").format(
+        connection_admin = self.open_connection_admin()
+        cursor = connection_admin.cursor()
+        cursor.execute(sql.SQL("DROP DATABASE IF EXISTS {} ").format(
                             sql.Identifier(self.database_name)))
         cursor.close()
-        connection.close()
+        connection_admin.close()
         self.database_name = None
 
 

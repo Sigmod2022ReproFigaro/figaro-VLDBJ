@@ -5,17 +5,17 @@ import json
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from evaluation.system_test import SystemTest
-from evaluation.system_test import Precision
-from evaluation.system_test import Performance
+from evaluation.system_test import PrecisionConf
+from evaluation.system_test import PerformanceConf
 from data_management.database_psql import JOIN_TABLE_NAME
 
 class SystemTestPsql(SystemTest):
     def __init__(self, path_log: str, path_dump: str, 
-            performance: Performance, precision: Precision, database: Database,
+            perf_conf: PerformanceConf, prec_conf: PrecisionConf, database: Database,
             test_mode: SystemTest.TestMode, 
             password: str, *args, **kwargs):
         super().__init__("PSQL", path_log=path_log, path_dump=path_dump, 
-                    performance=performance, precision = precision, 
+                    perf_conf=perf_conf, prec_conf = prec_conf, 
                     database = database, test_mode=test_mode)
         self.password = password
         self.join_path = os.path.join(self.path_dump, JOIN_TABLE_NAME) + ".csv"

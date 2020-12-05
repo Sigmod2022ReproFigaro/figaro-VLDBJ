@@ -6,3 +6,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+dumps/psql/*
+dumps/python/numpy/*
+logs/figaro/*
+logs/python/numpy/*
+log.txt

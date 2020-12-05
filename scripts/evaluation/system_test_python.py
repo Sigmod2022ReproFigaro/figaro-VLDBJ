@@ -6,30 +6,19 @@ import logging
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from evaluation.system_test import SystemTest
-from evaluation.system_test import Precision
-from evaluation.system_test import Performance
+from evaluation.system_test import PrecisionConf
+from evaluation.system_test import PerformanceConf
 
 class SystemTestPython(SystemTest):
     def __init__(self, path_log: str, path_dump: str, 
-    performance: Performance, precision: Precision, database: Database,
+    perf_conf: PerformanceConf, prec_conf: PrecisionConf, database: Database,
     test_type = SystemTest.TestMode.PERFORMANCE, **kwargs):
-        super().__init__("PYTHON", path_log, path_dump, performance, precision, database, test_type)
+        super().__init__("PYTHON", path_log, path_dump, perf_conf, prec_conf, database, test_type)
 
 
     def set_join_result_path(self, join_path):
         self.join_path = join_path
     
-
-    def eval(self):
-        args = ["python3", 
-            "/home/popina/Figaro/figaro-code/competitors/python/qr.py", 
-            "--data_path", self.join_path,
-            "--dump_file", os.path.join(self.path_dump, "r.csv")]
-        print(self.join_path)
-        result = subprocess.run(args=args,  capture_output=True, text=True)
-        print(result.stdout)
-        print(result.stderr)
-
 
     def run_debug(self):
         pass

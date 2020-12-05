@@ -6,7 +6,7 @@
 #        comp/prec - precision comparsion
 # 
 
-from enum import Enum, auto
+from enum import IntEnum, auto
 from abc import ABC, abstractmethod
 import abc
 import subprocess
@@ -14,18 +14,19 @@ import logging
 import os
 import json
 import argparse
+import typing
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from data_management.database_psql import JOIN_TABLE_NAME
 
 # Class that wraps performance parameters used in testing
-class Performance:
+class PerformanceConf:
     def __init__(self, path: str):
         self.path = path
 
 
 # Class that wraps precisions elements 
-class Precision:
+class PrecisionConf:
     def __init__(self, path: str):
         self.path = path
 
@@ -33,21 +34,28 @@ class Precision:
 class SystemTest(ABC):
     # Log test is only for debugging 
     # Dump is used for performance where data is later compared
-    # Performance evaluates speed of the algorithm 
-    # Precision compares data from dumps 
-    class TestMode(Enum): 
-        DEBUG = auto()
-        DUMP = auto()
-        PERFORMANCE = auto()
-        PRECISION = auto()
+    # PerformanceConf evaluates speed of the algorithm 
+    # PrecisionConf compares data from dumps 
+    class TestMode(IntEnum): 
+        DEBUG = 1
+        DUMP = 2
+        PERFORMANCE = 3
+        PRECISION = 4
+
+    map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP", 
+                    TestMode.PERFORMANCE: "PERFORMANCE", TestMode.PRECISION: "PRECISION"}
+
+    @staticmethod
+    def test_mode_to_str(test_mode: TestMode)->str: 
+        return SystemTest.map_mode_to_str[test_mode]
 
 
     def __init__(self, name, path_log: str, path_dump: str, 
-    performance: Performance, precision: Precision, database: Database,
+    perf_conf: PerformanceConf, prec_conf: PrecisionConf, database: Database,
     test_mode = TestMode.PERFORMANCE):
         self.name = name
-        self.prec = precision
-        self.perf = performance
+        self.prec = prec_conf
+        self.perf = perf_conf
         self.path_log = path_log
         self.path_dump = path_dump
         self.database = database
@@ -76,8 +84,8 @@ class SystemTest(ABC):
             system_json["system"]["log"]["path"], database.name)
         path_dump = SystemTest.create_dir_with_name(
             system_json["system"]["dump"]["path"], database.name)
-        return cls(path_log, path_dump, Precision(""), 
-                Performance(""), database, 
+        return cls(path_log, path_dump, PrecisionConf(""), 
+                PerformanceConf(""), database, 
                 test_mode, *args, **kwargs)
 
 
@@ -142,7 +150,3 @@ class SystemTest(ABC):
         pass
         #for test_data_type in TestMode:
         #    self.clean_data(test_data_type)
-
-
-    def load_database(self, database_specs):
-        pass
