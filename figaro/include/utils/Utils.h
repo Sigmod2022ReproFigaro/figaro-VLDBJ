@@ -20,8 +20,12 @@ namespace Figaro
     typedef Eigen::ArrayXd ArrayT;
     
     // TODO: move to Utils namespace
-    uint32_t getNumberOfLines(const std::string& filePath);   
+    uint32_t getNumberOfLines(const std::string& filePath);
+    std::ostream& outputMatrixTToCSV(std::ostream& out, 
+        const Figaro::MatrixT& matrix, char sep);   
 }
+
+
 
 std::ostream& operator<<(std::ostream& out, const Figaro::MatrixT& matrix);
 

@@ -2,6 +2,7 @@
 #include "database/query/Query.h"
 
 #include <boost/program_options.hpp>
+#include <fstream>
 
 namespace po = boost::program_options;
 
@@ -10,7 +11,26 @@ const std::string queryConfigPath = "";
 
 int main(int argc, char *argv[]) 
 {
-    boost::program_options::options_description desc("figaro - allowed options");
+    std::string dump_path; 
+    bool dump = false;
+    po::options_description desc("figaro - allowed options");   
+    desc.add_options()
+    ("help", "produce help message")
+    ("dump_path", po::value<std::string>(&dump_path))
+    ;
+
+    //po::positional_options_description p;
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::notify(vm);
+
+    if (vm.count("dump_path"))
+    {
+        dump_path = vm["dump_path"].as<std::string>();
+        dump = true;
+        FIGARO_LOG_INFO(dump_path)
+    }
+
     Figaro::MatrixT R;
     Figaro::Database database(DB_CONFIG_PATH);
     database.loadData();
@@ -38,6 +58,17 @@ int main(int argc, char *argv[])
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     database.computeQRDecompositionHouseholder("S", &R);
+
+    FIGARO_LOG_INFO(R);
+
+    if (dump)
+    {
+        std::string dumpFileName = dump_path + "/R.csv";
+        FIGARO_LOG_INFO("Dumping R to the path", dumpFileName);
+        std::ofstream fileDumpR(dumpFileName, std::ofstream::out);
+        Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',');
+    }
+
 
     FIGARO_LOG_INFO("Figaro program has terminated")
     return 0;

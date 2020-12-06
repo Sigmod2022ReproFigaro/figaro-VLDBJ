@@ -3,6 +3,7 @@ function init_global_paths()
     FIGARO_ROOT_PATH="${1:-/home/popina/Figaro/figaro-code/figaro}"
     FIGARO_LOG_PATH="$FIGARO_ROOT_PATH/log"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
+    FIGARO_DUMP_PATH="$FIGARO_ROOT_PATH/dump"
     FIGARO_TEST_MODE="DEBUG"
 }
 

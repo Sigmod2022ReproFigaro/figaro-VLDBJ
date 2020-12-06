@@ -24,10 +24,9 @@ namespace Figaro
     }
 }
 
-std::ostream& operator<<(std::ostream& out, const Figaro::MatrixT& matrix)
+std::ostream& Figaro::outputMatrixTToCSV(std::ostream& out, 
+    const Figaro::MatrixT& matrix, char sep)
 {
-    out << "Matrix Eigen" << std::endl;
-    out <<  "Matrix dimensions: " << matrix.rows() << " " << matrix.cols() << std::endl;
     for (uint32_t row = 0; row < matrix.rows(); row ++)
     {
         for (uint32_t col = 0; col < matrix.cols(); col++)
@@ -36,10 +35,18 @@ std::ostream& operator<<(std::ostream& out, const Figaro::MatrixT& matrix)
             out << matrix(row, col);
             if (col != (matrix.cols() - 1))
             {
-                out << ' ';
+                out << sep;
             }
         }
         out << std::endl;
     }
     return out;
+}
+
+
+std::ostream& operator<<(std::ostream& out, const Figaro::MatrixT& matrix)
+{
+    out << "Matrix Eigen" << std::endl;
+    out <<  "Matrix dimensions: " << matrix.rows() << " " << matrix.cols() << std::endl;
+    return Figaro::outputMatrixTToCSV(out, matrix, ' ');
 }
