@@ -1,5 +1,5 @@
 
-from evaluation.precision.precision_workbook import PrecisionWorkbook
+from evaluation.accuracy.accuracy_workbook import AccuracyWorkbook
 from decimal import *
 import csv
 
@@ -13,10 +13,10 @@ def read_csv_as_list(path: str):
     return rows
 
 
-def compare_precision_r(figaro_path: str, competitor_path: str, precision_path: str, precision, operation: str):
+def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: str, precision, operation: str):
     abs_err = Decimal(0)
     abs_err_comp = Decimal(0)
-    comp_wb = PrecisionWorkbook(output_file=precision_path+"/out.xlsx", 
+    comp_wb = AccuracyWorkbook(output_file=accuracy_path+"/R_comp.xlsx", 
                 precision=precision, operation=operation)
                 
     figaro_rows = read_csv_as_list(figaro_path)
@@ -45,6 +45,6 @@ if __name__ == "__main__":
     figaro_path = "/home/popina/Figaro/figaro-code/dumps/figaro/DB3/R.csv"
     python_path = "/home/popina/Figaro/figaro-code/dumps/python/numpy/DB3/r.csv"
     prec_comp_path = "/home/popina/Figaro/figaro-code/comparisons/precision/python/numpy/DB3"
-    compare_precision_r(figaro_path=figaro_path, competitor_path=python_path,
-                        precision_path=prec_comp_path, 
+    compare_accuracy_r(figaro_path=figaro_path, competitor_path=python_path,
+                        accuracy_path=prec_comp_path, 
                         precision=1e-5, operation='qr')

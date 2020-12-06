@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
 
-class PrecisionWorkbook:
+class AccuracyWorkbook:
 
     def __init__(self, output_file, precision, operation):
         self.work_book = Workbook()

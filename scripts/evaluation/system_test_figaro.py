@@ -7,15 +7,15 @@ import logging
 from data_management.database import Database
 from evaluation.system_test import SystemTest
 from evaluation.system_test import SystemTest
-from evaluation.system_test import PrecisionConf
+from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 
 class SystemTestFigaro(SystemTest):
     def __init__(self, path_log: str, path_dump: str, 
-            perf_conf: PerformanceConf, prec_conf: PrecisionConf, database: Database,
-            test_type = SystemTest.TestMode.PERFORMANCE, *args, **kwargs):
+            perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
+            test_mode = SystemTest.TestMode.PERFORMANCE, *args, **kwargs):
         super().__init__("FIGARO", path_log, path_dump, perf_conf, 
-            prec_conf, database, test_type)
+            accur_conf, database, test_mode)
 
 
     def run_debug(self):
@@ -37,7 +37,7 @@ class SystemTestFigaro(SystemTest):
         logging.error(result.stderr)
 
 
-    def run_precision(self):
+    def run_accuracy(self):
         pass
 
     
@@ -47,3 +47,11 @@ class SystemTestFigaro(SystemTest):
 
     def is_paper_algorithm(self):
         return True
+        
+
+    def is_dbms(self):
+        return False
+
+    
+    def requires_dbms_result(self):
+        pass

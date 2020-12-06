@@ -15,7 +15,7 @@ class SystemTestsEvaluator:
 
     map_mode_to_enum = {
         'dump': SystemTest.TestMode.DUMP,
-        'precision': SystemTest.TestMode.PRECISION,
+        'accuracy': SystemTest.TestMode.ACCURACY,
         'performance': SystemTest.TestMode.PERFORMANCE,
         'debug': SystemTest.TestMode.DEBUG}
 

@@ -27,24 +27,26 @@ class PerformanceConf:
 
 
 # Class that wraps precisions elements 
-class PrecisionConf:
-    def __init__(self, path: str):
+class AccuracyConf:
+    def __init__(self, path: str, precision: float):
         self.path = path
+        self.precision = precision
 
 
 class SystemTest(ABC):
     # Log test is only for debugging 
     # Dump is used for performance where data is later compared
     # PerformanceConf evaluates speed of the algorithm 
-    # PrecisionConf compares data from dumps 
+    # AccuracyConf compares data from dumps 
     class TestMode(IntEnum): 
         DEBUG = 1
         DUMP = 2
         PERFORMANCE = 3
-        PRECISION = 4
+        ACCURACY = 4
 
     map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP", 
-                    TestMode.PERFORMANCE: "PERFORMANCE", TestMode.PRECISION: "PRECISION"}
+                    TestMode.PERFORMANCE: "PERFORMANCE", 
+                    TestMode.ACCURACY: "ACCURACY"}
 
     @staticmethod
     def test_mode_to_str(test_mode: TestMode)->str: 
@@ -52,11 +54,11 @@ class SystemTest(ABC):
 
 
     def __init__(self, name, path_log: str, path_dump: str, 
-    perf_conf: PerformanceConf, prec_conf: PrecisionConf, database: Database,
+    perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
     test_mode = TestMode.PERFORMANCE):
         self.name = name
-        self.prec = prec_conf
-        self.perf = perf_conf
+        self.conf_accur = accur_conf
+        self.conf_perf = perf_conf
         self.path_log = path_log
         self.path_dump = path_dump
         self.database = database
@@ -97,8 +99,14 @@ class SystemTest(ABC):
             system_json["system"]["log"]["path"], database.name)
         path_dump = SystemTest.create_dir_with_name(
             system_json["system"]["dump"]["path"], database.name)
-        return cls(path_log, path_dump, PrecisionConf(""), 
-                PerformanceConf(""), database, 
+        accuracy_json = system_json["system"]["accuracy"]
+        path_accuracy = SystemTest.create_dir_with_name(
+            accuracy_json["path"], database.name)
+        precision = accuracy_json["precision"]
+        return cls(path_log, path_dump, 
+                PerformanceConf(""), 
+                AccuracyConf(path_accuracy, precision), 
+                database, 
                 test_mode, *args, **kwargs)
 
 
@@ -110,9 +118,9 @@ class SystemTest(ABC):
         elif self.test_mode == SystemTest.TestMode.DUMP:
             logging.info("Run dump")
             self.run_dump()
-        elif self.test_mode == SystemTest.TestMode.PRECISION:
+        elif self.test_mode == SystemTest.TestMode.ACCURACY:
             logging.info("Run precision")
-            self.run_precision()
+            self.run_accuracy()
         elif self.test_mode == SystemTest.TestMode.PERFORMANCE:
             logging.info("Run performance")
             self.run_performance()
@@ -120,6 +128,7 @@ class SystemTest(ABC):
             logging.error('This type of system test does not exist')
         logging.info("End of test {}".format(self.name))
     
+
     @abstractmethod
     def run_debug(self):
         pass
@@ -131,7 +140,7 @@ class SystemTest(ABC):
 
 
     @abstractmethod
-    def run_precision(self):
+    def run_accuracy(self):
         pass
 
     
@@ -140,14 +149,17 @@ class SystemTest(ABC):
         pass
 
     
+    @abstractmethod
     def is_dbms(self):
-        return False
+        pass
 
     
+    @abstractmethod
     def requires_dbms_result(self):
-        return False
+        pass
 
 
+    #@abstractmethod
     def is_paper_algorithm(self):
         return False
 
@@ -155,9 +167,11 @@ class SystemTest(ABC):
     def set_paper_system_test(self, system_test_paper):
         self.system_test_paper = system_test_paper
     
+
     # Deletes all the auxilary data from the correpsonding path
     def clean_data(self, test_data_type: TestMode):
         pass
+
 
     def clean_all_data(self):
         pass

@@ -6,14 +6,15 @@ import logging
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from evaluation.system_test import SystemTest
-from evaluation.system_test import PrecisionConf
+from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
+from evaluation.system_test_competitor import SystemTestCompetitor
 
-class SystemTestPython(SystemTest):
+class SystemTestPython(SystemTestCompetitor):
     def __init__(self, path_log: str, path_dump: str, 
-    perf_conf: PerformanceConf, prec_conf: PrecisionConf, database: Database,
-    test_type = SystemTest.TestMode.PERFORMANCE, **kwargs):
-        super().__init__("PYTHON", path_log, path_dump, perf_conf, prec_conf, database, test_type)
+    perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
+    test_mode = SystemTest.TestMode.PERFORMANCE, **kwargs):
+        super().__init__("PYTHON", path_log, path_dump, perf_conf, accur_conf, database, test_mode)
 
 
     def set_join_result_path(self, join_path):
@@ -28,7 +29,7 @@ class SystemTestPython(SystemTest):
         args = ["python3", 
             "/home/popina/Figaro/figaro-code/competitors/python/qr.py", 
             "--data_path", self.join_path,
-            "--dump_file", os.path.join(self.path_dump, "r.csv")]
+            "--dump_file", os.path.join(self.path_dump, "R.csv")]
         result = subprocess.run(args=args,  capture_output=True, text=True)
         
         path_log_file = os.path.join(self.path_log, "log.txt")
@@ -38,10 +39,6 @@ class SystemTestPython(SystemTest):
         logging.error(result.stderr)
 
 
-    def run_precision(self):
-        # TODO: call precision for the corresponding test. 
-        pass
-    
     def run_performance(self):
         pass
 
