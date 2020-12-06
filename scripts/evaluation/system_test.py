@@ -15,6 +15,7 @@ import os
 import json
 import argparse
 import typing
+from  collections import deque
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from data_management.database_psql import JOIN_TABLE_NAME
@@ -63,11 +64,23 @@ class SystemTest(ABC):
         self.system_test_paper = None
 
 
+    @staticmethod 
+    def create_abs_path(path: str): 
+        non_existing_paths = deque()
+        cur_path = path 
+        
+        while not os.path.exists(cur_path):
+            non_existing_paths.appendleft(cur_path)
+            cur_path, _ = os.path.split(cur_path)
+
+        for non_existing_path in non_existing_paths:
+            os.makedirs(non_existing_path)
+
+
     @staticmethod
-    def create_dir_with_name(path, dir_name):
+    def create_dir_with_name(path: str, dir_name: str)-> str:
         dir_abs_path = os.path.join(path, dir_name)
-        if not os.path.exists(dir_abs_path):
-            os.makedirs(dir_abs_path)
+        SystemTest.create_abs_path(dir_abs_path)
 
         return dir_abs_path
 
