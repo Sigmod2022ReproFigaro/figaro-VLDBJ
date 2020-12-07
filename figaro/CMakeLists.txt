@@ -13,7 +13,11 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 #set(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_RELEASE} -DBENCH")
 # Set to Debug, Benchmark or Release.
-set(CMAKE_BUILD_TYPE Debug)
+if (FIGARO_DEBUG)
+  set(CMAKE_BUILD_TYPE Debug)
+else()
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 # TODO: Clean this. 
 set(FIGARO_ROOT .)
@@ -41,6 +45,10 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS system thread iostreams program_options)
 include_directories(${Boost_INCLUDE_DIRS})
+
+if (FIGARO_DEBUG)
+  add_compile_definitions(FIGARO_LOG_LEVEL=0)
+endif()
 
 # Add libraries.
 if (FIGARO_RUN)

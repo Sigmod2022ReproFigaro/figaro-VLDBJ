@@ -13,10 +13,13 @@ int main(int argc, char *argv[])
 {
     std::string dump_path; 
     bool dump = false;
+    uint32_t precision;
+
     po::options_description desc("figaro - allowed options");   
     desc.add_options()
     ("help", "produce help message")
     ("dump_path", po::value<std::string>(&dump_path))
+    ("precision", po::value<uint32_t>(&precision))
     ;
 
     //po::positional_options_description p;
@@ -54,19 +57,21 @@ int main(int argc, char *argv[])
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
+    database.swapAttributes("S", {"A1", "A2"} );
+
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     database.computeQRDecompositionHouseholder("S", &R);
 
     FIGARO_LOG_INFO(R);
-
+    FIGARO_LOG_DBG("PRECISION", precision)
     if (dump)
     {
         std::string dumpFileName = dump_path + "/R.csv";
         FIGARO_LOG_INFO("Dumping R to the path", dumpFileName);
         std::ofstream fileDumpR(dumpFileName, std::ofstream::out);
-        Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',');
+        Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
     }
 
 

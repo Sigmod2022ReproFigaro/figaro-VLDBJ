@@ -62,6 +62,13 @@ namespace Figaro
                 strType = jsonAttributeInfo["type"];
                 m_type = mapStrTypeToType.at(strType);
             }
+
+            friend void swap(Attribute& attr1, Attribute& attr2)
+            {
+                std::swap(attr1.m_name, attr2.m_name);
+                std::swap(attr1.m_type, attr2.m_type);
+                std::swap(attr1.m_isPrimaryKey, attr2.m_isPrimaryKey);
+            }
         };
     private:
         std::string m_name;
@@ -231,6 +238,8 @@ namespace Figaro
         void computeTail(const std::string& attrName);
 
         void applyEigenQR(MatrixT* pR = nullptr);
+
+        void swapAttributes(const std::array<std::string, 2>& atributesSwap);
         
         friend std::ostream& operator<<(
             std::ostream& out, 

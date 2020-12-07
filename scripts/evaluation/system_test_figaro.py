@@ -28,6 +28,7 @@ class SystemTestFigaro(SystemTest):
         args = ["/bin/bash", "setup.sh", 
                 "--log_path={}".format(self.path_log),
                 "--dump_path={}".format(self.path_dump),
+                "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
         result = subprocess.run(
@@ -54,4 +55,4 @@ class SystemTestFigaro(SystemTest):
 
     
     def requires_dbms_result(self):
-        pass
+        return False

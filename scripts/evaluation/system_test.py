@@ -93,7 +93,8 @@ class SystemTest(ABC):
         database = None
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
-            
+        
+        #TODO: Refactor to remove unnecesary clutter. 
         database = Database(database_specs_path)
         path_log = SystemTest.create_dir_with_name(
             system_json["system"]["log"]["path"], database.name)
@@ -106,8 +107,8 @@ class SystemTest(ABC):
         return cls(path_log, path_dump, 
                 PerformanceConf(""), 
                 AccuracyConf(path_accuracy, precision), 
-                database, 
-                test_mode, *args, **kwargs)
+                database, test_mode, 
+                *args, **kwargs)
 
 
     def run(self):
@@ -121,6 +122,7 @@ class SystemTest(ABC):
         elif self.test_mode == SystemTest.TestMode.ACCURACY:
             logging.info("Run precision")
             self.run_accuracy()
+            logging.info("End precision")
         elif self.test_mode == SystemTest.TestMode.PERFORMANCE:
             logging.info("Run performance")
             self.run_performance()

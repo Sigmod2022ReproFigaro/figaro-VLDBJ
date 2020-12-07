@@ -22,7 +22,8 @@ namespace Figaro
     // TODO: move to Utils namespace
     uint32_t getNumberOfLines(const std::string& filePath);
     std::ostream& outputMatrixTToCSV(std::ostream& out, 
-        const Figaro::MatrixT& matrix, char sep);   
+        const Figaro::MatrixT& matrix, 
+        char sep = ' ', uint32_t precision = 6);   
 }
 
 

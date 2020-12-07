@@ -29,7 +29,8 @@ class SystemTestPython(SystemTestCompetitor):
         args = ["python3", 
             "/home/popina/Figaro/figaro-code/competitors/python/qr.py", 
             "--data_path", self.join_path,
-            "--dump_file", os.path.join(self.path_dump, "R.csv")]
+            "--dump_file", os.path.join(self.path_dump, "R.csv"),
+            "--precision", str(self.conf_accur.precision)]
         result = subprocess.run(args=args,  capture_output=True, text=True)
         
         path_log_file = os.path.join(self.path_log, "log.txt")

@@ -152,7 +152,7 @@ do                                        \
 
 #if FIGARO_LOG_LEVEL <= FIGARO_LOG_LEVEL_ERROR
 #undef FIGARO_LOG_ERROR
-#define FIGARO_LOG_ERROR(...) FIGARO_LOG_INTERNAL(ERRROR, __VA_ARGS__)
+#define FIGARO_LOG_ERROR(...) FIGARO_LOG_INTERNAL(ERROR, __VA_ARGS__)
 #endif
 
 #endif

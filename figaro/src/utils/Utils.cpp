@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 namespace Figaro
 {
@@ -25,14 +26,14 @@ namespace Figaro
 }
 
 std::ostream& Figaro::outputMatrixTToCSV(std::ostream& out, 
-    const Figaro::MatrixT& matrix, char sep)
+    const Figaro::MatrixT& matrix, char sep, uint32_t precision)
 {
     for (uint32_t row = 0; row < matrix.rows(); row ++)
     {
         for (uint32_t col = 0; col < matrix.cols(); col++)
         {
 
-            out << matrix(row, col);
+            out << std::setprecision(precision) << std::fixed << matrix(row, col);
             if (col != (matrix.cols() - 1))
             {
                 out << sep;
@@ -48,5 +49,5 @@ std::ostream& operator<<(std::ostream& out, const Figaro::MatrixT& matrix)
 {
     out << "Matrix Eigen" << std::endl;
     out <<  "Matrix dimensions: " << matrix.rows() << " " << matrix.cols() << std::endl;
-    return Figaro::outputMatrixTToCSV(out, matrix, ' ');
+    return Figaro::outputMatrixTToCSV(out, matrix);
 }

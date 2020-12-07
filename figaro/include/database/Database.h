@@ -52,6 +52,9 @@ namespace Figaro
                         const std::string& attrIterName);
 
         void computeQRDecompositionHouseholder(const std::string& relationName, MatrixT* pR = nullptr);
+
+        void swapAttributes(const std::string& relationName, 
+            const std::array<std::string, 2>& atributesSwap);
     };
 }
 #endif 

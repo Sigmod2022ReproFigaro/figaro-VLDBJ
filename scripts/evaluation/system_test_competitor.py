@@ -12,8 +12,10 @@ class SystemTestCompetitor(SystemTest):
     def is_paper_algorithm(self):
         return False
 
+
     def is_dbms(self):
         return False
+
 
     def run_accuracy(self):
         system_test_paper_path = os.path.join(
@@ -23,9 +25,5 @@ class SystemTestCompetitor(SystemTest):
         compare_accuracy_r(figaro_path=system_test_paper_path, 
             competitor_path=competitor_path, 
             accuracy_path=self.conf_accur.path, 
-            precision=self.conf_accur.precision,
+            precision=10**self.conf_accur.precision,
             operation='qr')
-
-
-    def requires_dbms_result(self):
-        return True

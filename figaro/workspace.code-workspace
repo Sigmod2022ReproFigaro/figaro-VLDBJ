@@ -62,7 +62,17 @@
 			"streambuf": "cpp",
 			"cinttypes": "cpp",
 			"typeinfo": "cpp",
-			"valarray": "cpp"
+			"valarray": "cpp",
+			"strstream": "cpp",
+			"bitset": "cpp",
+			"chrono": "cpp",
+			"list": "cpp",
+			"ratio": "cpp",
+			"stop_token": "cpp",
+			"thread": "cpp",
+			"cfenv": "cpp",
+			"typeindex": "cpp",
+			"variant": "cpp"
 		}
 	}
 }

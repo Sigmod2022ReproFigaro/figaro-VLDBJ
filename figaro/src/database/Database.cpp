@@ -129,6 +129,11 @@ namespace Figaro
     {
         m_relations.at(relationName).applyEigenQR(pR);
     }
+
+    void Database::swapAttributes(const std::string& relationName, const std::array<std::string, 2>& atributesSwap)
+    {
+        m_relations.at(relationName).swapAttributes(atributesSwap);
+    }
         
 
 
