@@ -18,14 +18,22 @@ class RelationGeneratedSpecs:
 class RelationGenerator:
     def __init__(self, relation: Relation):
         self.name = relation.name
-        self.setPks = relation.get_set_pk_attribute_names()
+        self.setPks = set(relation.get_pk_attribute_names())
         self.attribute_names = relation.get_attribute_names() 
+        self.data_path = relation.data_path
+
+
+    def dump_to_csv(self, generated_relation, output_path: str = None):
+        if output_path is None:
+            output_path = self.data_path
+        generated_relation.to_csv(output_path, index=False, header=False)
+
 
     # attribute_domains [{"name": "A", "start": 1, "end": 10}]
     # PKs are unique
     # We assume the same order as defined by schema
     #def generate(self, attribute_domains, num_tuples: int, pandas_format=True):
-    def generate(self, rel_specs: RelationGeneratedSpecs, pandas_format=True):
+    def generate(self, rel_specs: RelationGeneratedSpecs, pandas_format=True, output_path: str =None):
         all_tuples_in_domain = None
         generated_relation = []
         first_non_PK_idx = None
@@ -50,7 +58,10 @@ class RelationGenerator:
             generated_tuples = pd.DataFrame(generated_tuples, 
                                         columns=self.attribute_names)
         
-        return self.name, generated_tuples
+        print("Relation generated on:", output_path)
+        
+        self.dump_to_csv(generated_tuples, output_path)
+        
 
 
 if __name__ == "__main__":

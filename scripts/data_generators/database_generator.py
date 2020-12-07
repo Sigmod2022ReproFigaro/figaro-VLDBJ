@@ -31,19 +31,17 @@ class DatabaseGenerator:
     def generate(self, output_path):
         for rel_idx, relation_generator in enumerate(self.relation_generators):
             relation_gen_spec = self.relation_gen_specs[rel_idx]
-            name, generated_relation = relation_generator.generate(relation_gen_spec)
-
-            output_file_path = os.path.join(output_path, name)
+            output_file_path = os.path.join(output_path, relation_generator.name)
             output_file_path += ".csv"
-            print(output_file_path)
-            generated_relation.to_csv(output_file_path, index=False, header=False)
+            relation_generator.generate(relation_gen_spec, pandas_format=True,
+             output_path=output_file_path)
 
 
 if __name__ == "__main__":
-    db_specs_path = "/home/popina/Figaro/figaro-code/system_tests/test1/database_specs.conf"
+    db_specs_path = "/home/popina/Figaro/figaro-code/system_tests/test3/database_specs.conf"
     database = Database(db_specs_path)
     database_generator = DatabaseGenerator(db_specs_path, database)
-    database_generator.generate("/home/popina/Figaro/figaro-code/scripts/data_generators/databases_generated")
+    database_generator.generate("/home/popina/Figaro/figaro-code/scripts/data_generators/databases_generated/test3")
 
 
 
