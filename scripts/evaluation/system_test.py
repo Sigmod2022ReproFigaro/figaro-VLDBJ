@@ -15,6 +15,7 @@ import os
 import json
 import argparse
 import typing
+import shutil
 from  collections import deque
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
@@ -64,25 +65,15 @@ class SystemTest(ABC):
         self.database = database
         self.test_mode = test_mode
         self.system_test_paper = None
-
-
-    @staticmethod 
-    def create_abs_path(path: str): 
-        non_existing_paths = deque()
-        cur_path = path 
-        
-        while not os.path.exists(cur_path):
-            non_existing_paths.appendleft(cur_path)
-            cur_path, _ = os.path.split(cur_path)
-
-        for non_existing_path in non_existing_paths:
-            os.makedirs(non_existing_path)
+        self.clean_data(test_mode)
 
 
     @staticmethod
     def create_dir_with_name(path: str, dir_name: str)-> str:
         dir_abs_path = os.path.join(path, dir_name)
-        SystemTest.create_abs_path(dir_abs_path)
+        
+        if not os.path.exists(dir_abs_path):
+            os.makedirs(dir_abs_path)
 
         return dir_abs_path
 
@@ -104,12 +95,13 @@ class SystemTest(ABC):
         path_accuracy = SystemTest.create_dir_with_name(
             accuracy_json["path"], database.name)
         precision = accuracy_json["precision"]
-        return cls(path_log, path_dump, 
+        system_test = cls(path_log, path_dump, 
                 PerformanceConf(""), 
                 AccuracyConf(path_accuracy, precision), 
                 database, test_mode, 
                 *args, **kwargs)
 
+        return system_test
 
     def run(self):
         logging.info("Starting of test {}".format(self.name))
@@ -168,14 +160,29 @@ class SystemTest(ABC):
 
     def set_paper_system_test(self, system_test_paper):
         self.system_test_paper = system_test_paper
-    
 
+
+    def delete_content_of_dir(self, dir):
+        for file_name in os.listdir(dir):
+            file_path = os.path.join(dir, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+
+    
     # Deletes all the auxilary data from the correpsonding path
-    def clean_data(self, test_data_type: TestMode):
-        pass
+    def clean_data(self, test_mode: TestMode):
+        if test_mode == SystemTest.TestMode.ACCURACY:
+            self.delete_content_of_dir(self.conf_accur.path)
+        elif test_mode == SystemTest.TestMode.DUMP:
+            self.delete_content_of_dir(self.path_dump)
+        elif test_mode == SystemTest.TestMode.PERFORMANCE:
+            self.delete_content_of_dir(self.conf_perf)
+
+        self.delete_content_of_dir(self.path_log)
 
 
     def clean_all_data(self):
-        pass
-        #for test_data_type in TestMode:
-        #    self.clean_data(test_data_type)
+        for test_mode in SystemTest.TestMode:
+            self.clean_data(test_mode)

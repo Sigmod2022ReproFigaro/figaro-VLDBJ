@@ -22,14 +22,15 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--data_path", dest="data_path", required=True)
     parser.add_argument("-D", "--dump_file", dest="dump_file", required=False)
     parser.add_argument("-p", "--precision", dest="precision", required=False)
-    
-    precision = 15 if args.precision is None else args.precision
-    np.set_printoptions(threshold=sys.maxsize, precision=precision)
-    pd.set_option('display.max_columns', 500)
+    print (sys.argv[1:])
 
     args = parser.parse_args()
     data_path = args.data_path
     dump_file = args.dump_file
+    
+    precision = 15 if args.precision is None else int(args.precision)
+    np.set_printoptions(threshold=sys.maxsize, precision=precision)
+    pd.set_option('display.max_columns', 500)
 
     data = pd.read_csv(data_path, delimiter=",", header=None)
     r = np.linalg.qr(data, mode='r')
