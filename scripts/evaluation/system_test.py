@@ -80,13 +80,11 @@ class SystemTest(ABC):
 
     @classmethod
     def from_specs_path(cls, system_test_specs_path: str,
-        database_specs_path: str, test_mode: TestMode, *args, **kwargs):
-        database = None
+        database: Database, test_mode: TestMode, *args, **kwargs):
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
         
         #TODO: Refactor to remove unnecesary clutter. 
-        database = Database(database_specs_path)
         path_log = SystemTest.create_dir_with_name(
             system_json["system"]["log"]["path"], database.name)
         path_dump = SystemTest.create_dir_with_name(
@@ -182,7 +180,7 @@ class SystemTest(ABC):
 
         self.delete_content_of_dir(self.path_log)
 
-
+ 
     def clean_all_data(self):
         for test_mode in SystemTest.TestMode:
             self.clean_data(test_mode)

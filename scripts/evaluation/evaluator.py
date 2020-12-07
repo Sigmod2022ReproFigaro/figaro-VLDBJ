@@ -46,16 +46,16 @@ class SystemTestsEvaluator:
         for data_set_json in  data_sets_json:
             if "database_conf_path" in data_set_json:
                 database_conf_path = data_set_json["database_conf_path"]
+                database = Database(database_conf_path)
             else:
                 logging.error("TODO")
             
-            test += self.load_system_tests(system_tests_json, 
-                database_conf_path)
+            test += self.load_system_tests(system_tests_json, database)
         
         return test
 
 
-    def load_system_tests(self, system_tests_json, database_conf_path):
+    def load_system_tests(self, system_tests_json, database: Database):
         join_result_path = None
         system_test_paper = None
         batch_of_tests = []
@@ -64,8 +64,7 @@ class SystemTestsEvaluator:
                 system_test_disable = system_test_json.get("disable", False)
                 if system_test_disable:
                     continue
-                system_test = self.create_system_test(system_test_json, 
-                                    database_conf_path)
+                system_test = self.create_system_test(system_test_json, database)
                 if system_test.is_dbms():
                     join_result_path = system_test.get_join_result_path()
                 if system_test.is_paper_algorithm():
@@ -85,15 +84,14 @@ class SystemTestsEvaluator:
         return batch_of_tests
 
 
-    def create_system_test(self, system_test_json, database_conf_path: str):
+    def create_system_test(self, system_test_json, database: Database):
         system_conf_path = system_test_json["system_conf_path"]
         system_test_cat = system_test_json["category"]
         system_test_mode = system_test_json["mode"]
         class_type = SystemTestsEvaluator.map_category_to_class[system_test_cat]
         test_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
-        system_test = class_type.from_specs_path(system_conf_path,
-                                         database_conf_path, 
-        test_mode=test_mode, password=self.password)
+        system_test = class_type.from_specs_path(system_conf_path, database, 
+                        test_mode=test_mode, password=self.password)
 
         logging.debug("Category is{}".format(system_test_cat))
         logging.debug("Created category {}".format(type(system_test)))
@@ -110,9 +108,8 @@ class SystemTestsEvaluator:
 
 
 
-def eval_tests(password):
-    TEST_CONF_PATH = "/home/popina/Figaro/figaro-code/system_tests/test3/tests_specs.conf"
-    system_tests_evaluator = SystemTestsEvaluator(TEST_CONF_PATH, password)
+def eval_tests(password: str, test_conf_path: str):
+    system_tests_evaluator = SystemTestsEvaluator(test_conf_path, password)
     system_tests_evaluator.eval_tests()
 
 
@@ -136,12 +133,17 @@ def init_logging():
     
 if __name__ == "__main__":
     ROOT_PATH = "/home/popina/Figaro/figaro-code"
+
     init_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",  
                         dest="password", required=True)
+    parser.add_argument("-t", "--test", action="store", 
+                        dest="test", required=False)
     args = parser.parse_args()
-    #figaro_test()
-    #normal_test(args.password)
-    eval_tests(args.password)
+
+    test_conf_path = "/home/popina/Figaro/figaro-code/system_tests/test{}/tests_specs.conf"
+    test_num = 3 if args.test is None else args.test
+    test_conf_path = test_conf_path.format(test)
+    eval_tests(args.password, TEST_CONF_PATH)
 
