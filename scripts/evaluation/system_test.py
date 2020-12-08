@@ -65,7 +65,6 @@ class SystemTest(ABC):
         self.database = database
         self.test_mode = test_mode
         self.system_test_paper = None
-        self.clean_data(test_mode)
 
 
     @staticmethod
@@ -102,6 +101,9 @@ class SystemTest(ABC):
         return system_test
 
     def run(self):
+        logging.info("Cleaning old data")
+        #self.clean_data(self.test_mode)
+        logging.info("Old data cleaned")
         logging.info("Starting of test {}".format(self.name))
         if self.test_mode == SystemTest.TestMode.DEBUG:
             logging.info("Run debug")

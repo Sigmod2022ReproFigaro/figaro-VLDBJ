@@ -29,6 +29,7 @@ if __name__ == "__main__":
     dump_file = args.dump_file
     
     precision = 15 if args.precision is None else int(args.precision)
+    print(precision)
     np.set_printoptions(threshold=sys.maxsize, precision=precision)
     pd.set_option('display.max_columns', 500)
 

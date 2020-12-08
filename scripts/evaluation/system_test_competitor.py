@@ -25,5 +25,5 @@ class SystemTestCompetitor(SystemTest):
         compare_accuracy_r(figaro_path=system_test_paper_path, 
             competitor_path=competitor_path, 
             accuracy_path=self.conf_accur.path, 
-            precision=10**self.conf_accur.precision,
+            precision=self.conf_accur.precision,
             operation='qr')

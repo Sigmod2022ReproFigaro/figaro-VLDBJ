@@ -89,7 +89,6 @@ if __name__ == "__main__":
     
     database = Database(db_conf_path)
     database_generator = DatabaseGenerator(db_conf_path, database)
-    output_path = "/home/popina/Figaro/figaro-code/data/db_generated/1"
     database_generator.generate()
 
 

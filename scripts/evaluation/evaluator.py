@@ -60,10 +60,9 @@ class SystemTestsEvaluator:
         system_test_paper = None
         batch_of_tests = []
         for system_test_json in system_tests_json:
+            system_test_enabled = True
             if "system_conf_path" in system_test_json:
-                system_test_disable = system_test_json.get("disable", False)
-                if system_test_disable:
-                    continue
+                system_test_enabled = not system_test_json.get("disable", False)
                 system_test = self.create_system_test(system_test_json, database)
                 if system_test.is_dbms():
                     join_result_path = system_test.get_join_result_path()
@@ -72,7 +71,8 @@ class SystemTestsEvaluator:
             else: 
                 logging.error("TODO")
             
-            batch_of_tests.append(system_test)
+            if system_test_enabled:
+                batch_of_tests.append(system_test)
             
         for system_test in batch_of_tests:
             if system_test.requires_dbms_result():

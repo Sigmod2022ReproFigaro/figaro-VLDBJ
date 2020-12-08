@@ -9,4 +9,5 @@ venv.bak/
 /logs/
 /dumps
 /comparisons
+/data/db_generated
 log.txt

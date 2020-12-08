@@ -1,7 +1,8 @@
 
 from evaluation.accuracy.accuracy_workbook import AccuracyWorkbook
-from decimal import *
+from decimal import Decimal
 import csv
+import os
 
 
 def read_csv_as_list(path: str):
@@ -29,17 +30,16 @@ def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: st
             print("figaro_val ", figaro_val, " comp_val", comp_val)
             diff = figaro_val - comp_val
             abs_err += diff * diff
-            #print(abs_err)
             abs_err_comp += comp_val * comp_val
-            #print(abs_err_comp)
             comp_wb.save_entry(row_idx + 1, col_idx + 1, figaro_val, comp_val)
     comp_wb.save()
-    '''
-    with open(output_file +".txt", 'w') as file_prec:
-        file_prec.write("Absolute error is: {}\n".format(abs_err.sqrt()))
-        file_prec.write("Frobenius norm of comp is: {}\n".format(abs_err_comp.sqrt()))
-        file_prec.write("Relative error is: {}\n".format((abs_err).sqrt() / abs_err_comp.sqrt()))
-    '''
+    
+    errors_path = os.path.join(accuracy_path, "error.txt")
+    with open(errors_path, 'w') as file_errors:
+        file_errors.write("Absolute error is: {}\n".format(abs_err.sqrt()))
+        file_errors.write("Frobenius norm of comp is: {}\n".format(abs_err_comp.sqrt()))
+        file_errors.write("Relative error is: {}\n".format((abs_err).sqrt() / abs_err_comp.sqrt()))
+
 
 if __name__ == "__main__":
     figaro_path = "/home/popina/Figaro/figaro-code/dumps/figaro/DB3/R.csv"

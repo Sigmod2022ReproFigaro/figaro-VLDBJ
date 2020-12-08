@@ -3,7 +3,8 @@ from decimal import Decimal
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
-
+import logging
+import math 
 
 class AccuracyWorkbook:
 
@@ -15,14 +16,20 @@ class AccuracyWorkbook:
         self.comp_ws = self.work_book.create_sheet(operation.upper())
         self.prec_rel_figaro_ws = self.work_book.create_sheet("Figaro_rel")
         self.prec_rel_op_ws = self.work_book.create_sheet(operation.upper()+"_rel")
-        self.precision = precision
+        self.precision = math.pow(10, -precision)
         self.output_file = output_file
         self.operation = operation.upper()
+        logging.info("Precision is {}".format(self.precision))
 
     def save_entry(self, row, col, figaro_val, compet_val):
         diff = abs(figaro_val - compet_val)
         diff_rel_figaro = 0 if figaro_val == 0 else abs(diff / figaro_val)
         diff_rel_op = 0 if compet_val == 0 else abs(diff / compet_val)
+        logging.info("""Differrence row: {} col: {} 
+                        figaro_val {} compet_val {} 
+                        diff {} diff_rel_figaro {} diff_rel_op {}""".
+                    format(row, col, figaro_val, compet_val, diff, 
+                    diff_rel_figaro, diff_rel_op))
 
         self.figaro_ws.cell(row, col).value = figaro_val
         self.comp_ws.cell(row, col).value = compet_val
