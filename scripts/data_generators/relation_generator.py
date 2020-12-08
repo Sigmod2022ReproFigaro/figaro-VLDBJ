@@ -43,6 +43,7 @@ class RelationGenerator:
     def dump_to_csv(self, generated_relation, output_path: str = None):
         if output_path is None:
             output_path = self.data_path
+        print("Relation generated on:", output_path)
         generated_relation.to_csv(output_path, index=False, header=False)
 
 
@@ -81,7 +82,6 @@ class RelationGenerator:
         generated_tuples = pd.DataFrame(generated_tuples, 
                                     columns=self.attribute_names)
         if dump:
-            print("Relation generated on:", output_path)
             self.dump_to_csv(generated_tuples, output_path)
 
         return generated_tuples

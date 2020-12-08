@@ -144,6 +144,6 @@ if __name__ == "__main__":
 
     test_conf_path = "/home/popina/Figaro/figaro-code/system_tests/test{}/tests_specs.conf"
     test_num = 3 if args.test is None else args.test
-    test_conf_path = test_conf_path.format(test)
-    eval_tests(args.password, TEST_CONF_PATH)
+    test_conf_path = test_conf_path.format(test_num)
+    eval_tests(args.password, test_conf_path)
 

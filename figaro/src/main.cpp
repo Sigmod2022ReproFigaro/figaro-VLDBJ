@@ -6,12 +6,13 @@
 
 namespace po = boost::program_options;
 
-const std::string DB_CONFIG_PATH = "/home/popina/Figaro/figaro-code/system_tests/test3/database_specs.conf";
+//const std::string DB_CONFIG_PATH = "/home/popina/Figaro/figaro-code/system_tests/test3/database_specs.conf";
 const std::string queryConfigPath = "";
 
 int main(int argc, char *argv[]) 
 {
     std::string dump_path; 
+    std::string db_config_path;
     bool dump = false;
     uint32_t precision;
 
@@ -19,6 +20,7 @@ int main(int argc, char *argv[])
     desc.add_options()
     ("help", "produce help message")
     ("dump_path", po::value<std::string>(&dump_path))
+    ("db_config_path", po::value<std::string>(&db_config_path))
     ("precision", po::value<uint32_t>(&precision))
     ;
 
@@ -34,8 +36,10 @@ int main(int argc, char *argv[])
         FIGARO_LOG_INFO(dump_path)
     }
 
+    db_config_path = vm["db_config_path"].as<std::string>();
+    FIGARO_LOG_INFO(db_config_path)
     Figaro::MatrixT R;
-    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::Database database(db_config_path);
     database.loadData();
     database.sortData();
 
@@ -56,14 +60,19 @@ int main(int argc, char *argv[])
     database.sortRelation("U", {"C"});
     database.computeHead("U", "C");
 
-    database.joinRelations({"S", "R"}, {{"A", "A"}} );
-    database.swapAttributes("S", {"A1", "A2"} );
+    FIGARO_LOG_DBG("PASS sort and compute head")
 
+    database.joinRelations({"S", "R"}, {{"A", "A"}} );
+    FIGARO_LOG_DBG("Pass Join relations S R")
+    database.swapAttributes("S", {"A1", "A2"} );
+    FIGARO_LOG_DBG("Pass Join Swap ")
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
+    FIGARO_LOG_DBG("Pass Join relations T U")
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
+    FIGARO_LOG_DBG("Pass Compute Scaled")
     database.computeQRDecompositionHouseholder("S", &R);
-
+    FIGARO_LOG_DBG("Pass Compute Householder ")
     FIGARO_LOG_INFO(R);
     FIGARO_LOG_DBG("PRECISION", precision)
     if (dump)

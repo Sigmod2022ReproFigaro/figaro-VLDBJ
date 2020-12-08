@@ -4,6 +4,7 @@ function init_global_paths()
     FIGARO_LOG_PATH="$FIGARO_ROOT_PATH/log"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
     FIGARO_DUMP_PATH="$FIGARO_ROOT_PATH/dump"
+    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/database_specs.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
 }
@@ -30,6 +31,10 @@ function get_str_args()
         --dump_path=*)
             EXTENSION="${option#*=}"
             FIGARO_DUMP_PATH=$EXTENSION
+        ;;
+        --db_config_path=*)
+            EXTENSION="${option#*=}"
+            FIGARO_DB_CONFIG_PATH=$EXTENSION
         ;;
         --precision=*)
             EXTENSION="${option#*=}"
@@ -66,11 +71,11 @@ function main()
     make -j8
     case "${FIGARO_TEST_MODE}" in
     "DEBUG")
-        ./figaro > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
         ;;
     "DUMP")
-        ./figaro --dump_path "${FIGARO_DUMP_PATH}" --precision "${FIGARO_PRECISION}"  > \ 
-            "${FIGARO_LOG_PATH}/log.txt"  2>&1;
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_path "${FIGARO_DUMP_PATH}" \
+            --precision "${FIGARO_PRECISION}"  >  "${FIGARO_LOG_PATH}/log.txt"  2>&1;
         ;;
     "PERFORMANCE")
         ./figaro > "${FIGARO_LOG_PATH}/log.txt" 2>&1;

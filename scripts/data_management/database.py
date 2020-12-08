@@ -4,6 +4,7 @@ from data_management.relation import Relation
 
 class Database:
     def __init__(self, database_specs_path):
+        self.db_config_path = database_specs_path
         with open(database_specs_path) as json_file:
             self.json_db_schema = json.load(json_file)["database"]
         self.load_db_schema()
