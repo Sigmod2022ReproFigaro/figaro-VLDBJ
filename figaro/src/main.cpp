@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     //query.loadQuery(queryConfigPath);
     //query.evaluateQuery();
 
-
     database.sortRelation("R", {"A"});
     database.computeHead("R", "A");
 

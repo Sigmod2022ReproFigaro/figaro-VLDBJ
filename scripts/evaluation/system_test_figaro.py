@@ -19,7 +19,19 @@ class SystemTestFigaro(SystemTest):
 
 
     def run_debug(self):
-        pass
+        test_mode = SystemTest.test_mode_to_str(self.test_mode)
+        logging.error(test_mode)
+        args = ["/bin/bash", "setup.sh", 
+                "--log_path={}".format(self.path_log),
+                "--db_config_path={}".format(self.database.db_config_path),
+                "--precision={}".format(self.conf_accur.precision),
+                "--test_mode={}".format
+                (SystemTest.test_mode_to_str(self.test_mode))]
+        result = subprocess.run(
+            args=args, cwd="/home/popina/Figaro/figaro-code/figaro", 
+            capture_output=True, text=True, shell=False)
+        logging.info(result.stdout)
+        logging.error(result.stderr)
 
 
     def run_dump(self):

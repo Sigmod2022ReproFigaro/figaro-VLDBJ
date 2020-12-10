@@ -56,7 +56,6 @@ function main()
     init_global_paths
     get_str_args "$@"
 
-    echo "${FIGARO_LOG_PATH}"
     echo "$@"
     cd "${FIGARO_BUILD_PATH}"
     echo "TESTMODE ${FIGARO_TEST_MODE}"

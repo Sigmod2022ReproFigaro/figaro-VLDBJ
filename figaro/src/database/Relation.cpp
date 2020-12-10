@@ -297,6 +297,8 @@ namespace Figaro
             }
         }
     }
+
+    
     void Relation::getDistinctValuesRowPositions(
         const std::string& attributeName,
         std::vector<uint32_t>& vDistinctValuesRowPositions,
@@ -404,53 +406,50 @@ namespace Figaro
         //FIGARO_LOG_DBG("Successful head computation");
     }
 
+    // This code joins 1-N relations, where the cardinality of this is 1 and 
+    // the cardinality of relation is N.
     void Relation::joinRelation(const Relation& relation, 
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames)
     {
         // TODO: Update a number of cols depending on number of nonPK cols in relation.  
         std::unordered_map<double, double> hashTableVals;
-        uint32_t joinAttrIdx1;
-        uint32_t joinAttrIdx2;
+        std::vector<uint32_t> vDistValRowPos1;
+        std::vector<uint32_t> vNonPkAttrIdxs2;
         uint32_t numAttributes1;
         uint32_t numAttributes2;
         uint32_t numNonPkAttrs2;
-        const auto& joinAttributeName = vJoinAttributeNames.at(0);
+        uint32_t rowIdx2;
+        const auto& joinAttributeNameTup = vJoinAttributeNames.at(0);
+        std::string joinAttrName =  std::get<0>(joinAttributeNameTup);
 
-        joinAttrIdx1 = getAttributeIdx(std::get<0>(joinAttributeName));
-        joinAttrIdx2 = relation.getAttributeIdx(std::get<1>(joinAttributeName));
-        
         numAttributes1 = m_attributes.size();
         numAttributes2 = relation.m_attributes.size();
         numNonPkAttrs2 = relation.getNumberOfNonPKAttributes();
-        //FIGARO_LOG_DBG("Attribute Idxs", joinAttrIdx1, joinAttrIdx2);
+        
+        relation.getNonPKAttributeIdxs(vNonPkAttrIdxs2);
+        getDistinctValuesRowPositions(joinAttrName, vDistValRowPos1, false);
 
         schemaJoin(relation);
         m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_data.cols() + numNonPkAttrs2);
-
-        // TODO: Update indices. 
-        for (uint32_t colIdx = 0; colIdx < numNonPkAttrs2; colIdx++)
+   
+        uint32_t pkOffset2 = numAttributes2 - vNonPkAttrIdxs2.size();
+        for (uint32_t distValCnt = 0; distValCnt < vDistValRowPos1.size() - 1; distValCnt++)
         {
-            for (uint32_t rowIdx = 0; rowIdx < relation.m_data.rows(); rowIdx ++)
+            uint32_t headRowIdx = vDistValRowPos1[distValCnt] + 1;
+            for (uint32_t rowIdx = headRowIdx; rowIdx <= vDistValRowPos1[distValCnt + 1];
+                    rowIdx ++)
             {
-                // TODO: Remove hardcoding. 
-                //FIGARO_LOG_DBG("Second relation data", relation.m_data(rowIdx, joinAttrIdx1), relation.m_data(rowIdx, numAttributes2-1));
-                hashTableVals[relation.m_data(rowIdx, joinAttrIdx2)] = relation.m_data(rowIdx, numAttributes2-1);
-                // add all tuples
-            }
-            
-            for (uint32_t rowIdx = 0; rowIdx < m_data.rows(); rowIdx++)
-            {
-                // TODO: Clean this.
                 m_dataVectorOfVectors[rowIdx].resize(m_data.cols());
-                double joinAttrVal = m_data(rowIdx, joinAttrIdx1);
-                double nonjoinAttrVal = hashTableVals[joinAttrVal]; 
-                //m_data(rowIdx, m_data.cols() - 1) = nonjoinAttrVal;
-                m_dataVectorOfVectors[rowIdx][m_data.cols()-1] = nonjoinAttrVal;
+                for (const uint32_t nonPKAttrIdx: vNonPkAttrIdxs2)
+                {
+                    m_dataVectorOfVectors[rowIdx][numAttributes1 + nonPKAttrIdx - pkOffset2] =
+                     relation.m_dataVectorOfVectors[distValCnt][nonPKAttrIdx];
+                }
             }
-            //FIGARO_LOG_DBG("Relation join", m_name, relation.m_name);
-            //FIGARO_LOG_DBG("m_data", m_data);
         }
+        
         copyVectorOfVectorsToEigenData();
+        FIGARO_LOG_DBG("Rel1 After", *this)
     }
 
     // TODO: Pass vectors. Now we assume the vector is all ones. 
@@ -464,7 +463,7 @@ namespace Figaro
         std::vector<uint32_t> vDistinctValuesRowPositions; 
         std::unordered_map<double, uint32_t> htCnts;
         std::vector<uint32_t> vnonPKAttrIdxs;
-        double pkOffset;
+        uint32_t pkOffset;
 
         sortData({attributeName});
         //FIGARO_LOG_DBG("VV", m_dataVectorOfVectors);
