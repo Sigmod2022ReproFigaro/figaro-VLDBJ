@@ -411,7 +411,6 @@ namespace Figaro
     void Relation::joinRelation(const Relation& relation, 
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames)
     {
-        // TODO: Update a number of cols depending on number of nonPK cols in relation.  
         std::unordered_map<double, double> hashTableVals;
         std::vector<uint32_t> vDistValRowPos1;
         std::vector<uint32_t> vNonPkAttrIdxs2;
@@ -449,7 +448,7 @@ namespace Figaro
         }
         
         copyVectorOfVectorsToEigenData();
-        FIGARO_LOG_DBG("Rel1 After", *this)
+        FIGARO_LOG_DBG("PassedJOin", *this)
     }
 
     // TODO: Pass vectors. Now we assume the vector is all ones. 
@@ -461,12 +460,10 @@ namespace Figaro
         uint32_t distinctValuesCounter;
         std::vector<double> vDistinctValues;
         std::vector<uint32_t> vDistinctValuesRowPositions; 
-        std::unordered_map<double, uint32_t> htCnts;
         std::vector<uint32_t> vnonPKAttrIdxs;
         uint32_t pkOffset;
 
         sortData({attributeName});
-        //FIGARO_LOG_DBG("VV", m_dataVectorOfVectors);
         distinctValuesCounter = getDistinctValuesCount(attributeName);
         vDistinctValues.resize(distinctValuesCounter);
         vDistinctValuesRowPositions.resize(distinctValuesCounter + 1);
@@ -475,7 +472,6 @@ namespace Figaro
 
         getAttributeDistinctValues(attributeName, vDistinctValues);
         getDistinctValuesRowPositions(attributeName, vDistinctValuesRowPositions);
-        //getAttributeValuesCounts(attributeName, htCnts);
         
         for (uint32_t distCnt = 0; distCnt < distinctValuesCounter; distCnt++)
         {
@@ -490,13 +486,11 @@ namespace Figaro
             {
                 vCurRowSum[nonPKAttrIdx - pkOffset] = m_dataVectorOfVectors[headRowIdx][nonPKAttrIdx];
             }
-            //FIGARO_LOG_DBG("scalarCnt", scalarCnt);
+
             for (uint32_t rowIdx = headRowIdx + 1;
                 rowIdx <= vDistinctValuesRowPositions[distCnt + 1]; rowIdx ++)
             {
                 double i = rowIdx - headRowIdx + 1;
-                //FIGARO_LOG_DBG("rowIDx:", rowIdx, "i:", i);
-
                 for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
                 {
                     double prevRowSum = vCurRowSum[nonPKAttrIdx - pkOffset];
@@ -505,9 +499,8 @@ namespace Figaro
                         (m_dataVectorOfVectors[rowIdx][nonPKAttrIdx] * (i - 1) - 
                         prevRowSum) * std::sqrt(scalarCnt / (i * (i - 1)) );
                 }
-                //FIGARO_LOG_DBG(m_dataVectorOfVectors);
-                //FIGARO_LOG_DBG("vCurRowSum", vCurRowSum);
             }
+
             for (const uint32_t nonPKAttrIdx: vnonPKAttrIdxs)
             {
                 m_dataVectorOfVectors[headRowIdx][nonPKAttrIdx] = 
@@ -517,7 +510,8 @@ namespace Figaro
         copyVectorOfVectorsToEigenData();
         FIGARO_LOG_INFO(*this);
     }
-
+    
+    // N-N join where zero rows are omitted.
     void Relation::extend(const Relation& relation, const std::string& attrIterName)
     {
         constexpr uint32_t NUM_RELS = 2; 
