@@ -64,7 +64,6 @@ namespace Figaro
     {
         Relation& relation = m_relations.at(relationName);
         relation.sortData(vSortAttributeNames);
-        // TODO: Test this. 
     }
 
     MatrixT* Database::computeHead(const std::string& relName)
@@ -112,7 +111,7 @@ namespace Figaro
         for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
         {
             Relation* pRelation = aRelations[idxRel];
-            pRelation->getAttributeValuesCountAggregates(attrIterName, 
+            pRelation->getAttributeValuesCounts(attrIterName, 
                         aHashTabAttrCnt[idxRel]);
             FIGARO_LOG_DBG(aHashTabAttrCnt[idxRel]);
         }

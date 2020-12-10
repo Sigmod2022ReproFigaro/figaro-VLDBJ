@@ -146,7 +146,7 @@ namespace Figaro
         void getAttributeDistinctValues(const std::string& attributeName, 
                 std::vector<double>& vDistinctValues) const;
 
-        void getAttributeValuesCountAggregates(const std::string& attributeName, 
+        void getAttributeValuesCounts(const std::string& attributeName, 
             std::unordered_map<double, uint32_t>& htCnts) const;
 
         void getDistinctValuesRowPositions(const std::string& attributeName,

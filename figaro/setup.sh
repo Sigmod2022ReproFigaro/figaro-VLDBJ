@@ -62,11 +62,12 @@ function main()
     echo "TESTMODE ${FIGARO_TEST_MODE}"
     if [[ $FIGARO_TEST_MODE == DEBUG ]]; then 
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_DEBUG=ON
+    elif [[ $FIGARO_TEST_MODE == UNIT_TEST ]]; then
+        cmake ../. -D FIGARO_TEST=ON -D FIGARO_DEBUG=ON
     else
          cmake ../. -D FIGARO_RUN=ON 
     fi
     # Used for generation of tests and libs. 
-    #cmake ../. -D FIGARO_TEST=ON
     #cmake ../. -D FIGARO_RUN=ON -D FIGARO_TEST=ON -D FIGARO_LIB=ON
     make -j8
     case "${FIGARO_TEST_MODE}" in
@@ -82,11 +83,10 @@ function main()
         ;;
     "PRECISION")
         ;;
+    "UNIT_TEST")
+        ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > "${FIGARO_LOG_PATH}/log.txt" 2>&1
+        ;;
     esac
-
-    #./figaro --dump_path "${FIGARO_DUMP_PATH}" > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
 }
-#echo """KEYS" $@
 main $@
-#./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > "${FIGARO_LOG_PATH}/log.txt" 2>&1
 #valgrind --leak-check=yes ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > ../log/log.txt 2>&1
