@@ -83,7 +83,9 @@ function main()
     "PRECISION")
         ;;
     "UNIT_TEST")
-        ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > "${FIGARO_LOG_PATH}/log.txt" 2>&1
+        echo "*****************Running unit tests*****************"
+        #./figaro_test --gtest_filter=*ComputeSimpleHeadByOneMultipleAttributes \
+        ./figaro_test  >   "${FIGARO_LOG_PATH}/log.txt" 2>&1
         ;;
     esac
 }

@@ -49,13 +49,16 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
+    database.swapAttributes("S", {"A1", "A2"} );
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     database.computeQRDecompositionHouseholder("S", &R);
 
     FIGARO_LOG_DBG("DB CONFIG PATH", DB_CONFIG_PATH)
+    FIGARO_LOG_DBG("R", R)
     readMatrixDense(FILE_INPUT_EXP_R, expectedR);
+    FIGARO_LOG_DBG("expectedR", expectedR)
     compareMatrices(R, expectedR, false, false);
     FIGARO_LOG_DBG(R)
 }
@@ -88,13 +91,17 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
+    database.swapAttributes("S", {"A11", "A21"} );
+    database.swapAttributes("S", {"A12", "A21"} );
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     database.computeQRDecompositionHouseholder("S", &R);
 
     FIGARO_LOG_DBG("DB CONFIG PATH", DB_CONFIG_PATH)
+    FIGARO_LOG_DBG("R", R)
     readMatrixDense(FILE_INPUT_EXP_R, expectedR);
-    compareMatrices(R, expectedR, false, false);
+    FIGARO_LOG_DBG("expectedR", expectedR)
+    compareMatrices(R, expectedR, false, true);
     FIGARO_LOG_DBG(R)
 }
