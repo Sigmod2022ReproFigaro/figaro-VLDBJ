@@ -10,9 +10,9 @@ std::chrono::duration<double>  elapsed_##timer = finish_##timer - begin_##timer;
 double time_spent_##timer = elapsed_##timer.count();\
 double global_time_##timer = 0;
 
-#define MICRO_BENCH_BEGIN(timer) begin_##timer = std::chrono::high_resolution_clock::now();
+#define MICRO_BENCH_START(timer) begin_##timer = std::chrono::high_resolution_clock::now();
 
-#define MICRO_BENCH_END(timer) finish_##timer = std::chrono::high_resolution_clock::now();\
+#define MICRO_BENCH_STOP(timer) finish_##timer = std::chrono::high_resolution_clock::now();\
 elapsed_##timer = finish_##timer - begin_##timer;\
 time_spent_##timer = elapsed_##timer.count();\
 global_time_##timer += time_spent_##timer;

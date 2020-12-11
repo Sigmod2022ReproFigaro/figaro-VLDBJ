@@ -15,7 +15,9 @@ int main(int argc, char *argv[])
     std::string db_config_path;
     bool dump = false;
     uint32_t precision;
-    MICRO_BENCH_INIT(test);
+    MICRO_BENCH_INIT(load);
+    MICRO_BENCH_INIT(sort);
+    MICRO_BENCH_INIT(main)
 
     po::options_description desc("figaro - allowed options");   
     desc.add_options()
@@ -40,31 +42,41 @@ int main(int argc, char *argv[])
     db_config_path = vm["db_config_path"].as<std::string>();
     FIGARO_LOG_INFO(db_config_path)
     Figaro::MatrixT R;
-    MICRO_BENCH_BEGIN(test);
+    MICRO_BENCH_START(load);
     Figaro::Database database(db_config_path);
     database.loadData();
+    MICRO_BENCH_STOP(load);
+    MICRO_BENCH_START(sort)
     database.sortData();
-    MICRO_BENCH_END(test)
-    FIGARO_LOG_BENCH("Figaro", MICRO_BENCH_GET_TIMER(test));
+    MICRO_BENCH_STOP(sort)
 
     Figaro::Query query(&database);
     //query.loadQuery(queryConfigPath);
     //query.evaluateQuery();
 
+    MICRO_BENCH_START(sort)
     database.sortRelation("R", {"A"});
+    MICRO_BENCH_STOP(sort);
     database.computeHead("R", "A");
 
+    MICRO_BENCH_START(sort)
     database.sortRelation("S", {"A", "B"});
+    MICRO_BENCH_STOP(sort);
     database.computeHead("S", "A");
 
+    MICRO_BENCH_START(sort)
     database.sortRelation("T", {"C", "B"});
+    MICRO_BENCH_STOP(sort);
     database.computeHead("T", "C");
     
+    MICRO_BENCH_START(sort)
     database.sortRelation("U", {"C"});
+    MICRO_BENCH_STOP(sort);
     database.computeHead("U", "C");
 
     FIGARO_LOG_DBG("PASS sort and compute head")
 
+    MICRO_BENCH_START(main)
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
     FIGARO_LOG_DBG("Pass Join relations S R")
     database.swapAttributes("S", {"A1", "A2"} );
@@ -75,9 +87,13 @@ int main(int argc, char *argv[])
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     FIGARO_LOG_DBG("Pass Compute Scaled")
     database.computeQRDecompositionHouseholder("S", &R);
+    MICRO_BENCH_STOP(main)
     FIGARO_LOG_DBG("Pass Compute Householder ")
     FIGARO_LOG_INFO(R);
     FIGARO_LOG_DBG("PRECISION", precision)
+    FIGARO_LOG_BENCH("Figaro", "load", MICRO_BENCH_GET_TIMER(load));
+    FIGARO_LOG_BENCH("Figaro", "sort", MICRO_BENCH_GET_TIMER(sort));
+    FIGARO_LOG_BENCH("Figaro", "main", MICRO_BENCH_GET_TIMER(main));
     if (dump)
     {
         std::string dumpFileName = dump_path + "/R.csv";

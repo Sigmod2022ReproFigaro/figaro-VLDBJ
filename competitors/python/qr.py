@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import pandas as pd
 from  argparse import ArgumentParser
-
+from timeit import default_timer as timer
 
 def make_diagonal_positive(r):
     diag_sgn_r = np.sign(r.diagonal())
@@ -34,7 +34,10 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', 500)
 
     data = pd.read_csv(data_path, delimiter=",", header=None)
+    start = timer()
     r = np.linalg.qr(data, mode='r')
+    end = timer()
+    print("##FIGARO####computation##{}".format(end - start))
     print(r)
     r = make_diagonal_positive(r)
     print(r)
