@@ -1,12 +1,12 @@
 #include "database/Database.h"
 #include "database/query/Query.h"
+#include "utils/Performance.h"
 
 #include <boost/program_options.hpp>
 #include <fstream>
 
 namespace po = boost::program_options;
 
-//const std::string DB_CONFIG_PATH = "/home/popina/Figaro/figaro-code/system_tests/test3/database_specs.conf";
 const std::string queryConfigPath = "";
 
 int main(int argc, char *argv[]) 
@@ -15,6 +15,7 @@ int main(int argc, char *argv[])
     std::string db_config_path;
     bool dump = false;
     uint32_t precision;
+    MICRO_BENCH_INIT(test);
 
     po::options_description desc("figaro - allowed options");   
     desc.add_options()
@@ -39,9 +40,12 @@ int main(int argc, char *argv[])
     db_config_path = vm["db_config_path"].as<std::string>();
     FIGARO_LOG_INFO(db_config_path)
     Figaro::MatrixT R;
+    MICRO_BENCH_BEGIN(test);
     Figaro::Database database(db_config_path);
     database.loadData();
     database.sortData();
+    MICRO_BENCH_END(test)
+    FIGARO_LOG_BENCH("Figaro", MICRO_BENCH_GET_TIMER(test));
 
     Figaro::Query query(&database);
     //query.loadQuery(queryConfigPath);

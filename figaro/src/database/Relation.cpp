@@ -588,6 +588,23 @@ namespace Figaro
         FIGARO_LOG_INFO(*this);
     }
 
+    void Relation::swapAttributes(const std::array<std::string, 2>& atributesSwap)
+    {
+        uint32_t attrIdx1 = getAttributeIdx(atributesSwap[0]);
+        uint32_t attrIdx2 = getAttributeIdx(atributesSwap[1]);
+        FIGARO_LOG_DBG("attrIdx1", attrIdx1, "attrIdx2", attrIdx2);
+        FIGARO_LOG_DBG("attrIdx1", atributesSwap[0], "attrIdx2", atributesSwap[1]);
+        FIGARO_LOG_DBG("All before", *this);
+        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
+        {
+            std::swap(m_dataVectorOfVectors[rowIdx][attrIdx1], 
+                        m_dataVectorOfVectors[rowIdx][attrIdx2]);
+        }
+        copyVectorOfVectorsToEigenData();
+        swap(m_attributes[attrIdx1], m_attributes[attrIdx2]);
+        FIGARO_LOG_DBG("All after", *this);
+    }
+
     static void makeDiagonalElementsPositiveInR(MatrixT& matR)
     {
         ArrayT&& aDiag = matR.diagonal().array().sign();
@@ -610,25 +627,7 @@ namespace Figaro
             makeDiagonalElementsPositiveInR(*pR);
             FIGARO_LOG_DBG("R",*pR);
         }
-    }
-
-    void Relation::swapAttributes(const std::array<std::string, 2>& atributesSwap)
-    {
-        uint32_t attrIdx1 = getAttributeIdx(atributesSwap[0]);
-        uint32_t attrIdx2 = getAttributeIdx(atributesSwap[1]);
-        FIGARO_LOG_DBG("attrIdx1", attrIdx1, "attrIdx2", attrIdx2);
-        FIGARO_LOG_DBG("attrIdx1", atributesSwap[0], "attrIdx2", atributesSwap[1]);
-        FIGARO_LOG_DBG("All before", *this);
-        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
-        {
-            std::swap(m_dataVectorOfVectors[rowIdx][attrIdx1], 
-                        m_dataVectorOfVectors[rowIdx][attrIdx2]);
-        }
-        copyVectorOfVectorsToEigenData();
-        swap(m_attributes[attrIdx1], m_attributes[attrIdx2]);
-        FIGARO_LOG_DBG("All after", *this);
-    }
-    
+    }    
 
     std::ostream& operator<<(std::ostream& out, const Relation& relation)
     {

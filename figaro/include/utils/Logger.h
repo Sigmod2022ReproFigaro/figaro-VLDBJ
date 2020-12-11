@@ -13,6 +13,7 @@
 #define FIGARO_LOG_LEVEL 1
 #endif 
 
+// Used to exclude assertions from the generated code
 #if FIGARO_LOG_LEVEL > FIGARO_LOG_LEVEL_DEBUG
 #define NDEBUG
 #endif 
@@ -97,6 +98,7 @@ void figaroLogStd(Arg1&& severity, Arg2&& arg)
     std::cout << arg << std::endl;
 }
 
+// ##modulename##time logs time. 
 template<typename Arg, typename ...Args>
 void figaroLogBench(Arg&& module, Args&& ...args)
 {
@@ -119,7 +121,7 @@ FIGARO_LOG_INTERNAL_FUN(SEVERITY, __FILE__,    \
 #define FIGARO_LOG_BENCH_INTERNAL(...) \
 do                                        \
 {                                         \
-    figaroLogStd(__VA_ARGS__);             \
+    figaroLogBench(__VA_ARGS__);             \
 } while(0);
 
 #define FIGARO_LOG_DBG(...)
