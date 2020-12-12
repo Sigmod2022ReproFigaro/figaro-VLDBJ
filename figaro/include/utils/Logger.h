@@ -8,13 +8,13 @@
 #define FIGARO_LOG_LEVEL_ERROR 4
 
 // In the case if log level is defined by CmakeLists.txt we do not want
-// want to redefine it. 
+// want to redefine it. Default 
 #ifndef FIGARO_LOG_LEVEL 
-#define FIGARO_LOG_LEVEL 1
+#define FIGARO_LOG_LEVEL FIGARO_LOG_LEVEL_BENCH
 #endif 
 
 // Used to exclude assertions from the generated code
-#if FIGARO_LOG_LEVEL > FIGARO_LOG_LEVEL_DEBUG
+#if FIGARO_LOG_LEVEL > FIGARO_LOG_LEVEL_DEBUG && ! defined(NDEBUG)
 #define NDEBUG
 #endif 
 

@@ -6,6 +6,7 @@ import argparse
 import logging
 from data_management.database import Database
 from data_management.relation import Relation
+from timeit import default_timer as timer
 
 JOIN_TABLE_NAME = "join_table"
 
@@ -140,7 +141,10 @@ class DatabasePsql:
 
         logging.debug(sql_join)
         cursor = self.connection.cursor()
+        start = timer()
         cursor.execute(sql_join)
+        end = timer() 
+        logging.info("##Figaro##Join##{}".format(end - start))
         cursor.close()
 
 

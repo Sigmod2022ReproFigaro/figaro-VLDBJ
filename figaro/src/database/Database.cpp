@@ -2,7 +2,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-
+#include "utils/Performance.h"
 
 namespace Figaro
 {
@@ -108,6 +108,9 @@ namespace Figaro
         std::array<std::unordered_map<double, uint32_t>, NUM_RELATIONS> 
          aHashTabAttrCnt;
         
+        MICRO_BENCH_INIT(hash)
+        MICRO_BENCH_INIT(compute)
+        MICRO_BENCH_START(hash)
         for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
         {
             Relation* pRelation = aRelations[idxRel];
@@ -115,11 +118,20 @@ namespace Figaro
                         aHashTabAttrCnt[idxRel]);
             FIGARO_LOG_DBG(aHashTabAttrCnt[idxRel]);
         }
+        MICRO_BENCH_STOP(hash)
+        FIGARO_LOG_BENCH("Figaro", "main", "hash", MICRO_BENCH_GET_TIMER(hash));
 
+        MICRO_BENCH_START(compute)
         aRelations[0]->computeAndScaleGeneralizedHeadAndTail(
             attrIterName, aHashTabAttrCnt[1]);
+        MICRO_BENCH_STOP(compute)
+        FIGARO_LOG_BENCH("Figaro", "main", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
+        MICRO_BENCH_START(compute)
         aRelations[1]->computeAndScaleGeneralizedHeadAndTail(
             attrIterName, aHashTabAttrCnt[0]);
+        MICRO_BENCH_STOP(compute)
+        FIGARO_LOG_BENCH("Figaro", "main", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
+        FIGARO_LOG_BENCH("Figaro", "main", "scaleTotal", MICRO_BENCH_GET_TIMER(compute));
         aRelations[0]->extend(*aRelations[1], attrIterName);
     }
 

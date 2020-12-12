@@ -6,11 +6,14 @@
 #include <algorithm>
 #include <limits>
 #include <unordered_map>
+#include "utils/Performance.h"
 
 namespace Figaro
 {
     void Relation::copyVectorOfVectorsToEigenData(void)
     {
+        MICRO_BENCH_INIT(copy);
+        MICRO_BENCH_START(copy);
         for (uint32_t row = 0; row < m_dataVectorOfVectors.size(); row ++)
         {
             for (uint32_t col = 0; col < m_attributes.size(); col ++)
@@ -18,6 +21,9 @@ namespace Figaro
                 m_data(row, col) =  m_dataVectorOfVectors[row][col]; 
             }
         }
+        MICRO_BENCH_STOP(copy);
+        FIGARO_LOG_BENCH("Figaro", "main", "copyVectorOfVectorsToEigenData", MICRO_BENCH_GET_TIMER(copy));
+
     }
 
     uint32_t Relation::getAttributeIdx(const std::string& attributeName) const
@@ -463,7 +469,15 @@ namespace Figaro
         std::vector<uint32_t> vnonPKAttrIdxs;
         uint32_t pkOffset;
 
+        MICRO_BENCH_INIT(sort)
+        MICRO_BENCH_INIT(aggregates)
+        MICRO_BENCH_START(sort)
         sortData({attributeName});
+        MICRO_BENCH_STOP(sort)
+        FIGARO_LOG_BENCH("Figaro", "main", "sortData", MICRO_BENCH_GET_TIMER(sort));
+
+
+        MICRO_BENCH_START(aggregates)
         distinctValuesCounter = getDistinctValuesCount(attributeName);
         vDistinctValues.resize(distinctValuesCounter);
         vDistinctValuesRowPositions.resize(distinctValuesCounter + 1);
@@ -507,6 +521,8 @@ namespace Figaro
                     vCurRowSum[nonPKAttrIdx - pkOffset] * std::sqrt(scalarCnt / aggregateCnt);
             }
         }
+        MICRO_BENCH_STOP(aggregates)
+         FIGARO_LOG_BENCH("Figaro", "main", "aggregates", MICRO_BENCH_GET_TIMER(aggregates));
         copyVectorOfVectorsToEigenData();
         FIGARO_LOG_INFO(*this);
     }
@@ -616,17 +632,27 @@ namespace Figaro
 
     void Relation::applyEigenQR(MatrixT* pR)
     {
+        //MICRO_BENCH_INIT(timer);
         uint32_t numNonPKAttributes = getNumberOfNonPKAttributes();
+        //MICRO_BENCH_START(timer);
         const auto& rVals {m_data.rightCols(numNonPKAttributes)};
+        //MICRO_BENCH_STOP(timer);
+        //FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", MICRO_BENCH_GET_TIMER(timer));
         Eigen::HouseholderQR<MatrixT> qr{};
         // TODO: think how to avoid copy constructor. 
+        //MICRO_BENCH_START(timer);
         qr.compute(rVals);
+        //MICRO_BENCH_STOP(timer);
+        //FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", MICRO_BENCH_GET_TIMER(timer));
+        //MICRO_BENCH_START(timer);
         if (nullptr != pR)
         {
-            *pR = qr.matrixQR().triangularView<Eigen::Upper>();
+            *pR = qr.matrixQR().topLeftCorner(numNonPKAttributes, numNonPKAttributes).triangularView<Eigen::Upper>();
             makeDiagonalElementsPositiveInR(*pR);
             FIGARO_LOG_DBG("R",*pR);
         }
+        //MICRO_BENCH_STOP(timer);
+        //FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR",MICRO_BENCH_GET_TIMER(timer));
     }    
 
     std::ostream& operator<<(std::ostream& out, const Relation& relation)

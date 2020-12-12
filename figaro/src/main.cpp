@@ -46,9 +46,9 @@ int main(int argc, char *argv[])
     Figaro::Database database(db_config_path);
     database.loadData();
     MICRO_BENCH_STOP(load);
-    MICRO_BENCH_START(sort)
-    database.sortData();
-    MICRO_BENCH_STOP(sort)
+    //MICRO_BENCH_START(sort)
+    //database.sortData();
+    //MICRO_BENCH_STOP(sort)
 
     Figaro::Query query(&database);
     //query.loadQuery(queryConfigPath);
@@ -58,20 +58,24 @@ int main(int argc, char *argv[])
     database.sortRelation("R", {"A"});
     MICRO_BENCH_STOP(sort);
     database.computeHead("R", "A");
+    FIGARO_LOG_BENCH("Figaro", "main", "sort R a", MICRO_BENCH_GET_TIMER_LAP(sort));
 
     MICRO_BENCH_START(sort)
     database.sortRelation("S", {"A", "B"});
     MICRO_BENCH_STOP(sort);
+    FIGARO_LOG_BENCH("Figaro", "main", "sort S A B", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("S", "A");
 
     MICRO_BENCH_START(sort)
     database.sortRelation("T", {"C", "B"});
     MICRO_BENCH_STOP(sort);
+    FIGARO_LOG_BENCH("Figaro", "main", "sort T C B", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("T", "C");
     
     MICRO_BENCH_START(sort)
     database.sortRelation("U", {"C"});
     MICRO_BENCH_STOP(sort);
+    FIGARO_LOG_BENCH("Figaro", "main", "sort U C", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("U", "C");
 
     FIGARO_LOG_DBG("PASS sort and compute head")
@@ -79,14 +83,33 @@ int main(int argc, char *argv[])
     MICRO_BENCH_START(main)
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
     FIGARO_LOG_DBG("Pass Join relations S R")
+    MICRO_BENCH_STOP(main)
+    FIGARO_LOG_BENCH("Figaro", "main", "joinRelations", MICRO_BENCH_GET_TIMER_LAP(main));
+    MICRO_BENCH_START(main)
+
     database.swapAttributes("S", {"A1", "A2"} );
     FIGARO_LOG_DBG("Pass Join Swap ")
+    MICRO_BENCH_STOP(main)
+    FIGARO_LOG_BENCH("Figaro", "main", "swapAttributes", MICRO_BENCH_GET_TIMER_LAP(main));
+    MICRO_BENCH_START(main)
+
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
     FIGARO_LOG_DBG("Pass Join relations T U")
-
+    MICRO_BENCH_STOP(main)
+    FIGARO_LOG_BENCH("Figaro", "main", "joinRelations", MICRO_BENCH_GET_TIMER_LAP(main));
+    
+    MICRO_BENCH_START(main)
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     FIGARO_LOG_DBG("Pass Compute Scaled")
+    MICRO_BENCH_STOP(main)
+    FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", MICRO_BENCH_GET_TIMER_LAP(main));
+
+    MICRO_BENCH_START(main)
     database.computeQRDecompositionHouseholder("S", &R);
+    FIGARO_LOG_DBG("Pass Householder");
+    MICRO_BENCH_STOP(main)
+    FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", MICRO_BENCH_GET_TIMER_LAP(main));
+
     MICRO_BENCH_STOP(main)
     FIGARO_LOG_DBG("Pass Compute Householder ")
     FIGARO_LOG_INFO(R);
