@@ -1,5 +1,5 @@
 #include "database/query/ASTVisitor.h"
-
+/*
 namespace Figaro
 {
     void ASTVisitor::visitNodeRelation(ASTNodeRelation *pNodeRelation)
@@ -18,3 +18,4 @@ namespace Figaro
 
     }
 }
+*/

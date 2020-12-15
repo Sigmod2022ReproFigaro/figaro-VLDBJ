@@ -67,7 +67,7 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
 TEST(DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
 {
     static const std::string DB_CONFIG_PATH = getTestPath(4) + DB_CONFIG_PATH_IN;
-     static const std::string FILE_INPUT_EXP_R = getDataPath(4) + R_COMP_FILE_NAME;
+    static const std::string FILE_INPUT_EXP_R = getDataPath(4) + R_COMP_FILE_NAME;
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
     Figaro::ErrorCode loadError;
@@ -104,4 +104,13 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     FIGARO_LOG_DBG("expectedR", expectedR)
     compareMatrices(R, expectedR, false, true);
     FIGARO_LOG_DBG(R)
+}
+
+
+TEST(DatabaseConfig, BasicQueryParsing)
+{
+    static const std::string QUERY_CONFIG_PATH = getTestPath(5) + QUERY_CONFIG_PATH_IN;
+    Figaro::Query query(nullptr);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery();
 }

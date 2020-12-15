@@ -111,6 +111,7 @@ namespace Figaro
         MICRO_BENCH_INIT(hash)
         MICRO_BENCH_INIT(compute)
         MICRO_BENCH_START(hash)
+        MICRO_BENCH_INIT(extend)
         for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
         {
             Relation* pRelation = aRelations[idxRel];
@@ -132,7 +133,12 @@ namespace Figaro
         MICRO_BENCH_STOP(compute)
         FIGARO_LOG_BENCH("Figaro", "main", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
         FIGARO_LOG_BENCH("Figaro", "main", "scaleTotal", MICRO_BENCH_GET_TIMER(compute));
+
+        MICRO_BENCH_START(extend)
         aRelations[0]->extend(*aRelations[1], attrIterName);
+        MICRO_BENCH_STOP(extend)
+        FIGARO_LOG_BENCH("Figaro", "main", "extend", MICRO_BENCH_GET_TIMER(extend));
+
     }
 
     void Database::computeQRDecompositionHouseholder(const std::string& relationName,

@@ -13,6 +13,8 @@ namespace Figaro
         virtual void accept(ASTVisitor* pVisitor) = 0;
         virtual ~ASTNode() = 0;
     };
+    
+    inline ASTNode::~ASTNode() {}
 }
 
 #endif

@@ -14,9 +14,11 @@ namespace Figaro
         Database* m_pDatabase;
     public:
         ASTVisitor(Database* pDatabase): m_pDatabase(pDatabase) {}
-        void visitNodeRelation(ASTNodeRelation* pElement);
-        void visitNodeJoin(ASTNodeJoin* pElement);
-        void visitNodeQRGivens(ASTNodeQRGivens* pElement);
+        virtual void visitNodeRelation(ASTNodeRelation* pElement) = 0;
+        virtual void visitNodeJoin(ASTNodeJoin* pElement) = 0;
+        virtual void visitNodeQRGivens(ASTNodeQRGivens* pElement) = 0;
+
+        virtual ~ASTVisitor() {}
     };
 }
 

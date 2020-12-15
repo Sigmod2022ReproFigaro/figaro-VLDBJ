@@ -15,8 +15,12 @@ namespace Figaro
     public:
         // TODO: Add ranges and other options. 
         ASTNodeRelation(const std::string& relationName): m_relationName(relationName) {};
-        ASTNodeRelation(const json& jsonRelationOperands);
-        virtual ~ASTNodeRelation() override;
+        virtual ~ASTNodeRelation() override {}
+
+        const std::string& getRelationName() const
+        {
+            return m_relationName;
+        }
         
         void accept(ASTVisitor *pVisitor) override;
 

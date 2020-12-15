@@ -12,10 +12,19 @@ namespace Figaro
         ASTNode* m_pLeftChild;
         ASTNode* m_pRightChild;
     public:
+        ASTNode* getLeftChild(void) const
+        {
+            return m_pLeftChild;
+        }
+
+        ASTNode* getRightChild(void) const
+        {
+            return m_pRightChild;
+        }
+
         ASTNodeJoin(ASTNode* pLeftChild, ASTNode* pRightChild): 
             m_pLeftChild(pLeftChild), m_pRightChild(pRightChild){}
-        ASTNodeJoin(const json& jsonJoinOperands);
-        virtual ~ASTNodeJoin() override;
+        virtual ~ASTNodeJoin() override {}
         
         void accept(ASTVisitor* pVisitor) override;
     };

@@ -28,8 +28,10 @@ namespace Figaro
         //  all the attributes from the child nodes of the current node. 
         std::vector<SelectionAttribute> m_selectAttributes;
     public:
-        virtual ~ASTNodeAbsRelation() override {}
+        virtual ~ASTNodeAbsRelation() override = 0;
     };
+
+    inline ASTNodeAbsRelation::~ASTNodeAbsRelation() {}
 }
 
 #endif 

@@ -14,11 +14,14 @@ namespace Figaro
         ASTNode* m_pOperand;
     public:
         ASTNodeQRGivens(ASTNode *pOperand): m_pOperand(pOperand) {};
-        ASTNodeQRGivens(const json& jsonQRGivensOperands);
-        virtual ~ASTNodeQRGivens() override;
-        
+        virtual ~ASTNodeQRGivens() override {}
+        ASTNode* getOperand(void) 
+        { 
+            return m_pOperand;
+        };
         void accept(ASTVisitor *pVisitor) override;
     };
+    
     
 } // namespace Figaro
 
