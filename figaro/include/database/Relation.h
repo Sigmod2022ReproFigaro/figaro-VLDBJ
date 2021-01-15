@@ -107,6 +107,11 @@ namespace Figaro
         void getPKAttributeNames(
             std::vector<std::string>& vAttributeNamesPKs) const;
 
+
+        void getNonPKAttributeNames(
+            std::vector<std::string>& vAttributeNamesNonPKs) const;
+        
+
         void getPKAttributeIndices(std::vector<uint32_t>& vPkAttrIdxs) const;
         
         /**
@@ -181,7 +186,7 @@ namespace Figaro
         const Relation::GroupByT& getCountAggregates(void) const;
 
         void joinRelation(const Relation& relation,
-             const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames);
+             const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool bSwapAttributes);
 
         /**
          * It will copy the underlying data and apply head transformation onto it.  
@@ -239,8 +244,8 @@ namespace Figaro
 
         void applyEigenQR(MatrixT* pR = nullptr);
 
-        void swapAttributes(const std::array<std::string, 2>& atributesSwap);
-        
+        void swapAttributes(const std::array<std::vector<std::string>, 2>& attributesSwap);
+
         friend std::ostream& operator<<(
             std::ostream& out, 
             const Relation& relation);

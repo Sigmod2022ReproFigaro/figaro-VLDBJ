@@ -4,10 +4,17 @@
 
 #include <boost/program_options.hpp>
 #include <fstream>
+#include <omp.h>
 
 namespace po = boost::program_options;
 
 const std::string queryConfigPath = "";
+
+
+void initGlobalState(void)
+{
+    omp_set_num_threads(8);
+}
 
 int main(int argc, char *argv[]) 
 {
@@ -15,6 +22,9 @@ int main(int argc, char *argv[])
     std::string db_config_path;
     bool dump = false;
     uint32_t precision;
+
+    initGlobalState();
+
     MICRO_BENCH_INIT(load);
     MICRO_BENCH_INIT(sort);
     MICRO_BENCH_INIT(main)
@@ -81,18 +91,12 @@ int main(int argc, char *argv[])
     FIGARO_LOG_DBG("PASS sort and compute head")
 
     MICRO_BENCH_START(main)
-    database.joinRelations({"S", "R"}, {{"A", "A"}} );
+    database.joinRelations({"S", "R"}, {{"A", "A"}}, true /* swapNonPKAttrs */);
     FIGARO_LOG_DBG("Pass Join relations S R")
     MICRO_BENCH_STOP(main)
     FIGARO_LOG_BENCH("Figaro", "main", "joinRelations", MICRO_BENCH_GET_TIMER_LAP(main));
-    MICRO_BENCH_START(main)
 
-    database.swapAttributes("S", {"A1", "A2"} );
-    FIGARO_LOG_DBG("Pass Join Swap ")
-    MICRO_BENCH_STOP(main)
-    FIGARO_LOG_BENCH("Figaro", "main", "swapAttributes", MICRO_BENCH_GET_TIMER_LAP(main));
     MICRO_BENCH_START(main)
-
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
     FIGARO_LOG_DBG("Pass Join relations T U")
     MICRO_BENCH_STOP(main)

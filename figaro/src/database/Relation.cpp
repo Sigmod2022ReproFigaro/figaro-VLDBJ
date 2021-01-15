@@ -7,7 +7,7 @@
 #include <limits>
 #include <unordered_map>
 #include "utils/Performance.h"
-
+#include <omp.h>
 namespace Figaro
 {
     void Relation::copyVectorOfVectorsToEigenData(void)
@@ -89,6 +89,17 @@ namespace Figaro
         }
     }
 
+    void Relation::getNonPKAttributeNames(std::vector<std::string>& vAttributeNamesNonPKs) const
+    {
+        for (const auto& attribute: m_attributes)
+        {
+            if (!attribute.m_isPrimaryKey)
+            {
+                vAttributeNamesNonPKs.push_back(attribute.m_name);
+            }
+        }
+    }
+
     void Relation::getPKAttributeIndices(std::vector<uint32_t>& vPkAttrIdxs) const
     {
         for (uint32_t idx = 0; idx < m_attributes.size(); idx++)
@@ -117,6 +128,7 @@ namespace Figaro
         relation.getNonPKAttributeIdxs(vNonPKAttributeIdxs);
         for (const auto nonPKAttributeIdx: vNonPKAttributeIdxs)
         {
+            FIGARO_LOG_DBG("Schema extended, Added attribute", nonPKAttributeIdx);
             m_attributes.push_back(relation.m_attributes[nonPKAttributeIdx]);
         }
     }
@@ -222,7 +234,7 @@ namespace Figaro
                       return false; 
                   });
 
-        copyVectorOfVectorsToEigenData();
+        //copyVectorOfVectorsToEigenData();
         FIGARO_LOG_DBG("Relation: ", m_name);
         FIGARO_LOG_DBG(m_dataVectorOfVectors);
     }
@@ -245,9 +257,9 @@ namespace Figaro
         prevAttrVal = std::numeric_limits<double>::max();
         distCnt = 0;
 
-        for (uint32_t rowIdx = 0; rowIdx < m_data.rows(); rowIdx++)
+        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
         {
-            double curAttrVal = m_data(rowIdx, attrIdx);
+            double curAttrVal = m_dataVectorOfVectors[rowIdx][attrIdx];
             if (prevAttrVal != curAttrVal)
             {
                 distCnt++;
@@ -272,9 +284,9 @@ namespace Figaro
         prevAttrVal = std::numeric_limits<double>::max();
 
         // The first entry is saved for the end of imaginary predecessor of ranges. 
-        for (uint32_t rowIdx = 0; rowIdx < m_data.rows(); rowIdx++)
+        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
         {
-            double curAttrVal = m_data(rowIdx, attrIdx);
+            double curAttrVal = m_dataVectorOfVectors[rowIdx][attrIdx];
             if (prevAttrVal != curAttrVal)
             {
                 vDistinctVals[distCnt] = curAttrVal;
@@ -290,9 +302,10 @@ namespace Figaro
     {
         uint32_t attrIdx; 
         attrIdx = getAttributeIdx(attrName);
-        for (uint32_t rowIdx = 0; rowIdx < m_data.rows(); rowIdx++)
+        htCnts.reserve(m_dataVectorOfVectors.size());
+        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
         {
-            double curAttrVal = m_data(rowIdx, attrIdx);
+            double curAttrVal = m_dataVectorOfVectors[rowIdx][attrIdx];
             if (htCnts.find(curAttrVal) != htCnts.end())
             {
                 htCnts[curAttrVal] ++; 
@@ -320,9 +333,9 @@ namespace Figaro
         distCnt = 0; 
 
         // The first entry is saved for the end of imaginary predecessor of ranges. 
-        for (uint32_t rowIdx = 0; rowIdx < m_data.rows(); rowIdx++)
+        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
         {
-            double curAttrVal = m_data(rowIdx, attrIdx);
+            double curAttrVal = m_dataVectorOfVectors[rowIdx][attrIdx];
             if (prevAttrVal != curAttrVal)
             {
                 pushVal = rowIdx - 1;
@@ -338,7 +351,7 @@ namespace Figaro
                 distCnt++;
             }
         } 
-        pushVal = m_data.rows() - 1;
+        pushVal = m_dataVectorOfVectors.size() - 1;
         if (preallocated)
         {
             vDistinctValuesRowPositions[distCnt] = pushVal;
@@ -394,7 +407,7 @@ namespace Figaro
         aggregateByAttribute.resize(numDistinctValues);
         vDistinctVals.resize(numDistinctValues);
         vLimitEnds.resize(numDistinctValues + 1);
-        storeUniqueAndLimits(m_data, attrIdx, vDistinctVals, vLimitEnds);
+        //storeUniqueAndLimits(m_data, attrIdx, vDistinctVals, vLimitEnds);
         //FIGARO_LOG_DBG("RelatioN", m_name, "Attribute", attributeName)
         //FIGARO_LOG_DBG("vDistinctVals", vDistinctVals);
         //FIGARO_LOG_DBG("vLimitEnds", vLimitEnds);
@@ -406,7 +419,7 @@ namespace Figaro
                //FIGARO_LOG_DBG("FOR", "limIdx", limIdx, "rowIdx", rowIdx);
                // For now we assume only one column is added.
                // add non primary keys
-               aggregateByAttribute[limIdx] += m_data(rowIdx, nonPKAttrIdx);   
+               //aggregateByAttribute[limIdx] += m_data(rowIdx, nonPKAttrIdx);   
            } 
         }
         //FIGARO_LOG_DBG("Successful head computation");
@@ -414,8 +427,10 @@ namespace Figaro
 
     // This code joins 1-N relations, where the cardinality of this is 1 and 
     // the cardinality of relation is N.
-    void Relation::joinRelation(const Relation& relation, 
-        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames)
+    void Relation::joinRelation(
+        const Relation& relation, 
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames,
+        bool bSwapAttributes)
     {
         std::unordered_map<double, double> hashTableVals;
         std::vector<uint32_t> vDistValRowPos1;
@@ -423,6 +438,8 @@ namespace Figaro
         uint32_t numAttributes1;
         uint32_t numAttributes2;
         uint32_t numNonPkAttrs2;
+        std::vector<std::string> vAttributeNamesNonPKs1;
+        std::vector<std::string> vAttributeNamesNonPKs2;
         uint32_t rowIdx2;
         const auto& joinAttributeNameTup = vJoinAttributeNames.at(0);
         std::string joinAttrName =  std::get<0>(joinAttributeNameTup);
@@ -430,14 +447,21 @@ namespace Figaro
         numAttributes1 = m_attributes.size();
         numAttributes2 = relation.m_attributes.size();
         numNonPkAttrs2 = relation.getNumberOfNonPKAttributes();
-        
+        getNonPKAttributeNames(vAttributeNamesNonPKs1);
+        relation.getNonPKAttributeNames(vAttributeNamesNonPKs2);
+
+        FIGARO_LOG_DBG("First nonPkNames", vAttributeNamesNonPKs1);
+        FIGARO_LOG_DBG("Second NonPK names", vAttributeNamesNonPKs2);
+
+
         relation.getNonPKAttributeIdxs(vNonPkAttrIdxs2);
         getDistinctValuesRowPositions(joinAttrName, vDistValRowPos1, false);
 
         schemaJoin(relation);
-        m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_data.cols() + numNonPkAttrs2);
-   
+        m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_attributes.size());
         uint32_t pkOffset2 = numAttributes2 - vNonPkAttrIdxs2.size();
+        
+        #pragma omp parallel for schedule(static)
         for (uint32_t distValCnt = 0; distValCnt < vDistValRowPos1.size() - 1; distValCnt++)
         {
             uint32_t headRowIdx = vDistValRowPos1[distValCnt] + 1;
@@ -453,7 +477,12 @@ namespace Figaro
             }
         }
         
-        copyVectorOfVectorsToEigenData();
+        if (bSwapAttributes)
+        {
+            swapAttributes({{vAttributeNamesNonPKs1, vAttributeNamesNonPKs2}});
+        }
+        
+        //copyVectorOfVectorsToEigenData();
         FIGARO_LOG_DBG("PassedJOin", *this)
     }
 
@@ -487,6 +516,8 @@ namespace Figaro
         getAttributeDistinctValues(attributeName, vDistinctValues);
         getDistinctValuesRowPositions(attributeName, vDistinctValuesRowPositions);
         
+        
+        #pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < distinctValuesCounter; distCnt++)
         {
             uint32_t headRowIdx = vDistinctValuesRowPositions[distCnt] + 1;
@@ -545,7 +576,7 @@ namespace Figaro
         colOffset = m_attributes.size();
         numPKAttributesRel  = relation.getNumberOfPKAttributes();
         relation.getNonPKAttributeIdxs(vNonPkAttrIdxsRel);
-        appIdx = m_data.rows();
+        appIdx = m_dataVectorOfVectors.size();
         for (uint32_t idxRel = 0; idxRel < apRelations.size(); idxRel ++)
         {
             apRelations[idxRel]->getDistinctValuesRowPositions(
@@ -565,6 +596,7 @@ namespace Figaro
         }
 
         // TODO: reorder column first order. 
+        #pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < distValCnt; distCnt ++)
         {
             std::array<uint32_t, NUM_RELS> aHeadRowIdx;
@@ -604,21 +636,41 @@ namespace Figaro
         FIGARO_LOG_INFO(*this);
     }
 
-    void Relation::swapAttributes(const std::array<std::string, 2>& atributesSwap)
+    void Relation::swapAttributes(const std::array<std::vector<std::string>, 2>& attributesSwap)
     {
-        uint32_t attrIdx1 = getAttributeIdx(atributesSwap[0]);
-        uint32_t attrIdx2 = getAttributeIdx(atributesSwap[1]);
-        FIGARO_LOG_DBG("attrIdx1", attrIdx1, "attrIdx2", attrIdx2);
-        FIGARO_LOG_DBG("attrIdx1", atributesSwap[0], "attrIdx2", atributesSwap[1]);
-        FIGARO_LOG_DBG("All before", *this);
+        MICRO_BENCH_INIT(swap)
+        MICRO_BENCH_START(swap)
+        uint32_t numAttrsToSwap = attributesSwap[0].size();
+        FIGARO_LOG_DBG("numAttrsToSwap", numAttrsToSwap);
+        //FIGARO_LOG_DBG("attributesSwap", attributesSwap);
+        #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.size(); rowIdx++)
         {
-            std::swap(m_dataVectorOfVectors[rowIdx][attrIdx1], 
-                        m_dataVectorOfVectors[rowIdx][attrIdx2]);
+            for (uint32_t idx = 0; idx < numAttrsToSwap; idx ++)
+            {
+                // We assume number of attributes is the same in both relations.
+                uint32_t attrIdx1 = getAttributeIdx(attributesSwap[0][idx]);
+                uint32_t attrIdx2 = getAttributeIdx(attributesSwap[1][idx]);
+                FIGARO_LOG_DBG("attrIdx1", attrIdx1, "attrIdx2", attrIdx2);
+                FIGARO_LOG_DBG("attrIdx1", attributesSwap[0], "attrIdx2", attributesSwap[1]);
+                FIGARO_LOG_DBG("All before", *this);
+
+                std::swap(m_dataVectorOfVectors[rowIdx][attrIdx1], 
+                            m_dataVectorOfVectors[rowIdx][attrIdx2]);
+                //copyVectorOfVectorsToEigenData();
+                FIGARO_LOG_DBG("All after", *this);
+            }
         }
-        copyVectorOfVectorsToEigenData();
-        swap(m_attributes[attrIdx1], m_attributes[attrIdx2]);
-        FIGARO_LOG_DBG("All after", *this);
+
+         for (uint32_t idx = 0; idx < numAttrsToSwap; idx ++)
+        {
+            // We assume number of attributes is the same in both relations.
+            uint32_t attrIdx1 = getAttributeIdx(attributesSwap[0][idx]);
+            uint32_t attrIdx2 = getAttributeIdx(attributesSwap[1][idx]);
+            swap(m_attributes[attrIdx1], m_attributes[attrIdx2]);
+        }
+        MICRO_BENCH_STOP(swap)
+        FIGARO_LOG_BENCH("Figaro", "main", "swapAttributes", MICRO_BENCH_GET_TIMER(swap));
     }
 
     static void makeDiagonalElementsPositiveInR(MatrixT& matR)

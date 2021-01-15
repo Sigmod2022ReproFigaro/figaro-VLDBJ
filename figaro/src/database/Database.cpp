@@ -90,11 +90,11 @@ namespace Figaro
     }
 
     void  Database::joinRelations(std::vector<std::string> vRelationNames,
-        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames)
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes)
     {
         Relation& relation1= m_relations.at(vRelationNames[0]);
         Relation& relation2 = m_relations.at(vRelationNames[1]);
-        relation1.joinRelation(relation2, vJoinAttributeNames);
+        relation1.joinRelation(relation2, vJoinAttributeNames, swapAttributes);
     }
 
 
@@ -146,10 +146,17 @@ namespace Figaro
     {
         m_relations.at(relationName).applyEigenQR(pR);
     }
-
+    /*
     void Database::swapAttributes(const std::string& relationName, const std::array<std::string, 2>& atributesSwap)
     {
         m_relations.at(relationName).swapAttributes(atributesSwap);
+    }
+    */
+
+    void Database::swapAttributes(const std::string& relationName, 
+            const std::array<std::vector<std::string>, 2>& attributesSwap)
+    {
+        m_relations.at(relationName).swapAttributes(attributesSwap);
     }
         
 

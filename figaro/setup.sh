@@ -78,7 +78,7 @@ function main()
             --precision "${FIGARO_PRECISION}"  >  "${FIGARO_LOG_PATH}/log.txt"  2>&1;
         ;;
     "PERFORMANCE")
-        ./figaro > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
         ;;
     "PRECISION")
         ;;

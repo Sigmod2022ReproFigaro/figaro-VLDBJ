@@ -49,7 +49,7 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
-    database.swapAttributes("S", {"A1", "A2"} );
+    //database.swapAttributes("S", { { {"A1"}, {"A2"} }} );
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
@@ -72,6 +72,8 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     Figaro::ErrorCode initError;
     Figaro::ErrorCode loadError;
     Figaro::MatrixT R, expectedR;
+    std::vector<std::string> vStr1{"A11", "A12"};
+    std::vector<std::string> vStr2{"A21", "A22"};
 
     initError = database.getInitializationErrorCode();
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
@@ -91,8 +93,9 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
-    database.swapAttributes("S", {"A11", "A21"} );
-    database.swapAttributes("S", {"A12", "A21"} );
+    //database.swapAttributes("S", {{vStr1, vStr2}});
+    //database.swapAttributes("S", {"A11", "A21"} );
+    //database.swapAttributes("S", {"A12", "A21"} );
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");

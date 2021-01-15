@@ -8,8 +8,8 @@ set(CMKAKE_CXX_STANDARD REQUIRED)
 #TODO: Replace flags with compiler options. 
 # Checking compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -pthread -g -Wall -Wextra -Og  -Wl,--verbose")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++17 -pthread -Ofast -mtune=native -fassociative-math -freciprocal-math -fno-signed-zeros -frename-registers -fopenmp -Wl,--verbose")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -pthread -g -Wall -Wextra -Og")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++17 -pthread -Ofast -mtune=native -fassociative-math -freciprocal-math -fno-signed-zeros -frename-registers -fopenmp")
 endif()
 #set(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_RELEASE} -DBENCH")
 # Set to Debug, Benchmark or Release.
@@ -21,6 +21,8 @@ else()
   message("Release")
   set(CMAKE_BUILD_TYPE Release)
 endif()
+
+add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE )
 
 # TODO: Clean this. 
 set(FIGARO_ROOT .)
@@ -49,21 +51,20 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS system thread iostreams program_options)
 include_directories(${Boost_INCLUDE_DIRS})
 
-if (FIGARO_DEBUG)
+if (FIGARO_DEBUG OR FIGARO_TEST)
   add_compile_definitions(FIGARO_LOG_LEVEL=0)
 endif()
 
 # Add libraries.
 if (FIGARO_RUN)
-  target_link_libraries(figaro ${Boost_LIBRARIES} -ltbb)
+  target_link_libraries(figaro ${Boost_LIBRARIES} -ltbb -lopenblas -llapacke)
 endif()
 
 if (FIGARO_TEST)
-  add_compile_definitions(FIGARO_LOG_LEVEL=0)
   # Take care of Gtest library.
   find_package(GTest REQUIRED)
   target_include_directories(figaro_test PRIVATE ${GTEST_INCLUDE_DIRS})
-  target_link_libraries(figaro_test ${Boost_LIBRARIES} ${GTEST_LIBRARIES} -ltbb )
+  target_link_libraries(figaro_test ${Boost_LIBRARIES} ${GTEST_LIBRARIES} -ltbb -lopenblas -llapacke)
 endif()
 
 

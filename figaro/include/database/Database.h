@@ -37,7 +37,7 @@ namespace Figaro
         void sortRelation(const std::string& relationName, const std::vector<std::string> vSortAttributeNames);
 
         void joinRelations(std::vector<std::string> vRelationNames,
-        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames);
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
         
         MatrixT* computeHead(const std::string& relationName);
 
@@ -52,9 +52,12 @@ namespace Figaro
                         const std::string& attrIterName);
 
         void computeQRDecompositionHouseholder(const std::string& relationName, MatrixT* pR = nullptr);
-
+        /*
         void swapAttributes(const std::string& relationName, 
             const std::array<std::string, 2>& atributesSwap);
+        */
+        void swapAttributes(const std::string& relationName, 
+            const std::array<std::vector<std::string>, 2>& attributesSwap);
     };
 }
 #endif 
