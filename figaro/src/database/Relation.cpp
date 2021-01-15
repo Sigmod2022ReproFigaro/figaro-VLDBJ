@@ -596,7 +596,7 @@ namespace Figaro
         }
 
         // TODO: reorder column first order. 
-        #pragma omp parallel for schedule(static)
+        //#pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < distValCnt; distCnt ++)
         {
             std::array<uint32_t, NUM_RELS> aHeadRowIdx;
