@@ -2,6 +2,8 @@ import argparse
 import json
 import logging
 import sys
+import os
+from os import listdir
 from evaluation.system_test import SystemTest
 from evaluation.system_test_figaro import SystemTestFigaro
 from evaluation.system_test_psql import SystemTestPsql
@@ -130,6 +132,24 @@ def init_logging():
     root.addHandler(stdout_handler)
     root.addHandler(file_handler)
 
+
+
+def get_all_test_specs_paths(test_num):
+    test_conf_paths = []
+    test_specs_dir = "/home/popina/Figaro/figaro-code/system_tests/"
+    if test_num is None:
+        for test_path in listdir(test_specs_dir):
+            test_specs_path = os.path.join(test_specs_dir, test_path, "tests_specs.conf")
+            logging.info(test_specs_path)
+            test_conf_paths.append(test_specs_path)
+    else:
+        test_specs_path = os.path.join(test_specs_dir, "test{}".format(test_num), "tests_specs.conf")
+        test_conf_paths.append(test_specs_path)
+
+    return test_conf_paths
+
+
+
     
 if __name__ == "__main__":
     ROOT_PATH = "/home/popina/Figaro/figaro-code"
@@ -142,8 +162,8 @@ if __name__ == "__main__":
                         dest="test", required=False)
     args = parser.parse_args()
 
-    test_conf_path = "/home/popina/Figaro/figaro-code/system_tests/test{}/tests_specs.conf"
-    test_num = 3 if args.test is None else args.test
-    test_conf_path = test_conf_path.format(test_num)
-    eval_tests(args.password, test_conf_path)
+    test_conf_paths = get_all_test_specs_paths(args.test)
+    for test_conf_path in test_conf_paths:
+        logging.info("Running test specified in the path {}".format(test_conf_path))
+        eval_tests(args.password, test_conf_path)
 
