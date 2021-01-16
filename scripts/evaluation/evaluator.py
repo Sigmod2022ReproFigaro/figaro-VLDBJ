@@ -49,10 +49,12 @@ class SystemTestsEvaluator:
             if "database_conf_path" in data_set_json:
                 database_conf_path = data_set_json["database_conf_path"]
                 database = Database(database_conf_path)
+                data_set_enabled = not data_set_json.get("disable", False)
             else:
                 logging.error("TODO")
             
-            test += self.load_system_tests(system_tests_json, database)
+            if data_set_enabled:
+                test += self.load_system_tests(system_tests_json, database)
         
         return test
 

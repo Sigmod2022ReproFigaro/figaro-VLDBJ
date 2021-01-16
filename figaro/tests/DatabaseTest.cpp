@@ -49,7 +49,6 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
-    //database.swapAttributes("S", { { {"A1"}, {"A2"} }} );
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 
     database.computeScaledCartesianProduct({"S", "T"}, "B");
@@ -93,8 +92,6 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} );
-    //database.swapAttributes("S", {{vStr1, vStr2}});
-    //database.swapAttributes("S", {"A11", "A21"} );
     //database.swapAttributes("S", {"A12", "A21"} );
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
 

@@ -79,16 +79,14 @@ class DatabaseGenerator:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--test", action="store", 
-                        dest="test", required=False)
+    parser.add_argument("-d", "--db_config_path", action="store", 
+                        dest="db_config_path", required=False)
     args = parser.parse_args()
 
-    db_conf_path = "/home/popina/Figaro/figaro-code/system_tests/test{}/database_specs.conf"
-    test_num = 2 if args.test is None else args.test
-    db_conf_path = db_conf_path.format(test_num)
+    db_config_path = args.db_config_path
     
-    database = Database(db_conf_path)
-    database_generator = DatabaseGenerator(db_conf_path, database)
+    database = Database(db_config_path)
+    database_generator = DatabaseGenerator(db_config_path, database)
     database_generator.generate()
 
 
