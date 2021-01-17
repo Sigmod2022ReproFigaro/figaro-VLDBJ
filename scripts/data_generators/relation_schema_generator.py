@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 import argparse
-
+import math
 
 db_config_str = """
 {
@@ -73,21 +73,21 @@ db_config_str = """
                         "attribute_domains":
                         [
                             {"name": "A", "start": 1, "end": 100},
-                            {"name": "B", "start": 1, "end": 20000},
+                            {"name": "B", "start": 1, "end": {domain_size}},
 {S_gen_non_k_attr_specs}
                         ],
-                        "num_tuples": 1000000
+                        "num_tuples": {num_relation_rows}
                     },
                     {
                         "name": "T",
                         "distribution": "uniform",
                         "attribute_domains":
                         [
-                            {"name": "B", "start": 1, "end": 20000},
+                            {"name": "B", "start": 1, "end": {domain_size}},
                             {"name": "C", "start": 1, "end": 250},
 {T_gen_non_k_attr_specs}
                         ],
-                        "num_tuples": 1000000
+                        "num_tuples": {num_relation_rows}
                     },
                      {
                         "name": "U",
@@ -143,14 +143,25 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--test_num", action="store", 
                         dest="test_num", required=True)                
-    parser.add_argument("-n", "--num_non_pk_attrs", action="store",
+    parser.add_argument("-j", "--num_join_rows", action="store",
+                        dest="num_join_rows", required=True)
+    parser.add_argument("-r", "--num_relation_rows", action="store",
+                    dest="num_relation_rows", required=True)                        
+    parser.add_argument("-c", "--num_non_pk_attrs", action="store",
                         dest="num_non_pk_attrs", required=True)                    
     args = parser.parse_args()
 
     num_non_pk_attrs = int(args.num_non_pk_attrs)
+    num_join_rows = int(args.num_join_rows)
+    num_relation_rows=  int(args.num_relation_rows)
+    degree = num_join_rows / num_relation_rows
+    domain_size = math.ceil(num_relation_rows / degree)
+
     test_num = args.test_num
 
     db_config_str = db_config_str.replace("{test_num}", str(test_num))
+    db_config_str = db_config_str.replace("{domain_size}", str(domain_size))
+    db_config_str = db_config_str.replace("{num_relation_rows}", str(num_relation_rows))
     relations = ["R", "S", "T", "U"]
     for relation_name in relations:
         str_gen_non_pk_attrs = str_generate_non_pk_atributes(relation_name, num_non_pk_attrs)
