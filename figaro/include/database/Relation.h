@@ -20,7 +20,9 @@ namespace Figaro
     class Relation
     {
         static constexpr char DELIMITER = ',';
+        static constexpr uint32_t NUM_COLS_REL = 250;
     public:
+        static constexpr uint32_t MAX_NUM_COLS = 4 * NUM_COLS_REL + 2;
         // By default we will map strings to int
         enum class AttributeType 
         {
@@ -28,7 +30,8 @@ namespace Figaro
         };
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
-        typedef std::vector<std::vector<double>> VectorOfVectorsT;
+        typedef std::array<double, MAX_NUM_COLS> RowTT;
+        typedef std::vector<RowTT> VectorOfVectorsT;
         /**
          * @struct Attribute 
          * 
@@ -62,6 +65,19 @@ namespace Figaro
                 strType = jsonAttributeInfo["type"];
                 m_type = mapStrTypeToType.at(strType);
             }
+
+            Attribute& operator=(const Attribute& other)
+            {
+                if (this != &other)
+                {
+                    m_name = other.m_name;
+                    m_type = other.m_type;
+                    m_isPrimaryKey = m_isPrimaryKey;
+                }
+                return *this; 
+            }
+
+            
 
             friend void swap(Attribute& attr1, Attribute& attr2)
             {
@@ -121,7 +137,7 @@ namespace Figaro
          */
         void getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const;
 
-        void schemaJoin(const Relation& relation);
+        void schemaJoin(const Relation& relation, bool swapAttributes = false);
 
     public:
         Relation(const Relation&) = delete;
@@ -153,6 +169,10 @@ namespace Figaro
 
         void getAttributeValuesCounts(const std::string& attributeName, 
             std::unordered_map<double, uint32_t>& htCnts) const;
+
+        void getRowPtrs(
+            const std::string& attrName,
+            std::unordered_map<double, const RowTT* >& htRowPts) const;
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
              std::vector<uint32_t>& vDistinctValuesRowPositions,

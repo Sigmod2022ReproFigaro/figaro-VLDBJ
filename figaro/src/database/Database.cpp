@@ -94,9 +94,9 @@ namespace Figaro
     {
         Relation& relation1= m_relations.at(vRelationNames[0]);
         Relation& relation2 = m_relations.at(vRelationNames[1]);
+        
         relation1.joinRelation(relation2, vJoinAttributeNames, swapAttributes);
     }
-
 
     
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)

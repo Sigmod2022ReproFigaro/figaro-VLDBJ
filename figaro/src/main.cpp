@@ -71,13 +71,13 @@ int main(int argc, char *argv[])
     FIGARO_LOG_BENCH("Figaro", "main", "sort R a", MICRO_BENCH_GET_TIMER_LAP(sort));
 
     MICRO_BENCH_START(sort)
-    database.sortRelation("S", {"A", "B"});
+    database.sortRelation("S", {"B", "A"});
     MICRO_BENCH_STOP(sort);
     FIGARO_LOG_BENCH("Figaro", "main", "sort S A B", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("S", "A");
 
     MICRO_BENCH_START(sort)
-    database.sortRelation("T", {"C", "B"});
+    database.sortRelation("T", {"B", "C"});
     MICRO_BENCH_STOP(sort);
     FIGARO_LOG_BENCH("Figaro", "main", "sort T C B", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("T", "C");
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
     FIGARO_LOG_DBG("Pass Join relations T U")
     MICRO_BENCH_STOP(main)
-    FIGARO_LOG_BENCH("Figaro", "main", "joinRelations", MICRO_BENCH_GET_TIMER_LAP(main));
+    FIGARO_LOG_BENCH("Figaro", "main", "joinRelations",  MICRO_BENCH_GET_TIMER_LAP(main));
     
     MICRO_BENCH_START(main)
     database.computeScaledCartesianProduct({"S", "T"}, "B");
@@ -114,7 +114,6 @@ int main(int argc, char *argv[])
     MICRO_BENCH_STOP(main)
     FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", MICRO_BENCH_GET_TIMER_LAP(main));
 
-    MICRO_BENCH_STOP(main)
     FIGARO_LOG_DBG("Pass Compute Householder ")
     FIGARO_LOG_INFO(R);
     FIGARO_LOG_DBG("PRECISION", precision)

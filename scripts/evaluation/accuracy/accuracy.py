@@ -27,7 +27,7 @@ def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: st
         for col_idx, figaro_col in enumerate(figaro_row):
             figaro_val = Decimal(figaro_col)
             comp_val = Decimal(comp_rows[row_idx][col_idx])
-            print("figaro_val ", figaro_val, " comp_val", comp_val)
+            #print("figaro_val ", figaro_val, " comp_val", comp_val)
             diff = figaro_val - comp_val
             abs_err += diff * diff
             abs_err_comp += comp_val * comp_val
@@ -35,10 +35,16 @@ def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: st
     comp_wb.save()
     
     errors_path = os.path.join(accuracy_path, "error.txt")
+    relative_frob_norm = (abs_err).sqrt() / abs_err_comp.sqrt()
     with open(errors_path, 'w') as file_errors:
         file_errors.write("Absolute error is: {}\n".format(abs_err.sqrt()))
         file_errors.write("Frobenius norm of comp is: {}\n".format(abs_err_comp.sqrt()))
-        file_errors.write("Relative error is: {}\n".format((abs_err).sqrt() / abs_err_comp.sqrt()))
+        file_errors.write("Relative error is: {}\n".format(relative_frob_norm))
+
+    if relative_frob_norm > precision:
+        print("ERROR{}".format(relative_frob_norm))
+    else:
+        print("Accuracy excellent")
 
 
 if __name__ == "__main__":

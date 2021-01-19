@@ -25,12 +25,13 @@ class AccuracyWorkbook:
         diff = abs(figaro_val - compet_val)
         diff_rel_figaro = 0 if figaro_val == 0 else abs(diff / figaro_val)
         diff_rel_op = 0 if compet_val == 0 else abs(diff / compet_val)
-        logging.info("""Differrence row: {} col: {} 
-                        figaro_val {} compet_val {} 
-                        diff {} diff_rel_figaro {} diff_rel_op {}""".
-                    format(row, col, figaro_val, compet_val, diff, 
-                    diff_rel_figaro, diff_rel_op))
-
+        
+        
+        #logging.info("""Differrence row: {} col: {} 
+        #                figaro_val {} compet_val {} 
+        #                diff {} diff_rel_figaro {} diff_rel_op {}""".
+        #            format(row, col, figaro_val, compet_val, diff, 
+        #            diff_rel_figaro, diff_rel_op))
         self.figaro_ws.cell(row, col).value = figaro_val
         self.comp_ws.cell(row, col).value = compet_val
         self.prec_ws.cell(row, col).value = diff

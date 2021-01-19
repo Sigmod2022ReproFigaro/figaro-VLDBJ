@@ -24,6 +24,21 @@
 
 #define FIGARO_LOG_ASSERT(ASSERT_CHECK) assert(ASSERT_CHECK)
 
+
+template<typename T, std::size_t N>
+std::ostream& operator<<(std::ostream& out, const std::array<T, N>& a)
+{   
+    out << "Array" << std::endl;
+    out << "Array dimensions " << a.size() << std::endl;
+    for (uint32_t idx = 0; idx < a.size(); idx ++)
+    {
+        out << a.at(idx) << ' ';
+    }
+    out << std::endl;
+    return out; 
+}
+
+
 template<typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
 {   
