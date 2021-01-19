@@ -4,7 +4,7 @@ function init_global_paths()
     FIGARO_LOG_PATH="$FIGARO_ROOT_PATH/log"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
     FIGARO_DUMP_PATH="$FIGARO_ROOT_PATH/dump"
-    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/database_specs.conf"
+    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test5/databases/database_specs6.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
 }

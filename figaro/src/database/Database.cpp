@@ -112,6 +112,8 @@ namespace Figaro
         MICRO_BENCH_INIT(compute)
         MICRO_BENCH_START(hash)
         MICRO_BENCH_INIT(extend)
+
+        #pragma omp parallel for schedule(static)
         for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
         {
             Relation* pRelation = aRelations[idxRel];
@@ -146,20 +148,6 @@ namespace Figaro
     {
         m_relations.at(relationName).applyEigenQR(pR);
     }
-    /*
-    void Database::swapAttributes(const std::string& relationName, const std::array<std::string, 2>& atributesSwap)
-    {
-        m_relations.at(relationName).swapAttributes(atributesSwap);
-    }
-    */
-
-    void Database::swapAttributes(const std::string& relationName, 
-            const std::array<std::vector<std::string>, 2>& attributesSwap)
-    {
-        m_relations.at(relationName).swapAttributes(attributesSwap);
-    }
-        
-
 
 }
 

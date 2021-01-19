@@ -20,7 +20,7 @@ namespace Figaro
     class Relation
     {
         static constexpr char DELIMITER = ',';
-        static constexpr uint32_t NUM_COLS_REL = 250;
+        static constexpr uint32_t NUM_COLS_REL = 40;
     public:
         static constexpr uint32_t MAX_NUM_COLS = 4 * NUM_COLS_REL + 2;
         // By default we will map strings to int
@@ -30,8 +30,8 @@ namespace Figaro
         };
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
-        typedef std::array<double, MAX_NUM_COLS> RowTT;
-        typedef std::vector<RowTT> VectorOfVectorsT;
+        typedef std::array<double, MAX_NUM_COLS> RowT;
+        typedef std::vector<RowT> VectorOfVectorsT;
         /**
          * @struct Attribute 
          * 
@@ -172,7 +172,7 @@ namespace Figaro
 
         void getRowPtrs(
             const std::string& attrName,
-            std::unordered_map<double, const RowTT* >& htRowPts) const;
+            std::unordered_map<double, const RowT* >& htRowPts) const;
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
              std::vector<uint32_t>& vDistinctValuesRowPositions,
@@ -263,8 +263,6 @@ namespace Figaro
         void computeTail(const std::string& attrName);
 
         void applyEigenQR(MatrixT* pR = nullptr);
-
-        void swapAttributes(const std::array<std::vector<std::string>, 2>& attributesSwap);
 
         friend std::ostream& operator<<(
             std::ostream& out, 
