@@ -22,7 +22,7 @@
 #include <iostream>
 #include <vector>
 
-#define FIGARO_LOG_ASSERT(ASSERT_CHECK) assert(ASSERT_CHECK)
+#define FIGARO_LOG_ASSERT(ASSERT_CHECK) assert(ASSERT_CHECK);
 
 
 template<typename T, std::size_t N>

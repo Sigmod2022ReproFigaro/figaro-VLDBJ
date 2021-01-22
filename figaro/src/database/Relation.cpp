@@ -284,10 +284,9 @@ namespace Figaro
                 tmpMatrix[rowIdx][colIdx] = vRowPts[rowIdx][colIdx];
             }
         }
-
         FIGARO_LOG_DBG("tmpMatrix", tmpMatrix);
         FIGARO_LOG_DBG("m_dataVectorOfVectors", m_dataVectorOfVectors);
-        tmpMatrix.transferOwnershipTo(m_dataVectorOfVectors);
+        m_dataVectorOfVectors = std::move(tmpMatrix);
         FIGARO_LOG_DBG("tmpMatrix", tmpMatrix);
         FIGARO_LOG_DBG("Relation: ", m_name);
         FIGARO_LOG_DBG(m_dataVectorOfVectors);

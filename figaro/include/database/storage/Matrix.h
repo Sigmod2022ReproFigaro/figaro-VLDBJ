@@ -9,29 +9,83 @@ namespace Figaro
     template <typename T>
     class Matrix 
     {
-        ArrayStorage<T> m_storage; 
         uint32_t m_numRows = 0, m_numCols = 0;
+        ArrayStorage<T>* m_pStorage = nullptr; 
+        void destroyData(void)
+        {
+            m_numRows = 0;
+            m_numCols = 0;
+            if (nullptr != m_pStorage)
+            {
+                delete m_pStorage;
+                m_pStorage = nullptr;
+            }
+        }
     public:
-        Matrix(uint32_t numRows, uint32_t numCols): m_numRows(numRows), m_numCols(numCols), m_storage(numRows * numCols)
-        {}
+        Matrix(uint32_t numRows, uint32_t numCols)
+        {
+            m_numRows = numRows;
+            m_numCols = numCols;
+            m_pStorage = new ArrayStorage<T>(numRows * numCols);
+        }
+
+        Matrix(const Matrix&) = delete;
+        Matrix& operator=(const Matrix&) = delete;
+        Matrix(Matrix&& other)
+        {
+            m_pStorage = other.m_pStorage;
+            m_numRows = other.m_numRows;
+            m_numCols = other.m_numCols;
+
+            other.m_pStorage = nullptr;
+            other.m_numCols = 0;
+            other.m_numRows = 0;
+        }
+        Matrix& operator=(Matrix&& other) 
+        {
+            if (this != &other)
+            {
+                destroyData();
+                m_pStorage = other.m_pStorage;
+                m_numRows = other.m_numRows;
+                m_numCols = other.m_numCols;
+
+                other.m_pStorage = nullptr;
+                other.m_numCols = 0;
+                other.m_numRows = 0;
+            }
+            return *this;
+        }
+
+        ~Matrix() 
+        {
+            destroyData();
+        }
 
         // No bound checks for colIdx. BE CAREFULL!!!
         T* operator[](uint32_t rowIdx)
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &m_storage[rowIdx * m_numCols];
+            return &(*m_pStorage)[rowIdx * m_numCols];
         }
 
         const T* operator[](uint32_t rowIdx) const
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &m_storage[rowIdx * m_numCols];
+            return &(*m_pStorage)[rowIdx * m_numCols];
         }
         
         // Changes the size of matrix while keeping the data. 
         void resize(uint32_t newNumRows)
         {
-            m_storage.resize(newNumRows * m_numCols);
+            if (nullptr == m_pStorage)
+            {
+                m_pStorage = new ArrayStorage<T>(newNumRows * m_numCols);
+            }
+            else
+            {
+                m_pStorage->resize(newNumRows * m_numCols);
+            }
             m_numRows = newNumRows;
         }
 
@@ -43,14 +97,6 @@ namespace Figaro
         uint32_t getNumCols(void) const
         {
             return m_numCols;
-        }
-
-        void transferOwnershipTo(Matrix<T>& m)
-        {
-            m = *this;
-            m_numCols = 0;
-            m_numCols = 0;
-            m_storage = ArrayStorage<T>(0);
         }
 
         friend std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
@@ -160,12 +206,14 @@ namespace Figaro
 
         RowIterator begin()
         {
-            return RowIterator(m_storage.getData(), m_numCols);
+            FIGARO_LOG_ASSERT(m_pStorage != nullptr)
+            return RowIterator(m_pStorage->getData(), m_numCols);
         }
 
         RowIterator end()
         {
-            return RowIterator(m_storage.getData() + m_storage.getSize(), m_numCols);    
+            FIGARO_LOG_ASSERT(m_pStorage != nullptr)
+            return RowIterator(m_pStorage->getData() + m_pStorage->getSize(), m_numCols);    
         }
     };
 
