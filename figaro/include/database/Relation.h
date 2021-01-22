@@ -2,6 +2,7 @@
 #define _FIGARO_RELATION_H_
 
 #include "utils/Utils.h"
+#include "database/storage/Matrix.h"
 #include <vector>
 #include <unordered_map>
 
@@ -20,7 +21,7 @@ namespace Figaro
     class Relation
     {
         static constexpr char DELIMITER = ',';
-        static constexpr uint32_t NUM_COLS_REL = 40;
+        static constexpr uint32_t NUM_COLS_REL = 4;
     public:
         static constexpr uint32_t MAX_NUM_COLS = 4 * NUM_COLS_REL + 2;
         // By default we will map strings to int
@@ -30,8 +31,10 @@ namespace Figaro
         };
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
-        typedef std::array<double, MAX_NUM_COLS> RowT;
-        typedef std::vector<RowT> VectorOfVectorsT;
+        //typedef std::array<double, MAX_NUM_COLS> RowT;
+        //typedef std::vector<RowT> VectorOfVectorsT;
+        typedef Figaro::Matrix<double> VectorOfVectorsT;
+
         /**
          * @struct Attribute 
          * 
@@ -93,8 +96,15 @@ namespace Figaro
         std::string m_dataPath;
         
         MatrixT m_data; 
+        MatrixT m_dataTails1;
+        MatrixT m_dataTails2;
+        MatrixT m_dataHead;
         VectorOfVectorsT m_dataVectorOfVectors;
-        Relation::GroupByT m_countAggregates;
+        GroupByT m_countAggregates;
+        uint32_t numHeads;
+        uint32_t numTails1;
+        uint32_t numTails2;
+        uint32_t rightNonPKs;
 
         void copyVectorOfVectorsToEigenData(void);
 
@@ -172,7 +182,7 @@ namespace Figaro
 
         void getRowPtrs(
             const std::string& attrName,
-            std::unordered_map<double, const RowT* >& htRowPts) const;
+            std::unordered_map<double, const double*>& htRowPts) const;
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
              std::vector<uint32_t>& vDistinctValuesRowPositions,

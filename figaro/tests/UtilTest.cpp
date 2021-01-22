@@ -2,14 +2,14 @@
 #include <iostream>
 #include <fstream>
 
-std::string getTestPath(uint32_t idx)
+std::string getConfigPath(uint32_t idx)
 {
-    return TEST_PATH + "test" + std::to_string(idx) + "/";
+    return CONFIG_PATH + "test" + std::to_string(idx) + "/";
 }
 
 std::string getDataPath(uint32_t idx)
 {
-    return TEST_PATH + "test" + std::to_string(idx) + "/data/";
+    return TEST_PATH + "test" + std::to_string(idx) + "/";
 }
 
 void readMatrixDense(const std::string& sPath, Figaro::MatrixT& rmA, char sep)
