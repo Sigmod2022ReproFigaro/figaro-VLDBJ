@@ -166,7 +166,8 @@ namespace Figaro
         FIGARO_LOG_DBG("After schema change", *this);
     }
 
-    Relation::Relation(json jsonRelationSchema): m_dataVectorOfVectors(0, MAX_NUM_COLS)
+    Relation::Relation(json jsonRelationSchema): m_dataVectorOfVectors(0, MAX_NUM_COLS), m_dataTails1(0, MAX_NUM_COLS), m_dataTails2(0, MAX_NUM_COLS),
+    m_dataHead(0, MAX_NUM_COLS)
     {
         m_name = jsonRelationSchema["name"];
         json jsonRelationAttribute = jsonRelationSchema["attributes"];
@@ -502,10 +503,11 @@ namespace Figaro
         std::unordered_map<double, const double*> hashTabRowPt2;
         uint32_t attrIdx;
         std::vector<uint32_t> vDistValRowPos1;
+        std::vector<uint32_t> vPkAttrIdxs1;
         std::vector<uint32_t> vNonPkAttrIdxs1;
         std::vector<uint32_t> vNonPkAttrIdxs2;
-        uint32_t numAttributes1;
-        uint32_t numAttributes2;
+        uint32_t numAttrs1;
+        uint32_t numAttrs2;
         uint32_t numPKAttrs1;
         uint32_t numPKAttrs2;
         uint32_t numNonPkAttrs2;
@@ -515,8 +517,8 @@ namespace Figaro
         const auto& joinAttributeNameTup = vJoinAttributeNames.at(0);
         std::string joinAttrName =  std::get<0>(joinAttributeNameTup);
 
-        numAttributes1 = m_attributes.size();
-        numAttributes2 = relation.m_attributes.size();
+        numAttrs1 = m_attributes.size();
+        numAttrs2 = relation.m_attributes.size();
         numNonPkAttrs2 = relation.getNumberOfNonPKAttributes();
         numPKAttrs1 = getNumberOfPKAttributes();
         numPKAttrs2 = relation.getNumberOfPKAttributes();
@@ -528,45 +530,56 @@ namespace Figaro
 
 
         getNonPKAttributeIdxs(vNonPkAttrIdxs1);
+        getPKAttributeIndices(vPkAttrIdxs1);
         relation.getNonPKAttributeIdxs(vNonPkAttrIdxs2);
         getDistinctValuesRowPositions(joinAttrName, vDistValRowPos1, false);
+        uint32_t pkOffset2 = relation.getNumberOfPKAttributes();
+        attrIdx = getAttributeIdx(joinAttrName);
+        relation.getRowPtrs(joinAttrName, hashTabRowPt2);
 
         schemaJoin(relation, bSwapAttributes);
+        Matrix<double> dataOutput {m_dataVectorOfVectors.getNumRows(), m_attributes.size()};
         m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_attributes.size());
-        uint32_t pkOffset2 = numAttributes2 - vNonPkAttrIdxs2.size();
-        attrIdx = getAttributeIdx(joinAttrName);
 
        
-       relation.getRowPtrs(joinAttrName, hashTabRowPt2);
        #pragma omp parallel for schedule(static)
        for (uint32_t rowIdx = 0; rowIdx < m_dataVectorOfVectors.getNumRows(); rowIdx++)
        {
             const double joinAttrVal = m_dataVectorOfVectors[rowIdx][attrIdx];
             const double* rowPtr2 = hashTabRowPt2[joinAttrVal];
+
+            // Copy Pks
+            for (auto pkIdx: vPkAttrIdxs1)
+            {
+                dataOutput[rowIdx][pkIdx] = m_dataVectorOfVectors[rowIdx][pkIdx];
+            }
+            // Copy non-pk attributes
             if (bSwapAttributes)
             {
-                // swaps non-pk values of first and second relation in a join.
-                for (int32_t nonPKIdx = vNonPkAttrIdxs1.size() - 1; nonPKIdx >= 0; nonPKIdx -- )
+                for (const auto nonPKAttrIdx1: vNonPkAttrIdxs1)
                 {
-                    uint32_t attrIdx1 = vNonPkAttrIdxs1[nonPKIdx];
-                    m_dataVectorOfVectors[rowIdx][attrIdx1 + numNonPkAttrs2] = m_dataVectorOfVectors[rowIdx][attrIdx1];
-                    FIGARO_LOG_DBG("attrIdx1 + numNonPkAttrs2", attrIdx1 + numNonPkAttrs2, "attrIdx1", attrIdx1)
+                    dataOutput[rowIdx][nonPKAttrIdx1 + numNonPkAttrs2] = m_dataVectorOfVectors[rowIdx][nonPKAttrIdx1];
+                    FIGARO_LOG_DBG("attrIdx1 + numNonPkAttrs2", nonPKAttrIdx1 + numNonPkAttrs2, "attrIdx1", nonPKAttrIdx1)
                 }
-                for (const uint32_t nonPKAttrIdx2: vNonPkAttrIdxs2)
+                for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
                 {
-                    m_dataVectorOfVectors[rowIdx][numPKAttrs1 - numPKAttrs2 + nonPKAttrIdx2] = (rowPtr2)[nonPKAttrIdx2];
-                    FIGARO_LOG_DBG("numPKAttrs1", numPKAttrs1, "numPKAttrs2", numPKAttrs2, "numPKAttrs1 - numAttributes2 + nonPKAttrIdx2", numPKAttrs1 - numPKAttrs2 + nonPKAttrIdx2, "nonPKAttrIdx2", nonPKAttrIdx2)
+                    dataOutput[rowIdx][numPKAttrs1 - numPKAttrs2 + nonPKAttrIdx2] = (rowPtr2)[nonPKAttrIdx2];
+                    FIGARO_LOG_DBG("numPKAttrs1", numPKAttrs1, "numPKAttrs2", numPKAttrs2, "numPKAttrs1 - numAttrs2 + nonPKAttrIdx2", numPKAttrs1 - numPKAttrs2 + nonPKAttrIdx2, "nonPKAttrIdx2", nonPKAttrIdx2)
                 }
             }
-            else
+            else 
             {
-                for (const uint32_t nonPKAttrIdx2: vNonPkAttrIdxs2)
+                for (const auto nonPKAttrIdx1: vNonPkAttrIdxs1)
                 {
-                    m_dataVectorOfVectors[rowIdx][numAttributes1 + nonPKAttrIdx2 - pkOffset2] = (rowPtr2)[nonPKAttrIdx2];
+                    dataOutput[rowIdx][nonPKAttrIdx1] = m_dataVectorOfVectors[rowIdx][nonPKAttrIdx1];
+                }
+                for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
+                {
+                    dataOutput[rowIdx][numAttrs1 + nonPKAttrIdx2 - numPKAttrs2] = (rowPtr2)[nonPKAttrIdx2];
                 }
             }
-            FIGARO_LOG_DBG("\n")
         }
+        m_dataVectorOfVectors = std::move(dataOutput);
         
         FIGARO_LOG_DBG("End of Join", *this)
     }
@@ -595,6 +608,7 @@ namespace Figaro
 
         getAttributeDistinctValues(attributeName, vDistinctValues);
         getDistinctValuesRowPositions(attributeName, vDistinctValuesRowPositions);
+        
         
         
         #pragma omp parallel for schedule(static)
@@ -656,6 +670,11 @@ namespace Figaro
         uint32_t appIdx;
         uint32_t tailIdx1 = 0;
         uint32_t tailIdx2 = 0;
+        uint32_t numHeads;
+        uint32_t numTails1;
+        uint32_t numTails2;
+        uint32_t rightNonPKs;
+
         
         colOffset = m_attributes.size();
         numNonPkAttrs = getNumberOfNonPKAttributes();
@@ -680,9 +699,10 @@ namespace Figaro
         // By definition there are no dangling tuples. 
         numTails1 = m_dataVectorOfVectors.getNumRows() - distValCnt;             
         numTails2 = relation.m_dataVectorOfVectors.getNumRows() - distValCnt;
-        m_dataTails1.resize(numTails1, getNumberOfNonPKAttributes());
-        m_dataTails2.resize(numTails2, relation.getNumberOfNonPKAttributes());
-        m_dataHead.resize(numHeads, m_attributes.size() + vNonPkAttrIdxsRel.size());
+        
+        VectorOfVectorsT headOutput(numHeads, m_attributes.size() + vNonPkAttrIdxsRel.size());
+        VectorOfVectorsT tailOutput1(numTails1, getNumberOfNonPKAttributes());
+        VectorOfVectorsT tailOutput2(numTails2, getNumberOfPKAttributes());
         schemaJoin(relation);
         
         for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
@@ -709,15 +729,14 @@ namespace Figaro
                 uint32_t colOffsetRel = nonPKAttrIdx - numPKAttrs;
                 //FIGARO_LOG_DBG("HeadRowIdx", headRowIdx, "colIdx", colOffset + colOffsetRel,
                 //"colOffsetRel", colOffsetRel);
-                m_dataHead(distCnt,   colOffsetRel)
-                = m_data(aHeadRowIdx[0], nonPKAttrIdx);
+                headOutput[distCnt][colOffsetRel] = m_data(aHeadRowIdx[0], nonPKAttrIdx);
             }
             for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
             {
                 uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
                 //FIGARO_LOG_DBG("HeadRowIdx", headRowIdx, "colIdx", colOffset + colOffsetRel,
                 //"colOffsetRel", colOffsetRel);
-                m_dataHead(distCnt,  numNonPkAttrs + colOffsetRel)
+                headOutput[distCnt][numNonPkAttrs + colOffsetRel]
                 = relation.m_data(aHeadRowIdx[1], nonPKAttrIdx);
             }
             
@@ -740,7 +759,7 @@ namespace Figaro
                 for (const auto  nonPKAttrIdx: vNonPkAttrIdxs)
                 {
                     uint32_t colOffset1 = nonPKAttrIdx - numPKAttrs;
-                    m_dataTails1(tailIdx1,  colOffset1)
+                    tailOutput1[tailIdx1][colOffset1]
                     = m_data(rowIdx, nonPKAttrIdx);
                 }
                 tailIdx1++;
@@ -752,7 +771,7 @@ namespace Figaro
                 for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
                 {
                     uint32_t colOffset2 = nonPKAttrIdx - numPKAttributesRel;
-                    m_dataTails2(tailIdx2,  colOffset2)
+                    tailOutput2[tailIdx2][colOffset2]
                     = relation.m_data(rowIdx, nonPKAttrIdx);
                 }
                 tailIdx2++;
@@ -797,26 +816,11 @@ namespace Figaro
         const auto& rHeads {m_dataHead};
         const auto& rTails1 {m_dataTails1};
         const auto& rTails2 {m_dataTails2};
-        FIGARO_LOG_BENCH("numHeads", numHeads);
         FIGARO_LOG_BENCH("numNonPKAttributes", numNonPKAttributes);
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "copying", MICRO_BENCH_GET_TIMER_LAP(timer));
         Eigen::HouseholderQR<MatrixT> qr{};
         // TODO: think how to avoid copy constructor. 
-        MICRO_BENCH_START(timer);
-        qr.compute(rTails1);
-        qr.compute(rTails2);
-        FIGARO_LOG_BENCH("rTails1 rows", rTails1.rows(), "rTails1 cols", rTails1.cols());
-        FIGARO_LOG_BENCH("rTails2 rows", rTails2.rows(), "rTails2 cols", rTails2.cols());
-        MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "computeTails ", MICRO_BENCH_GET_TIMER_LAP(timer));
-        MICRO_BENCH_START(timer);
-        qr.compute(rHeads);
-        FIGARO_LOG_BENCH("rHeads rows", rHeads.rows(), "rHeads cols", rHeads.cols());
-        MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "computeHeads", MICRO_BENCH_GET_TIMER_LAP(timer));
-        MICRO_BENCH_START(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "computeFull ", MICRO_BENCH_GET_TIMER_LAP(timer));
         MICRO_BENCH_START(timer);
         qr.compute(rVals);
         MICRO_BENCH_STOP(timer);

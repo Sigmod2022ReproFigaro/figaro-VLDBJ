@@ -96,15 +96,17 @@ namespace Figaro
         std::string m_dataPath;
         
         MatrixT m_data; 
-        MatrixT m_dataTails1;
-        MatrixT m_dataTails2;
-        MatrixT m_dataHead;
         VectorOfVectorsT m_dataVectorOfVectors;
+        
+        //MatrixT m_dataTails1;
+        //MatrixT m_dataTails2;
+        //MatrixT m_dataHead;
+
+        VectorOfVectorsT m_dataHead;
+        VectorOfVectorsT m_dataTails1;
+        VectorOfVectorsT m_dataTails2;
+
         GroupByT m_countAggregates;
-        uint32_t numHeads;
-        uint32_t numTails1;
-        uint32_t numTails2;
-        uint32_t rightNonPKs;
 
         void copyVectorOfVectorsToEigenData(void);
 

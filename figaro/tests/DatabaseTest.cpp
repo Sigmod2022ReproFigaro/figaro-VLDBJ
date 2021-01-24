@@ -132,12 +132,61 @@ TEST(Storage, MatrixIterator)
     EXPECT_EQ(rowIdx, 0);
 }
 
+TEST(Matrix, ApplyGivens)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double> matrix(NUM_ROWS, NUM_COLS);
+
+    matrix[0][0] = 1; matrix[0][1] = 2;
+    matrix[1][0] = 3; matrix[1][1] = 4;
+    matrix[2][0] = 4; matrix[2][1] = 3;
+
+    double upperVal = matrix[1][0];
+    double lowerVal = matrix[2][0];
+    double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
+    double cosTheta = upperVal / r;
+    double sinTheta = -lowerVal / r;
+
+    matrix.applyGivens(1, 2, sinTheta, cosTheta);
+
+    EXPECT_EQ(matrix[0][0], 1);
+    EXPECT_EQ(matrix[0][1], 2);
+
+    EXPECT_NEAR(matrix[1][0], 5, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrix[1][1], 4.8, GIVENS_TEST_PRECISION_ERROR);
+    
+    EXPECT_NEAR(matrix[2][0], 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrix[2][1], -1.4, GIVENS_TEST_PRECISION_ERROR);
+}
+
+TEST(Matrix, computeQRGivens)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double> matrix(NUM_ROWS, NUM_COLS);
+
+    matrix[0][0] = 1; matrix[0][1] = 2;
+    matrix[1][0] = 3; matrix[1][1] = 4;
+    matrix[2][0] = 4; matrix[2][1] = 3;
+
+    matrix.computeQRGivens();
+
+    EXPECT_NEAR(matrix[0][0], 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrix[0][1], 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrix[1][0], 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrix[1][1], 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+    
+    EXPECT_NEAR(matrix[2][0], 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrix[2][1], 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
 TEST(DatabaseConfig, BasicInput) {
     static const std::string DB_CONFIG_PATH = getConfigPath(1) + DB_CONFIG_PATH_IN;
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError = database.getInitializationErrorCode();
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
 }
+
 
 TEST(DatabaseConfig, PathQuery3) {
     static const std::string DB_CONFIG_PATH = getConfigPath(2) + DB_CONFIG_PATH_IN;

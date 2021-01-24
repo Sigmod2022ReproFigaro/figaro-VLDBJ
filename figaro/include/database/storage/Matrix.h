@@ -128,6 +128,38 @@ namespace Figaro
             return out;
         }
 
+        void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, double sin, double cos)
+        {
+            auto& matA = *this;
+            for (uint32_t colIdx = 0; colIdx < matA.m_numCols; colIdx++)
+            {
+                double tmpUpperVal = matA[rowIdxUpper][colIdx];
+                double tmpLowerVal = matA[rowIdxLower][colIdx];
+                matA[rowIdxUpper][colIdx] = cos * tmpUpperVal - sin * tmpLowerVal;
+                matA[rowIdxLower][colIdx] = sin * tmpUpperVal + cos * tmpLowerVal;
+            }
+        }
+
+        void computeQRGivens(void)
+        {
+            auto& matA = *this;
+            for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+            {
+                for (uint32_t rowIdx = m_numRows -1 ; rowIdx > colIdx; rowIdx--)
+                {
+                    double upperVal = matA[rowIdx - 1][colIdx];
+                    double lowerVal = matA[rowIdx][colIdx];
+                    double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
+                    if (r > 0.0)
+                    {
+                        double sinTheta = -lowerVal / r;
+                        double cosTheta = upperVal / r;
+                        applyGivens(rowIdx - 1, rowIdx, sinTheta, cosTheta);
+                    }
+                }
+            }
+        }
+
 
         class RowIterator
         {
