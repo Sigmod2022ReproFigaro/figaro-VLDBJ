@@ -166,8 +166,8 @@ namespace Figaro
         FIGARO_LOG_DBG("After schema change", *this);
     }
 
-    Relation::Relation(json jsonRelationSchema): m_dataVectorOfVectors(0, MAX_NUM_COLS), m_dataTails1(0, MAX_NUM_COLS), m_dataTails2(0, MAX_NUM_COLS),
-    m_dataHead(0, MAX_NUM_COLS)
+    Relation::Relation(json jsonRelationSchema): 
+        m_dataVectorOfVectors(0, 0), m_dataTails1(0, 0), m_dataTails2(0, 0), m_dataHead(0, 0)
     {
         m_name = jsonRelationSchema["name"];
         json jsonRelationAttribute = jsonRelationSchema["attributes"];
@@ -207,7 +207,8 @@ namespace Figaro
         cntLines = getNumberOfLines(m_dataPath);
         numAttributes = numberOfAttributes();
         m_data = Eigen::MatrixXd::Zero(cntLines, numAttributes);
-        m_dataVectorOfVectors.resize(cntLines);
+        
+        m_dataVectorOfVectors = std::move(Matrix<double>(cntLines, numAttributes));
         //for (auto& row: m_dataVectorOfVectors)
         //{
             //row.resize(numAttributes);
@@ -538,7 +539,7 @@ namespace Figaro
         relation.getRowPtrs(joinAttrName, hashTabRowPt2);
 
         schemaJoin(relation, bSwapAttributes);
-        Matrix<double> dataOutput {m_dataVectorOfVectors.getNumRows(), m_attributes.size()};
+        Matrix<double> dataOutput {m_dataVectorOfVectors.getNumRows(), (uint32_t)m_attributes.size()};
         m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_attributes.size());
 
        
@@ -722,8 +723,8 @@ namespace Figaro
                 aHeadRowIdx[idx] = avDistinctValuesRowPositions[idx][distCnt] + 1;
             }
             
-
-
+            // Appends computed heads from the second relation to the end of rows. 
+            // 
             for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
             {
                 uint32_t colOffsetRel = nonPKAttrIdx - numPKAttrs;
@@ -739,9 +740,6 @@ namespace Figaro
                 headOutput[distCnt][numNonPkAttrs + colOffsetRel]
                 = relation.m_data(aHeadRowIdx[1], nonPKAttrIdx);
             }
-            
-            // Appends computed heads from the second relation to the end of rows. 
-            // 
             for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
             {
                 uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;

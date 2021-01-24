@@ -21,9 +21,7 @@ namespace Figaro
     class Relation
     {
         static constexpr char DELIMITER = ',';
-        static constexpr uint32_t NUM_COLS_REL = 4;
     public:
-        static constexpr uint32_t MAX_NUM_COLS = 4 * NUM_COLS_REL + 2;
         // By default we will map strings to int
         enum class AttributeType 
         {
