@@ -70,6 +70,11 @@ namespace Figaro
             m_size = newSize;
             m_data = newData;
         }
+
+        void setToZeros(void)
+        {
+            memset(m_data, 0, sizeof(T) * m_size);
+        }
     };
 }
 

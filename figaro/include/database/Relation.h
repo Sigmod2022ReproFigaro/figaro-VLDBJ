@@ -96,10 +96,6 @@ namespace Figaro
         MatrixT m_data; 
         VectorOfVectorsT m_dataVectorOfVectors;
         
-        //MatrixT m_dataTails1;
-        //MatrixT m_dataTails2;
-        //MatrixT m_dataHead;
-
         VectorOfVectorsT m_dataHead;
         VectorOfVectorsT m_dataTails1;
         VectorOfVectorsT m_dataTails2;

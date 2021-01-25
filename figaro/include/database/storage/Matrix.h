@@ -99,6 +99,41 @@ namespace Figaro
             return m_numCols;
         }
 
+
+        Matrix<T> getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd, 
+                        uint32_t colIdxBegin, uint32_t colIdxEnd) const
+        {
+            Matrix<T> tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
+            for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
+            {
+                for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
+                {
+                    tmp[rowIdx - rowIdxBegin][colIdx - colIdxBegin] = (*this)[rowIdx][colIdx];
+                }
+            }
+            return tmp;
+        }
+
+        Matrix<T> getRightCols(uint32_t numCols) const 
+        {
+            return getBlock(0, m_numRows - 1, m_numCols - numCols, m_numCols - 1);  
+        }
+
+        Matrix<T> getLeftCols(uint32_t numCols) const
+        {
+            return getBlock(0, m_numRows - 1, 0, numCols - 1);  
+        }
+
+        Matrix<T> getTopRows(uint32_t numRows) const 
+        {
+            return getBlock(0, numRows - 1, 0, m_numCols - 1);  
+        }
+
+        Matrix<T> getBottomRows(uint32_t numRows) const 
+        {
+            return getBlock(m_numRows - numRows, m_numRows - 1, 0, m_numCols - 1);  
+        }
+
         friend std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
         {
             out << "Figaro matrix" << std::endl;
@@ -128,6 +163,103 @@ namespace Figaro
             return out;
         }
 
+        static Matrix<T> zeros(uint32_t numRows, uint32_t numCols)
+        {
+            Matrix<T> m(numRows, numCols);
+            m.m_pStorage->setToZeros();
+            return m;
+        }
+
+        // TODO: parallelization
+
+
+        Matrix<T> concatenateHorizontally(const Matrix<T>& m) const
+        {
+            FIGARO_LOG_ASSERT(getNumRows() == m.getNumRows());
+            Matrix<T> tmp(m_numRows, m_numCols + m.m_numCols);
+            auto& thisRef = *this;
+
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                }
+                for (uint32_t colIdx = 0; colIdx < m.m_numCols; colIdx++)
+                {
+                    tmp[rowIdx][m_numCols + colIdx] = m[rowIdx][colIdx];
+                }
+            } 
+            return tmp;   
+        }
+
+        Matrix<T> concatenateVertically(const Matrix<T>& m) const
+        {
+            FIGARO_LOG_ASSERT(m_numCols == m.m_numCols);
+            Matrix<T> tmp(m_numRows + m.m_numRows, m_numCols);
+            auto& thisRef = *this;
+
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                }
+            } 
+
+            for (uint32_t rowIdx = 0; rowIdx < m.m_numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    tmp[rowIdx + m_numRows][colIdx] = m[rowIdx][colIdx];
+                }
+            } 
+            return tmp;
+        }
+
+        Matrix<T> concatenateHorizontallyScalar(T scalar, uint32_t numCols) const
+        {
+            Matrix<T> tmp(m_numRows, m_numCols + numCols);
+            auto& thisRef = *this;
+
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                }
+                for (uint32_t colIdx = 0; colIdx < numCols; colIdx++)
+                {
+                    tmp[rowIdx][m_numCols + colIdx] = scalar;
+                }
+            } 
+            return tmp;   
+        }
+
+        Matrix<T> concatenateVerticallyScalar(T scalar, uint32_t numRows) const
+        {
+            Matrix<T> tmp(m_numRows + numRows, m_numCols);
+            auto& thisRef = *this;
+
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                }
+            } 
+
+            for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    tmp[rowIdx + m_numRows][colIdx] = scalar;
+                }
+            } 
+            return tmp;
+        }
+
+        
         void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, double sin, double cos)
         {
             auto& matA = *this;
