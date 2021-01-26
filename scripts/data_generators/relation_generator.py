@@ -67,7 +67,7 @@ class RelationGenerator:
             domain = list(set(domain_full) & set(domain_range))
             if (attr_domain["name"] in self.setPks):
                 domains.append(domain)
-
+        #Think how to generate list only of PKs and later to 
         all_tuples_in_domain = [list(tup) for tup in it.product(*domains)]
         random.shuffle(all_tuples_in_domain)
         generated_tuples = all_tuples_in_domain[:rel_specs.num_tuples]   

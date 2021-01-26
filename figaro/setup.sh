@@ -71,7 +71,7 @@ function main()
     make -j8
     case "${FIGARO_TEST_MODE}" in
     "DEBUG")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
         ;;
     "DUMP")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_path "${FIGARO_DUMP_PATH}" \

@@ -148,6 +148,16 @@ class DatabasePsql:
         cursor.close()
 
 
+    def get_join_size(self) -> int:
+        sql_join_count = "SELECT COUNT(*) FROM join_table;"
+        logging.debug(sql_join_count)
+        cursor = self.connection.cursor()
+        cursor.execute(sql_join_count)
+        join_size = cursor.fetchone()
+        cursor.close()
+        return join_size
+
+
     def dump_join(self, relations, output_file_path):
         non_pk_attribute_names = DatabasePsql.get_non_pk_order_of_attributes(relations)
         cursor = self.connection.cursor()

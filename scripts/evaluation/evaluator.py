@@ -9,7 +9,7 @@ from evaluation.system_test_figaro import SystemTestFigaro
 from evaluation.system_test_psql import SystemTestPsql
 from evaluation.system_test_python import SystemTestPython
 from data_management.database import Database
-    
+from evaluation.custom_logging import init_logging
 class SystemTestsEvaluator:
     map_category_to_class = {
         'psql': SystemTestPsql, 'python': SystemTestPython,
@@ -117,25 +117,6 @@ def eval_tests(password: str, test_conf_path: str):
     system_tests_evaluator.eval_tests()
 
 
-def init_logging():
-    formatter_str = '-- %(levelname)5s -- [%(filename)20s:%(lineno)3s - %(funcName)20s()] %(message)s'
-    formatter = logging.Formatter(formatter_str)
-
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setFormatter(formatter)
-    stdout_handler.setLevel(logging.INFO)
-    
-    file_handler = logging.FileHandler('log.txt', mode='w')
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)
-    
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-    root.addHandler(stdout_handler)
-    root.addHandler(file_handler)
-
-
-
 def get_all_test_specs_paths(test_num):
     test_conf_paths = []
     test_specs_dir = "/home/popina/Figaro/figaro-code/system_tests/"
@@ -151,8 +132,6 @@ def get_all_test_specs_paths(test_num):
     return test_conf_paths
 
 
-
-    
 if __name__ == "__main__":
     ROOT_PATH = "/home/popina/Figaro/figaro-code"
 

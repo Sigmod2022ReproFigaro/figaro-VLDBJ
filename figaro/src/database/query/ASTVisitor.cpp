@@ -4,8 +4,8 @@ namespace Figaro
 {
     void ASTVisitor::visitNodeRelation(ASTNodeRelation *pNodeRelation)
     {
-        MatrixT* pHead = pNodeRelation->computeHead(m_pDatabase);
-        MatrixT* pTail = pNodeRelation->computeTail(m_pDatabase);
+        MatrixEigenT* pHead = pNodeRelation->computeHead(m_pDatabase);
+        MatrixEigenT* pTail = pNodeRelation->computeTail(m_pDatabase);
     }
 
     void ASTVisitor::visitNodeJoin(ASTNodeJoin *pElement)

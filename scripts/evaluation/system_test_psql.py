@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import logging
 import subprocess
 import os
 import json
@@ -9,7 +10,7 @@ from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from data_management.database_psql import JOIN_TABLE_NAME
 from evaluation.system_test_dbms import SystemTestDBMS
-
+from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler
 class SystemTestPsql(SystemTestDBMS):
     def __init__(self, path_log: str, path_dump: str, 
             perf_conf: PerformanceConf, accur_conf: AccuracyConf, 
@@ -24,14 +25,22 @@ class SystemTestPsql(SystemTestDBMS):
 
 
     def eval(self):
+        log_file_path = os.path.join(self.path_log, "log.txt")
+        file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
+
         database_psql = DatabasePsql(host_name="",user_name="popina", 
         password=self.password, database_name=self.database.name)
         database_psql.drop_database()
         database_psql.create_database(self.database)
         
         database_psql.evaluate_join(self.database.get_relations())
+        join_size = database_psql.get_join_size()
+        logging.info("Number of rows is {}".format(join_size))
         database_psql.dump_join(self.database.get_relations(), 
                                 self.join_path)
+
+        remove_logging_file_handler(file_handler)
+        
 
 
     def run_debug(self):

@@ -93,15 +93,13 @@ namespace Figaro
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
         
-        MatrixDT m_dataVectorOfVectors;
+        MatrixDT m_data;
         
         MatrixDT m_dataHead;
         MatrixDT m_dataTails1;
         MatrixDT m_dataTails2;
 
         GroupByT m_countAggregates;
-
-        void copyVectorOfVectorsToEigenData(void);
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
@@ -193,7 +191,7 @@ namespace Figaro
         ErrorCode loadData(void);
 
         /**
-         * Sorts the data stored in @p m_dataVectorOfVectors in ascending 
+         * Sorts the data stored in @p m_data in ascending 
          * order of PKs. For now, we assume PKs are leading attributes in
          * the relation schema. 
          */

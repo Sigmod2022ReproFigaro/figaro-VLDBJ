@@ -8,6 +8,7 @@ from data_generators.relation_generator import RelationGenerator
 from  typing import List
 from  typing import Tuple
 import pandas as pd
+from timeit import default_timer as timer
 
 class DatabaseGenerator:
     def __init__(self, generate_specs_path, database):
@@ -59,18 +60,29 @@ class DatabaseGenerator:
         for rel_idx, relation_generator in enumerate(self.relation_generators):
             relation_gen_spec = self.relation_gen_specs[rel_idx]
             relation = database.get_relation(relation_generator.name) 
+            
             if prev_gen_rel is not None:
                 for attr_name in prev_rel.get_pk_attribute_names():
                     full_domain = prev_gen_rel[attr_name].unique()
                     print(attr_name, full_domain)
                     relation_gen_spec.add_full_domain(attr_name, full_domain)
                 print()
+            
+            
             print(rel_idx, relation_gen_spec)
+            start = timer()
             prev_gen_rel = relation_generator.generate(relation_gen_spec, dump=False)
+            end = timer()
+            print("TIme for generation {}".format(end - start))
+            
+            start = timer()
             rel_data_tuples.append( (relation, prev_gen_rel) )
+            end = timer()
+            print("TIme for appending {}".format(end - start))
             prev_rel = relation
         
         rel_data_tuples.reverse()
+        print("removing dangling tuples")
         self.remove_dangling_tuples(rel_data_tuples)
         rel_data_tuples.reverse()
         for rel_idx, relation_generator in enumerate(self.relation_generators):
