@@ -39,11 +39,11 @@ namespace Figaro
         void joinRelations(std::vector<std::string> vRelationNames,
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
         
-        MatrixT* computeHead(const std::string& relationName);
+        MatrixEigenT* computeHead(const std::string& relationName);
 
-        MatrixT* computeHead(const std::string& relName, const std::string& attrName);
+        MatrixEigenT* computeHead(const std::string& relName, const std::string& attrName);
 
-        MatrixT* computeTail(const std::string& relationName);
+        MatrixEigenT* computeTail(const std::string& relationName);
 
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);
@@ -51,7 +51,7 @@ namespace Figaro
         void computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, 
                         const std::string& attrIterName);
 
-        void computeQRDecompositionHouseholder(const std::string& relationName, MatrixT* pR = nullptr);
+        void computeQRDecompositionHouseholder(const std::string& relationName, MatrixEigenT* pR = nullptr);
     };
 }
 #endif 

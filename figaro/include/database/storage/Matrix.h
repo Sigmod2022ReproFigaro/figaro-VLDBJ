@@ -15,11 +15,14 @@ namespace Figaro
         {
             m_numRows = 0;
             m_numCols = 0;
+            FIGARO_LOG_DBG("Tried destroying data");
             if (nullptr != m_pStorage)
             {
+                FIGARO_LOG_DBG("Not nullptr", m_pStorage)
                 delete m_pStorage;
                 m_pStorage = nullptr;
             }
+            FIGARO_LOG_DBG("Destroyed data");
         }
     public:
         Matrix(uint32_t numRows, uint32_t numCols)
@@ -33,6 +36,7 @@ namespace Figaro
         Matrix& operator=(const Matrix&) = delete;
         Matrix(Matrix&& other)
         {
+            FIGARO_LOG_DBG("Entered move constructor")
             m_pStorage = other.m_pStorage;
             m_numRows = other.m_numRows;
             m_numCols = other.m_numCols;
@@ -40,9 +44,11 @@ namespace Figaro
             other.m_pStorage = nullptr;
             other.m_numCols = 0;
             other.m_numRows = 0;
+            FIGARO_LOG_DBG("Finished move constructor")
         }
         Matrix& operator=(Matrix&& other) 
         {
+            FIGARO_LOG_DBG("Entered move assignment")
             if (this != &other)
             {
                 destroyData();
@@ -54,6 +60,7 @@ namespace Figaro
                 other.m_numCols = 0;
                 other.m_numRows = 0;
             }
+            FIGARO_LOG_DBG("Finished move assignment")
             return *this;
         }
 
@@ -166,7 +173,9 @@ namespace Figaro
         static Matrix<T> zeros(uint32_t numRows, uint32_t numCols)
         {
             Matrix<T> m(numRows, numCols);
+            FIGARO_LOG_DBG("Entered zeros")
             m.m_pStorage->setToZeros();
+            FIGARO_LOG_DBG("Exited zeros")
             return m;
         }
 
@@ -179,6 +188,7 @@ namespace Figaro
             Matrix<T> tmp(m_numRows, m_numCols + m.m_numCols);
             auto& thisRef = *this;
 
+            FIGARO_LOG_DBG("Entered concatenateHorizontally")
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
@@ -190,6 +200,7 @@ namespace Figaro
                     tmp[rowIdx][m_numCols + colIdx] = m[rowIdx][colIdx];
                 }
             } 
+            FIGARO_LOG_DBG("Exited concatenateHorizontally")
             return tmp;   
         }
 
@@ -222,6 +233,7 @@ namespace Figaro
             Matrix<T> tmp(m_numRows, m_numCols + numCols);
             auto& thisRef = *this;
 
+            FIGARO_LOG_DBG("Entered concatenateHorizontallyScalar")
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
@@ -233,6 +245,7 @@ namespace Figaro
                     tmp[rowIdx][m_numCols + colIdx] = scalar;
                 }
             } 
+            FIGARO_LOG_DBG("FInished concatenateHorizontallyScalar")
             return tmp;   
         }
 

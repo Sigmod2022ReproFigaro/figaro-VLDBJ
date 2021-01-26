@@ -10,12 +10,12 @@ namespace Figaro
         pVisitor->visitNodeRelation(this);
     }
 
-    MatrixT* ASTNodeRelation::computeHead(Database* pDatabase) const
+    MatrixEigenT* ASTNodeRelation::computeHead(Database* pDatabase) const
     {
         return pDatabase->computeHead(m_relationName);
     }
 
-    MatrixT* ASTNodeRelation::computeTail(Database* pDatabase) const
+    MatrixEigenT* ASTNodeRelation::computeTail(Database* pDatabase) const
     {
         return pDatabase->computeTail(m_relationName);
     }

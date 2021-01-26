@@ -30,8 +30,8 @@ namespace Figaro
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
         //typedef std::array<double, MAX_NUM_COLS> RowT;
-        //typedef std::vector<RowT> VectorOfVectorsT;
-        typedef Figaro::Matrix<double> VectorOfVectorsT;
+        //typedef std::vector<RowT> MatrixDT;
+        typedef Figaro::Matrix<double> MatrixDT;
 
         /**
          * @struct Attribute 
@@ -93,12 +93,11 @@ namespace Figaro
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
         
-        MatrixT m_data; 
-        VectorOfVectorsT m_dataVectorOfVectors;
+        MatrixDT m_dataVectorOfVectors;
         
-        VectorOfVectorsT m_dataHead;
-        VectorOfVectorsT m_dataTails1;
-        VectorOfVectorsT m_dataTails2;
+        MatrixDT m_dataHead;
+        MatrixDT m_dataTails1;
+        MatrixDT m_dataTails2;
 
         GroupByT m_countAggregates;
 
@@ -268,7 +267,7 @@ namespace Figaro
 
         void computeTail(const std::string& attrName);
 
-        void applyEigenQR(MatrixT* pR = nullptr);
+        void applyEigenQR(MatrixEigenT* pR = nullptr);
 
         friend std::ostream& operator<<(
             std::ostream& out, 

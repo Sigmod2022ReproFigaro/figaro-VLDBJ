@@ -14,7 +14,7 @@ constexpr double GIVENS_TEST_PRECISION_ERROR = 1e-15;
 
 std::string getConfigPath(uint32_t idx);
 std::string getDataPath(uint32_t idx);
-void readMatrixDense(const std::string& sPath, Figaro::MatrixT& rmA, char sep = ',');
-void compareMatrices(Figaro::MatrixT& R, Figaro::MatrixT& expR, bool cmpRowNum=true, bool cmpColNum=true);
+void readMatrixDense(const std::string& sPath, Figaro::MatrixEigenT& rmA, char sep = ',');
+void compareMatrices(Figaro::MatrixEigenT& R, Figaro::MatrixEigenT& expR, bool cmpRowNum=true, bool cmpColNum=true);
 
 #endif

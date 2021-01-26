@@ -10,22 +10,6 @@
 #include <omp.h>
 namespace Figaro
 {
-    void Relation::copyVectorOfVectorsToEigenData(void)
-    {
-        MICRO_BENCH_INIT(copy);
-        MICRO_BENCH_START(copy);
-        for (uint32_t row = 0; row < m_dataVectorOfVectors.getNumRows(); row ++)
-        {
-            for (uint32_t col = 0; col < m_attributes.size(); col ++)
-            {
-                m_data(row, col) =  m_dataVectorOfVectors[row][col]; 
-            }
-        }
-        MICRO_BENCH_STOP(copy);
-        FIGARO_LOG_BENCH("Figaro", "main", "copyVectorOfVectorsToEigenData", MICRO_BENCH_GET_TIMER(copy));
-
-    }
-
     uint32_t Relation::getAttributeIdx(const std::string& attributeName) const
     {
         for (uint32_t idx = 0; idx < m_attributes.size(); idx ++)
@@ -206,13 +190,8 @@ namespace Figaro
 
         cntLines = getNumberOfLines(m_dataPath);
         numAttributes = numberOfAttributes();
-        m_data = Eigen::MatrixXd::Zero(cntLines, numAttributes);
         
         m_dataVectorOfVectors = std::move(Matrix<double>(cntLines, numAttributes));
-        //for (auto& row: m_dataVectorOfVectors)
-        //{
-            //row.resize(numAttributes);
-        //}
         
 
         // TODO: If there is time, write regex that will parse files based on the attributes type. 
@@ -232,11 +211,10 @@ namespace Figaro
             {
                 std::getline(strStream, strVal, DELIMITER);
                 double val = std::stod(strVal);
-                m_data(row, col) =  val; 
                 m_dataVectorOfVectors[row][col] = val;
             }
         }
-        FIGARO_LOG_DBG("m_data", m_data);
+        FIGARO_LOG_DBG("m_dataVectorOfVectors", m_dataVectorOfVectors);
         return ErrorCode::NO_ERROR;
     }
 
@@ -255,7 +233,7 @@ namespace Figaro
         std::vector<uint32_t> vAttributesIdxs;
         uint32_t numRows = m_dataVectorOfVectors.getNumRows();
         uint32_t numCols = m_dataVectorOfVectors.getNumCols();
-        VectorOfVectorsT tmpMatrix(numRows, numCols);
+        MatrixDT tmpMatrix(numRows, numCols);
         getAttributesIdxs(vAttributeNames, vAttributesIdxs);
 
         std::vector<double*> vRowPts(numRows);
@@ -431,7 +409,7 @@ namespace Figaro
         }
     }
 
-    static void storeUniqueAndLimits(MatrixT mat, uint32_t colIdx, 
+    static void storeUniqueAndLimits(MatrixEigenT mat, uint32_t colIdx, 
             std::vector<double>& vDistinctVals, std::vector<uint32_t>& vLimitEnds)
     {
         double prevAttrVal = std::numeric_limits<double>::max();
@@ -540,7 +518,6 @@ namespace Figaro
 
         schemaJoin(relation, bSwapAttributes);
         Matrix<double> dataOutput {m_dataVectorOfVectors.getNumRows(), (uint32_t)m_attributes.size()};
-        m_data.conservativeResize(Eigen::NoChange_t::NoChange, m_attributes.size());
 
        
        #pragma omp parallel for schedule(static)
@@ -649,7 +626,6 @@ namespace Figaro
         }
         MICRO_BENCH_STOP(aggregates)
          FIGARO_LOG_BENCH("Figaro", "main", "aggregates", MICRO_BENCH_GET_TIMER(aggregates));
-        copyVectorOfVectorsToEigenData();
         FIGARO_LOG_INFO(*this);
     }
     
@@ -692,28 +668,20 @@ namespace Figaro
                 attrIterName, avDistinctValuesRowPositions[idxRel], false);
         }
         distValCnt = avDistinctValuesRowPositions[1].size() - 1; 
-        addRowsCnt = relation.m_data.rows() - distValCnt; 
+        addRowsCnt = relation.m_dataVectorOfVectors.getNumRows() - distValCnt; 
 
-        m_data.conservativeResize(m_data.rows() + addRowsCnt, 
-            m_attributes.size() + vNonPkAttrIdxsRel.size());
         numHeads = distValCnt;
         // By definition there are no dangling tuples. 
         numTails1 = m_dataVectorOfVectors.getNumRows() - distValCnt;             
         numTails2 = relation.m_dataVectorOfVectors.getNumRows() - distValCnt;
         
-        VectorOfVectorsT headOutput(numHeads, vNonPkAttrIdxs.size() + vNonPkAttrIdxsRel.size());
-        VectorOfVectorsT tailOutput1(numTails1, getNumberOfNonPKAttributes());
-        VectorOfVectorsT tailOutput2(numTails2, getNumberOfPKAttributes());
+        MatrixDT headOutput(numHeads, vNonPkAttrIdxs.size() + vNonPkAttrIdxsRel.size());
+        MatrixDT tailOutput1(numTails1, getNumberOfNonPKAttributes());
+        MatrixDT tailOutput2(numTails2, relation.getNumberOfNonPKAttributes());
         schemaJoin(relation);
         
-
-        for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
-        {
-            uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
-            m_data.col(colOffset + colOffsetRel).setZero();
-        }
-
-        // TODO: Set heads of the first relation to zero.
+        // TODO: Change m_data to m_vectorofVectors
+        // TODO: Remove m_data as Eigen matrix completely. 
 
         //#pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < distValCnt; distCnt ++)
@@ -730,29 +698,14 @@ namespace Figaro
             for (const auto  nonPKAttrIdx: vNonPkAttrIdxs)
             {
                 uint32_t colOffsetRel = nonPKAttrIdx - numPKAttrs;
-                //FIGARO_LOG_DBG("HeadRowIdx", headRowIdx, "colIdx", colOffset + colOffsetRel,
-                //"colOffsetRel", colOffsetRel);
-                headOutput[distCnt][colOffsetRel] = m_data(aHeadRowIdx[0], nonPKAttrIdx);
+                headOutput[distCnt][colOffsetRel] = m_dataVectorOfVectors[aHeadRowIdx[0]][ nonPKAttrIdx];
             }
-            //FIGARO_LOG_DBG("headOutput", headOutput)
             for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
             {
                 uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
-                //FIGARO_LOG_DBG("HeadRowIdx", headRowIdx, "colIdx", colOffset + colOffsetRel,
-                //"colOffsetRel", colOffsetRel);
                 headOutput[distCnt][numNonPkAttrs + colOffsetRel]
-                = relation.m_data(aHeadRowIdx[1], nonPKAttrIdx);
+                = relation.m_dataVectorOfVectors[aHeadRowIdx[1]][nonPKAttrIdx];
             }
-            //FIGARO_LOG_DBG("headOutput", headOutput)
-            for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
-            {
-                uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
-                //FIGARO_LOG_DBG("HeadRowIdx", headRowIdx, "colIdx", colOffset + colOffsetRel,
-                //"colOffsetRel", colOffsetRel);
-                m_data(aHeadRowIdx[0], colOffset + colOffsetRel)
-                = relation.m_data(aHeadRowIdx[1], nonPKAttrIdx);
-            }
-            
 
             // Copies tails to the end. 
             precNextRowIdx = avDistinctValuesRowPositions[0][distCnt+1];
@@ -762,7 +715,7 @@ namespace Figaro
                 {
                     uint32_t colOffset1 = nonPKAttrIdx - numPKAttrs;
                     tailOutput1[tailIdx1][colOffset1]
-                    = m_data(rowIdx, nonPKAttrIdx);
+                    = m_dataVectorOfVectors[rowIdx][nonPKAttrIdx];
                 }
                 tailIdx1++;
             }
@@ -774,27 +727,10 @@ namespace Figaro
                 {
                     uint32_t colOffset2 = nonPKAttrIdx - numPKAttributesRel;
                     tailOutput2[tailIdx2][colOffset2]
-                    = relation.m_data(rowIdx, nonPKAttrIdx);
+                    = relation.m_dataVectorOfVectors[rowIdx][nonPKAttrIdx];
                 }
                 tailIdx2++;
             }
-            
-            // Appends computed tails from the second relation to the end of 
-            // the first relation. 
-            // 
-            precNextRowIdx = avDistinctValuesRowPositions[1][distCnt+1];
-            for (uint32_t rowIdx = aHeadRowIdx[1] + 1; rowIdx <= precNextRowIdx; rowIdx++ )
-            {
-                m_data.row(appIdx).setZero();
-                for (const auto  nonPKAttrIdx: vNonPkAttrIdxsRel)
-                {
-                    uint32_t colOffsetRel = nonPKAttrIdx - numPKAttributesRel;
-                    m_data(appIdx, colOffset  + colOffsetRel)
-                    = relation.m_data(rowIdx, nonPKAttrIdx);
-                }
-                appIdx++;
-            }
-            
         }
         FIGARO_LOG_INFO("After extend", *this);
         m_dataHead = std::move(headOutput);
@@ -802,7 +738,7 @@ namespace Figaro
         m_dataTails2 = std::move(tailOutput2);
     }
 
-    static void makeDiagonalElementsPositiveInR(MatrixT& matR)
+    static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR)
     {
         ArrayT&& aDiag = matR.diagonal().array().sign();
         for (uint32_t rowIdx = 0; rowIdx < matR.cols(); rowIdx ++)
@@ -811,7 +747,7 @@ namespace Figaro
         }
     }
 
-    static void copyMatrixToEigenMatrix(const Figaro::Relation::VectorOfVectorsT& mOur, MatrixT& mEig)
+    static void copyMatrixToEigenMatrix(const Figaro::Relation::MatrixDT& mOur, MatrixEigenT& mEig)
     {
         mEig.resize(mOur.getNumRows(), mOur.getNumCols());
         for (uint32_t rowIdx = 0; rowIdx < mOur.getNumRows(); rowIdx++)
@@ -823,44 +759,46 @@ namespace Figaro
         }
     }
 
-    void Relation::applyEigenQR(MatrixT* pR)
+    void Relation::applyEigenQR(MatrixEigenT* pR)
     {
         MICRO_BENCH_INIT(timer);
         uint32_t numNonPKAttributes = getNumberOfNonPKAttributes();
         MICRO_BENCH_START(timer);
-        const auto& rVals { m_data.rightCols(numNonPKAttributes)};
         FIGARO_LOG_BENCH("numNonPKAttributes", numNonPKAttributes);
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "copying", MICRO_BENCH_GET_TIMER_LAP(timer));
-        Eigen::HouseholderQR<MatrixT> qr{};
-        FIGARO_LOG_DBG("m_dataHeadBefore", m_dataHead)
+        Eigen::HouseholderQR<MatrixEigenT> qr{};
+        MatrixEigenT matEigen;
+
+        MICRO_BENCH_START(timer);
         m_dataHead.computeQRGivens();
-        FIGARO_LOG_DBG("m_dataHeadAfter", m_dataHead)
-        FIGARO_LOG_DBG("m_dataTails1Before", m_dataTails1)
-        FIGARO_LOG_DBG("m_dataTails2Before", m_dataTails2)
         m_dataTails1.computeQRGivens();
         m_dataTails2.computeQRGivens();
-        FIGARO_LOG_DBG("m_dataTails1After", m_dataTails1)
-        FIGARO_LOG_DBG("m_dataTails2After", m_dataTails2)
+        MICRO_BENCH_STOP(timer);
+        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
+
+        MICRO_BENCH_START(timer);
         m_dataHead.resize(m_dataHead.getNumCols());
         m_dataTails1.resize(m_dataTails1.getNumCols()); 
         m_dataTails2.resize(m_dataTails2.getNumCols());
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        FIGARO_LOG_DBG("m_dataTails1", m_dataTails1)
-        FIGARO_LOG_DBG("m_dataTails2", m_dataTails2)
+        MICRO_BENCH_STOP(timer);
+        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "resize", MICRO_BENCH_GET_TIMER_LAP(timer));
 
+        MICRO_BENCH_START(timer);
         m_dataTails1 = m_dataTails1.concatenateHorizontallyScalar(0, m_dataHead.getNumCols() - m_dataTails1.getNumCols());
         m_dataTails2 = Matrix<double>::zeros(m_dataTails2.getNumRows(), m_dataHead.getNumCols() - m_dataTails2.getNumCols()).concatenateHorizontally(m_dataTails2);
-        FIGARO_LOG_DBG("m_dataTails1", m_dataTails1)
-        FIGARO_LOG_DBG("m_dataTails2", m_dataTails2)
         auto&& m_dataFull = m_dataHead.concatenateVertically(m_dataTails1).concatenateVertically(m_dataTails2);
-        FIGARO_LOG_DBG("m_dataFull", m_dataFull)
+        MICRO_BENCH_STOP(timer);
+        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "concatenate", MICRO_BENCH_GET_TIMER_LAP(timer));
 
-        copyMatrixToEigenMatrix(m_dataFull, m_data);
+        MICRO_BENCH_START(timer);
+        copyMatrixToEigenMatrix(m_dataFull, matEigen);
+        MICRO_BENCH_STOP(timer);
+        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "copying", MICRO_BENCH_GET_TIMER_LAP(timer));
+
         // TODO: think how to avoid copy constructor. 
         MICRO_BENCH_START(timer);
-        //qr.compute(rVals);
-        qr.compute(m_data);
+        qr.compute(matEigen);
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "computeHeads", MICRO_BENCH_GET_TIMER_LAP(timer));
         if (nullptr != pR)
@@ -870,7 +808,7 @@ namespace Figaro
         }
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "extracting data", MICRO_BENCH_GET_TIMER_LAP(timer));
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR",MICRO_BENCH_GET_TIMER(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "total", MICRO_BENCH_GET_TIMER(timer));
     }    
 
     std::ostream& operator<<(std::ostream& out, const Relation& relation)
@@ -886,7 +824,7 @@ namespace Figaro
                 << strType << ")" << "; ";
         }
         out << "]" << std::endl;
-        out << relation.m_data;
+        out << relation.m_dataVectorOfVectors;
         return out;
     }
 }

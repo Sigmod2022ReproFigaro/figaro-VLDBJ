@@ -24,9 +24,9 @@ namespace Figaro
         
         void accept(ASTVisitor *pVisitor) override;
 
-        MatrixT* computeHead(Database* pDatabase) const;
+        MatrixEigenT* computeHead(Database* pDatabase) const;
 
-        MatrixT* computeTail(Database* pDatabase) const;
+        MatrixEigenT* computeTail(Database* pDatabase) const;
 
         void computeHeadSingleThreaded(const std::vector<std::string>& ) const;
     };

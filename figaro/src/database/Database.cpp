@@ -66,19 +66,19 @@ namespace Figaro
         relation.sortData(vSortAttributeNames);
     }
 
-    MatrixT* Database::computeHead(const std::string& relName)
+    MatrixEigenT* Database::computeHead(const std::string& relName)
     {
         return nullptr;
     }
 
-    MatrixT* Database::computeHead(const std::string& relName, const std::string& attrName)
+    MatrixEigenT* Database::computeHead(const std::string& relName, const std::string& attrName)
     {
         Relation& relation = m_relations.at(relName);//[relName];
         relation.computeHead(attrName);
         return nullptr;
     }
 
-    MatrixT* Database::computeTail(const std::string& relName)
+    MatrixEigenT* Database::computeTail(const std::string& relName)
     {
         return nullptr;
     }
@@ -144,7 +144,7 @@ namespace Figaro
     }
 
     void Database::computeQRDecompositionHouseholder(const std::string& relationName,
-    MatrixT* pR)
+    MatrixEigenT* pR)
     {
         m_relations.at(relationName).applyEigenQR(pR);
     }

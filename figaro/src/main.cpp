@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
     db_config_path = vm["db_config_path"].as<std::string>();
     FIGARO_LOG_INFO(db_config_path)
-    Figaro::MatrixT R;
+    Figaro::MatrixEigenT R;
     MICRO_BENCH_START(load);
     Figaro::Database database(db_config_path);
     database.loadData();

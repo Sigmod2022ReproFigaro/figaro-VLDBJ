@@ -12,7 +12,7 @@ std::string getDataPath(uint32_t idx)
     return TEST_PATH + "test" + std::to_string(idx) + "/";
 }
 
-void readMatrixDense(const std::string& sPath, Figaro::MatrixT& rmA, char sep)
+void readMatrixDense(const std::string& sPath, Figaro::MatrixEigenT& rmA, char sep)
 {
     std::ifstream input(sPath);
     std::stringstream lineStream;
@@ -48,7 +48,7 @@ void readMatrixDense(const std::string& sPath, Figaro::MatrixT& rmA, char sep)
     input.close();
 }
 
-void compareMatrices(Figaro::MatrixT& R, Figaro::MatrixT& expR, bool cmpRowNum, bool cmpColNum)
+void compareMatrices(Figaro::MatrixEigenT& R, Figaro::MatrixEigenT& expR, bool cmpRowNum, bool cmpColNum)
 {
     if (cmpRowNum)
     {
