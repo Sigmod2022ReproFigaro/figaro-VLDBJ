@@ -16,7 +16,7 @@ class AccuracyWorkbook:
         self.comp_ws = self.work_book.create_sheet(operation.upper())
         self.prec_rel_figaro_ws = self.work_book.create_sheet("Figaro_rel")
         self.prec_rel_op_ws = self.work_book.create_sheet(operation.upper()+"_rel")
-        self.precision = math.pow(10, -precision)
+        self.precision = precision
         self.output_file = output_file
         self.operation = operation.upper()
         logging.info("Precision is {}".format(self.precision))

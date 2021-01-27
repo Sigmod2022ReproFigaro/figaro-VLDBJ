@@ -1,6 +1,7 @@
 
 from evaluation.accuracy.accuracy_workbook import AccuracyWorkbook
 from decimal import Decimal
+import math
 import csv
 import os
 
@@ -17,6 +18,7 @@ def read_csv_as_list(path: str):
 def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: str, precision, operation: str):
     abs_err = Decimal(0)
     abs_err_comp = Decimal(0)
+    precision = math.pow(10, -precision)
     comp_wb = AccuracyWorkbook(output_file=accuracy_path+"/R_comp.xlsx", 
                 precision=precision, operation=operation)
                 
