@@ -5,23 +5,23 @@ import os
 import json
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
-from evaluation.system_test import LogConf, SystemTest
+from evaluation.system_test import DumpConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from data_management.database_psql import JOIN_TABLE_NAME
 from evaluation.system_test_dbms import SystemTestDBMS
 from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler
 class SystemTestPsql(SystemTestDBMS):
-    def __init__(self, log_conf: LogConf, path_dump: str, 
+    def __init__(self, log_conf: LogConf, dump_conf: DumpConf, 
             perf_conf: PerformanceConf, accur_conf: AccuracyConf, 
             database: Database,
             test_mode: SystemTest.TestMode, 
             password: str, **kwargs):
-        super().__init__("PSQL", log_conf=log_conf, path_dump=path_dump, 
+        super().__init__("PSQL", log_conf=log_conf, dump_conf=dump_conf, 
                     perf_conf=perf_conf, accur_conf = accur_conf, 
                     database = database, test_mode=test_mode)
         self.password = password
-        self.join_path = os.path.join(self.path_dump, JOIN_TABLE_NAME) + ".csv"
+        self.join_path = self.conf_dump.file_path
 
 
     def eval(self, dump: bool, performance: bool):

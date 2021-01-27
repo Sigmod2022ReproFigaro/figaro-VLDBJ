@@ -5,16 +5,16 @@ import os
 import json
 import logging
 from data_management.database import Database
-from evaluation.system_test import LogConf, SystemTest
+from evaluation.system_test import DumpConf, LogConf, SystemTest
 from evaluation.system_test import SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 
 class SystemTestFigaro(SystemTest):
-    def __init__(self, log_conf: LogConf, path_dump: str, 
+    def __init__(self, log_conf: LogConf, dump_conf: DumpConf, 
             perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
             test_mode = SystemTest.TestMode.PERFORMANCE, *args, **kwargs):
-        super().__init__("FIGARO", log_conf, path_dump, perf_conf, 
+        super().__init__("FIGARO", log_conf, dump_conf, perf_conf, 
             accur_conf, database, test_mode)
     
 
@@ -43,7 +43,7 @@ class SystemTestFigaro(SystemTest):
         logging.error(test_mode)
         args = ["/bin/bash", "setup.sh", 
                 "--log_file_path={}".format(self.conf_log.file_path),
-                "--dump_path={}".format(self.path_dump),
+                "--dump_file_path={}".format(self.conf_dump.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format

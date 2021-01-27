@@ -37,6 +37,11 @@ class LogConf:
         self.file_path = file_path
 
 
+class DumpConf:
+    def __init__(self, path: str, file_path: str):
+        self.path = path
+        self.file_path  = file_path
+
 class SystemTest(ABC):
     # Debug test is only for debugging 
     # Dump is used for accuracy where data is later compared.
@@ -60,14 +65,14 @@ class SystemTest(ABC):
         return SystemTest.map_mode_to_str[test_mode]
 
 
-    def __init__(self, name, log_conf: LogConf, path_dump: str, 
+    def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf, 
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
     test_mode = TestMode.PERFORMANCE):
         self.name = name
         self.conf_accur = accur_conf
         self.conf_perf = perf_conf
         self.conf_log = log_conf
-        self.path_dump = path_dump
+        self.conf_dump = dump_conf
         self.database = database
         self.test_mode = test_mode
         self.system_test_paper = None
@@ -95,8 +100,10 @@ class SystemTest(ABC):
                     log_json["path"], database.name)
         log_file_path = os.path.join(log_path, log_json["file"])
 
-        path_dump = SystemTest.create_dir_with_name(
-            system_json["system"]["dump"]["path"], database.name)
+        dump_json = system_json["system"]["dump"]
+        path_dump = SystemTest.create_dir_with_name(    
+            dump_json["path"], database.name)
+        dump_file_path = os.path.join(path_dump, dump_json["file"])
 
         perf_json = system_json["system"]["performance"]
         path_perf = SystemTest.create_dir_with_name(
@@ -108,11 +115,13 @@ class SystemTest(ABC):
             accuracy_json["path"], database.name)
         precision = accuracy_json["precision"]
         
-        system_test = cls(LogConf(log_path, log_file_path), path_dump, 
-                PerformanceConf(path_perf, num_reps), 
-                AccuracyConf(path_accuracy, precision), 
-                database, test_mode, 
-                *args, **kwargs)
+        system_test = cls(
+            LogConf(log_path, log_file_path), 
+            DumpConf(path_dump, dump_file_path), 
+            PerformanceConf(path_perf, num_reps), 
+            AccuracyConf(path_accuracy, precision), 
+            database, test_mode, 
+            *args, **kwargs)
 
         return system_test
 

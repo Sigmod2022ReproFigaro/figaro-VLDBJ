@@ -3,9 +3,9 @@ from evaluation.system_test import *
 from evaluation.accuracy.accuracy import compare_accuracy_r
 
 class SystemTestCompetitor(SystemTest):
-    def __init__(self, name, log_conf: LogConf, path_dump: str, 
+    def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf, 
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database, test_mode):
-        super().__init__(name, log_conf, path_dump, perf_conf, accur_conf, database, test_mode)
+        super().__init__(name, log_conf, dump_conf, perf_conf, accur_conf, database, test_mode)
 
 
     def is_paper_algorithm(self):
@@ -17,9 +17,8 @@ class SystemTestCompetitor(SystemTest):
 
 
     def run_accuracy(self):
-        system_test_paper_path = os.path.join(
-            self.system_test_paper.path_dump, "R.csv")
-        competitor_path = os.path.join(self.path_dump, "R.csv")
+        system_test_paper_path = self.system_test_paper.conf_dump.file_path
+        competitor_path = self.conf_dump.file_path
         
         compare_accuracy_r(figaro_path=system_test_paper_path, 
             competitor_path=competitor_path, 

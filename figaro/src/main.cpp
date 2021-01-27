@@ -18,7 +18,7 @@ void initGlobalState(void)
 
 int main(int argc, char *argv[]) 
 {
-    std::string dump_path; 
+    std::string dumpFilePath; 
     std::string db_config_path;
     bool dump = false;
     uint32_t precision;
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     po::options_description desc("figaro - allowed options");   
     desc.add_options()
     ("help", "produce help message")
-    ("dump_path", po::value<std::string>(&dump_path))
+    ("dump_file_path", po::value<std::string>(&dumpFilePath))
     ("db_config_path", po::value<std::string>(&db_config_path))
     ("precision", po::value<uint32_t>(&precision))
     ;
@@ -42,11 +42,11 @@ int main(int argc, char *argv[])
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
 
-    if (vm.count("dump_path"))
+    if (vm.count("dump_file_path"))
     {
-        dump_path = vm["dump_path"].as<std::string>();
+        dumpFilePath = vm["dump_file_path"].as<std::string>();
         dump = true;
-        FIGARO_LOG_INFO(dump_path)
+        FIGARO_LOG_INFO(dumpFilePath)
     }
 
     db_config_path = vm["db_config_path"].as<std::string>();
@@ -122,9 +122,8 @@ int main(int argc, char *argv[])
     FIGARO_LOG_BENCH("Figaro", "main", MICRO_BENCH_GET_TIMER(main));
     if (dump)
     {
-        std::string dumpFileName = dump_path + "/R.csv";
-        FIGARO_LOG_INFO("Dumping R to the path", dumpFileName);
-        std::ofstream fileDumpR(dumpFileName, std::ofstream::out);
+        FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
+        std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
         Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
     }
 
