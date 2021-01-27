@@ -5,19 +5,19 @@ import os
 import json
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
-from evaluation.system_test import SystemTest
+from evaluation.system_test import LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from data_management.database_psql import JOIN_TABLE_NAME
 from evaluation.system_test_dbms import SystemTestDBMS
 from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler
 class SystemTestPsql(SystemTestDBMS):
-    def __init__(self, path_log: str, path_dump: str, 
+    def __init__(self, log_conf: LogConf, path_dump: str, 
             perf_conf: PerformanceConf, accur_conf: AccuracyConf, 
             database: Database,
             test_mode: SystemTest.TestMode, 
             password: str, **kwargs):
-        super().__init__("PSQL", path_log=path_log, path_dump=path_dump, 
+        super().__init__("PSQL", log_conf=log_conf, path_dump=path_dump, 
                     perf_conf=perf_conf, accur_conf = accur_conf, 
                     database = database, test_mode=test_mode)
         self.password = password
@@ -25,7 +25,7 @@ class SystemTestPsql(SystemTestDBMS):
 
 
     def eval(self, dump: bool, performance: bool):
-        log_file_path = os.path.join(self.path_log, "log.txt")
+        log_file_path = self.conf_log.file_path
         file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
 
         database_psql = DatabasePsql(host_name="",user_name="popina", 

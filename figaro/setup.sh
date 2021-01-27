@@ -1,7 +1,7 @@
 function init_global_paths()
 {
     FIGARO_ROOT_PATH="${1:-/home/popina/Figaro/figaro-code/figaro}"
-    FIGARO_LOG_PATH="$FIGARO_ROOT_PATH/log"
+    FIGARO_LOG_FILE_PATH="$FIGARO_ROOT_PATH/log/log.txt"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
     FIGARO_DUMP_PATH="$FIGARO_ROOT_PATH/dump"
     FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test1/databases/database_specs11.conf"
@@ -20,9 +20,9 @@ function get_str_args()
             init_global_paths $EXTENSION
         ;;
         
-        -l=*|--log_path=*)
+        -l=*|--log_file_path=*)
             EXTENSION="${option#*=}"
-            FIGARO_LOG_PATH="${EXTENSION}"
+            FIGARO_LOG_FILE_PATH="${EXTENSION}"
         ;;
         -t=*|--test_mode=*)
             EXTENSION="${option#*=}"
@@ -71,20 +71,20 @@ function main()
     make -j8
     case "${FIGARO_TEST_MODE}" in
     "DEBUG")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_path "${FIGARO_DUMP_PATH}" \
-            --precision "${FIGARO_PRECISION}"  >  "${FIGARO_LOG_PATH}/log.txt"  2>&1;
+            --precision "${FIGARO_PRECISION}"  >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
         ;;
     "PERFORMANCE")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_PATH}/log.txt" 2>&1;
+        --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         ./figaro_test \
-        >   "${FIGARO_LOG_PATH}/log.txt" 2>&1
+        >   "${FIGARO_LOG_FILE_PATH}" 2>&1
         
        # ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneMultipleAttributes \
         #./figaro_test  --gtest_filter=*BasicQueryParsing \

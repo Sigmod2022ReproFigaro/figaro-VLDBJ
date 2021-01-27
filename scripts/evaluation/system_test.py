@@ -30,6 +30,12 @@ class AccuracyConf:
         self.precision = precision
 
 
+class LogConf:
+    def __init__(self, path: str, file_path: str):
+        self.path = path
+        self.file_path = file_path
+
+
 class SystemTest(ABC):
     # Debug test is only for debugging 
     # Dump is used for accuracy where data is later compared.
@@ -53,13 +59,13 @@ class SystemTest(ABC):
         return SystemTest.map_mode_to_str[test_mode]
 
 
-    def __init__(self, name, path_log: str, path_dump: str, 
+    def __init__(self, name, log_conf: LogConf, path_dump: str, 
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
     test_mode = TestMode.PERFORMANCE):
         self.name = name
         self.conf_accur = accur_conf
         self.conf_perf = perf_conf
-        self.path_log = path_log
+        self.conf_log = log_conf
         self.path_dump = path_dump
         self.database = database
         self.test_mode = test_mode
@@ -83,17 +89,22 @@ class SystemTest(ABC):
             system_json = json.load(json_file)
         
         #TODO: Refactor to remove unnecessary clutter. 
-        path_log = SystemTest.create_dir_with_name(
-            system_json["system"]["log"]["path"], database.name)
+        log_json = system_json["system"]["log"]
+        log_path = SystemTest.create_dir_with_name(
+                    log_json["path"], database.name)
+        log_file_path = os.path.join(log_path, log_json["file"])
+
         path_dump = SystemTest.create_dir_with_name(
             system_json["system"]["dump"]["path"], database.name)
         path_perf = SystemTest.create_dir_with_name(
             system_json["system"]["performance"]["path"], database.name)
+        
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
             accuracy_json["path"], database.name)
         precision = accuracy_json["precision"]
-        system_test = cls(path_log, path_dump, 
+        
+        system_test = cls(LogConf(log_path, log_file_path), path_dump, 
                 PerformanceConf(path_perf), 
                 AccuracyConf(path_accuracy, precision), 
                 database, test_mode, 
@@ -148,7 +159,7 @@ class SystemTest(ABC):
     
     
     def run_performance_analysis(self):
-        path_log_file = os.path.join(self.path_log, 'log.txt')
+        path_log_file = self.conf_log.file_path
         path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
         gather_times(path_log_file, path_times_file, self.database.name, 2)
 
