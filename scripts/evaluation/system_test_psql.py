@@ -24,7 +24,7 @@ class SystemTestPsql(SystemTestDBMS):
         self.join_path = os.path.join(self.path_dump, JOIN_TABLE_NAME) + ".csv"
 
 
-    def eval(self):
+    def eval(self, dump: bool, performance: bool):
         log_file_path = os.path.join(self.path_log, "log.txt")
         file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
 
@@ -33,10 +33,12 @@ class SystemTestPsql(SystemTestDBMS):
         database_psql.drop_database()
         database_psql.create_database(self.database)
         
-        database_psql.evaluate_join(self.database.get_relations())
+        num_repetitions = 5 if performance else 1
+        database_psql.evaluate_join(self.database.get_relations(), num_repetitions=num_repetitions)
         join_size = database_psql.get_join_size()
         logging.info("Number of rows is {}".format(join_size))
-        database_psql.dump_join(self.database.get_relations(), 
+        if (dump):
+            database_psql.dump_join(self.database.get_relations(), 
                                 self.join_path)
 
         remove_logging_file_handler(file_handler)
@@ -48,15 +50,11 @@ class SystemTestPsql(SystemTestDBMS):
 
     
     def run_dump(self):
-        self.eval()
+        self.eval(dump=True, performance=False)
 
     
     def run_performance(self):
-        self.eval()
-
-    
-    def run_performance_analysis(self):
-        self.eval()
+        self.eval(dump=False, performance=True)
 
     
     def is_dbms(self):

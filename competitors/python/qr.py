@@ -41,7 +41,7 @@ if __name__ == "__main__":
         start = timer()
         r = np.linalg.qr(data, mode='r')
         end = timer()
-        print("##FIGARO####computation##{}".format(end - start))
+        print("##Figaro####computation##{}".format(end - start))
 
     #print(r)
     r = make_diagonal_positive(r)

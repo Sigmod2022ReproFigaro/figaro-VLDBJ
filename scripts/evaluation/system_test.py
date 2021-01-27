@@ -6,20 +6,16 @@
 #        comp/prec - precision comparsion
 # 
 
-from enum import IntEnum, auto
+from enum import IntEnum
 from abc import ABC, abstractmethod
 import abc
-import subprocess
 import logging
 import os
 import json
-import argparse
 import typing
 import shutil
-from  collections import deque
 from data_management.database import Database
-from data_management.database_psql import DatabasePsql
-from data_management.database_psql import JOIN_TABLE_NAME
+from evaluation.performance.benchmark import gather_times
 
 # Class that wraps performance parameters used in testing
 class PerformanceConf:
@@ -150,9 +146,11 @@ class SystemTest(ABC):
     def run_performance(self):
         pass
     
-    @abstractmethod
+    
     def run_performance_analysis(self):
-        pass
+        path_log_file = os.path.join(self.path_log, 'log.txt')
+        path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
+        gather_times(path_log_file, path_times_file, self.database.name, 2)
 
     
     @abstractmethod

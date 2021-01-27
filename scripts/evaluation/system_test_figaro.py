@@ -16,6 +16,10 @@ class SystemTestFigaro(SystemTest):
             test_mode = SystemTest.TestMode.PERFORMANCE, *args, **kwargs):
         super().__init__("FIGARO", path_log, path_dump, perf_conf, 
             accur_conf, database, test_mode)
+    
+
+    def eval(self):
+        pass
 
 
     def run_debug(self):
@@ -59,7 +63,7 @@ class SystemTestFigaro(SystemTest):
         pass
 
     def run_performance_analysis(self):
-        pass
+        super().run_performance_analysis()
 
     def is_paper_algorithm(self):
         return True

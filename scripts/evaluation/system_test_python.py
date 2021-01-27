@@ -24,30 +24,31 @@ class SystemTestPython(SystemTestCompetitor):
     def run_debug(self):
         pass
 
-
-    def run_dump(self):
+    
+    def eval(self, dump: bool, performance: bool):
         args = ["python3", 
             "/home/popina/Figaro/figaro-code/competitors/python/qr.py", 
-            "--data_path", self.join_path,
-            "--dump_file", os.path.join(self.path_dump, "R.csv"),
-            "--precision", str(self.conf_accur.precision)]
+            "--data_path", self.join_path]
+        if dump:
+            args += [ "--dump_file", os.path.join(self.path_dump, "R.csv"),
+                     "--precision", str(self.conf_accur.precision)]
+
+        if performance:
+            args += ["--num_repetitions", "5"]
+
         result = subprocess.run(args=args,  capture_output=True, text=True)
         path_log_file = os.path.join(self.path_log, "log.txt")
         with open(path_log_file, "w") as log_file: 
             log_file.write(result.stdout)
         logging.error(result.stderr)
+
+
+    def run_dump(self):
+        self.eval(dump=True, performance=False)
 
 
     def run_performance(self):
-        args = ["python3", 
-            "/home/popina/Figaro/figaro-code/competitors/python/qr.py", 
-            "--data_path", self.join_path,
-            "--num_repetitions", "5"]
-        result = subprocess.run(args=args,  capture_output=True, text=True)
-        path_log_file = os.path.join(self.path_log, "log.txt")
-        with open(path_log_file, "w") as log_file: 
-            log_file.write(result.stdout)
-        logging.error(result.stderr)
+        self.eval(dump=False, performance=True)
 
 
     def requires_dbms_result(self):

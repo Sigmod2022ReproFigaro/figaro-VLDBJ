@@ -44,7 +44,7 @@ def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: st
         file_errors.write("Relative error is: {}\n".format(relative_frob_norm))
 
     if relative_frob_norm > precision:
-        print("ERROR{}".format(relative_frob_norm))
+        print("Figaro and competitor have different precision: {}".format(relative_frob_norm))
     else:
         print("Accuracy excellent")
 

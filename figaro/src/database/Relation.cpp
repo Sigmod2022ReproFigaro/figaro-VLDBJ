@@ -785,6 +785,7 @@ namespace Figaro
         qr.compute(matEigen);
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "Householder reduced", MICRO_BENCH_GET_TIMER_LAP(timer));
+        MICRO_BENCH_START(timer);
         if (nullptr != pR)
         {
             *pR = qr.matrixQR().topLeftCorner(numNonPKAttributes, numNonPKAttributes).triangularView<Eigen::Upper>();

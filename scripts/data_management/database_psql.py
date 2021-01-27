@@ -122,8 +122,8 @@ class DatabasePsql:
         return pk_atrr_names_unique + non_pk_attribute_names
     
 
-    def evaluate_join(self, relations):
-        sql_join = "CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
+    def evaluate_join(self, relations, num_repetitions: int):
+        sql_join = "DROP TABLE IF EXISTS " + JOIN_TABLE_NAME + ";CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
         sql_from_natural_join = ""
 
         sql_select = ""
@@ -140,12 +140,13 @@ class DatabasePsql:
         sql_join = sql_join.format(sql_select, sql_from_natural_join)
 
         logging.debug(sql_join)
-        cursor = self.connection.cursor()
-        start = timer()
-        cursor.execute(sql_join)
-        end = timer() 
-        logging.info("##Figaro##Join##{}".format(end - start))
-        cursor.close()
+        for i in range(num_repetitions):
+            cursor = self.connection.cursor()
+            start = timer()
+            cursor.execute(sql_join)
+            end = timer() 
+            logging.info("##Figaro####Join##{}".format(end - start))
+            cursor.close()
 
 
     def get_join_size(self) -> int:

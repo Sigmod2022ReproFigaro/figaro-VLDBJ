@@ -6,8 +6,7 @@ import re
 from openpyxl import Workbook, load_workbook
 import os
 
-reg_pattern2 = "(?<=##FIGARO##)([\w ]+)(?:##)(?:[ ]*)([-+]?[0-9]*\.?[0-9]*([eE]?[-+]?[0-9]*))"
-reg_pattern = "(?<=##FIGARO####)([\w ]+)(?:##)(?:[ ]*)([-+]?[0-9]*\.?[0-9]*([eE]?[-+]?[0-9]*))"
+reg_pattern = "(?:[. ]*?)(?<=##Figaro####)([\w ]+)(?:##)(?:[ ]*)([-+]?[0-9]+\.?[0-9]*([eE]?[-+]?[0-9]*))"
 
 class TimeWorkbook:
 
@@ -42,13 +41,13 @@ class TimeWorkbook:
             meas_time = measure_times[meas_times]
             n_times = len(meas_time)
             self.save_entry(row_idx + len(meas_time), self.col_header,  meas_times)
-            print("idx", row_idx)
+            #print("idx", row_idx)
             for idx, time in enumerate(meas_time, 1):
                 self.save_entry(row_idx, col_idx, time)
                 self.save_entry(row_idx, self.col_header, meas_times + str(idx))
                 row_idx += 1
             col_letter = get_column_letter(col_idx)
-            print("saved", meas_times, str(row_idx - n_times + 1), str(row_idx - 1))
+            #print("saved", meas_times, str(row_idx - n_times + 1), str(row_idx - 1))
             if n_times == 1:
                 self.save_entry(row_idx, col_idx, meas_time[0])
             else:
@@ -69,11 +68,11 @@ def parse_times(times_path, time_workbook):
     meas_times = {}
     with open(times_path) as time_file:
         for line in time_file:
-            #print(line)
+            print(line)
             matches = re.findall(reg_pattern, line)
             if len(matches) > 0:
-                #print(line)
-                #print(matches)
+                print("Match {}".format(line))
+                print(matches)
                 measurement = matches[0][0]
                 time = float(matches[0][1])
                 #print(measurement)
