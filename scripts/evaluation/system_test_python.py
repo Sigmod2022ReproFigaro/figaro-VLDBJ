@@ -34,7 +34,7 @@ class SystemTestPython(SystemTestCompetitor):
                      "--precision", str(self.conf_accur.precision)]
 
         if performance:
-            args += ["--num_repetitions", "5"]
+            args += ["--num_repetitions", str(self.conf_perf.num_reps)]
 
         result = subprocess.run(args=args,  capture_output=True, text=True)
         path_log_file = self.conf_log.file_path

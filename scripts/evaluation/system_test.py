@@ -19,8 +19,9 @@ from evaluation.performance.benchmark import gather_times
 
 # Class that wraps performance parameters used in testing
 class PerformanceConf:
-    def __init__(self, path: str):
+    def __init__(self, path: str, num_reps: int):
         self.path = path
+        self.num_reps = num_reps
 
 
 # Class that wraps precisions elements 
@@ -96,8 +97,11 @@ class SystemTest(ABC):
 
         path_dump = SystemTest.create_dir_with_name(
             system_json["system"]["dump"]["path"], database.name)
+
+        perf_json = system_json["system"]["performance"]
         path_perf = SystemTest.create_dir_with_name(
-            system_json["system"]["performance"]["path"], database.name)
+                        perf_json["path"], database.name)
+        num_reps = perf_json["number_reps"]
         
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
@@ -105,7 +109,7 @@ class SystemTest(ABC):
         precision = accuracy_json["precision"]
         
         system_test = cls(LogConf(log_path, log_file_path), path_dump, 
-                PerformanceConf(path_perf), 
+                PerformanceConf(path_perf, num_reps), 
                 AccuracyConf(path_accuracy, precision), 
                 database, test_mode, 
                 *args, **kwargs)
