@@ -58,6 +58,8 @@ class SystemTestFigaro(SystemTest):
     def run_performance(self):
         pass
 
+    def run_performance_analysis(self):
+        pass
 
     def is_paper_algorithm(self):
         return True

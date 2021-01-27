@@ -68,24 +68,24 @@ int main(int argc, char *argv[])
     database.sortRelation("R", {"A"});
     MICRO_BENCH_STOP(sort);
     database.computeHead("R", "A");
-    FIGARO_LOG_BENCH("Figaro", "main", "sort R a", MICRO_BENCH_GET_TIMER_LAP(sort));
+    FIGARO_LOG_BENCH("Figaro", "sort", "sort R a", MICRO_BENCH_GET_TIMER_LAP(sort));
 
     MICRO_BENCH_START(sort)
     database.sortRelation("S", {"B", "A"});
     MICRO_BENCH_STOP(sort);
-    FIGARO_LOG_BENCH("Figaro", "main", "sort S A B", MICRO_BENCH_GET_TIMER_LAP(sort));
+    FIGARO_LOG_BENCH("Figaro", "sort", "sort S A B", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("S", "A");
 
     MICRO_BENCH_START(sort)
     database.sortRelation("T", {"B", "C"});
     MICRO_BENCH_STOP(sort);
-    FIGARO_LOG_BENCH("Figaro", "main", "sort T C B", MICRO_BENCH_GET_TIMER_LAP(sort));
+    FIGARO_LOG_BENCH("Figaro", "sort", "sort T C B", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("T", "C");
     
     MICRO_BENCH_START(sort)
     database.sortRelation("U", {"C"});
     MICRO_BENCH_STOP(sort);
-    FIGARO_LOG_BENCH("Figaro", "main", "sort U C", MICRO_BENCH_GET_TIMER_LAP(sort));
+    FIGARO_LOG_BENCH("Figaro", "sort", "sort U C", MICRO_BENCH_GET_TIMER_LAP(sort));
     database.computeHead("U", "C");
 
     FIGARO_LOG_DBG("PASS sort and compute head")

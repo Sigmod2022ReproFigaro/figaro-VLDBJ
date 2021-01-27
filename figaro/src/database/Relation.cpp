@@ -570,10 +570,6 @@ namespace Figaro
         std::vector<uint32_t> vnonPKAttrIdxs;
         uint32_t pkOffset;
 
-        MICRO_BENCH_INIT(aggregates)
-
-
-        MICRO_BENCH_START(aggregates)
         distinctValuesCounter = getDistinctValuesCount(attributeName);
         vDistinctValues.resize(distinctValuesCounter);
         vDistinctValuesRowPositions.resize(distinctValuesCounter + 1);
@@ -620,8 +616,6 @@ namespace Figaro
                     vCurRowSum[nonPKAttrIdx - pkOffset] * std::sqrt(scalarCnt / aggregateCnt);
             }
         }
-        MICRO_BENCH_STOP(aggregates)
-         FIGARO_LOG_BENCH("Figaro", "main", "aggregates", MICRO_BENCH_GET_TIMER(aggregates));
         FIGARO_LOG_INFO(*this);
     }
     
@@ -765,40 +759,40 @@ namespace Figaro
         m_dataTails1.computeQRGivens();
         m_dataTails2.computeQRGivens();
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         MICRO_BENCH_START(timer);
         m_dataHead.resize(m_dataHead.getNumCols());
         m_dataTails1.resize(m_dataTails1.getNumCols()); 
         m_dataTails2.resize(m_dataTails2.getNumCols());
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "resize", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "resize", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         MICRO_BENCH_START(timer);
         m_dataTails1 = m_dataTails1.concatenateHorizontallyScalar(0, m_dataHead.getNumCols() - m_dataTails1.getNumCols());
         m_dataTails2 = Matrix<double>::zeros(m_dataTails2.getNumRows(), m_dataHead.getNumCols() - m_dataTails2.getNumCols()).concatenateHorizontally(m_dataTails2);
         auto&& m_dataFull = m_dataHead.concatenateVertically(m_dataTails1).concatenateVertically(m_dataTails2);
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "concatenate", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "concatenate", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         MICRO_BENCH_START(timer);
         copyMatrixToEigenMatrix(m_dataFull, matEigen);
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "copying", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "copying", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         // TODO: think how to avoid copy constructor. 
         MICRO_BENCH_START(timer);
         qr.compute(matEigen);
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "Householder reduced", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "Householder reduced", MICRO_BENCH_GET_TIMER_LAP(timer));
         if (nullptr != pR)
         {
             *pR = qr.matrixQR().topLeftCorner(numNonPKAttributes, numNonPKAttributes).triangularView<Eigen::Upper>();
             makeDiagonalElementsPositiveInR(*pR);
         }
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "extracting data", MICRO_BENCH_GET_TIMER_LAP(timer));
-        FIGARO_LOG_BENCH("Figaro", "main", "applyEigenQR", "total", MICRO_BENCH_GET_TIMER(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "extracting data", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "total", MICRO_BENCH_GET_TIMER(timer));
     }    
 
     std::ostream& operator<<(std::ostream& out, const Relation& relation)

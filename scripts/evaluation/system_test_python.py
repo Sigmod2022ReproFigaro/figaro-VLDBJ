@@ -39,7 +39,15 @@ class SystemTestPython(SystemTestCompetitor):
 
 
     def run_performance(self):
-        pass
+        args = ["python3", 
+            "/home/popina/Figaro/figaro-code/competitors/python/qr.py", 
+            "--data_path", self.join_path,
+            "--num_repetitions", "5"]
+        result = subprocess.run(args=args,  capture_output=True, text=True)
+        path_log_file = os.path.join(self.path_log, "log.txt")
+        with open(path_log_file, "w") as log_file: 
+            log_file.write(result.stdout)
+        logging.error(result.stderr)
 
 
     def requires_dbms_result(self):

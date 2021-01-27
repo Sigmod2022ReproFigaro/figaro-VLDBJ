@@ -55,6 +55,10 @@ class SystemTestPsql(SystemTestDBMS):
         self.eval()
 
     
+    def run_performance_analysis(self):
+        self.eval()
+
+    
     def is_dbms(self):
         return True
 

@@ -35,18 +35,21 @@ class AccuracyConf:
 
 
 class SystemTest(ABC):
-    # Log test is only for debugging 
-    # Dump is used for performance where data is later compared
-    # PerformanceConf evaluates speed of the algorithm 
-    # AccuracyConf compares data from dumps 
+    # Debug test is only for debugging 
+    # Dump is used for accuracy where data is later compared.
+    # Performance is used to run successive tests for comparisons. 
+    # Perofrmance analysis evaluates speed of the algorithm 
+    # Accuracy compares data from dumps 
     class TestMode(IntEnum): 
         DEBUG = 1
         DUMP = 2
         PERFORMANCE = 3
         ACCURACY = 4
-
+        PERFORMANCE_ANALYSIS = 5
+    #
     map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP", 
                     TestMode.PERFORMANCE: "PERFORMANCE", 
+                    TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",
                     TestMode.ACCURACY: "ACCURACY"}
 
     @staticmethod
@@ -83,17 +86,19 @@ class SystemTest(ABC):
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
         
-        #TODO: Refactor to remove unnecesary clutter. 
+        #TODO: Refactor to remove unnecessary clutter. 
         path_log = SystemTest.create_dir_with_name(
             system_json["system"]["log"]["path"], database.name)
         path_dump = SystemTest.create_dir_with_name(
             system_json["system"]["dump"]["path"], database.name)
+        path_perf = SystemTest.create_dir_with_name(
+            system_json["system"]["performance"]["path"], database.name)
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
             accuracy_json["path"], database.name)
         precision = accuracy_json["precision"]
         system_test = cls(path_log, path_dump, 
-                PerformanceConf(""), 
+                PerformanceConf(path_perf), 
                 AccuracyConf(path_accuracy, precision), 
                 database, test_mode, 
                 *args, **kwargs)
@@ -112,12 +117,15 @@ class SystemTest(ABC):
             logging.info("Run dump")
             self.run_dump()
         elif self.test_mode == SystemTest.TestMode.ACCURACY:
-            logging.info("Run precision")
+            logging.info("Run accuracy")
             self.run_accuracy()
-            logging.info("End precision")
+            logging.info("End accuracy")
         elif self.test_mode == SystemTest.TestMode.PERFORMANCE:
             logging.info("Run performance")
             self.run_performance()
+        elif self.test_mode == SystemTest.TestMode.PERFORMANCE_ANALYSIS:
+            logging.info("Run performance analysis")
+            self.run_performance_analysis()
         else:
             logging.error('This type of system test does not exist')
         logging.info("End of test {}".format(self.name))
@@ -140,6 +148,10 @@ class SystemTest(ABC):
     
     @abstractmethod
     def run_performance(self):
+        pass
+    
+    @abstractmethod
+    def run_performance_analysis(self):
         pass
 
     

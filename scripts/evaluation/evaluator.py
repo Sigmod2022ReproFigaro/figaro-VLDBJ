@@ -19,6 +19,7 @@ class SystemTestsEvaluator:
         'dump': SystemTest.TestMode.DUMP,
         'accuracy': SystemTest.TestMode.ACCURACY,
         'performance': SystemTest.TestMode.PERFORMANCE,
+        'performance_analysis': SystemTest.TestMode.PERFORMANCE_ANALYSIS,
         'debug': SystemTest.TestMode.DEBUG}
 
 
