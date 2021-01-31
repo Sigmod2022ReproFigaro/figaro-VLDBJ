@@ -62,17 +62,17 @@ db_config_str = """
                         "distribution": "uniform",
                         "attribute_domains":
                         [
-                            {"name": "A", "start": 1, "end": 100},
+                            {"name": "A", "start": 1, "end": 1000},
 {R_gen_non_k_attr_specs}
                         ],
-                        "num_tuples": 100
+                        "num_tuples": 1000
                     },
                     {
                         "name": "S",
                         "distribution": "uniform",
                         "attribute_domains":
                         [
-                            {"name": "A", "start": 1, "end": 100},
+                            {"name": "A", "start": 1, "end": 1000},
                             {"name": "B", "start": 1, "end": {domain_size}},
 {S_gen_non_k_attr_specs}
                         ],
@@ -84,7 +84,7 @@ db_config_str = """
                         "attribute_domains":
                         [
                             {"name": "B", "start": 1, "end": {domain_size}},
-                            {"name": "C", "start": 1, "end": 250},
+                            {"name": "C", "start": 1, "end": 1000},
 {T_gen_non_k_attr_specs}
                         ],
                         "num_tuples": {num_relation_rows}
@@ -94,10 +94,10 @@ db_config_str = """
                         "distribution": "uniform",
                         "attribute_domains":
                         [
-                            {"name": "C", "start": 1, "end": 250},
+                            {"name": "C", "start": 1, "end": 1000},
 {U_gen_non_k_attr_specs}
                         ],
-                        "num_tuples": 250
+                        "num_tuples": 1000
                     }
                 ]
             }, 

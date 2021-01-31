@@ -15,14 +15,14 @@ namespace Figaro
         {
             m_numRows = 0;
             m_numCols = 0;
-            FIGARO_LOG_DBG("Tried destroying data");
+            //FIGARO_LOG_DBG("Tried destroying data");
             if (nullptr != m_pStorage)
             {
-                FIGARO_LOG_DBG("Not nullptr", m_pStorage)
+                //FIGARO_LOG_DBG("Not nullptr", m_pStorage)
                 delete m_pStorage;
                 m_pStorage = nullptr;
             }
-            FIGARO_LOG_DBG("Destroyed data");
+            //FIGARO_LOG_DBG("Destroyed data");
         }
     public:
         Matrix(uint32_t numRows, uint32_t numCols)
@@ -36,7 +36,7 @@ namespace Figaro
         Matrix& operator=(const Matrix&) = delete;
         Matrix(Matrix&& other)
         {
-            FIGARO_LOG_DBG("Entered move constructor")
+            //FIGARO_LOG_DBG("Entered move constructor")
             m_pStorage = other.m_pStorage;
             m_numRows = other.m_numRows;
             m_numCols = other.m_numCols;
@@ -44,11 +44,11 @@ namespace Figaro
             other.m_pStorage = nullptr;
             other.m_numCols = 0;
             other.m_numRows = 0;
-            FIGARO_LOG_DBG("Finished move constructor")
+            //FIGARO_LOG_DBG("Finished move constructor")
         }
         Matrix& operator=(Matrix&& other) 
         {
-            FIGARO_LOG_DBG("Entered move assignment")
+            //FIGARO_LOG_DBG("Entered move assignment")
             if (this != &other)
             {
                 destroyData();
@@ -60,7 +60,7 @@ namespace Figaro
                 other.m_numCols = 0;
                 other.m_numRows = 0;
             }
-            FIGARO_LOG_DBG("Finished move assignment")
+            //FIGARO_LOG_DBG("Finished move assignment")
             return *this;
         }
 
@@ -276,6 +276,8 @@ namespace Figaro
         void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, double sin, double cos)
         {
             auto& matA = *this;
+            
+            //#pragma omp parallel for schedule(static)
             for (uint32_t colIdx = 0; colIdx < matA.m_numCols; colIdx++)
             {
                 double tmpUpperVal = matA[rowIdxUpper][colIdx];
@@ -288,6 +290,7 @@ namespace Figaro
         void computeQRGivens(void)
         {
             auto& matA = *this;
+            constexpr double epsilon = 0.0;
             for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
             {
                 for (uint32_t rowIdx = m_numRows -1 ; rowIdx > colIdx; rowIdx--)
@@ -295,7 +298,7 @@ namespace Figaro
                     double upperVal = matA[rowIdx - 1][colIdx];
                     double lowerVal = matA[rowIdx][colIdx];
                     double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
-                    if (r > 0.0)
+                    if (r > epsilon)
                     {
                         double sinTheta = -lowerVal / r;
                         double cosTheta = upperVal / r;

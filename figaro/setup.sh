@@ -3,8 +3,8 @@ function init_global_paths()
     FIGARO_ROOT_PATH="${1:-/home/popina/Figaro/figaro-code/figaro}"
     FIGARO_LOG_FILE_PATH="$FIGARO_ROOT_PATH/log/log.txt"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
-    FIGARO_DUMP_PATH="$FIGARO_ROOT_PATH/dump"
-    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test1/databases/database_specs11.conf"
+    FIGARO_DUMP_FILE_PATH="$FIGARO_ROOT_PATH/dump/R.csv"
+    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs17.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
 }
@@ -28,9 +28,9 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_TEST_MODE=$EXTENSION
         ;;
-        --dump_path=*)
+        --dump_file_path=*)
             EXTENSION="${option#*=}"
-            FIGARO_DUMP_PATH=$EXTENSION
+            FIGARO_DUMP_FILE_PATH=$EXTENSION
         ;;
         --db_config_path=*)
             EXTENSION="${option#*=}"
@@ -74,7 +74,7 @@ function main()
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_path "${FIGARO_DUMP_PATH}" \
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
             --precision "${FIGARO_PRECISION}"  >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
         ;;
     "PERFORMANCE")

@@ -147,7 +147,7 @@ namespace Figaro
             m_attributes.insert(std::end(m_attributes), std::begin(tmpV), std::end(tmpV));
         }
 
-        FIGARO_LOG_DBG("After schema change", *this);
+        //FIGARO_LOG_DBG("After schema change", *this);
     }
 
     Relation::Relation(json jsonRelationSchema): 
@@ -214,7 +214,7 @@ namespace Figaro
                 m_data[row][col] = val;
             }
         }
-        FIGARO_LOG_DBG("m_data", m_data);
+        //FIGARO_LOG_DBG("m_data", m_data);
         return ErrorCode::NO_ERROR;
     }
 
@@ -264,12 +264,9 @@ namespace Figaro
                 tmpMatrix[rowIdx][colIdx] = vRowPts[rowIdx][colIdx];
             }
         }
-        FIGARO_LOG_DBG("tmpMatrix", tmpMatrix);
-        FIGARO_LOG_DBG("m_data", m_data);
         m_data = std::move(tmpMatrix);
-        FIGARO_LOG_DBG("tmpMatrix", tmpMatrix);
-        FIGARO_LOG_DBG("Relation: ", m_name);
-        FIGARO_LOG_DBG(m_data);
+        //FIGARO_LOG_DBG("Relation: ", m_name);
+        //FIGARO_LOG_DBG(m_data);
     }
 
     void Relation::sortData(void)
@@ -549,7 +546,7 @@ namespace Figaro
                 }
                 for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
                 {
-                    dataOutput[rowIdx][numAttrs1 + nonPKAttrIdx2 - numPKAttrs2] = (rowPtr2)[nonPKAttrIdx2];
+                    dataOutput[rowIdx][numAttrs1 - numPKAttrs2 + nonPKAttrIdx2 ] = (rowPtr2)[nonPKAttrIdx2];
                 }
             }
         }
@@ -616,7 +613,7 @@ namespace Figaro
                     vCurRowSum[nonPKAttrIdx - pkOffset] * std::sqrt(scalarCnt / aggregateCnt);
             }
         }
-        FIGARO_LOG_INFO(*this);
+        //FIGARO_LOG_INFO(*this);
     }
     
     // N-N join where zero rows are omitted.
@@ -676,9 +673,9 @@ namespace Figaro
             {
                 aHeadRowIdx[idx] = avDistinctValuesRowPositions[idx][distCnt] + 1;
                 aTailIdxs[idx] = aHeadRowIdx[idx] - distCnt;
-                FIGARO_LOG_DBG("aHeadRowIdx", aHeadRowIdx)
-                FIGARO_LOG_DBG("distCnt", distCnt)
-                FIGARO_LOG_DBG("aTailIdxs", aTailIdxs[idx])
+                //FIGARO_LOG_DBG("aHeadRowIdx", aHeadRowIdx)
+                //FIGARO_LOG_DBG("distCnt", distCnt)
+                //FIGARO_LOG_DBG("aTailIdxs", aTailIdxs[idx])
             }
             
             // Horizontally concatenates heads. 
@@ -754,17 +751,36 @@ namespace Figaro
         Eigen::HouseholderQR<MatrixEigenT> qr{};
         MatrixEigenT matEigen;
 
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("m_dataTails1", m_dataTails1)
+        FIGARO_LOG_DBG("m_dataTails2", m_dataTails2)
         MICRO_BENCH_START(timer);
-        m_dataHead.computeQRGivens();
-        m_dataTails1.computeQRGivens();
-        m_dataTails2.computeQRGivens();
+        
+        
+        
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         MICRO_BENCH_START(timer);
-        m_dataHead.resize(m_dataHead.getNumCols());
-        m_dataTails1.resize(m_dataTails1.getNumCols()); 
-        m_dataTails2.resize(m_dataTails2.getNumCols());
+        // Tries to resize where the number of columns is much bigger than the number of rows.
+        // This increases size and causes all sorts of problems. 
+        if (m_dataHead.getNumCols() < m_dataHead.getNumRows())
+        {
+            m_dataHead.computeQRGivens();
+            m_dataHead.resize(m_dataHead.getNumCols());
+        }
+        if (m_dataTails1.getNumCols() < m_dataTails1.getNumRows())
+        {
+            m_dataTails1.computeQRGivens();
+            m_dataTails1.resize(m_dataTails1.getNumCols()); 
+
+        }
+        if (m_dataTails2.getNumCols() < m_dataTails2.getNumRows())
+        {
+            m_dataTails2.computeQRGivens();
+            m_dataTails2.resize(m_dataTails2.getNumCols());
+
+        }
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "resize", MICRO_BENCH_GET_TIMER_LAP(timer));
 

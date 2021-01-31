@@ -119,7 +119,6 @@ namespace Figaro
             Relation* pRelation = aRelations[idxRel];
             pRelation->getAttributeValuesCounts(attrIterName, 
                         aHashTabAttrCnt[idxRel]);
-            FIGARO_LOG_DBG(aHashTabAttrCnt[idxRel]);
         }
         MICRO_BENCH_STOP(hash)
         FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "hash", MICRO_BENCH_GET_TIMER(hash));

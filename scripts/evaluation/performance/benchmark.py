@@ -30,6 +30,7 @@ class TimeWorkbook:
         self.time_sheet.cell(row, col).value = entry
 
     def save_entries(self, data_set, measure_times, data_set_idx):
+        #TODO: Iterate over row_header to see if there is a database named as data_set
         self.save_entry(self.row_header, self.col_header, "Measure/dataset")
         self.save_entry(self.row_header, data_set_idx, data_set)
 
@@ -64,7 +65,7 @@ class TimeWorkbook:
         self.work_book.save(self.output_file)
 
 
-def parse_times(times_path, time_workbook):
+def parse_times(times_path):
     meas_times = {}
     with open(times_path) as time_file:
         for line in time_file:
@@ -91,7 +92,7 @@ def parse_times(times_path, time_workbook):
 def gather_times(log_path: str, times_formated_path: str, 
                  database_name: str, data_set_idx: int):
     data_set_times = {}
-    measure_times = parse_times(log_path, times_formated_path)
+    measure_times = parse_times(log_path)
     print(measure_times)
 
     time_workbook = TimeWorkbook(times_formated_path, 'qr')

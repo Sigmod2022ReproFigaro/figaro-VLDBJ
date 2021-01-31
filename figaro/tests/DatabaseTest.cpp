@@ -357,12 +357,8 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     database.computeQRDecompositionHouseholder("S", &R);
 
-    FIGARO_LOG_DBG("DB CONFIG PATH", DB_CONFIG_PATH)
-    FIGARO_LOG_DBG("R", R)
     readMatrixDense(FILE_INPUT_EXP_R, expectedR);
-    FIGARO_LOG_DBG("expectedR", expectedR)
     compareMatrices(R, expectedR, false, false);
-    FIGARO_LOG_DBG(R)
 }
 
 
@@ -398,10 +394,7 @@ TEST(DISABLED_DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     database.computeQRDecompositionHouseholder("S", &R);
 
-    FIGARO_LOG_DBG("DB CONFIG PATH", DB_CONFIG_PATH)
-    FIGARO_LOG_DBG("R", R)
     readMatrixDense(FILE_INPUT_EXP_R, expectedR);
-    FIGARO_LOG_DBG("expectedR", expectedR)
     compareMatrices(R, expectedR, false, true);
     FIGARO_LOG_DBG(R)
 }
