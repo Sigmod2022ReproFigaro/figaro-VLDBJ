@@ -28,6 +28,7 @@ class PerformanceConf:
 class AccuracyConf:
     def __init__(self, path: str, precision: float):
         self.path = path
+        #self.path_all = 
         self.precision = precision
 
 
@@ -54,7 +55,7 @@ class SystemTest(ABC):
         PERFORMANCE = 3
         ACCURACY = 4
         PERFORMANCE_ANALYSIS = 5
-    #
+    
     map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP", 
                     TestMode.PERFORMANCE: "PERFORMANCE", 
                     TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",

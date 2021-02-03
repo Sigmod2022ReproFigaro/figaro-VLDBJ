@@ -273,12 +273,12 @@ namespace Figaro
         }
 
         
-        void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, double sin, double cos)
+        void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx,
+                         double sin, double cos)
         {
             auto& matA = *this;
             
-            //#pragma omp parallel for schedule(static)
-            for (uint32_t colIdx = 0; colIdx < matA.m_numCols; colIdx++)
+            for (uint32_t colIdx = startColIdx; colIdx < matA.m_numCols; colIdx++)
             {
                 double tmpUpperVal = matA[rowIdxUpper][colIdx];
                 double tmpLowerVal = matA[rowIdxLower][colIdx];
@@ -291,18 +291,45 @@ namespace Figaro
         {
             auto& matA = *this;
             constexpr double epsilon = 0.0;
-            for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+            uint32_t numBatches;
+            uint32_t batchSize;
+            #pragma omp parallel
             {
-                for (uint32_t rowIdx = m_numRows -1 ; rowIdx > colIdx; rowIdx--)
+                batchSize = omp_get_num_threads();
+            }
+            // Ceil division
+            numBatches = (m_numCols + batchSize - 1) / batchSize;
+            for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
+            {
+                #pragma omp parallel
                 {
-                    double upperVal = matA[rowIdx - 1][colIdx];
-                    double lowerVal = matA[rowIdx][colIdx];
-                    double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
-                    if (r > epsilon)
+                    uint32_t threadId;
+                    uint32_t colIdx;
+                    threadId = omp_get_thread_num();
+                    colIdx = batchIdx * batchSize + threadId;
+
+                    // Each thread will get equal number of rows to process. 
+                    // Although some threads will do dummy processing in the begining
+                    for (uint32_t rowIdx = m_numRows - 1 + 2 * threadId; rowIdx > colIdx; rowIdx--)
                     {
-                        double sinTheta = -lowerVal / r;
-                        double cosTheta = upperVal / r;
-                        applyGivens(rowIdx - 1, rowIdx, sinTheta, cosTheta);
+                        if ((rowIdx <= (m_numRows - 1)) && (colIdx < m_numCols))
+                        {
+                            double upperVal = matA[rowIdx - 1][colIdx];
+                            double lowerVal = matA[rowIdx][colIdx];
+                            double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
+                            if (r > epsilon)
+                            {
+                                double sinTheta = -lowerVal / r;
+                                double cosTheta = upperVal / r;
+                                applyGivens(rowIdx - 1, rowIdx, colIdx, sinTheta, cosTheta);
+                            }
+                        }
+                        #pragma omp barrier
+                    }
+                    // Extra dummy loops needed for barier synchronization. 
+                    for (uint32_t idx = 0; idx < batchSize - threadId - 1; idx++)
+                    {
+                        #pragma omp barrier
                     }
                 }
             }

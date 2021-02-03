@@ -147,16 +147,29 @@ class DatabasePsql:
             end = timer() 
             logging.info("##Figaro####Join##{}".format(end - start))
             cursor.close()
+    
+
+
+    def get_relation_size(self, relation_name) -> int:
+        sql_relation_count = "SELECT COUNT(*) FROM {};"
+        sql_relation_count = sql_relation_count.format(relation_name)
+        logging.debug(sql_relation_count)
+        cursor = self.connection.cursor()
+        cursor.execute(sql_relation_count)
+        relation_size = cursor.fetchone()
+        cursor.close()
+        return relation_size
 
 
     def get_join_size(self) -> int:
-        sql_join_count = "SELECT COUNT(*) FROM join_table;"
-        logging.debug(sql_join_count)
-        cursor = self.connection.cursor()
-        cursor.execute(sql_join_count)
-        join_size = cursor.fetchone()
-        cursor.close()
-        return join_size
+        return self.get_relation_size(JOIN_TABLE_NAME)
+
+
+    def log_relation_sizes(self, relation_names):
+        for relation_name in relation_names:
+            logging.info("Number of rows in relation {} is {}".
+                        format(relation_name, 
+                        self.get_relation_size(relation_name)))
 
 
     def dump_join(self, relations, output_file_path):

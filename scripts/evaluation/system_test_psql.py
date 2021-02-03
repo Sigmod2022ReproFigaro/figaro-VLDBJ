@@ -32,6 +32,7 @@ class SystemTestPsql(SystemTestDBMS):
         database_psql.evaluate_join(self.database.get_relations(), num_repetitions=num_repetitions)
         join_size = database_psql.get_join_size()
         logging.info("Number of rows is {}".format(join_size))
+        database_psql.log_relation_sizes(self.database.get_relation_names())
         if (dump):
             database_psql.dump_join(self.database.get_relations(), 
                                 self.join_path)

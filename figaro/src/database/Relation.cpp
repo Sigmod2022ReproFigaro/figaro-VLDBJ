@@ -756,12 +756,6 @@ namespace Figaro
         FIGARO_LOG_DBG("m_dataTails2", m_dataTails2)
         MICRO_BENCH_START(timer);
         
-        
-        
-        MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
-
-        MICRO_BENCH_START(timer);
         // Tries to resize where the number of columns is much bigger than the number of rows.
         // This increases size and causes all sorts of problems. 
         if (m_dataHead.getNumCols() < m_dataHead.getNumRows())
@@ -782,7 +776,7 @@ namespace Figaro
 
         }
         MICRO_BENCH_STOP(timer);
-        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "resize", MICRO_BENCH_GET_TIMER_LAP(timer));
+        FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         MICRO_BENCH_START(timer);
         m_dataTails1 = m_dataTails1.concatenateHorizontallyScalar(0, m_dataHead.getNumCols() - m_dataTails1.getNumCols());
