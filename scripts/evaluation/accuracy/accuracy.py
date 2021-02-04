@@ -3,10 +3,12 @@ from evaluation.accuracy.accuracy_workbook import AccuracyWorkbook
 import math
 import csv
 import os
-
+import pandas as pd
 
 def read_csv_as_list(path: str):
     rows = None
+    #df = pd.read_csv(path, header=None)
+    #df.
     with open(path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file)
         rows = list(csv_reader)
@@ -14,11 +16,13 @@ def read_csv_as_list(path: str):
     return rows
 
 
-def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: str, precision, operation: str):
+def compare_accuracy_r(figaro_path: str, competitor_path: str, 
+        accuracy_path: str, r_comp_file_path: str, errors_file_path: str, 
+        precision: float, operation: str):
     abs_err = 0.0
     abs_err_comp = 0.0
     precision = math.pow(10, -precision)
-    comp_wb = AccuracyWorkbook(output_file=accuracy_path+"/R_comp.xlsx", 
+    comp_wb = AccuracyWorkbook(output_file=r_comp_file_path, 
                 precision=precision, operation=operation)
                 
     figaro_rows = read_csv_as_list(figaro_path)
@@ -35,9 +39,9 @@ def compare_accuracy_r(figaro_path: str, competitor_path: str, accuracy_path: st
             comp_wb.save_entry(row_idx + 1, col_idx + 1, figaro_val, comp_val)
     comp_wb.save()
     
-    errors_path = os.path.join(accuracy_path, "error.txt")
+
     relative_frob_norm = math.sqrt(abs_err) / math.sqrt(abs_err_comp)
-    with open(errors_path, 'w') as file_errors:
+    with open(errors_file_path, 'w') as file_errors:
         file_errors.write("Absolute error is: {}\n".format(math.sqrt(abs_err)))
         file_errors.write("Frobenius norm of comp is: {}\n".format(math.sqrt(abs_err_comp)))
         file_errors.write("Relative error is: {}\n".format(relative_frob_norm))

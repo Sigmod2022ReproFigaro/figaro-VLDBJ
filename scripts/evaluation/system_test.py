@@ -28,9 +28,11 @@ class PerformanceConf:
 
 # Class that wraps precisions elements 
 class AccuracyConf:
-    def __init__(self, path: str, precision: float):
+    def __init__(self, path: str, r_comp_file_path: str, 
+                errors_file_path: str, precision: float):
         self.path = path
-        #self.path_all = 
+        self.r_comp_file_path = r_comp_file_path
+        self.errors_file_path = errors_file_path
         self.precision = precision
 
 
@@ -116,14 +118,18 @@ class SystemTest(ABC):
         
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
-            accuracy_json["path"], database.name)
+            accuracy_json["path"],  database.name)
+        path_errors_file = os.path.join(path_accuracy, 
+                            accuracy_json["errors_file"])
+        path_r_comp_file =os.path.join(path_accuracy, 
+                            accuracy_json["r_comp_file"])
         precision = accuracy_json["precision"]
         
         system_test = cls(
             LogConf(log_path, log_file_path), 
             DumpConf(path_dump, dump_file_path), 
             PerformanceConf(path_glob, path_perf, num_reps), 
-            AccuracyConf(path_accuracy, precision), 
+            AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision), 
             database, test_mode, 
             *args, **kwargs)
 
