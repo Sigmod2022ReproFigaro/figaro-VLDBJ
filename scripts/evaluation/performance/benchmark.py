@@ -1,10 +1,9 @@
 from argparse import ArgumentParser
 from pathlib import Path
 from openpyxl.utils.cell import get_column_letter
-import openpyxl
 import re
 from openpyxl import Workbook, load_workbook
-import os
+import logging
 
 reg_pattern = "(?:[. ]*?)(?<=##Figaro####)([\w ]+)(?:##)(?:[ ]*)([-+]?[0-9]+\.?[0-9]*([eE]?[-+]?[0-9]*))"
 
@@ -26,17 +25,28 @@ class TimeWorkbook:
         self.col_header = 1
         self.row_header = 1
 
+
+    def get_db_idx(self, db_name: str)-> int:
+        for col_idx in range(1, self.time_sheet.max_column + 1):
+            if db_name == self.time_sheet.cell(self.row_header, col_idx).value:
+                return col_idx 
+
+        col_idx = self.time_sheet.max_column + 1
+        return col_idx
+
+
     def save_entry(self, row, col, entry):
         self.time_sheet.cell(row, col).value = entry
 
-    def save_entries(self, data_set, measure_times, data_set_idx):
-        #TODO: Iterate over row_header to see if there is a database named as data_set
+
+    def save_entries(self, db_name: str, measure_times):
+        db_name_idx = self.get_db_idx(db_name)
         self.save_entry(self.row_header, self.col_header, "Measure/dataset")
-        self.save_entry(self.row_header, data_set_idx, data_set)
+        self.save_entry(self.row_header, db_name_idx, db_name)
 
         row_idx = self.row_header + 1
-        col_idx = data_set_idx
-        print(data_set_idx)
+        col_idx = db_name_idx
+        print(db_name_idx)
         for meas_times in measure_times:
             #print(meas_times)
             meas_time = measure_times[meas_times]
@@ -58,7 +68,6 @@ class TimeWorkbook:
                     col_letter,row_idx - 1))
             
             row_idx += 1
-
 
     def save(self):
         print (self.output_file)
@@ -90,14 +99,18 @@ def parse_times(times_path):
 #TODO: ADd option for save_entries for average or microbench
 
 def gather_times(log_path: str, times_formated_path: str, 
-                 database_name: str, data_set_idx: int):
+                 database_name: str):
     data_set_times = {}
     measure_times = parse_times(log_path)
     print(measure_times)
 
     time_workbook = TimeWorkbook(times_formated_path, 'qr')
-    time_workbook.save_entries(database_name, measure_times, data_set_idx)
+    time_workbook.save_entries(database_name, measure_times)
     time_workbook.save()
+
+
+#TODO: Collect all times into one big sheet
+#TODO: Extract all sizes and add this to one big sheet 
 
 if __name__ == "__main__":
     parser = ArgumentParser()

@@ -19,9 +19,11 @@ from evaluation.performance.benchmark import gather_times
 
 # Class that wraps performance parameters used in testing
 class PerformanceConf:
-    def __init__(self, path: str, num_reps: int):
+    def __init__(self, glob_path: str, path: str, num_reps: int):
         self.path = path
         self.num_reps = num_reps
+        self.glob_path = glob_path 
+        
 
 
 # Class that wraps precisions elements 
@@ -107,6 +109,7 @@ class SystemTest(ABC):
         dump_file_path = os.path.join(path_dump, dump_json["file"])
 
         perf_json = system_json["system"]["performance"]
+        path_glob = perf_json["path"]
         path_perf = SystemTest.create_dir_with_name(
                         perf_json["path"], database.name)
         num_reps = perf_json["number_reps"]
@@ -119,7 +122,7 @@ class SystemTest(ABC):
         system_test = cls(
             LogConf(log_path, log_file_path), 
             DumpConf(path_dump, dump_file_path), 
-            PerformanceConf(path_perf, num_reps), 
+            PerformanceConf(path_glob, path_perf, num_reps), 
             AccuracyConf(path_accuracy, precision), 
             database, test_mode, 
             *args, **kwargs)
@@ -175,7 +178,10 @@ class SystemTest(ABC):
     def run_performance_analysis(self):
         path_log_file = self.conf_log.file_path
         path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
-        gather_times(path_log_file, path_times_file, self.database.name, 2)
+        path_glob_times_file = os.path.join(self.conf_perf.glob_path, "time.xlsx")
+        gather_times(path_log_file, path_times_file, self.database.name)
+        logging.info(path_glob_times_file)
+        gather_times(path_log_file, path_glob_times_file, self.database.name)
 
     
     @abstractmethod
