@@ -750,6 +750,7 @@ namespace Figaro
         uint32_t numNonPKAttributes = getNumberOfNonPKAttributes();
         Eigen::HouseholderQR<MatrixEigenT> qr{};
         MatrixEigenT matEigen;
+        std::array<MatrixDT*, 2> pDataTails = {&m_dataTails1, &m_dataTails2};
 
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         FIGARO_LOG_DBG("m_dataTails1", m_dataTails1)
@@ -760,9 +761,25 @@ namespace Figaro
         // This increases size and causes all sorts of problems. 
         if (m_dataHead.getNumCols() < m_dataHead.getNumRows())
         {
-            m_dataHead.computeQRGivens();
+            m_dataHead.computeQRGivens(8);
             m_dataHead.resize(m_dataHead.getNumCols());
         }
+    
+        #pragma omp parallel num_threads(2)
+        {
+            #pragma omp for
+            for (uint32_t idx = 0; idx < 2; idx ++)
+            {
+                if (pDataTails[idx]->getNumCols() < pDataTails[idx]->getNumRows())
+                {
+                    pDataTails[idx]->computeQRGivens(4);
+                    pDataTails[idx]->resize(pDataTails[idx]->getNumCols()); 
+
+                }
+            }
+        }
+        
+        /*
         if (m_dataTails1.getNumCols() < m_dataTails1.getNumRows())
         {
             m_dataTails1.computeQRGivens();
@@ -775,6 +792,7 @@ namespace Figaro
             m_dataTails2.resize(m_dataTails2.getNumCols());
 
         }
+        */
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
 

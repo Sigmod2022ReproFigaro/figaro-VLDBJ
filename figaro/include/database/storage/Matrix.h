@@ -287,16 +287,38 @@ namespace Figaro
             }
         }
 
-        void computeQRGivens(void)
+        void computeQRGivensSequential(void)
+        {
+            auto& matA = *this;
+            for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+            {
+                for (uint32_t rowIdx = m_numRows -1 ; rowIdx > colIdx; rowIdx--)
+                {
+                    double upperVal = matA[rowIdx - 1][colIdx];
+                    double lowerVal = matA[rowIdx][colIdx];
+                    double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
+                    if (r > 0.0)
+                    {
+                        double sinTheta = -lowerVal / r;
+                        double cosTheta = upperVal / r;
+                        applyGivens(rowIdx - 1, rowIdx, colIdx, sinTheta, cosTheta);
+                    }
+                }
+            }
+        }
+
+        
+        void computeQRGivensParallelized(uint32_t numThreads)
         {
             auto& matA = *this;
             constexpr double epsilon = 0.0;
             uint32_t numBatches;
             uint32_t batchSize;
-            #pragma omp parallel
-            {
-                batchSize = omp_get_num_threads();
-            }
+            //#pragma omp parallel
+            //{
+            //}
+            batchSize = numThreads;//omp_get_num_threads();
+            omp_set_num_threads(numThreads);
             // Ceil division
             numBatches = (m_numCols + batchSize - 1) / batchSize;
             for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
@@ -333,6 +355,20 @@ namespace Figaro
                     }
                 }
             }
+        }
+
+        // numThreads denotes number of threads avaiable for the computation in the case of parallelization. 
+        void computeQRGivens(uint32_t numThreads)
+        {
+            if (m_numCols > 100)
+            {
+                computeQRGivensParallelized(numThreads);
+            }
+            else
+            {
+                computeQRGivensSequential();
+            }
+            
         }
 
 
