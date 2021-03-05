@@ -16,7 +16,7 @@ namespace Figaro
     {
         std::string operatorName = jsonQueryConfig["operator"];
         ASTNode* pCreatedNode = nullptr;
-        
+        // TODO: Replace with factory pattern.
         if (operatorName == "GIV_QR")
         {
             const json& operand = jsonQueryConfig["operands"][0];
@@ -26,17 +26,27 @@ namespace Figaro
         }
         else if (operatorName == "natural_join")
         {
-            const json& operandLeft = jsonQueryConfig["operands"][0];
-            const json& operandRight = jsonQueryConfig["operands"][1];
-            ASTNode* pCreatedLeftOperand = createASTFromJson(operandLeft);
-            ASTNode* pCreatedRightOperand = createASTFromJson(operandRight);
-            pCreatedNode = new ASTNodeJoin(pCreatedLeftOperand, pCreatedRightOperand);
+            const json& operandCentral = jsonQueryConfig["central_relation"];
+            ASTNodeRelation* pCreatedCentralOperand = 
+            (ASTNodeRelation*)createASTFromJson(operandCentral);
+            std::vector<ASTNodeAbsRelation*> vpCreatedChildOperands;
+            for (const auto& operandChild: jsonQueryConfig["children"])
+            {
+                ASTNodeAbsRelation* pCreatedOperandChild = 
+                (ASTNodeAbsRelation*)createASTFromJson(operandChild);
+                vpCreatedChildOperands.push_back(pCreatedOperandChild);
+            }
+            pCreatedNode = new ASTNodeJoin(pCreatedCentralOperand, vpCreatedChildOperands);
+            for (ASTNodeAbsRelation* pChild: vpCreatedChildOperands)
+            {
+                pChild->setParent((ASTNodeAbsRelation*)pCreatedNode);
+            }
             FIGARO_LOG_DBG("JOIN")
         }
         else if (operatorName == "relation")
         {
-            const std::string& relationName = jsonQueryConfig["operand"];
-            pCreatedNode = new ASTNodeRelation(relationName);
+            const std::string& relationName = jsonQueryConfig["relation"];
+            pCreatedNode = new ASTNodeRelation(relationName, m_pDatabase->getRelationAttributeNames(relationName));
             FIGARO_LOG_DBG("RELATION", relationName)
         }
 

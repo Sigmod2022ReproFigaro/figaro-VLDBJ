@@ -7,6 +7,7 @@ namespace Figaro
 {
     class ASTScaledCartesianProductVisitor: public ASTVisitor
     {
+        std::vector<ASTNodeRelation*> m_vpASTNodeRelation;  
     public:
         ASTScaledCartesianProductVisitor(Database* pDatabase): ASTVisitor(pDatabase) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
@@ -14,6 +15,8 @@ namespace Figaro
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
 
         virtual ~ASTScaledCartesianProductVisitor() override {}
+
+
     };
 }
 

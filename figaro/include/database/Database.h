@@ -36,6 +36,9 @@ namespace Figaro
 
         void sortRelation(const std::string& relationName, const std::vector<std::string> vSortAttributeNames);
 
+
+        std::vector<std::string> getRelationAttributeNames(const std::string& relationName);
+
         void joinRelations(std::vector<std::string> vRelationNames,
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
         

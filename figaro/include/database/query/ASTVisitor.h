@@ -11,6 +11,7 @@ namespace Figaro
 {
     class ASTVisitor
     {
+    protected:
         Database* m_pDatabase;
     public:
         ASTVisitor(Database* pDatabase): m_pDatabase(pDatabase) {}

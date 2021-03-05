@@ -9,6 +9,7 @@ namespace Figaro
     template <typename T>
     class Matrix 
     {
+        static constexpr uint32_t MIN_COLS_PAR = 100;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr; 
         void destroyData(void)
@@ -314,10 +315,7 @@ namespace Figaro
             constexpr double epsilon = 0.0;
             uint32_t numBatches;
             uint32_t batchSize;
-            //#pragma omp parallel
-            //{
-            //}
-            batchSize = numThreads;//omp_get_num_threads();
+            batchSize = numThreads;
             omp_set_num_threads(numThreads);
             // Ceil division
             numBatches = (m_numCols + batchSize - 1) / batchSize;
@@ -357,10 +355,10 @@ namespace Figaro
             }
         }
 
-        // numThreads denotes number of threads avaiable for the computation in the case of parallelization. 
-        void computeQRGivens(uint32_t numThreads)
+        // numThreads denotes number of threads available for the computation in the case of parallelization. 
+        void computeQRGivens(uint32_t numThreads = 1)
         {
-            if (m_numCols > 100)
+            if (m_numCols > MIN_COLS_PAR)
             {
                 computeQRGivensParallelized(numThreads);
             }

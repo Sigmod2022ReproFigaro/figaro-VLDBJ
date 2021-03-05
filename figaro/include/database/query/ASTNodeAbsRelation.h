@@ -27,7 +27,20 @@ namespace Figaro
         // In initial version, in this variable will represent 
         //  all the attributes from the child nodes of the current node. 
         std::vector<SelectionAttribute> m_selectAttributes;
+        ASTNodeAbsRelation* m_pParent = nullptr;
     public:
+        void setParent(ASTNodeAbsRelation* pParent)
+        {
+            m_pParent = pParent;
+        }
+        ASTNodeAbsRelation* getParent(void)
+        {
+            return m_pParent;
+        }
+        virtual const std::vector<std::string>& getAttributeNames(void) const = 0;
+
+        virtual const std::vector<std::string>& getJoinAttributeNames(void) = 0;
+        virtual void checkAndUpdateJoinAttributes(void) = 0;
         virtual ~ASTNodeAbsRelation() override = 0;
     };
 

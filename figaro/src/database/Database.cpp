@@ -66,6 +66,13 @@ namespace Figaro
         relation.sortData(vSortAttributeNames);
     }
 
+    std::vector<std::string> Database::getRelationAttributeNames(const std::string& relationName)
+    {
+        auto& relation = m_relations.at(relationName);
+        return relation.getAttributeNames();
+
+    }
+
     MatrixEigenT* Database::computeHead(const std::string& relName)
     {
         return nullptr;

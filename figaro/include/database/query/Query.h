@@ -12,7 +12,7 @@ namespace Figaro
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr; 
         static void destroyAST(ASTNode* pASTRoot);
-        static ASTNode* createASTFromJson(const json& jsonQueryConfig);
+        ASTNode* createASTFromJson(const json& jsonQueryConfig);
         ErrorCode createAST(const json& jsonQueryConfig);
 
     public:

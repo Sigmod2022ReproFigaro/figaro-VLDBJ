@@ -62,6 +62,16 @@ namespace Figaro
         return nokPKAttributes;
     }
 
+    std::vector<std::string> Relation::getAttributeNames(void) const
+    {
+        std::vector<std::string> vAttrNames;
+        for (const auto& attribute: m_attributes)
+        {
+            vAttrNames.push_back(attribute.m_name);
+        }
+        return vAttrNames;
+    }
+
     void Relation::getPKAttributeNames(std::vector<std::string>& vAttributeNamesPKs) const
     {
         for (const auto& attribute: m_attributes)
@@ -761,38 +771,26 @@ namespace Figaro
         // This increases size and causes all sorts of problems. 
         if (m_dataHead.getNumCols() < m_dataHead.getNumRows())
         {
-            m_dataHead.computeQRGivens(8);
+            m_dataHead.computeQRGivens(omp_get_num_procs());
             m_dataHead.resize(m_dataHead.getNumCols());
         }
-    
-        #pragma omp parallel num_threads(2)
+
+        omp_set_num_threads(pDataTails.size());
+        //omp_set_num_threads(1);
+        #pragma omp parallel
         {
             #pragma omp for
-            for (uint32_t idx = 0; idx < 2; idx ++)
+            for (uint32_t idx = 0; idx < pDataTails.size(); idx ++)
             {
                 if (pDataTails[idx]->getNumCols() < pDataTails[idx]->getNumRows())
                 {
-                    pDataTails[idx]->computeQRGivens(4);
+                    pDataTails[idx]->computeQRGivens(omp_get_num_procs() / pDataTails.size());
                     pDataTails[idx]->resize(pDataTails[idx]->getNumCols()); 
 
                 }
             }
         }
         
-        /*
-        if (m_dataTails1.getNumCols() < m_dataTails1.getNumRows())
-        {
-            m_dataTails1.computeQRGivens();
-            m_dataTails1.resize(m_dataTails1.getNumCols()); 
-
-        }
-        if (m_dataTails2.getNumCols() < m_dataTails2.getNumRows())
-        {
-            m_dataTails2.computeQRGivens();
-            m_dataTails2.resize(m_dataTails2.getNumCols());
-
-        }
-        */
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "computeQRGivens", MICRO_BENCH_GET_TIMER_LAP(timer));
 

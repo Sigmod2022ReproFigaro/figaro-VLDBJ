@@ -5,6 +5,46 @@
 namespace Figaro 
 {
 
+     void ASTNodeRelation::checkAndUpdateJoinAttributes(ASTNodeAbsRelation* pNodeAbsRelation)
+    {
+        if (nullptr != pNodeAbsRelation)
+        {
+            const std::vector<std::string> vAttrNames = pNodeAbsRelation->getAttributeNames();
+            for (const auto& attrName: vAttrNames)
+            {
+                setJoinAttribute(attrName);
+            }
+        }
+    }
+
+    void ASTNodeRelation::setJoinAttribute(const std::string& attrName)
+        {
+            if (m_mIsJoinAttr.find(attrName) != m_mIsJoinAttr.end())
+            {
+                m_mIsJoinAttr[attrName] = true;
+            }
+        }
+
+    void ASTNodeRelation::checkAndUpdateJoinAttributes(void) 
+    {
+        checkAndUpdateJoinAttributes(getParent());
+    }
+
+    const std::vector<std::string>& ASTNodeRelation::getJoinAttributeNames(void) 
+    {
+        if (m_vJoinAttributeNames.size() == 0)
+        {
+            for (auto const& [attrName, isJoinAttr]: m_mIsJoinAttr)
+            {
+                if (isJoinAttr)
+                {
+                    m_vJoinAttributeNames.push_back(attrName);
+                }
+            }
+        }
+        return m_vJoinAttributeNames;
+    }
+
     void ASTNodeRelation::accept(ASTVisitor *pVisitor) 
     {
         pVisitor->visitNodeRelation(this);
@@ -26,6 +66,6 @@ namespace Figaro
         for (const auto& joinAttribute: joinAttributes)
         {
             
-        }
+        } 
     }
 }

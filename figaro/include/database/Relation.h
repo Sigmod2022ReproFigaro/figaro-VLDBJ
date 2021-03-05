@@ -152,6 +152,9 @@ namespace Figaro
             return m_attributes;
         }
 
+
+        std::vector<std::string> getAttributeNames(void) const;
+
         const std::string& getName(void) const { return m_name; }
 
 

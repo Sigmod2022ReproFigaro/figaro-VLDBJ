@@ -15,7 +15,8 @@ void initGlobalState(void)
 {
     omp_set_nested(1);
     omp_set_dynamic(0);
-    omp_set_num_threads(8);
+    uint32_t numberOfCores =  omp_get_num_procs();
+    omp_set_num_threads(numberOfCores);
 }
 
 int main(int argc, char *argv[]) 
