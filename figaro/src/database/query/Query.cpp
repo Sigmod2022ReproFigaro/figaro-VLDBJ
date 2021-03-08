@@ -1,5 +1,6 @@
 #include "database/query/Query.h"
-#include "database/query/ASTScaledCartesianProductVisitor.h"
+#include "database/query/ASTJoinAttributesComputeVisitor.h"
+#include "database/query/ASTFigaroExpressionVisitor.h"
 #include <fstream>
 
 namespace Figaro
@@ -20,8 +21,15 @@ namespace Figaro
         if (operatorName == "GIV_QR")
         {
             const json& operand = jsonQueryConfig["operands"][0];
+            std::vector<std::string> vRelationOrder;
+            
+            for (const auto& relName: jsonQueryConfig["relation_order"])
+            {
+                vRelationOrder.push_back(relName);
+            }
+
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
-            pCreatedNode = new ASTNodeQRGivens(pCreatedOperandNode);
+            pCreatedNode = new ASTNodeQRGivens(pCreatedOperandNode, vRelationOrder);
             FIGARO_LOG_DBG("GIV_QR")
         }
         else if (operatorName == "natural_join")
@@ -47,7 +55,9 @@ namespace Figaro
         {
             const std::string& relationName = jsonQueryConfig["relation"];
             pCreatedNode = new ASTNodeRelation(relationName, m_pDatabase->getRelationAttributeNames(relationName));
+            m_mRelNameASTNodeRel[relationName] = (ASTNodeRelation*)pCreatedNode;
             FIGARO_LOG_DBG("RELATION", relationName)
+            
         }
 
         return pCreatedNode;
@@ -90,8 +100,10 @@ namespace Figaro
      void Query::evaluateQuery(void)
      {
          // Create visitor
-        ASTScaledCartesianProductVisitor visitor(m_pDatabase);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
+        ASTFigaroExpressionVisitor figaroExprVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         // TODO: Visitor to fill out everything in the root. 
-        m_pASTRoot->accept(&visitor);
+        m_pASTRoot->accept(&joinAttrVisitor);
+        m_pASTRoot->accept(&figaroExprVisitor);
      }
 }

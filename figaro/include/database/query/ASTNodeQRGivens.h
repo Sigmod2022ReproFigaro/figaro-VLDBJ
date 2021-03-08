@@ -12,13 +12,19 @@ namespace Figaro
     {
         friend class ASTVisitor;
         ASTNode* m_pOperand;
+        std::vector<std::string> m_vRelationOrder;
     public:
-        ASTNodeQRGivens(ASTNode *pOperand): m_pOperand(pOperand) {};
+        ASTNodeQRGivens(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder) {};
         virtual ~ASTNodeQRGivens() override {}
         ASTNode* getOperand(void) 
         { 
             return m_pOperand;
         };
+
+        const std::vector<std::string>& getRelationOrder(void)
+        {
+            return m_vRelationOrder;
+        }
         void accept(ASTVisitor *pVisitor) override;
     };
     

@@ -3,6 +3,7 @@
 
 #include "utils/Utils.h"
 #include "ASTNode.h"
+#include "ASTNodeRelation.h"
 #include "database/Database.h"
 
 namespace Figaro
@@ -11,6 +12,7 @@ namespace Figaro
     {
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr; 
+        std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
         ErrorCode createAST(const json& jsonQueryConfig);
