@@ -3,21 +3,6 @@
 namespace Figaro
 {
 
-    static std::string getFormateJoinAttributeNames(std::vector<std::string> vJoinAttributeNames)
-    {
-        std::string formatedStr = "";
-
-        for (uint32_t idx = 0; idx < vJoinAttributeNames.size(); idx++)
-        {
-            if (idx > 0)
-            {
-                formatedStr += ",";
-            }
-            formatedStr += vJoinAttributeNames[idx];
-        }
-        return formatedStr;
-    }
-
     std::vector<std::string> ASTFigaroExpressionVisitor::setIntersection(const std::vector<std::string>& vStr1, const std::vector<std::string>& vStr2)
     {
         std::map<std::string, bool> sStrAppears; 
@@ -65,22 +50,50 @@ namespace Figaro
         return strSqrt;
     }
 
+    // TODO: Add for arbitrary number of join attributes.
+    void aggregateAwayRelation(ASTNodeRelation* pRel)
+    {
+        // Aggregate away pElement->getParent() and 
+        // Aggregate away each element in postorder of parent
+        ASTNodeJoin* pParent = (ASTNodeJoin*)pRel->getParent();
+        for (const auto& pCurRel: pParent->getRelationPostorder())
+        {
+            pCurRel->moveFromNumToDenum(pRel);
+            pCurRel->moveFromNumToDenum(pParent->getCentralRelation());
+        }
+        pParent->getCentralRelation()->moveFromNumToDenum(pRel);
+        pParent->getCentralRelation()->moveFromNumToDenum(pParent->getCentralRelation());
+        // Iterate over all relations and remove aggregated away attributes.
+    }
+
     void ASTFigaroExpressionVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         std::string strSqrt = l2TailnormExpression(pElement);
         FIGARO_LOG_DBG("\\vcat_{", formJoinAttrNames, "} T(", relationName, "^{", formJoinAttrNames, "})", strSqrt);
+        /*
+        if (nullptr != pElement->getParent())
+        {
+            aggregateAwayRelation(pElement);
+        }
+        pElement->getRelationPostorder().push_back(pElement);
+        */
     }
 
     void ASTFigaroExpressionVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
+        std::vector<ASTNodeRelation*>&  vRelPostorder = pElement->getRelationPostorder();
         for (const auto& pChild: pElement->getChildren())
         {
             FIGARO_LOG_DBG("Child");
             pChild->accept(this);
+            /*
+            vRelPostorder.insert(vRelPostorder.begin(), 
+                pChild->getRelationPostorder().begin(), pChild->getRelationPostorder().end());
+            */
         }
 
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
@@ -88,6 +101,8 @@ namespace Figaro
         const auto& strSqrt = l2TailnormExpression(pElement->getCentralRelation());
         FIGARO_LOG_DBG("\\vcat_{", formJoinAttrNames, "} T(", relationName, "^{", formJoinAttrNames, "})",
         strSqrt);
+
+        //vRelPostorder.push_back(pElement->getCentralRelation());
         
     }
 

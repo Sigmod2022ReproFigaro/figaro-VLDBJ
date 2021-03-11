@@ -18,12 +18,19 @@ namespace Figaro
     }
 
     void ASTNodeRelation::setJoinAttribute(const std::string& attrName)
+    {
+        if (m_mIsJoinAttr.find(attrName) != m_mIsJoinAttr.end())
         {
-            if (m_mIsJoinAttr.find(attrName) != m_mIsJoinAttr.end())
-            {
-                m_mIsJoinAttr[attrName] = true;
-            }
+            m_mIsJoinAttr[attrName] = true;
         }
+    }
+
+    void ASTNodeRelation::moveFromNumToDenum(ASTNodeRelation* pRelation)
+    {
+        const auto& itRelation = std::find(m_vpASTNodeRelNum.begin(), m_vpASTNodeRelNum.end(), pRelation);
+        m_vpASTNodeRelNum.erase(itRelation);
+        m_vpASTNodeRelDenom.push_back(pRelation);
+    }
 
     void ASTNodeRelation::checkAndUpdateJoinAttributes(void) 
     {

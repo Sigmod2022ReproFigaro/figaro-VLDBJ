@@ -3,19 +3,19 @@
 namespace Figaro
 {
 
-    static std::string getFormateJoinAttributeNames(std::vector<std::string> vJoinAttributeNames)
+    void ASTJoinAttributesComputeVisitor::initializeEnumAndDenomRelations(ASTNodeRelation* pRelation)
     {
-        std::string formatedStr = "";
-
-        for (uint32_t idx = 0; idx < vJoinAttributeNames.size(); idx++)
+        std::vector<ASTNodeRelation*>& numRelations =  pRelation->getNumRelations();
+        std::vector<ASTNodeRelation*>& denomRelations =  pRelation->getDenomRelations();
+        
+        denomRelations.push_back(pRelation);
+        for (const auto& pCurRelation: m_vpASTNodeRelation)
         {
-            if (idx > 0)
+            if (pCurRelation != pRelation)
             {
-                formatedStr += ",";
+                numRelations.push_back(pCurRelation);
             }
-            formatedStr += vJoinAttributeNames[idx];
         }
-        return formatedStr;
     }
 
     void ASTJoinAttributesComputeVisitor::visitNodeRelation(ASTNodeRelation* pElement)
@@ -24,6 +24,7 @@ namespace Figaro
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
+        initializeEnumAndDenomRelations(pElement);
     }
 
     void ASTJoinAttributesComputeVisitor::visitNodeJoin(ASTNodeJoin* pElement)
@@ -36,7 +37,9 @@ namespace Figaro
             pChild->accept(this);
         }
         pElement->checkAndUpdateJoinAttributes();
-
+        
+        
+        initializeEnumAndDenomRelations(pElement->getCentralRelation());
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
@@ -47,6 +50,10 @@ namespace Figaro
     {
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
+        for (const auto& relName: pElement->getRelationOrder())
+        {
+            m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
+        }
         pElement->getOperand()->accept(this);
         
     }

@@ -100,9 +100,8 @@ namespace Figaro
      void Query::evaluateQuery(void)
      {
          // Create visitor
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroExpressionVisitor figaroExprVisitor(m_pDatabase, m_mRelNameASTNodeRel);
-        // TODO: Visitor to fill out everything in the root. 
         m_pASTRoot->accept(&joinAttrVisitor);
         m_pASTRoot->accept(&figaroExprVisitor);
      }

@@ -6,6 +6,8 @@
 
 namespace Figaro
 {
+    class ASTNodeRelation;
+
     class ASTNodeAbsRelation: public ASTNode
     {
         enum class SelectionCriterion
@@ -28,6 +30,7 @@ namespace Figaro
         //  all the attributes from the child nodes of the current node. 
         std::vector<SelectionAttribute> m_selectAttributes;
         ASTNodeAbsRelation* m_pParent = nullptr;
+        std::vector<ASTNodeRelation*> m_vpRelPostorder;
     public:
         void setParent(ASTNodeAbsRelation* pParent)
         {
@@ -38,8 +41,13 @@ namespace Figaro
             return m_pParent;
         }
         virtual const std::vector<std::string>& getAttributeNames(void) const = 0;
+        std::vector<ASTNodeRelation*>& getRelationPostorder(void)
+        {
+            return m_vpRelPostorder;
+        }
 
         virtual const std::vector<std::string>& getJoinAttributeNames(void) = 0;
+        //virtual void addVisitedNode(ASTNodeAbsRelation* pChildVisited) = 0;
         virtual void checkAndUpdateJoinAttributes(void) = 0;
         virtual ~ASTNodeAbsRelation() override = 0;
     };
