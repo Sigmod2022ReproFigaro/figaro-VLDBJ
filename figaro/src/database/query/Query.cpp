@@ -1,6 +1,7 @@
 #include "database/query/Query.h"
 #include "database/query/ASTJoinAttributesComputeVisitor.h"
-#include "database/query/ASTFigaroExpressionVisitor.h"
+#include "database/query/ASTFigaroFirstPassVisitor.h"
+#include "database/query/ASTFigaroSecondPassVisitor.h"
 #include <fstream>
 
 namespace Figaro
@@ -101,8 +102,10 @@ namespace Figaro
      {
          // Create visitor
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
-        ASTFigaroExpressionVisitor figaroExprVisitor(m_pDatabase, m_mRelNameASTNodeRel);
+        ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         m_pASTRoot->accept(&joinAttrVisitor);
-        m_pASTRoot->accept(&figaroExprVisitor);
+        m_pASTRoot->accept(&figaroFirstPassVisitor);
+        m_pASTRoot->accept(&figaroSecondPassVisitor);
      }
 }

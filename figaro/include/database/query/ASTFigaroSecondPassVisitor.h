@@ -1,17 +1,16 @@
-#ifndef _FIGARO_AST_FIGARO_EXPRESSION_VISITOR_H_
-#define _FIGARO_AST_FIGARO_EXPRESSION_VISITOR_H_
+#ifndef _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
+#define _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
 
 #include "ASTQRVisitor.h"
 
 namespace Figaro
 {
-    class ASTFigaroExpressionVisitor: public ASTQRVisitor
+    class ASTFigaroSecondPassVisitor: public ASTQRVisitor
     {
         static std::vector<std::string> setIntersection(const std::vector<std::string>& vStr1, const std::vector<std::string>& vStr2);
-        std::string l2TailnormExpression(ASTNodeRelation* pElement);
-
+        std::string strCountsHeadGenearlized(ASTNodeRelation* pRel);
     public:
-        ASTFigaroExpressionVisitor(
+        ASTFigaroSecondPassVisitor(
             Database* pDatabase, 
             const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel): 
                 ASTQRVisitor(pDatabase, mRelNameASTNodeRel) {}
@@ -19,7 +18,7 @@ namespace Figaro
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
 
-        virtual ~ASTFigaroExpressionVisitor() override {}
+        virtual ~ASTFigaroSecondPassVisitor() override {}
 
 
     };

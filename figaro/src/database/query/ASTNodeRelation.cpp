@@ -27,9 +27,33 @@ namespace Figaro
 
     void ASTNodeRelation::moveFromNumToDenum(ASTNodeRelation* pRelation)
     {
-        const auto& itRelation = std::find(m_vpASTNodeRelNum.begin(), m_vpASTNodeRelNum.end(), pRelation);
-        m_vpASTNodeRelNum.erase(itRelation);
-        m_vpASTNodeRelDenom.push_back(pRelation);
+        const auto& itRelation = std::find(m_vpASTNodeRelNumer.begin(), m_vpASTNodeRelNumer.end(), pRelation);
+        if (itRelation != m_vpASTNodeRelNumer.end())
+        {
+            FIGARO_LOG_DBG("itRelation", (*itRelation)->getRelationName())
+            for (const auto& pCurRel: m_vpASTNodeRelNumer)
+            {
+                FIGARO_LOG_DBG("numer", pCurRel->getRelationName())
+            }
+            for (const auto& pCurRel: m_vpASTNodeRelDenom)
+            {
+                FIGARO_LOG_DBG("denom", pCurRel->getRelationName())
+            }
+
+            m_vpASTNodeRelNumer.erase(itRelation);
+            FIGARO_LOG_DBG("Erasure passed")
+
+            m_vpASTNodeRelDenom.push_back(pRelation);
+            FIGARO_LOG_DBG("AddedRElation")
+        }
+         for (const auto& pCurRel: m_vpASTNodeRelNumer)
+            {
+                FIGARO_LOG_DBG("numer", pCurRel->getRelationName())
+            }
+            for (const auto& pCurRel: m_vpASTNodeRelDenom)
+            {
+                FIGARO_LOG_DBG("denom", pCurRel->getRelationName())
+            }
     }
 
     void ASTNodeRelation::checkAndUpdateJoinAttributes(void) 

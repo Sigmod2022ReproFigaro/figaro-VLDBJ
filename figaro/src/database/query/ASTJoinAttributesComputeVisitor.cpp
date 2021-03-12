@@ -5,7 +5,7 @@ namespace Figaro
 
     void ASTJoinAttributesComputeVisitor::initializeEnumAndDenomRelations(ASTNodeRelation* pRelation)
     {
-        std::vector<ASTNodeRelation*>& numRelations =  pRelation->getNumRelations();
+        std::vector<ASTNodeRelation*>& numRelations =  pRelation->getNumerRelations();
         std::vector<ASTNodeRelation*>& denomRelations =  pRelation->getDenomRelations();
         
         denomRelations.push_back(pRelation);
