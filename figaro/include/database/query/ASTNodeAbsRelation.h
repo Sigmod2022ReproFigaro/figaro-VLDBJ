@@ -30,6 +30,7 @@ namespace Figaro
         //  all the attributes from the child nodes of the current node. 
         std::vector<SelectionAttribute> m_selectAttributes;
         ASTNodeAbsRelation* m_pParent = nullptr;
+        // TODO: Move to relation
         std::vector<ASTNodeRelation*> m_vpRelPostorder;
     public:
         void setParent(ASTNodeAbsRelation* pParent)
@@ -40,6 +41,7 @@ namespace Figaro
         {
             return m_pParent;
         }
+        virtual ASTNodeRelation* getRelation(void) = 0;
         virtual const std::vector<std::string>& getAttributeNames(void) const = 0;
         std::vector<ASTNodeRelation*>& getRelationPostorder(void)
         {

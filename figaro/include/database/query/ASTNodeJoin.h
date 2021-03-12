@@ -16,7 +16,11 @@ namespace Figaro
         ASTNodeJoin(ASTNodeRelation* pRelation, std::vector<ASTNodeAbsRelation*> vPChild): 
             m_pCenRelation(pRelation), m_vPChild(vPChild){}
         virtual ~ASTNodeJoin() override {}
-
+        
+        ASTNodeRelation* getRelation(void) override
+        {
+            return m_pCenRelation;
+        }
         ASTNodeRelation* getCentralRelation(void)
         {
             return m_pCenRelation;

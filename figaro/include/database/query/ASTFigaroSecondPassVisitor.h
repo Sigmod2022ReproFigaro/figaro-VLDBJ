@@ -8,7 +8,7 @@ namespace Figaro
     class ASTFigaroSecondPassVisitor: public ASTQRVisitor
     {
         static std::vector<std::string> setIntersection(const std::vector<std::string>& vStr1, const std::vector<std::string>& vStr2);
-        std::string strCountsHeadGenearlized(ASTNodeRelation* pRel);
+        std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase, 

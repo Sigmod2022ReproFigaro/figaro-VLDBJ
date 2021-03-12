@@ -30,6 +30,11 @@ namespace Figaro
         };
         virtual ~ASTNodeRelation() override {}
 
+        ASTNodeRelation* getRelation(void) override
+        {
+            return this;
+        }
+
         const std::string& getRelationName() const
         {
             return m_relationName;

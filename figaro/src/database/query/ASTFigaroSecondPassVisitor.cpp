@@ -4,26 +4,41 @@ namespace Figaro
 {
 
     // TODO: Add for arbitrary number of join attributes.
-    void aggregateAwayRelation(ASTNodeRelation* pRel, ASTNodeJoin* pParent)
+    void aggregateAwayRelation(ASTNodeAbsRelation* pAbsRel)
     {
-        // Aggregate away pElement->getParent() and 
-        // Aggregate away each element in postorder of parent
-        //ASTNodeJoin* pParent = (ASTNodeJoin*)pRel->getParent();
-        pRel->moveFromNumToDenum(pRel);
-        pRel->moveFromNumToDenum(pParent->getCentralRelation());
+        ASTNodeAbsRelation* pParent = pAbsRel->getParent();
+        ASTNodeRelation* pRelInst = pAbsRel->getRelation();
+        for (const auto& pCurRel: pAbsRel->getRelationPostorder())
+        {
+            
+            pCurRel->moveFromNumToDenum(pRelInst);
+            pCurRel->moveFromNumToDenum(pParent->getRelation());
+            pParent->getRelation()->moveFromNumToDenum(pCurRel);
+            for (const auto& pCurRelIn: pParent->getRelationPostorder())
+            {
+                pCurRel->moveFromNumToDenum(pCurRelIn);
+            }
+        }
         for (const auto& pCurRel: pParent->getRelationPostorder())
         {
             
-            pCurRel->moveFromNumToDenum(pRel);
-            pCurRel->moveFromNumToDenum(pParent->getCentralRelation());
+            pCurRel->moveFromNumToDenum(pRelInst);
+            pRelInst->moveFromNumToDenum(pCurRel);
+            pCurRel->moveFromNumToDenum(pParent->getRelation());
+            for (const auto& pCurRelIn: pAbsRel->getRelationPostorder())
+            {
+                pCurRel->moveFromNumToDenum(pCurRelIn);
+            }
         }
-        pParent->getCentralRelation()->moveFromNumToDenum(pRel);
-        pParent->getCentralRelation()->moveFromNumToDenum(pParent->getCentralRelation());
+        pRelInst->moveFromNumToDenum(pRelInst);
+        pRelInst->moveFromNumToDenum(pParent->getRelation());
+        pParent->getRelation()->moveFromNumToDenum(pRelInst);
+        pParent->getRelation()->moveFromNumToDenum(pParent->getRelation());
 
         // Iterate over all relations and remove aggregated away attributes.
     }
 
-    std::string ASTFigaroSecondPassVisitor::strCountsHeadGenearlized(ASTNodeRelation* pRel)
+    std::string ASTFigaroSecondPassVisitor::strCountsHeadGeneralized(ASTNodeRelation* pRel)
     {
         std::string str = "";
         str += "\\sqrt{|";
@@ -49,11 +64,11 @@ namespace Figaro
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         if (nullptr != pElement->getParent())
         {
-            aggregateAwayRelation(pElement, (ASTNodeJoin*)pElement->getParent());
+            aggregateAwayRelation(pElement);
         }
         for (const auto& pCurRel: m_vpASTNodeRelation)
         {
-            std::string strHeadCounts = strCountsHeadGenearlized(pCurRel);
+            std::string strHeadCounts = strCountsHeadGeneralized(pCurRel);
             FIGARO_LOG_DBG("Relation", pCurRel->getRelationName(), "HeadCounts", strHeadCounts)
         }
         pElement->getRelationPostorder().push_back(pElement);
@@ -80,11 +95,11 @@ namespace Figaro
 
         if (nullptr != pElement->getParent())
         {
-            aggregateAwayRelation(pElement->getCentralRelation(), (ASTNodeJoin*) pElement->getParent());
+            aggregateAwayRelation(pElement);
         }
         for (const auto& pCurRel: m_vpASTNodeRelation)
         {
-            std::string strHeadCounts = strCountsHeadGenearlized(pCurRel);
+            std::string strHeadCounts = strCountsHeadGeneralized(pCurRel);
             FIGARO_LOG_DBG("Relation", pCurRel->getRelationName(), "HeadCounts", strHeadCounts)
         }
 
