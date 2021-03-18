@@ -50,8 +50,8 @@ function get_str_args()
 
 function main()
 {
-    export CC=/usr/bin/gcc-10
-    export CXX=/usr/bin/g++-10
+    export CC=gcc-10
+    export CXX=g++-10
 
     init_global_paths
     get_str_args "$@"
