@@ -25,7 +25,9 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--root", action="store", 
                         dest="root_path", required=False)
     parser.add_argument("-d", "--data", action="store", 
-                        dest="data_path", required=False)          
+                        dest="data_path", required=False)    
+    parser.add_argument("-s", "--system_tests_path", action="store", 
+                        dest="system_tests_path", required=True)
     parser.add_argument("-b", "--backup", action="store_true", 
                         dest="backup", required=False)                                
     args = parser.parse_args()
@@ -34,7 +36,7 @@ if __name__ == "__main__":
         else "/home/popina/Figaro/figaro-code"
     data_path = args.data_path if args.data_path is not None \
             else "/home/popina/Figaro/data"
-    system_tests_path = os.path.join(root_path, "system_tests")
+    system_tests_path = args.system_tests_path
 
     if args.backup:
         system_tests_path_backup = system_tests_path + "_backup"

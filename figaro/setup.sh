@@ -33,6 +33,10 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_DUMP_FILE_PATH=$EXTENSION
         ;;
+        --data_path=*)
+            EXTENSION="${option#*=}"
+            FIGARO_DATA_PATH=$EXTENSION
+        ;;
         --db_config_path=*)
             EXTENSION="${option#*=}"
             FIGARO_DB_CONFIG_PATH=$EXTENSION
