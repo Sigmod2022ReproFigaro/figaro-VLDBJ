@@ -118,9 +118,9 @@ def eval_tests(password: str, test_conf_path: str):
     system_tests_evaluator.eval_tests()
 
 
-def get_all_test_specs_paths(test_num):
+def get_all_test_specs_paths(root_path: str, test_num):
     test_conf_paths = []
-    test_specs_dir = "/home/popina/Figaro/figaro-code/system_tests/"
+    test_specs_dir = os.path.join(root_path, "system_tests/")
     if test_num is None:
         for test_path in listdir(test_specs_dir):
             test_specs_path = os.path.join(test_specs_dir, test_path, "tests_specs.conf")
@@ -134,18 +134,19 @@ def get_all_test_specs_paths(test_num):
 
 
 if __name__ == "__main__":
-    ROOT_PATH = "/home/popina/Figaro/figaro-code"
-
     init_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",  
                         dest="password", required=True)
     parser.add_argument("-t", "--test", action="store", 
                         dest="test", required=False)
+    parser.add_argument("-r", "--root", action="store", 
+                        dest="root_path", required=False)
     args = parser.parse_args()
 
-    test_conf_paths = get_all_test_specs_paths(args.test)
+    root_path = args.root_path if args.root_path is not None \
+        else "/home/popina/Figaro/figaro-code"
+    test_conf_paths = get_all_test_specs_paths(root_path, args.test)
     for test_conf_path in test_conf_paths:
         logging.info("Running test specified in the path {}".format(test_conf_path))
         eval_tests(args.password, test_conf_path)
-
