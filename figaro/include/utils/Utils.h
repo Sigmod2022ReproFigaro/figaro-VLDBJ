@@ -1,7 +1,7 @@
 #ifndef _FIGARO_UTILS_H_
 #define _FIGARO_UTILS_H_
 
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 // There is a bug because Eigen include C complex.h which has I defined as macro
 // while boost uses I as classname, and thus there is a clash in naming.
 // I is not used anywhere in eigen as a variable except in src/SparseLU/SparseLU_gemm_kernel.h:
