@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include "utils/Utils.h"
-const std::string TEST_PATH = "/home/popina/Figaro/data/unit_test_databases/";
+extern std::string GL_DATA_PATH;
 const std::string CONFIG_PATH = "../tests/";
 const std::string DB_CONFIG_PATH_IN = "database_specs.conf";
 const std::string QUERY_CONFIG_PATH_IN = "query_specs.conf";

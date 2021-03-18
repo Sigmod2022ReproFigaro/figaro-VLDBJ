@@ -1,10 +1,11 @@
 function init_global_paths()
 {
     FIGARO_ROOT_PATH="${1:-/home/popina/Figaro/figaro-code/figaro}"
+    FIGARO_DATA_PATH="/home/popina/Figaro/data"
     FIGARO_LOG_FILE_PATH="$FIGARO_ROOT_PATH/log/log.txt"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
     FIGARO_DUMP_FILE_PATH="$FIGARO_ROOT_PATH/dump/R.csv"
-    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs17.conf"
+    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
 }
@@ -41,7 +42,6 @@ function get_str_args()
             FIGARO_PRECISION=$EXTENSION
         ;;
         *)    # unknown option
-        echo "${option}"
         echo "Wrong  argument" $option
         ;;
     esac
@@ -83,11 +83,11 @@ function main()
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
-        ./figaro_test \
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*BasicQueryParsing \
         >   "${FIGARO_LOG_FILE_PATH}" 2>&1
+        #./figaro_test \
         
        # ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneMultipleAttributes \
-        #./figaro_test  --gtest_filter=*BasicQueryParsing \
         ;;
     esac
 }
