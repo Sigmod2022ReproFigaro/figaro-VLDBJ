@@ -142,7 +142,7 @@ TEST(Matrix, ConcatenateVertically)
     Figaro::Matrix<double> matrix = matrix1.concatenateVertically(matrix2);
     matrix = matrix.concatenateVerticallyScalar(0, 2);
 
-    EXPECT_EQ(matrix[0][0], 1); 
+    EXPECT_EQ(matrix[0][0], 1);
     EXPECT_EQ(matrix[0][1], 2);
     EXPECT_EQ(matrix[1][0], 3);
     EXPECT_EQ(matrix[1][1], 4);
@@ -152,7 +152,7 @@ TEST(Matrix, ConcatenateVertically)
     EXPECT_EQ(matrix[3][1], 8);
     EXPECT_EQ(matrix[4][0], 9);
     EXPECT_EQ(matrix[4][1], 10);
-    
+
     EXPECT_EQ(matrix[5][0], 0);
     EXPECT_EQ(matrix[5][1], 0);
     EXPECT_EQ(matrix[6][0], 0);
@@ -168,13 +168,13 @@ TEST(Matrix, ConcatenateHorizontally)
     matrix1[0][0] = 1; matrix1[0][1] = 2;
     matrix1[1][0] = 3; matrix1[1][1] = 4;
 
-    matrix2[0][0] = 5; matrix2[0][1] = 6; matrix2[0][2] = 7; 
+    matrix2[0][0] = 5; matrix2[0][1] = 6; matrix2[0][2] = 7;
     matrix2[1][0] = 8 ;matrix2[1][1] = 9; matrix2[1][2] = 10;
 
     Figaro::Matrix<double> matrix = matrix1.concatenateHorizontally(matrix2);
     matrix = matrix.concatenateHorizontallyScalar(0, 2);
-    
-    EXPECT_EQ(matrix[0][0], 1); 
+
+    EXPECT_EQ(matrix[0][0], 1);
     EXPECT_EQ(matrix[0][1], 2);
     EXPECT_EQ(matrix[1][0], 3);
     EXPECT_EQ(matrix[1][1], 4);
@@ -229,7 +229,7 @@ TEST(Matrix, ApplyGivens)
 
     EXPECT_NEAR(matrix[1][0], 5, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrix[1][1], 4.8, GIVENS_TEST_PRECISION_ERROR);
-    
+
     EXPECT_NEAR(matrix[2][0], 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrix[2][1], -1.4, GIVENS_TEST_PRECISION_ERROR);
 }
@@ -250,7 +250,7 @@ TEST(Matrix, computeQRGivens)
 
     EXPECT_NEAR(matrix[1][0], 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrix[1][1], 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
-    
+
     EXPECT_NEAR(matrix[2][0], 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrix[2][1], 0, GIVENS_TEST_PRECISION_ERROR);
 }
@@ -338,7 +338,7 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
     loadError = database.loadData();
     EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
-    
+
     database.sortRelation("R", {"A"});
     database.computeHead("R", "A");
 
@@ -347,7 +347,7 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
 
     database.sortRelation("T", {"B", "C"});
     database.computeHead("T", "C");
-    
+
     database.sortRelation("U", {"C"});
     database.computeHead("U", "C");
 
@@ -375,7 +375,7 @@ TEST(DISABLED_DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
     loadError = database.loadData();
     EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
-    
+
     database.sortRelation("R", {"A"});
     database.computeHead("R", "A");
 
@@ -384,7 +384,7 @@ TEST(DISABLED_DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
 
     database.sortRelation("T", {"C", "B"});
     database.computeHead("T", "C");
-    
+
     database.sortRelation("U", {"C"});
     database.computeHead("U", "C");
 

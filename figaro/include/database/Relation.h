@@ -6,24 +6,37 @@
 #include <vector>
 #include <unordered_map>
 
-// TODO: Optimize tuple instanciated Relation based on number of attributes. 
+// TODO: Optimize tuple instanciated Relation based on number of attributes.
 namespace Figaro
 {
-    /** 
+    /**
      * @class Relation
-     * 
+     *
      * @brief We prevent attributes with the same name. The order of attributes
-     * represent the order in which they are stored in the corresponding 
+     * represent the order in which they are stored in the corresponding
      * csf file. In the constructor, the relation schema is initalized from
-     * json object. The data is not loaded until requested 
-     * with function @see loadData.   
+     * json object. The data is not loaded until requested
+     * with function @see loadData.
      */
     class Relation
     {
         static constexpr char DELIMITER = ',';
+
+        static bool compareTuples(const double pTuple1[], const double pTuple2[],
+                const std::vector<uint32_t>& vAttrIdxs)
+        {
+            for (const auto& attrIdx: vAttrIdxs)
+            {
+                if (pTuple1[attrIdx] != pTuple2[attrIdx])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     public:
         // By default we will map strings to int
-        enum class AttributeType 
+        enum class AttributeType
         {
             FLOAT, INTEGER, CATEGORY
         };
@@ -34,16 +47,16 @@ namespace Figaro
         typedef Figaro::Matrix<double> MatrixDT;
 
         /**
-         * @struct Attribute 
-         * 
-         * This structure containts metadata about the attribute.  
-         * Metadata includes name, type, if the attribute is part of 
-         * primary key. 
+         * @struct Attribute
+         *
+         * This structure containts metadata about the attribute.
+         * Metadata includes name, type, if the attribute is part of
+         * primary key.
          */
-        struct Attribute 
+        struct Attribute
         {
             std::string m_name = "";
-            AttributeType m_type = AttributeType::FLOAT; 
+            AttributeType m_type = AttributeType::FLOAT;
             bool m_isPrimaryKey = false;
             const std::map<AttributeType, std::string> mapTypeToStr =
             {
@@ -75,10 +88,10 @@ namespace Figaro
                     m_type = other.m_type;
                     m_isPrimaryKey = m_isPrimaryKey;
                 }
-                return *this; 
+                return *this;
             }
 
-            
+
 
             friend void swap(Attribute& attr1, Attribute& attr2)
             {
@@ -92,36 +105,44 @@ namespace Figaro
         ErrorCode initalizationErrorCode = ErrorCode::NO_ERROR;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
-        
+
         MatrixDT m_data;
-        
+
         MatrixDT m_dataHead;
+        MatrixDT m_dataTails;
         MatrixDT m_dataTails1;
         MatrixDT m_dataTails2;
-
         GroupByT m_countAggregates;
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
         /**
          * For each attribute denoted by name stored in vector @p vAttributeNames, return
-         * the corresponding column index stored in @p vAttributeIdx. 
+         * the corresponding column index stored in @p vAttributeIdx.
          * The computed  order of indices is the same as the order of attribute names
-         * provided by @p vAttributeNames. 
+         * provided by @p vAttributeNames.
          */
         void getAttributesIdxs(
-            const std::vector<std::string>& vAttributeNames, 
+            const std::vector<std::string>& vAttributeNames,
             std::vector<uint32_t>& vAttributeIdxs) const;
+
+        void getAttributesIdxsComplement(const std::vector<uint32_t>& vAttributeIdxs,
+            std::vector<uint32_t> vAttributesCompIdxs) const;
 
         uint32_t getNumberOfPKAttributes(void) const;
 
         uint32_t getNumberOfNonPKAttributes(void) const;
 
-        
+        uint32_t getNumberOfAttributes(void) const
+        {
+            return m_attributes.size();
+        }
+
+
         /**
          * For each part of a composite PK compute the corresponding column index. The
-         * order of returned indices is the same as specified initially by the 
-         * relational schema. 
+         * order of returned indices is the same as specified initially by the
+         * relational schema.
          */
         void getPKAttributeNames(
             std::vector<std::string>& vAttributeNamesPKs) const;
@@ -129,14 +150,14 @@ namespace Figaro
 
         void getNonPKAttributeNames(
             std::vector<std::string>& vAttributeNamesNonPKs) const;
-        
+
 
         void getPKAttributeIndices(std::vector<uint32_t>& vPkAttrIdxs) const;
-        
+
         /**
-         * Returns a vector of indices of the attributes that are not part 
+         * Returns a vector of indices of the attributes that are not part
          * of composite primary key for this relation. Indexing of attributes
-         * starts from 0. 
+         * starts from 0.
          */
         void getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const;
 
@@ -147,7 +168,7 @@ namespace Figaro
         Relation(Relation&& ) = default;
         Relation(json jsonRelationSchema);
 
-        const std::vector<Attribute>& getAttributes(void) const 
+        const std::vector<Attribute>& getAttributes(void) const
         {
             return m_attributes;
         }
@@ -158,7 +179,7 @@ namespace Figaro
         const std::string& getName(void) const { return m_name; }
 
 
-        uint32_t numberOfAttributes() const 
+        uint32_t numberOfAttributes() const
         {
             return m_attributes.size();
         }
@@ -166,15 +187,19 @@ namespace Figaro
         const std::string& getAttributeName(uint32_t attributedIdx) const
         {
             return m_attributes.at(attributedIdx).m_name;
-        }   
+        }
 
         uint32_t getDistinctValuesCount(const std::string& attributeName) const;
 
-        void getAttributeDistinctValues(const std::string& attributeName, 
+        void getAttributeDistinctValues(const std::string& attributeName,
                 std::vector<double>& vDistinctValues) const;
 
-        void getAttributeValuesCounts(const std::string& attributeName, 
+        void getAttributeDistinctValues(const std::vector<uint32_t>& vAttrIdxs,
+                std::vector<double>& vDistinctValues) const;
+
+        void getAttributeValuesCounts(const std::string& attributeName,
             std::unordered_map<double, uint32_t>& htCnts) const;
+
 
         void getRowPtrs(
             const std::string& attrName,
@@ -184,51 +209,57 @@ namespace Figaro
              std::vector<uint32_t>& vDistinctValuesRowPositions,
              bool preallocated = true) const;
 
+        void getDistinctValuesRowPositions(const std::vector<uint32_t>& vAttrIdxs,
+             std::vector<uint32_t>& vDistinctValuesRowPositions,
+             bool preallocated = true) const;
+
         /**
-         * Fills the table data from the file path specified by @p filePath . 
-         * The data should be formated in CSV format where the separator is |  
-         * and where the number of attribues is the same as in schema. The 
-         * attribute types of lodaded data need to agree with the relational 
-         * schema in this class. 
+         * Fills the table data from the file path specified by @p filePath .
+         * The data should be formated in CSV format where the separator is |
+         * and where the number of attribues is the same as in schema. The
+         * attribute types of lodaded data need to agree with the relational
+         * schema in this class.
          */
         ErrorCode loadData(void);
 
         /**
-         * Sorts the data stored in @p m_data in ascending 
+         * Sorts the data stored in @p m_data in ascending
          * order of PKs. For now, we assume PKs are leading attributes in
-         * the relation schema. 
+         * the relation schema.
          */
         void sortData(void);
 
         void sortData(const std::vector<std::string>& vAttributeNames);
-        
+
 
         void computeCountAggregates(void);
 
         /**
          * Returns associative data structure whose keys are values group
-         * byed on and values are the corresponding counts. 
-         */ 
+         * byed on and values are the corresponding counts.
+         */
         const Relation::GroupByT& getCountAggregates(void) const;
 
         void joinRelation(const Relation& relation,
              const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool bSwapAttributes);
 
         /**
-         * It will copy the underlying data and apply head transformation onto it.  
+         * It will copy the underlying data and apply head transformation onto it.
          * The Head transformation will be applied as if we had:
          * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes)
-         * GROUP BY PK.  
+         * GROUP BY PK.
          */
         void computeHead(void);
 
         /**
-         * It will copy the underlying data and apply head transformation onto it.  
-         * The Head transformation will be applied as if we had:
-         * SELECT attrNames[0], attrtNames[1], ... attrNames[n] HEAD(remaining attributes)
-         * GROUP BY attrNames.  
+         * It will copy the underlying data and apply head transformation onto it.
+         * The Head and Tail transformation will be applied as if we had:
+         * SELECT attrNames[0], attrNames[1], ... attrNames[n]
+         *  HEAD(remaining attributes),
+         *  TAIL(remaining attributes)
+         * GROUP BY attrNames.
          */
-        void computeHead(const std::vector<std::string>& attributeNames);
+        void computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames);
 
         void computeHead(const std::string& attributeName);
 
@@ -243,26 +274,26 @@ namespace Figaro
         void extend(const Relation& rel, const std::string& attrIterName);
 
          /**
-         * It will copy the underlying data and apply head transformation onto it.  
+         * It will copy the underlying data and apply head transformation onto it.
          * The Head transformation will be applied as if we had:
          * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes, v)
-         * GROUP BY PK.  
+         * GROUP BY PK.
          */
         void computeHead(const VectorT& v);
 
         /**
-         * It will copy the underlying data and apply head transformation onto it.  
+         * It will copy the underlying data and apply head transformation onto it.
          * The Head transformation will be applied as if we had:
          * SELECT attrNames[0], attrtNames[1], ... attrNames[n] HEAD(remaining attributes, v)
-         * GROUP BY attrNames.  
+         * GROUP BY attrNames.
          */
         void computeHead(const std::vector<std::string> attrNames, const VectorT& v);
 
         /**
-         * It will copy the underlying data and apply head transformation onto it.  
+         * It will copy the underlying data and apply head transformation onto it.
          * The Head transformation will be applied as if we had:
          * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes)
-         * GROUP BY PK.  
+         * GROUP BY PK.
          */
         void computeTail(void);
 
@@ -271,11 +302,11 @@ namespace Figaro
         void applyEigenQR(MatrixEigenT* pR = nullptr);
 
         friend std::ostream& operator<<(
-            std::ostream& out, 
+            std::ostream& out,
             const Relation& relation);
 
     };
 
-        
+
 }
 #endif

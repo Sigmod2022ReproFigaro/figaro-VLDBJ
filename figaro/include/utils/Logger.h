@@ -8,15 +8,15 @@
 #define FIGARO_LOG_LEVEL_ERROR 4
 
 // In the case if log level is defined by CmakeLists.txt we do not want
-// want to redefine it. Default 
-#ifndef FIGARO_LOG_LEVEL 
+// want to redefine it. Default
+#ifndef FIGARO_LOG_LEVEL
 #define FIGARO_LOG_LEVEL FIGARO_LOG_LEVEL_BENCH
-#endif 
+#endif
 
 // Used to exclude assertions from the generated code
 #if FIGARO_LOG_LEVEL > FIGARO_LOG_LEVEL_DEBUG && ! defined(NDEBUG)
 #define NDEBUG
-#endif 
+#endif
 
 #include <cassert>
 #include <iostream>
@@ -27,7 +27,7 @@
 
 template<typename T, std::size_t N>
 std::ostream& operator<<(std::ostream& out, const std::array<T, N>& a)
-{   
+{
     out << "Array" << std::endl;
     out << "Array dimensions " << a.size() << std::endl;
     for (uint32_t idx = 0; idx < a.size(); idx ++)
@@ -35,13 +35,13 @@ std::ostream& operator<<(std::ostream& out, const std::array<T, N>& a)
         out << a.at(idx) << ' ';
     }
     out << std::endl;
-    return out; 
+    return out;
 }
 
 
 template<typename T>
 std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
-{   
+{
     out << "Vector" << std::endl;
     out << "Vector dimensions " << v.size() << std::endl;
     for (uint32_t idx = 0; idx < v.size(); idx ++)
@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
         out << v.at(idx) << ' ';
     }
     out << std::endl;
-    return out; 
+    return out;
 }
 
 template<typename T>
@@ -59,11 +59,11 @@ std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& 
     uint32_t colNum;
 
     colNum = matrix.at(0).size();
-    rowNum = matrix.size(); 
+    rowNum = matrix.size();
 
     out << "Matrix" << std::endl;
     out <<  "Matrix dimensions: " << rowNum << " " << colNum << std::endl;
-    
+
     for (uint32_t row = 0; row < rowNum; row ++)
     {
         for (uint32_t col = 0; col < colNum; col++)
@@ -82,9 +82,9 @@ std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& 
 
 
 template<typename KeyType, typename ValType>
-std::ostream& operator<<(std::ostream& out, 
+std::ostream& operator<<(std::ostream& out,
     const std::unordered_map<KeyType, ValType>& ht)
-{   
+{
     out << "Hash table" << std::endl;
     out << "Hash table size " << ht.size() << std::endl;
     for (const auto& [key, value]: ht)
@@ -92,7 +92,7 @@ std::ostream& operator<<(std::ostream& out,
         out << key << ":" << value << " ";
     }
     out << std::endl;
-    return out; 
+    return out;
 }
 
 // TODO:
@@ -113,7 +113,7 @@ void figaroLogStd(Arg1&& severity, Arg2&& arg)
     std::cout << arg << std::endl;
 }
 
-// ##modulename##time logs time. 
+// ##modulename##time logs time.
 template<typename Arg, typename ...Args>
 void figaroLogBench(Arg&& module, Args&& ...args)
 {

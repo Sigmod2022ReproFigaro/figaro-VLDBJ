@@ -25,7 +25,7 @@ namespace Figaro
         }
     }
 
-    void ASTNodeRelation::moveFromNumToDenum(ASTNodeRelation* pRelation)
+    void ASTNodeRelation::moveFromNumerToDenum(ASTNodeRelation* pRelation)
     {
         const auto& itRelation = std::find(m_vpASTNodeRelNumer.begin(), m_vpASTNodeRelNumer.end(), pRelation);
         if (itRelation != m_vpASTNodeRelNumer.end())

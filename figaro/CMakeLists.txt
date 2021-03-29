@@ -64,7 +64,7 @@ if (FIGARO_TEST)
   # Take care of Gtest library.
   find_package(GTest REQUIRED)
   target_include_directories(figaro_test PRIVATE ${GTEST_INCLUDE_DIRS})
-  target_link_libraries(figaro_test ${Boost_LIBRARIES} ${GTEST_LIBRARIES} -ltbb -lopenblas -llapacke)
+  target_link_libraries(figaro_test ${Boost_LIBRARIES} ${GTEST_LIBRARIES} -ltbb -lopenblas -llapacke  -Wl,--verbose)
 endif()
 
 

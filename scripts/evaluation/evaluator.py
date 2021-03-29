@@ -26,7 +26,7 @@ class SystemTestsEvaluator:
     def __init__(self, tests_conf: str, password: str = None):
         with open(tests_conf) as json_file:
             tests_json = json.load(json_file)
-        
+
         self.password = password
         self.load_tests(tests_json)
 
@@ -40,7 +40,7 @@ class SystemTestsEvaluator:
             test = self.load_system_tests_data_sets(
                         system_tests_json, data_set_json)
             tests += test
-        
+
         self.tests = tests
 
 
@@ -53,10 +53,10 @@ class SystemTestsEvaluator:
                 data_set_enabled = not data_set_json.get("disable", False)
             else:
                 logging.error("TODO")
-            
+
             if data_set_enabled:
                 test += self.load_system_tests(system_tests_json, database)
-        
+
         return test
 
 
@@ -73,19 +73,19 @@ class SystemTestsEvaluator:
                     join_result_path = system_test.get_join_result_path()
                 if system_test.is_paper_algorithm():
                     system_test_paper = system_test
-            else: 
+            else:
                 logging.error("TODO")
-            
+
             if system_test_enabled:
                 batch_of_tests.append(system_test)
-            
+
         for system_test in batch_of_tests:
             if system_test.requires_dbms_result():
                 system_test.set_join_result_path(join_result_path)
-            
+
             if not system_test.is_paper_algorithm():
                 system_test.set_paper_system_test(system_test_paper)
-        
+
         return batch_of_tests
 
 
@@ -95,14 +95,14 @@ class SystemTestsEvaluator:
         system_test_mode = system_test_json["mode"]
         class_type = SystemTestsEvaluator.map_category_to_class[system_test_cat]
         test_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
-        system_test = class_type.from_specs_path(system_conf_path, database, 
+        system_test = class_type.from_specs_path(system_conf_path, database,
                         test_mode=test_mode, password=self.password)
 
         logging.debug("Category is{}".format(system_test_cat))
         logging.debug("Created category {}".format(type(system_test)))
         logging.debug("Mode is{}".format(system_test_mode))
         logging.debug("Create mode{}".format(system_test_mode))
-        
+
         return system_test
 
 
@@ -136,11 +136,11 @@ def get_all_test_specs_paths(root_path: str, test_num):
 if __name__ == "__main__":
     init_logging()
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--password", action="store",  
+    parser.add_argument("-p", "--password", action="store",
                         dest="password", required=True)
-    parser.add_argument("-t", "--test", action="store", 
+    parser.add_argument("-t", "--test", action="store",
                         dest="test", required=False)
-    parser.add_argument("-r", "--root", action="store", 
+    parser.add_argument("-r", "--root", action="store",
                         dest="root_path", required=False)
     args = parser.parse_args()
 

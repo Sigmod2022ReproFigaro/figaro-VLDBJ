@@ -11,29 +11,29 @@ namespace Figaro
         for (const auto& pCurRel: pAbsRel->getRelationPostorder())
         {
             
-            pCurRel->moveFromNumToDenum(pRelInst);
-            pCurRel->moveFromNumToDenum(pParent->getRelation());
-            pParent->getRelation()->moveFromNumToDenum(pCurRel);
+            pCurRel->moveFromNumerToDenum(pRelInst);
+            pCurRel->moveFromNumerToDenum(pParent->getRelation());
+            pParent->getRelation()->moveFromNumerToDenum(pCurRel);
             for (const auto& pCurRelIn: pParent->getRelationPostorder())
             {
-                pCurRel->moveFromNumToDenum(pCurRelIn);
+                pCurRel->moveFromNumerToDenum(pCurRelIn);
             }
         }
         for (const auto& pCurRel: pParent->getRelationPostorder())
         {
             
-            pCurRel->moveFromNumToDenum(pRelInst);
-            pRelInst->moveFromNumToDenum(pCurRel);
-            pCurRel->moveFromNumToDenum(pParent->getRelation());
+            pCurRel->moveFromNumerToDenum(pRelInst);
+            pRelInst->moveFromNumerToDenum(pCurRel);
+            pCurRel->moveFromNumerToDenum(pParent->getRelation());
             for (const auto& pCurRelIn: pAbsRel->getRelationPostorder())
             {
-                pCurRel->moveFromNumToDenum(pCurRelIn);
+                pCurRel->moveFromNumerToDenum(pCurRelIn);
             }
         }
-        pRelInst->moveFromNumToDenum(pRelInst);
-        pRelInst->moveFromNumToDenum(pParent->getRelation());
-        pParent->getRelation()->moveFromNumToDenum(pRelInst);
-        pParent->getRelation()->moveFromNumToDenum(pParent->getRelation());
+        pRelInst->moveFromNumerToDenum(pRelInst);
+        pRelInst->moveFromNumerToDenum(pParent->getRelation());
+        pParent->getRelation()->moveFromNumerToDenum(pRelInst);
+        pParent->getRelation()->moveFromNumerToDenum(pParent->getRelation());
 
         // Iterate over all relations and remove aggregated away attributes.
     }

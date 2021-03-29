@@ -12,18 +12,18 @@
 #include "utils/Logger.h"
 #include "utils/ErrorCode.h"
 
-namespace Figaro 
+namespace Figaro
 {
     typedef nlohmann::json json;
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixEigenT;
     typedef Eigen::VectorXd VectorT;
     typedef Eigen::ArrayXd ArrayT;
-    
+
     // TODO: move to Utils namespace
     uint32_t getNumberOfLines(const std::string& filePath);
-    std::ostream& outputMatrixTToCSV(std::ostream& out, 
-        const Figaro::MatrixEigenT& matrix, 
-        char sep = ' ', uint32_t precision = 6);   
+    std::ostream& outputMatrixTToCSV(std::ostream& out,
+        const Figaro::MatrixEigenT& matrix,
+        char sep = ' ', uint32_t precision = 6);
 }
 
 

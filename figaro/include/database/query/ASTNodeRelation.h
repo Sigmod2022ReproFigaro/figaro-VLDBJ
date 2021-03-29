@@ -49,7 +49,7 @@ namespace Figaro
             return m_vpASTNodeRelDenom;
         }
 
-        void moveFromNumToDenum(ASTNodeRelation* pRelation);
+        void moveFromNumerToDenum(ASTNodeRelation* pRelation);
 
         void setJoinAttribute(const std::string& attrName);
 

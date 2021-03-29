@@ -12,19 +12,19 @@ def read_csv_as_list(path: str):
     with open(path, 'r') as csv_file:
         csv_reader = csv.reader(csv_file)
         rows = list(csv_reader)
-        
+
     return rows
 
 
-def compare_accuracy_r(figaro_path: str, competitor_path: str, 
-        accuracy_path: str, r_comp_file_path: str, errors_file_path: str, 
+def compare_accuracy_r(figaro_path: str , competitor_path: str,
+        accuracy_path: str, r_comp_file_path: str, errors_file_path: str,
         precision: float, operation: str):
     abs_err = 0.0
     abs_err_comp = 0.0
     precision = math.pow(10, -precision)
-    comp_wb = AccuracyWorkbook(output_file=r_comp_file_path, 
+    comp_wb = AccuracyWorkbook(output_file=r_comp_file_path,
                 precision=precision, operation=operation)
-                
+
     figaro_rows = read_csv_as_list(figaro_path)
     comp_rows = read_csv_as_list(competitor_path)
 
@@ -38,7 +38,7 @@ def compare_accuracy_r(figaro_path: str, competitor_path: str,
             abs_err_comp += comp_val * comp_val
             comp_wb.save_entry(row_idx + 1, col_idx + 1, figaro_val, comp_val)
     comp_wb.save()
-    
+
 
     relative_frob_norm = math.sqrt(abs_err) / math.sqrt(abs_err_comp)
     with open(errors_file_path, 'w') as file_errors:
@@ -57,5 +57,5 @@ if __name__ == "__main__":
     python_path = "/home/popina/Figaro/figaro-code/dumps/python/numpy/DB3/r.csv"
     prec_comp_path = "/home/popina/Figaro/figaro-code/comparisons/precision/python/numpy/DB3"
     compare_accuracy_r(figaro_path=figaro_path, competitor_path=python_path,
-                        accuracy_path=prec_comp_path, 
+                        accuracy_path=prec_comp_path,
                         precision=1e-5, operation='qr')

@@ -23,7 +23,7 @@ namespace Figaro
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
-            
+
             for (const auto& relName: jsonQueryConfig["relation_order"])
             {
                 vRelationOrder.push_back(relName);
@@ -36,12 +36,12 @@ namespace Figaro
         else if (operatorName == "natural_join")
         {
             const json& operandCentral = jsonQueryConfig["central_relation"];
-            ASTNodeRelation* pCreatedCentralOperand = 
+            ASTNodeRelation* pCreatedCentralOperand =
             (ASTNodeRelation*)createASTFromJson(operandCentral);
             std::vector<ASTNodeAbsRelation*> vpCreatedChildOperands;
             for (const auto& operandChild: jsonQueryConfig["children"])
             {
-                ASTNodeAbsRelation* pCreatedOperandChild = 
+                ASTNodeAbsRelation* pCreatedOperandChild =
                 (ASTNodeAbsRelation*)createASTFromJson(operandChild);
                 vpCreatedChildOperands.push_back(pCreatedOperandChild);
             }
@@ -58,7 +58,7 @@ namespace Figaro
             pCreatedNode = new ASTNodeRelation(relationName, m_pDatabase->getRelationAttributeNames(relationName));
             m_mRelNameASTNodeRel[relationName] = (ASTNodeRelation*)pCreatedNode;
             FIGARO_LOG_DBG("RELATION", relationName)
-            
+
         }
 
         return pCreatedNode;
@@ -67,7 +67,7 @@ namespace Figaro
     ErrorCode Query::createAST(const json& jsonQueryConfig)
     {
         ErrorCode errorCode = ErrorCode::NO_ERROR;
-        
+
         ASTNode* pASTRoot = createASTFromJson(jsonQueryConfig);
         if (nullptr == pASTRoot)
         {
@@ -89,11 +89,11 @@ namespace Figaro
         if (inputFileStream.fail())
         {
             FIGARO_LOG_ERROR("Query configuration path incorrect", queryConfigPath);
-            return ErrorCode::WRONG_PATH;  
+            return ErrorCode::WRONG_PATH;
         }
         inputFileStream >> jsonQueryConfig;
         FIGARO_LOG_INFO("Database Configuration", jsonQueryConfig);
-        
+
         errorCode = createAST(jsonQueryConfig["query"]["evaluation_hint"]);
         return errorCode;
     }
@@ -104,6 +104,7 @@ namespace Figaro
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
+
         m_pASTRoot->accept(&joinAttrVisitor);
         m_pASTRoot->accept(&figaroFirstPassVisitor);
         m_pASTRoot->accept(&figaroSecondPassVisitor);
