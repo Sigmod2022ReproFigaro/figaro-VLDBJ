@@ -8,6 +8,47 @@
 #include <unordered_map>
 #include "utils/Performance.h"
 #include <omp.h>
+
+    template <class T>
+    inline void hash_combine(std::size_t& seed, T v)
+    {
+        seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
+    template<class... TupleArgs>
+    struct std::hash<std::tuple<TupleArgs...>>
+    {
+        private:
+            //  this is a termination condition
+            //  N == sizeof...(TupleTypes)
+            //
+            template<size_t Idx = 0, typename... TupleTypes>
+            inline typename std::enable_if<N == sizeof...(TupleTypes), void>::type
+            hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
+            {
+            }
+
+            //  this is the computation workhorse
+            //  N < sizeof...(TupleTypes)
+            //
+            template<size_t Idx = 0, typename... TupleTypes>
+            inline typename std::enable_if<N < sizeof...(TupleTypes), void>::type
+            hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
+            {
+                hash_combine(seed, std::get<Idx>(tup));
+
+                //  on to next element
+                hash_combine_tup<Idx+1>(seed, tup);
+            }
+
+        public:
+            size_t operator()(std::tuple<TupleArgs...> tupleValue) const
+            {
+                size_t seed = 0;
+                hash_combine_tup<0>(seed, tupleValue);
+                return seed;
+            }
+    };
+
 namespace Figaro
 {
     uint32_t Relation::getAttributeIdx(const std::string& attributeName) const
@@ -523,16 +564,24 @@ namespace Figaro
         numNonJoinAttrs = vNonJoinAttrIdxs.size();
         numTailRows = m_data.getNumRows() - numDistinctValues;
 
-        // 1) Preallocate memory for heads and tails.
+        // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
         Matrix<double> dataHeads{numDistinctValues, getNumberOfAttributes()};
         Matrix<double> dataTails{numTailRows, numNonJoinAttrs};
+        Matrix<double> dataScale{numDistinctValues, 1};
+        Matrix<double> scale{numDistinctValues, 1};
+        Matrix<double> allScales{numDistinctValues, 1};
 
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
         // project away these attributes.
         for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
         {
-            uint32_t headRowIdx = vDistValsRowPositions[distCnt] + 1;
+            uint32_t headRowIdx;
+            uint32_t numDistVals;
             std::vector<double> vCurRowSum(numNonJoinAttrs);
+
+            headRowIdx = vDistValsRowPositions[distCnt] + 1;
+            numDistVals =  vDistValsRowPositions[distCnt+1] -  vDistValsRowPositions[distCnt] + 1;
+
             for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
             {
                 vCurRowSum[nonJoinAttrIdx - numJoinAttrs] = m_data[headRowIdx][nonJoinAttrIdx];
@@ -563,10 +612,18 @@ namespace Figaro
             {
                 dataHeads[distCnt][nonJoinAttrIdx] = vCurRowSum[nonJoinAttrIdx - numJoinAttrs];
             }
+
+            // TODO: Push square root as late as possible.
+            scale[distCnt][0] = std::sqrt(numDistVals);
+            dataScale[distCnt][0] = 1 / std::sqrt(numDistVals);
+            allScales[distCnt][0] = scale[distCnt][0];
         }
 
         m_dataHead = std::move(dataHeads);
         m_dataTails = std::move(dataTails);
+
+        m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
+        m_vSubTreeRelNames.push_back(m_name);
 
         // TODO: Multiplication Tails block by counts is missing.
         //FIGARO_LOG_DBG("Successful head computation");
@@ -657,6 +714,190 @@ namespace Figaro
 
         FIGARO_LOG_DBG("End of Join", *this)
     }
+
+    void Relation::schemaJoins(
+        const std::vector<Relation*>& vpChildRels,
+        const std::vector<uint32_t>& vJoinAttrIdxs,
+        const std::vector<uint32_t>& vNonJoinAttrIdxs,
+        const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs)
+    {
+        for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel++)
+        {
+            uint32_t prevSize = m_attributes.size();
+            for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
+            {
+                FIGARO_LOG_DBG("Schema extended, Added attribute", nonPKAttributeIdx);
+                m_attributes.push_back(vpChildRels[idxRel]->m_attributes[nonJoinAttrIdx]);
+            }
+
+            // Copy relation names from the subtree for each children.
+            m_vSubTreeRelNames.insert(m_vSubTreeRelNames.begin(),
+                vpChildRels[idxRel]->m_vSubTreeRelNames.begin(),
+                vpChildRels[idxRel]->m_vSubTreeRelNames.end());
+            // Copy the offsest to the data.
+            m_vSubTreeDataOffsets.insert(m_vSubTreeDataOffsets.end(),
+                vpChildRels[idxRel]->m_vSubTreeDataOffsets.begin(),
+                vpChildRels[idxRel]->m_vSubTreeDataOffsets.end());
+            for (uint32_t idxRelSub = prevSize; idxRelSub < m_vSubTreeDataOffsets.size(); idxRelSub ++)
+            {
+                m_vSubTreeDataOffsets[idxRelSub] += prevSize;
+            }
+
+        }
+    }
+
+
+
+    void Relation::getHashTableRowPtrs(const std::vector<uint32_t>& vJoinAttrIdx,
+        void*& pHashTablePt)
+    {
+        if (vJoinAttrIdx.size() == 1)
+        {
+            std::unordered_map<double, const double*>* tpHashTablePt = new std::unordered_map<double, const double*> ();
+            tpHashTablePt->reserve(m_data.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            {
+                double curAttrVal = m_data[rowIdx][vJoinAttrIdx[0]];
+                (*tpHashTablePt)[curAttrVal] = m_data[rowIdx];
+            }
+            pHashTablePt = tpHashTablePt;
+        }
+        else if (vJoinAttrIdx.size() == 2)
+        {
+            std::unordered_map<std::tuple<double, double>, const double*>* tpHashTablePt =
+             new std::unordered_map<std::tuple<double, double>, const double*> ();
+            tpHashTablePt->reserve(m_data.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            {
+                std::tuple<double, double> curAttrVal = std::make_tuple(vJoinAttrIdx[0], vJoinAttrIdx[1]);
+                (*tpHashTablePt)[curAttrVal] = m_data[rowIdx];
+            }
+            pHashTablePt = tpHashTablePt;
+        }
+        else
+        {
+
+        }
+    }
+
+
+    const double* Relation::getRowPointer(uint32_t rowIdx,
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  hashTabRowPt)
+    {
+        const double* rowPtr = nullptr;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            // TODO: Extract join for relation specific from join attribute value.
+            const double joinAttrVal = m_data[rowIdx][vParJoinAttrIdxs[0]];
+            std::unordered_map<double, const double*> hashTabRowPtOne = *(std::unordered_map<double, const double*>*)(hashTabRowPt);
+            rowPtr = hashTabRowPtOne[joinAttrVal];
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            const std::tuple<double, double> joinAttrVal =  std::make_tuple(m_data[rowIdx][vParJoinAttrIdxs[0]], m_data[rowIdx][vParJoinAttrIdxs[1]]);
+            std::unordered_map<std::tuple<double, double>, const double*> hashTabRowPtOne = *(std::unordered_map<std::tuple<double, double>, const double*>*)(hashTabRowPt);
+            rowPtr = hashTabRowPtOne[joinAttrVal];
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+
+        return rowPtr;
+    }
+
+    void Relation::joinRelations(
+        const std::vector<std::string>& vJoinAttributeNames,
+        const std::vector<std::string>& vParJoinAttributeNames,
+        const std::vector<Relation*>& vpChildRels,
+        const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
+    {
+        std::unordered_map<double, const double*> hashTabRowPt2;
+        uint32_t numAttrsCurRel;
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
+        std::vector<uint32_t> vNonJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvNonJoinAttrIdxs;
+        std::vector<uint32_t> vNumJoinAttrs;
+        // Cumulative sum of non-join attributes of relations before.
+        std::vector<uint32_t> vCumNumNonJoinAttrs;
+        std::vector<void*> vpHashTabRowPt;
+
+        numAttrsCurRel = m_attributes.size();
+        vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vvNonJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vNumJoinAttrs.resize(vvJoinAttributeNames.size());
+        vCumNumNonJoinAttrs.resize(vvJoinAttributeNames.size());
+
+        for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
+        {
+            vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel]);
+            vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
+            getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
+            vpChildRels[idxRel]->getHashTableRowPtrs(vvJoinAttrIdxs[idxRel], vpHashTabRowPt[idxRel]);
+            vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
+            if (idxRel == 0)
+            {
+                vCumNumNonJoinAttrs[idxRel] = 0;
+            }
+            else
+            {
+                vCumNumNonJoinAttrs[idxRel] = vCumNumNonJoinAttrs[idxRel-1] +
+                                            vvNonJoinAttrIdxs[idxRel - 1].size();
+            }
+        }
+        getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
+
+        schemaJoins(vpChildRels, vJoinAttrIdxs, vNonJoinAttrIdxs, vvNonJoinAttrIdxs);
+        Matrix<double> dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
+        Matrix<double> scales{m_data.getNumRows(), m_vSubTreeRelNames.size()};
+        Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size()};
+        Matrix<double> allScales{m_data.getNumRows(), 1};
+
+
+       //#pragma omp parallel for schedule(static)
+       for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
+       {
+            // TODO: Optimization change the way how the values are extracted to tree.
+
+            // Copies only join attributes of a parent node needed for further evaluation.
+            //for (auto joinAttrIdx: vParJoinAttrIdxs)
+            for (auto joinAttrIdx: vJoinAttrIdxs)
+            {
+                dataOutput[rowIdx][joinAttrIdx] = m_dataHead[rowIdx][joinAttrIdx];
+            }
+            // TODO: Add reordering relations based on global order
+            for (const auto nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                dataOutput[rowIdx][nonJoinAttrIdx] = m_dataHead[rowIdx][nonJoinAttrIdx];
+            }
+            for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
+            {
+
+                const double* rowPtr = getRowPointer(rowIdx, vvCurJoinAttrIdxs[idxRel],
+                                                      vpHashTabRowPt[idxRel]);
+
+                for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
+                {
+                    uint32_t idxOut = numAttrsCurRel + vCumNumNonJoinAttrs[idxRel] +
+                                    nonJoinAttrIdx - vNumJoinAttrs[idxRel];
+                    dataOutput[rowIdx][idxOut] = (rowPtr)[nonJoinAttrIdx];
+                }
+            }
+        }
+        m_dataHead = std::move(dataOutput);
+
+        FIGARO_LOG_DBG("End of Join", *this)
+    }
+
+
 
     // TODO: Pass vectors. Now we assume the vector is all ones.
     void Relation::computeAndScaleGeneralizedHeadAndTail(

@@ -102,7 +102,7 @@ namespace Figaro
         };
     private:
         std::string m_name;
-        ErrorCode initalizationErrorCode = ErrorCode::NO_ERROR;
+        ErrorCode initializationErrorCode = ErrorCode::NO_ERROR;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
 
@@ -112,7 +112,13 @@ namespace Figaro
         MatrixDT m_dataTails;
         MatrixDT m_dataTails1;
         MatrixDT m_dataTails2;
-        GroupByT m_countAggregates;
+
+        MatrixDT m_scales;
+        MatrixDT m_dataScales;
+        MatrixDT m_allScales;
+
+        std::vector<std::string> m_vSubTreeRelNames;
+        std::vector<uint32_t> m_vSubTreeDataOffsets;
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
@@ -162,6 +168,19 @@ namespace Figaro
         void getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const;
 
         void schemaJoin(const Relation& relation, bool swapAttributes = false);
+
+        void Relation::schemaJoins(
+            const std::vector<Relation*>& vpChildRels,
+            const std::vector<uint32_t>& vJoinAttrIdxs,
+            const std::vector<uint32_t>& vNonJoinAttrIdxs,
+            const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
+
+        void getHashTableRowPtrs(const std::vector<uint32_t>& vJoinAttrIdx,
+            void*& pHashTablePt);
+
+        const double* getRowPointer(uint32_t rowIdx,
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*  hashTabRowPt);
 
     public:
         Relation(const Relation&) = delete;
@@ -242,6 +261,21 @@ namespace Figaro
 
         void joinRelation(const Relation& relation,
              const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool bSwapAttributes);
+
+
+        /**
+         *  It will join relations by copying data from the children relations @p vpChildRels
+         *  in the join tree to the current head data. The join attributes that are
+         *  not in the relation ( @p vParJoinAttributeNames ) that is in the parent node
+         *  will be omitted. We assume @p vParJoinAttributeNames is a subset of
+         *  @p vJoinAttributeNames and each @p vvJoinAttributeNames[i] is a subset of
+         *  @p vJoinAttributeNames .
+         */
+        void joinRelations(
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames,
+            const std::vector<Relation*>& vpChildRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
         /**
          * It will copy the underlying data and apply head transformation onto it.
