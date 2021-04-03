@@ -753,24 +753,24 @@ namespace Figaro
     {
         if (vJoinAttrIdx.size() == 1)
         {
-            std::unordered_map<double, const double*>* tpHashTablePt = new std::unordered_map<double, const double*> ();
-            tpHashTablePt->reserve(m_data.getNumRows());
-            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            std::unordered_map<double, uint32_t>* tpHashTablePt = new std::unordered_map<double, uint32_t> ();
+            tpHashTablePt->reserve(m_dataHead.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
             {
-                double curAttrVal = m_data[rowIdx][vJoinAttrIdx[0]];
-                (*tpHashTablePt)[curAttrVal] = m_data[rowIdx];
+                double curAttrVal = m_dataHead[rowIdx][vJoinAttrIdx[0]];
+                (*tpHashTablePt)[curAttrVal] = rowIdx;
             }
             pHashTablePt = tpHashTablePt;
         }
         else if (vJoinAttrIdx.size() == 2)
         {
-            std::unordered_map<std::tuple<double, double>, const double*>* tpHashTablePt =
-             new std::unordered_map<std::tuple<double, double>, const double*> ();
-            tpHashTablePt->reserve(m_data.getNumRows());
-            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            std::unordered_map<std::tuple<double, double>, uint32_t>* tpHashTablePt =
+             new std::unordered_map<std::tuple<double, double>, uint32_t> ();
+            tpHashTablePt->reserve(m_dataHead.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
             {
                 std::tuple<double, double> curAttrVal = std::make_tuple(vJoinAttrIdx[0], vJoinAttrIdx[1]);
-                (*tpHashTablePt)[curAttrVal] = m_data[rowIdx];
+                (*tpHashTablePt)[curAttrVal] = rowIdx;
             }
             pHashTablePt = tpHashTablePt;
         }
@@ -781,23 +781,23 @@ namespace Figaro
     }
 
 
-    const double* Relation::getRowPointer(uint32_t rowIdx,
+    uint32_t Relation::getChildRowIdx(uint32_t rowIdx,
         const std::vector<uint32_t>& vParJoinAttrIdxs,
         void*  hashTabRowPt)
     {
-        const double* rowPtr = nullptr;
+        uint32_t rowChildIdx = UINT32_MAX;
         if (vParJoinAttrIdxs.size() == 1)
         {
             // TODO: Extract join for relation specific from join attribute value.
-            const double joinAttrVal = m_data[rowIdx][vParJoinAttrIdxs[0]];
-            std::unordered_map<double, const double*> hashTabRowPtOne = *(std::unordered_map<double, const double*>*)(hashTabRowPt);
-            rowPtr = hashTabRowPtOne[joinAttrVal];
+            const double joinAttrVal = m_dataHead[rowIdx][vParJoinAttrIdxs[0]];
+            std::unordered_map<double, uint32_t> hashTabRowPtOne = *(std::unordered_map<double, uint32_t>*)(hashTabRowPt);
+            rowChildIdx = hashTabRowPtOne[joinAttrVal];
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
-            const std::tuple<double, double> joinAttrVal =  std::make_tuple(m_data[rowIdx][vParJoinAttrIdxs[0]], m_data[rowIdx][vParJoinAttrIdxs[1]]);
-            std::unordered_map<std::tuple<double, double>, const double*> hashTabRowPtOne = *(std::unordered_map<std::tuple<double, double>, const double*>*)(hashTabRowPt);
-            rowPtr = hashTabRowPtOne[joinAttrVal];
+            const std::tuple<double, double> joinAttrVal =  std::make_tuple(m_dataHead[rowIdx][vParJoinAttrIdxs[0]], m_dataHead[rowIdx][vParJoinAttrIdxs[1]]);
+            std::unordered_map<std::tuple<double, double>, uint32_t> hashTabRowPtOne = *(std::unordered_map<std::tuple<double, double>, uint32_t>*)(hashTabRowPt);
+            rowChildIdx = hashTabRowPtOne[joinAttrVal];
         }
         else
         {
@@ -805,7 +805,7 @@ namespace Figaro
             //const std::vector<double> t =
         }
 
-        return rowPtr;
+        return rowChildIdx;
     }
 
     void Relation::joinRelations(
@@ -815,7 +815,7 @@ namespace Figaro
         const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
     {
         std::unordered_map<double, const double*> hashTabRowPt2;
-        uint32_t numAttrsCurRel;
+        uint32_t numJoinAttrsCurRel;
         std::vector<uint32_t> vJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
@@ -824,15 +824,18 @@ namespace Figaro
         std::vector<std::vector<uint32_t> > vvNonJoinAttrIdxs;
         std::vector<uint32_t> vNumJoinAttrs;
         // Cumulative sum of non-join attributes of relations before.
+        // We assume preorder layout of data columns.
         std::vector<uint32_t> vCumNumNonJoinAttrs;
+        std::vector<uint32_t> vCumNumRelSubTree;
         std::vector<void*> vpHashTabRowPt;
 
-        numAttrsCurRel = m_attributes.size();
+        numJoinAttrsCurRel = vJoinAttributeNames.size();
         vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vvNonJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vNumJoinAttrs.resize(vvJoinAttributeNames.size());
         vCumNumNonJoinAttrs.resize(vvJoinAttributeNames.size());
+        vCumNumRelSubTree.resize(vpChildRels.size());
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
@@ -843,12 +846,14 @@ namespace Figaro
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
             if (idxRel == 0)
             {
-                vCumNumNonJoinAttrs[idxRel] = 0;
+                vCumNumNonJoinAttrs[idxRel] = 1;
+                vCumNumRelSubTree[idxRel] = 1;
             }
             else
             {
                 vCumNumNonJoinAttrs[idxRel] = vCumNumNonJoinAttrs[idxRel-1] +
                                             vvNonJoinAttrIdxs[idxRel - 1].size();
+                vCumNumRelSubTree[idxRel] = vCumNumRelSubTree[idxRel-1] + vpChildRels[idxRel-1]->m_vSubTreeRelNames.size();
             }
         }
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
@@ -856,9 +861,10 @@ namespace Figaro
         getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
 
         schemaJoins(vpChildRels, vJoinAttrIdxs, vNonJoinAttrIdxs, vvNonJoinAttrIdxs);
+
         Matrix<double> dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
-        Matrix<double> scales{m_data.getNumRows(), m_vSubTreeRelNames.size()};
-        Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size()};
+        Matrix<double> scales{m_data.getNumRows(), vpChildRels.size() + 1};
+        Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size() + 1};
         Matrix<double> allScales{m_data.getNumRows(), 1};
 
 
@@ -881,16 +887,43 @@ namespace Figaro
             for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
             {
 
-                const double* rowPtr = getRowPointer(rowIdx, vvCurJoinAttrIdxs[idxRel],
+                uint32_t childRowIdx = getChildRowIdx(rowIdx, vvCurJoinAttrIdxs[idxRel],
                                                       vpHashTabRowPt[idxRel]);
-
+                // Copying data from children relations.
+                const double* childRowPt = vpChildRels[idxRel]->m_dataHead[childRowIdx];
                 for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
                 {
-                    uint32_t idxOut = numAttrsCurRel + vCumNumNonJoinAttrs[idxRel] +
+                    uint32_t idxOut = numJoinAttrsCurRel + vCumNumNonJoinAttrs[idxRel] +
                                     nonJoinAttrIdx - vNumJoinAttrs[idxRel];
-                    dataOutput[rowIdx][idxOut] = (rowPtr)[nonJoinAttrIdx];
+                    dataOutput[rowIdx][idxOut] = childRowPt[nonJoinAttrIdx];
+                }
+                // Updating dataScales data from relations from subtrees.
+                for (uint32_t idxSubTreeRel = 0;
+                        idxSubTreeRel < vpChildRels[idxRel]->m_vSubTreeRelNames.size();
+                        idxSubTreeRel++)
+                {
+                    uint32_t shiftIdxSTRel = idxSubTreeRel + vCumNumRelSubTree[idxRel];
+                    dataScales[rowIdx][shiftIdxSTRel] =
+                        vpChildRels[idxRel]->m_dataScales[childRowIdx][idxSubTreeRel];
+                }
+                scales[rowIdx][idxRel] = vpChildRels[idxRel]->m_dataScales[childRowIdx][0];
+                allScales[rowIdx][0] *= scales[childRowIdx][idxRel];
+            }
+            for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
+            {
+                for (uint32_t idxSubTreeRel = 0;
+                            idxSubTreeRel < vpChildRels[idxRel]->m_vSubTreeRelNames.size();
+                            idxSubTreeRel++)
+                {
+                    uint32_t shiftIdxSTRel = idxSubTreeRel + vCumNumRelSubTree[idxRel];
+                    dataScales[rowIdx][shiftIdxSTRel] *= allScales[rowIdx][0];
+                    dataScales[rowIdx][shiftIdxSTRel] /= scales[rowIdx][idxRel];
                 }
             }
+            // Updated datascales for the central relation.
+            dataScales[rowIdx][0] *= allScales[rowIdx][0];
+            dataScales[rowIdx][0] /= scales[rowIdx][0];
+            scales[rowIdx][0] = allScales[rowIdx][0];
         }
         m_dataHead = std::move(dataOutput);
 

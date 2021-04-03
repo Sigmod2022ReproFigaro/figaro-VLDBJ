@@ -178,7 +178,7 @@ namespace Figaro
         void getHashTableRowPtrs(const std::vector<uint32_t>& vJoinAttrIdx,
             void*& pHashTablePt);
 
-        const double* getRowPointer(uint32_t rowIdx,
+        uint32_t getChildRowIdx(uint32_t rowIdx,
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  hashTabRowPt);
 
