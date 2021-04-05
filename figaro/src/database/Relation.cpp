@@ -542,93 +542,6 @@ namespace Figaro
     }
 
 
-   // We assume join attributes are before nonJoinAttributes.
-    void Relation::computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames)
-    {
-        std::vector<uint32_t> vJoinAttrIdxs;
-        std::vector<uint32_t> vNonJoinAttrIdxs;
-        uint32_t numDistinctValues;
-        uint32_t numJoinAttrs;
-        uint32_t numNonJoinAttrs;
-        uint32_t numTailRows;
-
-        std::vector<double> aggregateByAttribute;
-        std::vector<uint32_t> vDistValsRowPositions;
-
-        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
-        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
-        getDistinctValuesRowPositions(vJoinAttrIdxs, vDistValsRowPositions, false);
-
-        numDistinctValues = vDistValsRowPositions.size() - 1;
-        numJoinAttrs = vJoinAttrIdxs.size();
-        numNonJoinAttrs = vNonJoinAttrIdxs.size();
-        numTailRows = m_data.getNumRows() - numDistinctValues;
-
-        // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
-        Matrix<double> dataHeads{numDistinctValues, getNumberOfAttributes()};
-        Matrix<double> dataTails{numTailRows, numNonJoinAttrs};
-        Matrix<double> dataScale{numDistinctValues, 1};
-        Matrix<double> scale{numDistinctValues, 1};
-        Matrix<double> allScales{numDistinctValues, 1};
-
-        // 2) Iterate over join attributes and compute Heads and Tails of relation that
-        // project away these attributes.
-        for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
-        {
-            uint32_t headRowIdx;
-            uint32_t numDistVals;
-            std::vector<double> vCurRowSum(numNonJoinAttrs);
-
-            headRowIdx = vDistValsRowPositions[distCnt] + 1;
-            numDistVals =  vDistValsRowPositions[distCnt+1] -  vDistValsRowPositions[distCnt] + 1;
-
-            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
-            {
-                vCurRowSum[nonJoinAttrIdx - numJoinAttrs] = m_data[headRowIdx][nonJoinAttrIdx];
-            }
-            for (uint32_t rowIdx = vDistValsRowPositions[distCnt] + 1;
-                rowIdx <= vDistValsRowPositions[distCnt+1];
-                rowIdx++)
-            {
-                uint32_t tailRowIdx = rowIdx - distCnt;
-                double i = rowIdx - headRowIdx + 1;
-                for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
-                {
-                    double prevRowSum = vCurRowSum[nonJoinAttrIdx - numJoinAttrs];
-                    vCurRowSum[nonJoinAttrIdx - numJoinAttrs] += m_data[rowIdx][nonJoinAttrIdx];
-                    dataTails[tailRowIdx][nonJoinAttrIdx - numJoinAttrs] =
-                    (m_data[rowIdx][nonJoinAttrIdx] * (i - 1) - prevRowSum)
-                    / std::sqrt(i * (i - 1));
-                }
-            }
-
-            // Copy join attributes to be used as indices.
-            for (const uint32_t joinAttrIdx: vJoinAttrIdxs)
-            {
-                dataHeads[distCnt][joinAttrIdx] = m_data[headRowIdx][joinAttrIdx];
-            }
-            // Copy arithmetic sum.
-            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
-            {
-                dataHeads[distCnt][nonJoinAttrIdx] = vCurRowSum[nonJoinAttrIdx - numJoinAttrs];
-            }
-
-            // TODO: Push square root as late as possible.
-            scale[distCnt][0] = std::sqrt(numDistVals);
-            dataScale[distCnt][0] = 1 / std::sqrt(numDistVals);
-            allScales[distCnt][0] = scale[distCnt][0];
-        }
-
-        m_dataHead = std::move(dataHeads);
-        m_dataTails = std::move(dataTails);
-
-        m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
-        m_vSubTreeRelNames.push_back(m_name);
-
-        // TODO: Multiplication Tails block by counts is missing.
-        //FIGARO_LOG_DBG("Successful head computation");
-    }
-
     // This code joins 1-N relations, where the cardinality of @p this is 1 and
     // the cardinality of @p relation is N.
     void Relation::joinRelation(
@@ -715,6 +628,98 @@ namespace Figaro
         FIGARO_LOG_DBG("End of Join", *this)
     }
 
+
+   // We assume join attributes are before nonJoinAttributes.
+    void Relation::computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames)
+    {
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vNonJoinAttrIdxs;
+        uint32_t numDistinctValues;
+        uint32_t numJoinAttrs;
+        uint32_t numNonJoinAttrs;
+        uint32_t numTailRows;
+
+        std::vector<double> aggregateByAttribute;
+        std::vector<uint32_t> vDistValsRowPositions;
+
+        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
+        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        getDistinctValuesRowPositions(vJoinAttrIdxs, vDistValsRowPositions, false);
+
+        numDistinctValues = vDistValsRowPositions.size() - 1;
+        numJoinAttrs = vJoinAttrIdxs.size();
+        numNonJoinAttrs = vNonJoinAttrIdxs.size();
+        numTailRows = m_data.getNumRows() - numDistinctValues;
+
+        // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
+        Matrix<double> dataHeads{numDistinctValues, getNumberOfAttributes()};
+        Matrix<double> dataTails{numTailRows, numNonJoinAttrs};
+        Matrix<double> dataScale{numDistinctValues, 1};
+        Matrix<double> scale{numDistinctValues, 1};
+        std::vector<double> allScales(numDistinctValues);
+
+        // 2) Iterate over join attributes and compute Heads and Tails of relation that
+        // project away these attributes.
+        for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
+        {
+            uint32_t headRowIdx;
+            uint32_t numDistVals;
+            std::vector<double> vCurRowSum(numNonJoinAttrs);
+
+            headRowIdx = vDistValsRowPositions[distCnt] + 1;
+            numDistVals =  vDistValsRowPositions[distCnt+1] -  vDistValsRowPositions[distCnt] + 1;
+
+            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                vCurRowSum[nonJoinAttrIdx - numJoinAttrs] = m_data[headRowIdx][nonJoinAttrIdx];
+            }
+            for (uint32_t rowIdx = headRowIdx + 1;
+                rowIdx <= vDistValsRowPositions[distCnt+1];
+                rowIdx++)
+            {
+                uint32_t tailRowIdx = rowIdx - distCnt;
+                double i = rowIdx - headRowIdx + 1;
+                for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
+                {
+                    double prevRowSum = vCurRowSum[nonJoinAttrIdx - numJoinAttrs];
+                    vCurRowSum[nonJoinAttrIdx - numJoinAttrs] += m_data[rowIdx][nonJoinAttrIdx];
+                    dataTails[tailRowIdx][nonJoinAttrIdx - numJoinAttrs] =
+                    (m_data[rowIdx][nonJoinAttrIdx] * (i - 1) - prevRowSum)
+                    / std::sqrt(i * (i - 1));
+                }
+            }
+
+            // Copy join attributes to be used as indices.
+            for (const uint32_t joinAttrIdx: vJoinAttrIdxs)
+            {
+                dataHeads[distCnt][joinAttrIdx] = m_data[headRowIdx][joinAttrIdx];
+            }
+            // Copy arithmetic sum.
+            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                dataHeads[distCnt][nonJoinAttrIdx] = vCurRowSum[nonJoinAttrIdx - numJoinAttrs];
+            }
+
+            // TODO: Push square root as late as possible.
+            scale[distCnt][0] = std::sqrt(numDistVals);
+            dataScale[distCnt][0] = 1 / std::sqrt(numDistVals);
+            allScales[distCnt] = scale[distCnt][0];
+        }
+
+        m_dataHead = std::move(dataHeads);
+        m_dataTails = std::move(dataTails);
+
+        m_scales = std::move(scale);
+        m_dataScales = std::move(dataScale);
+        m_allScales = std::move(allScales);
+
+        m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
+        m_vSubTreeRelNames.push_back(m_name);
+
+        // TODO: Multiplication Tails block by counts is missing.
+        //FIGARO_LOG_DBG("Successful head computation");
+    }
+
     void Relation::schemaJoins(
         const std::vector<Relation*>& vpChildRels,
         const std::vector<uint32_t>& vJoinAttrIdxs,
@@ -748,7 +753,7 @@ namespace Figaro
 
 
 
-    void Relation::getHashTableRowPtrs(const std::vector<uint32_t>& vJoinAttrIdx,
+    void Relation::getHashTableRowIdxs(const std::vector<uint32_t>& vJoinAttrIdx,
         void*& pHashTablePt)
     {
         if (vJoinAttrIdx.size() == 1)
@@ -842,7 +847,7 @@ namespace Figaro
             vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel]);
             vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
-            vpChildRels[idxRel]->getHashTableRowPtrs(vvJoinAttrIdxs[idxRel], vpHashTabRowPt[idxRel]);
+            vpChildRels[idxRel]->getHashTableRowIdxs(vvJoinAttrIdxs[idxRel], vpHashTabRowPt[idxRel]);
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
             if (idxRel == 0)
             {
@@ -865,7 +870,6 @@ namespace Figaro
         Matrix<double> dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
         Matrix<double> scales{m_data.getNumRows(), vpChildRels.size() + 1};
         Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size() + 1};
-        Matrix<double> allScales{m_data.getNumRows(), 1};
 
 
        //#pragma omp parallel for schedule(static)
@@ -907,7 +911,7 @@ namespace Figaro
                         vpChildRels[idxRel]->m_dataScales[childRowIdx][idxSubTreeRel];
                 }
                 scales[rowIdx][idxRel] = vpChildRels[idxRel]->m_dataScales[childRowIdx][0];
-                allScales[rowIdx][0] *= scales[childRowIdx][idxRel];
+                m_allScales[rowIdx] *= scales[childRowIdx][idxRel];
             }
             for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
             {
@@ -916,21 +920,85 @@ namespace Figaro
                             idxSubTreeRel++)
                 {
                     uint32_t shiftIdxSTRel = idxSubTreeRel + vCumNumRelSubTree[idxRel];
-                    dataScales[rowIdx][shiftIdxSTRel] *= allScales[rowIdx][0];
+                    dataScales[rowIdx][shiftIdxSTRel] *= m_allScales[rowIdx];
                     dataScales[rowIdx][shiftIdxSTRel] /= scales[rowIdx][idxRel];
                 }
             }
             // Updated datascales for the central relation.
-            dataScales[rowIdx][0] *= allScales[rowIdx][0];
+            dataScales[rowIdx][0] = m_dataScales[rowIdx][0] * m_allScales[rowIdx];
             dataScales[rowIdx][0] /= scales[rowIdx][0];
-            scales[rowIdx][0] = allScales[rowIdx][0];
+            scales[rowIdx][0] = m_allScales[rowIdx];
         }
         m_dataHead = std::move(dataOutput);
+        m_dataScales = std::move(scales);
+        m_scales = std::move(scales);
 
         FIGARO_LOG_DBG("End of Join", *this)
     }
 
 
+    void Relation::computeAndScaleGeneralizedHeadAndTail(
+        const std::vector<std::string>& vJoinAttributeNames,
+        const std::vector<std::string>& vParJoinAttributeNames
+        )
+    {
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        std::vector<uint32_t> vParDistValsRowPositions;
+        uint32_t numDistinctValues;
+        uint32_t numRelsSubTree;
+        uint32_t numJoinAttrs;
+        uint32_t numNonJoinAttrs;
+
+        getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
+        getDistinctValuesRowPositions(vParJoinAttrIdxs, vParDistValsRowPositions, false);
+        numDistinctValues = vParDistValsRowPositions.size();
+        numRelsSubTree = m_vSubTreeRelNames.size();
+        numJoinAttrs = vJoinAttributeNames.size();
+        numNonJoinAttrs = getNumberOfAttributes() - numJoinAttrs;
+
+        MatrixDT dataHeadOut { numDistinctValues, getNumberOfAttributes()};
+        MatrixDT dataTailsOut{ m_dataHead.getNumRows() - numDistinctValues, numNonJoinAttrs};
+
+        for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
+        {
+            uint32_t startIdx;
+            uint32_t numDistVals;
+            double sumSqrScalesPrev;
+            double sumSqrScalesCur;
+            std::vector<double> vCurScaleSum(numNonJoinAttrs);
+
+            startIdx = vParDistValsRowPositions[distCnt] + 1;
+            numDistVals =  vParDistValsRowPositions[distCnt+1] -  vParDistValsRowPositions[distCnt] + 1;
+
+            sumSqrScalesPrev = 0;
+            sumSqrScalesCur = m_scales[startIdx][0] * m_scales[startIdx][0];
+
+            // Generalized head and tail computation.
+            for (uint32_t rowIdx = startIdx + 1;
+                rowIdx <= vParDistValsRowPositions[distCnt+1];
+                rowIdx++)
+            {
+                sumSqrScalesCur = sumSqrScalesPrev  + m_scales[rowIdx][0] * m_scales[rowIdx][0];
+                for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
+                {
+                    for (uint32_t attrIdx = m_vSubTreeDataOffsets[idxRel];
+                        attrIdx;
+                        attrIdx++)
+                        {
+                            m_dataHead[rowIdx][attrIdx] *= m_dataScales[rowIdx][idxRel];
+                        }
+                }
+                sumSqrScalesPrev = sumSqrScalesPrev;
+                // TODO: Think where to put zeros. Pass global order.
+            }
+
+        }
+
+
+        // TODO: Multiply Generalized tails with counts
+    }
 
     // TODO: Pass vectors. Now we assume the vector is all ones.
     void Relation::computeAndScaleGeneralizedHeadAndTail(

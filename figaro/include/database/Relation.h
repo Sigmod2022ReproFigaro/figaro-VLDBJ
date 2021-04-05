@@ -110,12 +110,13 @@ namespace Figaro
 
         MatrixDT m_dataHead;
         MatrixDT m_dataTails;
+        MatrixDT m_dataTailsGen;
         MatrixDT m_dataTails1;
         MatrixDT m_dataTails2;
 
         MatrixDT m_scales;
         MatrixDT m_dataScales;
-        MatrixDT m_allScales;
+        std::vector<double> m_allScales;
 
         std::vector<std::string> m_vSubTreeRelNames;
         std::vector<uint32_t> m_vSubTreeDataOffsets;
@@ -175,7 +176,7 @@ namespace Figaro
             const std::vector<uint32_t>& vNonJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
 
-        void getHashTableRowPtrs(const std::vector<uint32_t>& vJoinAttrIdx,
+        void getHashTableRowIdxs(const std::vector<uint32_t>& vJoinAttrIdx,
             void*& pHashTablePt);
 
         uint32_t getChildRowIdx(uint32_t rowIdx,
@@ -297,6 +298,11 @@ namespace Figaro
 
         void computeHead(const std::string& attributeName);
 
+
+        void computeAndScaleGeneralizedHeadAndTail(
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames
+        );
 
         void computeAndScaleGeneralizedHeadAndTail(
             const std::string& attributeName,
