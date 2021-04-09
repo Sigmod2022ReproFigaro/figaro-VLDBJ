@@ -669,11 +669,11 @@ namespace Figaro
         MatrixDT cntsJoin{vDistValsRowPositions.size(), vJoinAttrNames.size() + 1};
         MatrixDT cntsPar{vParDistValsRowPositions.size(), vParJoinAttrNames.size() + 4};
 
-        const uint32_t cntsJoinCntD = cntsJoin.getNumCols() - 2;
-        const uint32_t cntsJoinCntP = cntsJoin.getNumCols() - 1;
-        const uint32_t cntsParCntD = cntsPar.getNumCols() - 3;
-        const uint32_t cntsParCntU = cntsPar.getNumCols() - 2;
-        const uint32_t cntsParCntC = cntsPar.getNumCols() - 1;
+        m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
+        m_cntsJoinIdxP = cntsJoin.getNumCols() - 1;
+        m_cntsParIdxD = cntsPar.getNumCols() - 3;
+        m_cntsParIdxU = cntsPar.getNumCols() - 2;
+        m_cntsParIdxC = cntsPar.getNumCols() - 1;
 
         uint32_t distCntPar = 0;
 
@@ -686,9 +686,9 @@ namespace Figaro
                 cntsJoin[distCnt][joinAttrIdx] =
                     m_data[startRowIdx][joinAttrIdx];
             }
-            cntsJoin[distCnt][cntsJoinCntD] = vDistValsRowPositions[distCnt + 1] -
+            cntsJoin[distCnt][m_cntsJoinIdxD] = vDistValsRowPositions[distCnt + 1] -
                 vDistValsRowPositions[distCnt];
-            cntsJoin[distCnt][cntsJoinCntP] = distCntPar;
+            cntsJoin[distCnt][m_cntsJoinIdxP] = distCntPar;
 
             // If we are ending the block of the same parent attributes, switch to new block.
             if (vParDistValsRowPositions[distCntPar + 1] == vDistValsRowPositions[distCnt + 1])
@@ -707,10 +707,10 @@ namespace Figaro
                 cntsPar[distCnt][joinAttrIdx] =
                     m_data[headRowIdx][joinAttrIdx];
             }
-            cntsPar[distCnt][cntsParCntD] = vParDistValsRowPositions[distCnt + 1] -
+            cntsPar[distCnt][m_cntsParIdxD] = vParDistValsRowPositions[distCnt + 1] -
                 vParDistValsRowPositions[distCnt];
-            cntsPar[distCnt][cntsParCntU] = 0;
-            cntsPar[distCnt][cntsParCntC] = 1 / cntsPar[distCnt][cntsParCntD];
+            cntsPar[distCnt][m_cntsParIdxU] = 0;
+            cntsPar[distCnt][m_cntsParIdxC] = 1 / cntsPar[distCnt][m_cntsParIdxD];
         }
 
         getHashTableRowIdxs(vParJoinAttrIdxs, m_pHTParCounts, cntsPar);
@@ -722,11 +722,11 @@ namespace Figaro
                 uint32_t childRowIdx = getChildRowIdx(
                         idxRow, vvCurJoinAttrIdxs[idxChild],
                         vpChildRels[idxChild]->m_pHTParCounts, cntsJoin);
-                const uint32_t idxD = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 1;
+                const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
                 double childCnt = vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxD];
-                cntsJoin[idxRow][cntsParCntD] *= childCnt;
-                uint32_t idxPar = (uint32_t)cntsJoin[idxRow][cntsJoinCntP];
-                cntsPar[idxPar][cntsParCntD] *= childCnt;
+                cntsJoin[idxRow][m_cntsJoinIdxD] *= childCnt;
+                uint32_t idxPar = (uint32_t)cntsJoin[idxRow][m_cntsJoinIdxP];
+                cntsPar[idxPar][m_cntsParIdxD] *= childCnt;
             }
         }
 
@@ -766,16 +766,6 @@ namespace Figaro
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
         }
 
-
-
-
-        const uint32_t cntsJoinCntD = m_countsJoinAttrs.getNumCols() - 2;
-        const uint32_t cntsJoinCntP = m_countsJoinAttrs.getNumCols() - 1;
-        const uint32_t cntsParCntD = m_countsParJoinAttrs.getNumCols() - 3;
-        const uint32_t cntsParCntU = m_countsParJoinAttrs.getNumCols() - 2;
-        const uint32_t cntsParCntC = m_countsParJoinAttrs.getNumCols() - 1;
-
-
         for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow ++)
         {
             for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
@@ -785,12 +775,12 @@ namespace Figaro
                         idxRow, vvCurJoinAttrIdxs[idxChild],
                         vpChildRels[idxChild]->m_pHTParCounts, m_countsJoinAttrs);
                 const uint32_t idxU = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 2;
-                uint32_t countCur = m_countsJoinAttrs[idxRow][cntsJoinCntD];
+                uint32_t countCur = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
 
                 if (!isRoot)
                 {
-                    uint32_t idxPar = (uint32_t)m_countsJoinAttrs[idxRow][cntsJoinCntP];
-                    countCur *= m_countsParJoinAttrs[idxPar][cntsParCntU];
+                    uint32_t idxPar = (uint32_t)m_countsJoinAttrs[idxRow][m_cntsJoinIdxP];
+                    countCur *= m_countsParJoinAttrs[idxPar][m_cntsParIdxU];
                 }
                 vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxU]
                     += countCur;
@@ -802,9 +792,9 @@ namespace Figaro
             for (uint32_t idxRow = 0;
                 idxRow < vpChildRels[idxChild]->m_countsParJoinAttrs.getNumRows(); idxRow ++)
             {
-                const uint32_t idxD = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 3;
-                const uint32_t idxU = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 2;
-                const uint32_t idxC = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 1;
+                const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
+                const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
+                const uint32_t idxC = vpChildRels[idxChild]->m_cntsParIdxC;
                 vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *=
                 1 / vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
 

@@ -126,6 +126,12 @@ namespace Figaro
 
         void* m_pHTParCounts;
 
+        uint32_t m_cntsParIdxD;
+        uint32_t m_cntsParIdxU;
+        uint32_t m_cntsParIdxC;
+        uint32_t m_cntsJoinIdxD;
+        uint32_t m_cntsJoinIdxP;
+
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
         /**
