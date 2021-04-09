@@ -30,11 +30,11 @@ namespace Figaro
         checkAndUpdateJoinAttributes(getParent());
     }
 
-    void ASTNodeRelation::updateParJoinAttrs(ASTNodeAbsRelation* pNodeAbsRelation)
+    void ASTNodeRelation::updateParJoinAttrs(ASTNodeAbsRelation* pParent)
     {
-        if (nullptr != pNodeAbsRelation)
+        if (nullptr != pParent)
         {
-            const std::vector<std::string> vParJoinAttrs = pNodeAbsRelation->getJoinAttributeNames();
+            const std::vector<std::string> vParJoinAttrs = pParent->getJoinAttributeNames();
             m_vParJoinAttributeNames = setIntersection(getJoinAttributeNames(), vParJoinAttrs);
         }
     }

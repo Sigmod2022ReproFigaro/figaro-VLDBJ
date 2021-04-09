@@ -67,7 +67,7 @@ namespace Figaro
          */
         void checkAndUpdateJoinAttributes(void) override;
 
-        void updateParJoinAttrs(ASTNodeAbsRelation* pNodeAbsRelation);
+        void updateParJoinAttrs(ASTNodeAbsRelation* pParent);
 
         void updateParJoinAttrs(void) override;
 

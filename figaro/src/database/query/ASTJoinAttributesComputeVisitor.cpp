@@ -24,7 +24,7 @@ namespace Figaro
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
-        initializeEnumAndDenomRelations(pElement);
+        //initializeEnumAndDenomRelations(pElement);
     }
 
     void ASTJoinAttributesComputeVisitor::visitNodeJoin(ASTNodeJoin* pElement)
@@ -39,7 +39,7 @@ namespace Figaro
         pElement->checkAndUpdateJoinAttributes();
         pElement->checkAndUpdateChildrenParJoinAttributes();
 
-        initializeEnumAndDenomRelations(pElement->getCentralRelation());
+        //initializeEnumAndDenomRelations(pElement->getCentralRelation());
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);

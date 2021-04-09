@@ -41,7 +41,7 @@ struct std::hash<std::tuple<TupleArgs...> >
             hash_combine(seed, std::get<Idx>(tup));
 
             //  on to next element
-            hash_combine_tup<Idx+1>(seed, tup);
+            hash_combine_tup<Idx + 1>(seed, tup);
         }
 
     public:

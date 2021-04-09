@@ -26,6 +26,8 @@ namespace Figaro
         {
             pChild->updateParJoinAttrs();
             const auto& vChildParJoinAttrNames = pChild->getParJoinAttributeNames();
+            FIGARO_LOG_DBG("childName", pChild->getRelation()->getRelationName(),
+            "parAttrNames", vChildParJoinAttrNames)
             m_vvChildJoinAttributeNames.push_back(vChildParJoinAttrNames);
         }
     }
