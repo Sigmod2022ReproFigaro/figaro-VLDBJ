@@ -729,6 +729,90 @@ namespace Figaro
                 cntsPar[idxPar][cntsParCntD] *= childCnt;
             }
         }
+
+        m_countsJoinAttrs = std::move(cntsJoin);
+        m_countsParJoinAttrs  = std::move(cntsPar);
+    }
+
+   void Relation::computeUpAndCircleCounts(
+        const std::vector<Relation*>& vpChildRels,
+        const std::vector<std::string>& vJoinAttrNames,
+        const std::vector<std::string>& vParJoinAttrNames,
+        const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+        bool isRoot)
+    {
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        std::vector<uint32_t> vDistValsRowPositions;
+        std::vector<uint32_t> vParDistValsRowPositions;
+        std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
+        uint32_t numJoinDistVals;
+        uint32_t numParJoinDistVals;
+        std::vector<void*> vpHTParCounts;
+
+        vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+
+        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+
+        numJoinDistVals = vDistValsRowPositions.size() - 1;
+        numParJoinDistVals = vParDistValsRowPositions.size() - 1;
+
+        for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
+        {
+            vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel]);
+            getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
+        }
+
+
+
+
+        const uint32_t cntsJoinCntD = m_countsJoinAttrs.getNumCols() - 2;
+        const uint32_t cntsJoinCntP = m_countsJoinAttrs.getNumCols() - 1;
+        const uint32_t cntsParCntD = m_countsParJoinAttrs.getNumCols() - 3;
+        const uint32_t cntsParCntU = m_countsParJoinAttrs.getNumCols() - 2;
+        const uint32_t cntsParCntC = m_countsParJoinAttrs.getNumCols() - 1;
+
+
+        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow ++)
+        {
+            for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+            {
+                // Hash join on child.
+                uint32_t childRowIdx = getChildRowIdx(
+                        idxRow, vvCurJoinAttrIdxs[idxChild],
+                        vpChildRels[idxChild]->m_pHTParCounts, m_countsJoinAttrs);
+                const uint32_t idxU = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 2;
+                uint32_t countCur = m_countsJoinAttrs[idxRow][cntsJoinCntD];
+
+                if (!isRoot)
+                {
+                    uint32_t idxPar = (uint32_t)m_countsJoinAttrs[idxRow][cntsJoinCntP];
+                    countCur *= m_countsParJoinAttrs[idxPar][cntsParCntU];
+                }
+                vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxU]
+                    += countCur;
+            }
+        }
+
+        for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+        {
+            for (uint32_t idxRow = 0;
+                idxRow < vpChildRels[idxChild]->m_countsParJoinAttrs.getNumRows(); idxRow ++)
+            {
+                const uint32_t idxD = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 3;
+                const uint32_t idxU = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 2;
+                const uint32_t idxC = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 1;
+                vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *=
+                1 / vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
+
+                vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxC] *=
+                    vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *
+                    vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
+            }
+        }
     }
 
    // We assume join attributes are before nonJoinAttributes.
