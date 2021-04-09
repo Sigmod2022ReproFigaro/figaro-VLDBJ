@@ -2,15 +2,31 @@
 #include "database/query/ASTVisitor.h"
 #include "database/Database.h"
 
-namespace Figaro 
+namespace Figaro
 {
 
-    void ASTNodeJoin::checkAndUpdateJoinAttributes(void) 
+    void ASTNodeJoin::checkAndUpdateJoinAttributes(void)
     {
         m_pCenRelation->checkAndUpdateJoinAttributes(getParent());
+
         for (const auto& pChild: getChildren())
         {
             m_pCenRelation->checkAndUpdateJoinAttributes(pChild);
+        }
+    }
+
+    void ASTNodeJoin::updateParJoinAttrs(void)
+    {
+        m_pCenRelation->updateParJoinAttrs(getParent());
+    }
+
+    void ASTNodeJoin::checkAndUpdateChildrenParJoinAttributes(void)
+    {
+        for (const auto& pChild: getChildren())
+        {
+            pChild->updateParJoinAttrs();
+            const auto& vChildParJoinAttrNames = pChild->getParJoinAttributeNames();
+            m_vvChildJoinAttributeNames.push_back(vChildParJoinAttrNames);
         }
     }
 
@@ -19,7 +35,7 @@ namespace Figaro
         return m_pCenRelation->getJoinAttributeNames();
     }
 
-    void ASTNodeJoin::accept(ASTVisitor *pVisitor) 
+    void ASTNodeJoin::accept(ASTVisitor *pVisitor)
     {
         pVisitor->visitNodeJoin(this);
     }

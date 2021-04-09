@@ -24,6 +24,9 @@ namespace Figaro
     std::ostream& outputMatrixTToCSV(std::ostream& out,
         const Figaro::MatrixEigenT& matrix,
         char sep = ' ', uint32_t precision = 6);
+    std::vector<std::string> setIntersection(
+        const std::vector<std::string>& vStr1,
+        const std::vector<std::string>& vStr2);
 }
 
 

@@ -347,80 +347,6 @@ namespace Figaro
         sortData(vAttrNamesPKs);
     }
 
-    uint32_t Relation::getDistinctValuesCount(const std::string& attributeName) const
-    {
-        double prevAttrVal;
-        uint32_t distCnt;
-        uint32_t attrIdx;
-
-        attrIdx = getAttributeIdx(attributeName);
-        prevAttrVal = std::numeric_limits<double>::max();
-        distCnt = 0;
-
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            double curAttrVal = m_data[rowIdx][attrIdx];
-            if (prevAttrVal != curAttrVal)
-            {
-                distCnt++;
-                prevAttrVal = curAttrVal;
-            }
-        }
-        return distCnt;
-    }
-
-    // Asumes tuples (t1, t2) are ordered in such way that t1 < t2
-    // iff t1[attrName] < t2[attrName]
-    void Relation::getAttributeDistinctValues(
-        const std::string& attrName,
-        std::vector<double>& vDistinctVals) const
-    {
-        double prevAttrVal;
-        uint32_t distCnt;
-        uint32_t attrIdx;
-
-        distCnt = 0;
-        attrIdx = getAttributeIdx(attrName);
-        prevAttrVal = std::numeric_limits<double>::max();
-
-        // The first entry is saved for the end of imaginary predecessor of ranges.
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            double curAttrVal = m_data[rowIdx][attrIdx];
-            if (prevAttrVal != curAttrVal)
-            {
-                vDistinctVals[distCnt] = curAttrVal;
-                prevAttrVal = curAttrVal;
-                distCnt++;
-            }
-        }
-    }
-
-
-    void Relation::getAttributeDistinctValues(
-        const std::vector<uint32_t>& vAttrIdxs,
-        std::vector<double>& vDistinctVals) const
-    {
-        uint32_t distCnt;
-        std::vector<double> vPrevAttrVals(vAttrIdxs.size(), std::numeric_limits<double>::max());
-
-        distCnt = 0;
-        const double* pPrevAttrVals = &vPrevAttrVals[0];
-
-        // The first entry is saved for the end of imaginary predecessor of ranges.
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            const double* pCurAttrVals = m_data[rowIdx];
-            if (compareTuples(pCurAttrVals, pPrevAttrVals, vAttrIdxs))
-            {
-                //vDistinctVals[distCnt] = curAttrVal;
-                pPrevAttrVals = pCurAttrVals;
-                distCnt++;
-            }
-        }
-    }
-
-
     void Relation::getDistinctValuesRowPositions(
         const std::vector<uint32_t>& vAttrIdxs,
         std::vector<uint32_t>& vDistinctValuesRowPositions,
@@ -462,42 +388,6 @@ namespace Figaro
             vDistinctValuesRowPositions.push_back(pushVal);
         }
     }
-
-    void Relation::getAttributeValuesCounts(
-        const std::string& attrName,
-        std::unordered_map<double, uint32_t>& htCnts) const
-    {
-        uint32_t attrIdx;
-        attrIdx = getAttributeIdx(attrName);
-        htCnts.reserve(m_data.getNumRows());
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            double curAttrVal = m_data[rowIdx][attrIdx];
-            if (htCnts.find(curAttrVal) != htCnts.end())
-            {
-                htCnts[curAttrVal] ++;
-            }
-            else
-            {
-                htCnts[curAttrVal] = 1;
-            }
-        }
-    }
-
-    void Relation::getRowPtrs(
-        const std::string& attrName,
-        std::unordered_map<double, const double*>& htRowPts) const
-    {
-        uint32_t attrIdx;
-        attrIdx = getAttributeIdx(attrName);
-        htRowPts.reserve(m_data.getNumRows());
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            double curAttrVal = m_data[rowIdx][attrIdx];
-            htRowPts[curAttrVal] = m_data[rowIdx];
-        }
-    }
-
 
     void Relation::getDistinctValuesRowPositions(
         const std::string& attributeName,
@@ -543,91 +433,71 @@ namespace Figaro
         }
     }
 
-
-    // This code joins 1-N relations, where the cardinality of @p this is 1 and
-    // the cardinality of @p relation is N.
-    void Relation::joinRelation(
-        const Relation& relation,
-        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames,
-        bool bSwapAttributes)
+    // TODO: Convert this to a template.
+    void Relation::getHashTableRowIdxs(
+        const std::vector<uint32_t>& vParAttrIdx,
+        void*& pHashTablePt,
+        const MatrixDT& data)
     {
-        std::unordered_map<double, const double*> hashTabRowPt2;
-        uint32_t attrIdx;
-        std::vector<uint32_t> vDistValRowPos1;
-        std::vector<uint32_t> vPkAttrIdxs1;
-        std::vector<uint32_t> vNonPkAttrIdxs1;
-        std::vector<uint32_t> vNonPkAttrIdxs2;
-        uint32_t numAttrs1;
-        uint32_t numPKAttrs1;
-        uint32_t numPKAttrs2;
-        uint32_t numNonPkAttrs2;
-        std::vector<std::string> vAttributeNamesNonPKs1;
-        std::vector<std::string> vAttributeNamesNonPKs2;
-        uint32_t rowIdx2;
-        const auto& joinAttributeNameTup = vJoinAttributeNames.at(0);
-        std::string joinAttrName =  std::get<0>(joinAttributeNameTup);
-
-        numAttrs1 = m_attributes.size();
-        numNonPkAttrs2 = relation.getNumberOfNonPKAttributes();
-        numPKAttrs1 = getNumberOfPKAttributes();
-        numPKAttrs2 = relation.getNumberOfPKAttributes();
-        getNonPKAttributeNames(vAttributeNamesNonPKs1);
-        relation.getNonPKAttributeNames(vAttributeNamesNonPKs2);
-
-        FIGARO_LOG_DBG("First nonPkNames", vAttributeNamesNonPKs1);
-        FIGARO_LOG_DBG("Second NonPK names", vAttributeNamesNonPKs2);
-
-
-        getNonPKAttributeIdxs(vNonPkAttrIdxs1);
-        getPKAttributeIndices(vPkAttrIdxs1);
-        relation.getNonPKAttributeIdxs(vNonPkAttrIdxs2);
-        getDistinctValuesRowPositions(joinAttrName, vDistValRowPos1, false);
-        uint32_t pkOffset2 = relation.getNumberOfPKAttributes();
-        attrIdx = getAttributeIdx(joinAttrName);
-        relation.getRowPtrs(joinAttrName, hashTabRowPt2);
-
-        schemaJoin(relation, bSwapAttributes);
-        Matrix<double> dataOutput {m_data.getNumRows(), (uint32_t)m_attributes.size()};
-
-
-       #pragma omp parallel for schedule(static)
-       for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-       {
-            const double joinAttrVal = m_data[rowIdx][attrIdx];
-            const double* rowPtr2 = hashTabRowPt2[joinAttrVal];
-
-            // Copy Pks
-            for (auto pkIdx: vPkAttrIdxs1)
+        if (vParAttrIdx.size() == 1)
+        {
+            std::unordered_map<double, uint32_t>* tpHashTablePt = new std::unordered_map<double, uint32_t> ();
+            tpHashTablePt->reserve(data.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < data.getNumRows(); rowIdx++)
             {
-                dataOutput[rowIdx][pkIdx] = m_data[rowIdx][pkIdx];
+                double curAttrVal = data[rowIdx][vParAttrIdx[0]];
+                (*tpHashTablePt)[curAttrVal] = rowIdx;
             }
-            // Copy non-pk attributes
-            if (bSwapAttributes)
-            {
-                for (const auto nonPKAttrIdx1: vNonPkAttrIdxs1)
-                {
-                    dataOutput[rowIdx][nonPKAttrIdx1 + numNonPkAttrs2] = m_data[rowIdx][nonPKAttrIdx1];
-                }
-                for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
-                {
-                    dataOutput[rowIdx][numPKAttrs1 - numPKAttrs2 + nonPKAttrIdx2] = (rowPtr2)[nonPKAttrIdx2];
-                }
-            }
-            else
-            {
-                for (const auto nonPKAttrIdx1: vNonPkAttrIdxs1)
-                {
-                    dataOutput[rowIdx][nonPKAttrIdx1] = m_data[rowIdx][nonPKAttrIdx1];
-                }
-                for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
-                {
-                    dataOutput[rowIdx][numAttrs1 - numPKAttrs2 + nonPKAttrIdx2 ] = (rowPtr2)[nonPKAttrIdx2];
-                }
-            }
+            pHashTablePt = tpHashTablePt;
         }
-        m_data = std::move(dataOutput);
+        else if (vParAttrIdx.size() == 2)
+        {
+            std::unordered_map<std::tuple<double, double>, uint32_t>* tpHashTablePt =
+             new std::unordered_map<std::tuple<double, double>, uint32_t> ();
+            tpHashTablePt->reserve(data.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < data.getNumRows(); rowIdx++)
+            {
+                std::tuple<double, double> curAttrVal = std::make_tuple(vParAttrIdx[0], vParAttrIdx[1]);
+                (*tpHashTablePt)[curAttrVal] = rowIdx;
+            }
+            pHashTablePt = tpHashTablePt;
+        }
+        else
+        {
 
-        FIGARO_LOG_DBG("End of Join", *this)
+        }
+    }
+
+
+    uint32_t Relation::getChildRowIdx(
+        uint32_t rowIdx,
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  htChildRowIdx,
+        const MatrixDT& dataParent)
+    {
+        uint32_t rowChildIdx = UINT32_MAX;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            // TODO: Extract join for relation specific from join attribute value.
+            const double joinAttrVal = dataParent[rowIdx][vParJoinAttrIdxs[0]];
+            std::unordered_map<double, uint32_t> htChildRowIdxOne = *(std::unordered_map<double, uint32_t>*)(htChildRowIdx);
+            rowChildIdx = htChildRowIdxOne[joinAttrVal];
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            const std::tuple<double, double> joinAttrVal =
+            std::make_tuple(dataParent[rowIdx][vParJoinAttrIdxs[0]],
+                            dataParent[rowIdx][vParJoinAttrIdxs[1]]);
+            std::unordered_map<std::tuple<double, double>, uint32_t> htChildRowIdxOne = *(std::unordered_map<std::tuple<double, double>, uint32_t>*)(htChildRowIdx);
+            rowChildIdx = htChildRowIdxOne[joinAttrVal];
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+
+        return rowChildIdx;
     }
 
 
@@ -677,6 +547,7 @@ namespace Figaro
 
         uint32_t distCntPar = 0;
 
+        // TODO: Combine these four  cycles in one cycle.
         for (uint32_t distCnt = 0; distCnt < numJoinDistVals; distCnt++)
         {
             uint32_t startRowIdx = vDistValsRowPositions[distCnt] + 1;
@@ -731,7 +602,7 @@ namespace Figaro
         }
 
         m_countsJoinAttrs = std::move(cntsJoin);
-        m_countsParJoinAttrs  = std::move(cntsPar);
+        m_countsParJoinAttrs = std::move(cntsPar);
     }
 
    void Relation::computeUpAndCircleCounts(
@@ -774,7 +645,7 @@ namespace Figaro
                 uint32_t childRowIdx = getChildRowIdx(
                         idxRow, vvCurJoinAttrIdxs[idxChild],
                         vpChildRels[idxChild]->m_pHTParCounts, m_countsJoinAttrs);
-                const uint32_t idxU = vpChildRels[idxChild]->m_countsParJoinAttrs.getNumCols() - 2;
+                const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
                 uint32_t countCur = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
 
                 if (!isRoot)
@@ -925,74 +796,6 @@ namespace Figaro
             }
 
         }
-    }
-
-
-
-    void Relation::getHashTableRowIdxs(
-        const std::vector<uint32_t>& vParAttrIdx,
-        void*& pHashTablePt,
-        const MatrixDT& data)
-    {
-        if (vParAttrIdx.size() == 1)
-        {
-            std::unordered_map<double, uint32_t>* tpHashTablePt = new std::unordered_map<double, uint32_t> ();
-            tpHashTablePt->reserve(data.getNumRows());
-            for (uint32_t rowIdx = 0; rowIdx < data.getNumRows(); rowIdx++)
-            {
-                double curAttrVal = data[rowIdx][vParAttrIdx[0]];
-                (*tpHashTablePt)[curAttrVal] = rowIdx;
-            }
-            pHashTablePt = tpHashTablePt;
-        }
-        else if (vParAttrIdx.size() == 2)
-        {
-            std::unordered_map<std::tuple<double, double>, uint32_t>* tpHashTablePt =
-             new std::unordered_map<std::tuple<double, double>, uint32_t> ();
-            tpHashTablePt->reserve(data.getNumRows());
-            for (uint32_t rowIdx = 0; rowIdx < data.getNumRows(); rowIdx++)
-            {
-                std::tuple<double, double> curAttrVal = std::make_tuple(vParAttrIdx[0], vParAttrIdx[1]);
-                (*tpHashTablePt)[curAttrVal] = rowIdx;
-            }
-            pHashTablePt = tpHashTablePt;
-        }
-        else
-        {
-
-        }
-    }
-
-
-    uint32_t Relation::getChildRowIdx(
-        uint32_t rowIdx,
-        const std::vector<uint32_t>& vParJoinAttrIdxs,
-        void*  htChildRowIdx,
-        const MatrixDT& dataParent)
-    {
-        uint32_t rowChildIdx = UINT32_MAX;
-        if (vParJoinAttrIdxs.size() == 1)
-        {
-            // TODO: Extract join for relation specific from join attribute value.
-            const double joinAttrVal = dataParent[rowIdx][vParJoinAttrIdxs[0]];
-            std::unordered_map<double, uint32_t> htChildRowIdxOne = *(std::unordered_map<double, uint32_t>*)(htChildRowIdx);
-            rowChildIdx = htChildRowIdxOne[joinAttrVal];
-        }
-        else if (vParJoinAttrIdxs.size() == 2)
-        {
-            const std::tuple<double, double> joinAttrVal =
-            std::make_tuple(dataParent[rowIdx][vParJoinAttrIdxs[0]],
-                            dataParent[rowIdx][vParJoinAttrIdxs[1]]);
-            std::unordered_map<std::tuple<double, double>, uint32_t> htChildRowIdxOne = *(std::unordered_map<std::tuple<double, double>, uint32_t>*)(htChildRowIdx);
-            rowChildIdx = htChildRowIdxOne[joinAttrVal];
-        }
-        else
-        {
-            // TODO: Consider how to handle this case.
-            //const std::vector<double> t =
-        }
-
-        return rowChildIdx;
     }
 
     void Relation::joinRelations(
@@ -1208,6 +1011,202 @@ namespace Figaro
 
         // TODO: Multiply Generalized tails with counts
     }
+
+        void Relation::getAttributeValuesCounts(
+        const std::string& attrName,
+        std::unordered_map<double, uint32_t>& htCnts) const
+    {
+        uint32_t attrIdx;
+        attrIdx = getAttributeIdx(attrName);
+        htCnts.reserve(m_data.getNumRows());
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            double curAttrVal = m_data[rowIdx][attrIdx];
+            if (htCnts.find(curAttrVal) != htCnts.end())
+            {
+                htCnts[curAttrVal] ++;
+            }
+            else
+            {
+                htCnts[curAttrVal] = 1;
+            }
+        }
+    }
+
+    void Relation::getRowPtrs(
+        const std::string& attrName,
+        std::unordered_map<double, const double*>& htRowPts) const
+    {
+        uint32_t attrIdx;
+        attrIdx = getAttributeIdx(attrName);
+        htRowPts.reserve(m_data.getNumRows());
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            double curAttrVal = m_data[rowIdx][attrIdx];
+            htRowPts[curAttrVal] = m_data[rowIdx];
+        }
+    }
+
+
+    uint32_t Relation::getDistinctValuesCount(const std::string& attributeName) const
+    {
+        double prevAttrVal;
+        uint32_t distCnt;
+        uint32_t attrIdx;
+
+        attrIdx = getAttributeIdx(attributeName);
+        prevAttrVal = std::numeric_limits<double>::max();
+        distCnt = 0;
+
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            double curAttrVal = m_data[rowIdx][attrIdx];
+            if (prevAttrVal != curAttrVal)
+            {
+                distCnt++;
+                prevAttrVal = curAttrVal;
+            }
+        }
+        return distCnt;
+    }
+
+    // Asumes tuples (t1, t2) are ordered in such way that t1 < t2
+    // iff t1[attrName] < t2[attrName]
+    void Relation::getAttributeDistinctValues(
+        const std::string& attrName,
+        std::vector<double>& vDistinctVals) const
+    {
+        double prevAttrVal;
+        uint32_t distCnt;
+        uint32_t attrIdx;
+
+        distCnt = 0;
+        attrIdx = getAttributeIdx(attrName);
+        prevAttrVal = std::numeric_limits<double>::max();
+
+        // The first entry is saved for the end of imaginary predecessor of ranges.
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            double curAttrVal = m_data[rowIdx][attrIdx];
+            if (prevAttrVal != curAttrVal)
+            {
+                vDistinctVals[distCnt] = curAttrVal;
+                prevAttrVal = curAttrVal;
+                distCnt++;
+            }
+        }
+    }
+
+
+    void Relation::getAttributeDistinctValues(
+        const std::vector<uint32_t>& vAttrIdxs,
+        std::vector<double>& vDistinctVals) const
+    {
+        uint32_t distCnt;
+        std::vector<double> vPrevAttrVals(vAttrIdxs.size(), std::numeric_limits<double>::max());
+
+        distCnt = 0;
+        const double* pPrevAttrVals = &vPrevAttrVals[0];
+
+        // The first entry is saved for the end of imaginary predecessor of ranges.
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            const double* pCurAttrVals = m_data[rowIdx];
+            if (compareTuples(pCurAttrVals, pPrevAttrVals, vAttrIdxs))
+            {
+                //vDistinctVals[distCnt] = curAttrVal;
+                pPrevAttrVals = pCurAttrVals;
+                distCnt++;
+            }
+        }
+    }
+
+    // This code joins 1-N relations, where the cardinality of @p this is 1 and
+    // the cardinality of @p relation is N.
+    void Relation::joinRelation(
+        const Relation& relation,
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames,
+        bool bSwapAttributes)
+    {
+        std::unordered_map<double, const double*> hashTabRowPt2;
+        uint32_t attrIdx;
+        std::vector<uint32_t> vDistValRowPos1;
+        std::vector<uint32_t> vPkAttrIdxs1;
+        std::vector<uint32_t> vNonPkAttrIdxs1;
+        std::vector<uint32_t> vNonPkAttrIdxs2;
+        uint32_t numAttrs1;
+        uint32_t numPKAttrs1;
+        uint32_t numPKAttrs2;
+        uint32_t numNonPkAttrs2;
+        std::vector<std::string> vAttributeNamesNonPKs1;
+        std::vector<std::string> vAttributeNamesNonPKs2;
+        uint32_t rowIdx2;
+        const auto& joinAttributeNameTup = vJoinAttributeNames.at(0);
+        std::string joinAttrName =  std::get<0>(joinAttributeNameTup);
+
+        numAttrs1 = m_attributes.size();
+        numNonPkAttrs2 = relation.getNumberOfNonPKAttributes();
+        numPKAttrs1 = getNumberOfPKAttributes();
+        numPKAttrs2 = relation.getNumberOfPKAttributes();
+        getNonPKAttributeNames(vAttributeNamesNonPKs1);
+        relation.getNonPKAttributeNames(vAttributeNamesNonPKs2);
+
+        FIGARO_LOG_DBG("First nonPkNames", vAttributeNamesNonPKs1);
+        FIGARO_LOG_DBG("Second NonPK names", vAttributeNamesNonPKs2);
+
+
+        getNonPKAttributeIdxs(vNonPkAttrIdxs1);
+        getPKAttributeIndices(vPkAttrIdxs1);
+        relation.getNonPKAttributeIdxs(vNonPkAttrIdxs2);
+        getDistinctValuesRowPositions(joinAttrName, vDistValRowPos1, false);
+        uint32_t pkOffset2 = relation.getNumberOfPKAttributes();
+        attrIdx = getAttributeIdx(joinAttrName);
+        relation.getRowPtrs(joinAttrName, hashTabRowPt2);
+
+        schemaJoin(relation, bSwapAttributes);
+        Matrix<double> dataOutput {m_data.getNumRows(), (uint32_t)m_attributes.size()};
+
+
+       #pragma omp parallel for schedule(static)
+       for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+       {
+            const double joinAttrVal = m_data[rowIdx][attrIdx];
+            const double* rowPtr2 = hashTabRowPt2[joinAttrVal];
+
+            // Copy Pks
+            for (auto pkIdx: vPkAttrIdxs1)
+            {
+                dataOutput[rowIdx][pkIdx] = m_data[rowIdx][pkIdx];
+            }
+            // Copy non-pk attributes
+            if (bSwapAttributes)
+            {
+                for (const auto nonPKAttrIdx1: vNonPkAttrIdxs1)
+                {
+                    dataOutput[rowIdx][nonPKAttrIdx1 + numNonPkAttrs2] = m_data[rowIdx][nonPKAttrIdx1];
+                }
+                for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
+                {
+                    dataOutput[rowIdx][numPKAttrs1 - numPKAttrs2 + nonPKAttrIdx2] = (rowPtr2)[nonPKAttrIdx2];
+                }
+            }
+            else
+            {
+                for (const auto nonPKAttrIdx1: vNonPkAttrIdxs1)
+                {
+                    dataOutput[rowIdx][nonPKAttrIdx1] = m_data[rowIdx][nonPKAttrIdx1];
+                }
+                for (const auto nonPKAttrIdx2: vNonPkAttrIdxs2)
+                {
+                    dataOutput[rowIdx][numAttrs1 - numPKAttrs2 + nonPKAttrIdx2 ] = (rowPtr2)[nonPKAttrIdx2];
+                }
+            }
+        }
+        m_data = std::move(dataOutput);
+
+        FIGARO_LOG_DBG("End of Join", *this)
+    }
+
 
     // TODO: Pass vectors. Now we assume the vector is all ones.
     void Relation::computeAndScaleGeneralizedHeadAndTail(

@@ -2,10 +2,18 @@
 #include "database/query/ASTVisitor.h"
 #include "database/Database.h"
 
-namespace Figaro 
+namespace Figaro
 {
 
-     void ASTNodeRelation::checkAndUpdateJoinAttributes(ASTNodeAbsRelation* pNodeAbsRelation)
+    void ASTNodeRelation::setJoinAttribute(const std::string& attrName)
+    {
+        if (m_mIsJoinAttr.find(attrName) != m_mIsJoinAttr.end())
+        {
+            m_mIsJoinAttr[attrName] = true;
+        }
+    }
+
+    void ASTNodeRelation::checkAndUpdateJoinAttributes(ASTNodeAbsRelation* pNodeAbsRelation)
     {
         if (nullptr != pNodeAbsRelation)
         {
@@ -17,13 +25,40 @@ namespace Figaro
         }
     }
 
-    void ASTNodeRelation::setJoinAttribute(const std::string& attrName)
+    void ASTNodeRelation::checkAndUpdateJoinAttributes(void)
     {
-        if (m_mIsJoinAttr.find(attrName) != m_mIsJoinAttr.end())
+        checkAndUpdateJoinAttributes(getParent());
+    }
+
+    void ASTNodeRelation::updateParJoinAttrs(ASTNodeAbsRelation* pNodeAbsRelation)
+    {
+        if (nullptr != pNodeAbsRelation)
         {
-            m_mIsJoinAttr[attrName] = true;
+            const std::vector<std::string> vParJoinAttrs = pNodeAbsRelation->getJoinAttributeNames();
+            m_vParJoinAttributeNames = setIntersection(getJoinAttributeNames(), vParJoinAttrs);
         }
     }
+
+    void ASTNodeRelation::updateParJoinAttrs(void)
+    {
+        updateParJoinAttrs(getParent());
+    }
+
+    const std::vector<std::string>& ASTNodeRelation::getJoinAttributeNames(void)
+    {
+        if (m_vJoinAttributeNames.size() == 0)
+        {
+            for (auto const& [attrName, isJoinAttr]: m_mIsJoinAttr)
+            {
+                if (isJoinAttr)
+                {
+                    m_vJoinAttributeNames.push_back(attrName);
+                }
+            }
+        }
+        return m_vJoinAttributeNames;
+    }
+
 
     void ASTNodeRelation::moveFromNumerToDenum(ASTNodeRelation* pRelation)
     {
@@ -56,27 +91,7 @@ namespace Figaro
             }
     }
 
-    void ASTNodeRelation::checkAndUpdateJoinAttributes(void) 
-    {
-        checkAndUpdateJoinAttributes(getParent());
-    }
-
-    const std::vector<std::string>& ASTNodeRelation::getJoinAttributeNames(void) 
-    {
-        if (m_vJoinAttributeNames.size() == 0)
-        {
-            for (auto const& [attrName, isJoinAttr]: m_mIsJoinAttr)
-            {
-                if (isJoinAttr)
-                {
-                    m_vJoinAttributeNames.push_back(attrName);
-                }
-            }
-        }
-        return m_vJoinAttributeNames;
-    }
-
-    void ASTNodeRelation::accept(ASTVisitor *pVisitor) 
+    void ASTNodeRelation::accept(ASTVisitor *pVisitor)
     {
         pVisitor->visitNodeRelation(this);
     }
@@ -96,7 +111,7 @@ namespace Figaro
     {
         for (const auto& joinAttribute: joinAttributes)
         {
-            
-        } 
+
+        }
     }
 }

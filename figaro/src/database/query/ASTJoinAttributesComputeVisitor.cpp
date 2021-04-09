@@ -7,7 +7,7 @@ namespace Figaro
     {
         std::vector<ASTNodeRelation*>& numRelations =  pRelation->getNumerRelations();
         std::vector<ASTNodeRelation*>& denomRelations =  pRelation->getDenomRelations();
-        
+
         denomRelations.push_back(pRelation);
         for (const auto& pCurRelation: m_vpASTNodeRelation)
         {
@@ -37,13 +37,12 @@ namespace Figaro
             pChild->accept(this);
         }
         pElement->checkAndUpdateJoinAttributes();
-        
-        
+        pElement->checkAndUpdateChildrenParJoinAttributes();
+
         initializeEnumAndDenomRelations(pElement->getCentralRelation());
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
-        
     }
 
     void ASTJoinAttributesComputeVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
@@ -55,7 +54,7 @@ namespace Figaro
             m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
         }
         pElement->getOperand()->accept(this);
-        
+
     }
 
 }

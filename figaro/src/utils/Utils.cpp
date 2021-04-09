@@ -8,7 +8,7 @@ namespace Figaro
 {
     uint32_t getNumberOfLines(const std::string& filePath)
     {
-        std::string line; 
+        std::string line;
         std::ifstream file(filePath);
         uint32_t cntLines = 0;
         if (file.fail())
@@ -23,9 +23,37 @@ namespace Figaro
         }
         return cntLines;
     }
+
+    std::vector<std::string> setIntersection(
+        const std::vector<std::string>& vStr1,
+        const std::vector<std::string>& vStr2)
+    {
+        std::map<std::string, bool> sStrAppears;
+        std::vector<std::string> vIntersection;
+        //FIGARO_LOG_DBG("set1", vStr1, "set2", vStr2)
+        for (const auto& str: vStr1)
+        {
+            sStrAppears[str] = false;
+        }
+        for (const auto& str: vStr2)
+        {
+            if (sStrAppears.find(str) != sStrAppears.end())
+            {
+                sStrAppears[str] = true;
+            }
+        }
+        for (const auto&[key, exists]: sStrAppears)
+        {
+            if (exists)
+            {
+                vIntersection.push_back(key);
+            }
+        }
+        return vIntersection;
+    }
 }
 
-std::ostream& Figaro::outputMatrixTToCSV(std::ostream& out, 
+std::ostream& Figaro::outputMatrixTToCSV(std::ostream& out,
     const Figaro::MatrixEigenT& matrix, char sep, uint32_t precision)
 {
     for (uint32_t row = 0; row < matrix.rows(); row ++)

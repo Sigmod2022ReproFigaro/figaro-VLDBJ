@@ -12,11 +12,12 @@ namespace Figaro
         friend class ASTVisitor;
         ASTNodeRelation* m_pCenRelation;
         std::vector<ASTNodeAbsRelation*> m_vPChild;
+        std::vector<std::vector<std::string> > m_vvChildJoinAttributeNames;
     public:
-        ASTNodeJoin(ASTNodeRelation* pRelation, std::vector<ASTNodeAbsRelation*> vPChild): 
+        ASTNodeJoin(ASTNodeRelation* pRelation, std::vector<ASTNodeAbsRelation*> vPChild):
             m_pCenRelation(pRelation), m_vPChild(vPChild){}
         virtual ~ASTNodeJoin() override {}
-        
+
         ASTNodeRelation* getRelation(void) override
         {
             return m_pCenRelation;
@@ -33,12 +34,27 @@ namespace Figaro
 
         const std::vector<std::string>& getJoinAttributeNames(void) override;
 
+        const std::vector<std::string>&
+        getParJoinAttributeNames(void) override
+        {
+            return getCentralRelation()->getParJoinAttributeNames();
+        }
+
         std::vector<ASTNodeAbsRelation*> getChildren(void)
         {
             return m_vPChild;
         }
-        
+
+        /**
+         * Intersects the attributes of the current node, its parrent and
+         * its children and based on that updates @p m_vJoinAttributeNames
+         */
         void checkAndUpdateJoinAttributes(void) override;
+
+        void updateParJoinAttrs(void) override;
+
+        void checkAndUpdateChildrenParJoinAttributes(void);
+
 
         void accept(ASTVisitor* pVisitor) override;
     };

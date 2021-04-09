@@ -2,33 +2,6 @@
 
 namespace Figaro
 {
-
-    std::vector<std::string> ASTFigaroFirstPassVisitor::setIntersection(const std::vector<std::string>& vStr1, const std::vector<std::string>& vStr2)
-    {
-        std::map<std::string, bool> sStrAppears; 
-        std::vector<std::string> vIntersection;
-        //FIGARO_LOG_DBG("set1", vStr1, "set2", vStr2)
-        for (const auto& str: vStr1)
-        {
-            sStrAppears[str] = false;
-        }
-        for (const auto& str: vStr2)
-        {
-            if (sStrAppears.find(str) != sStrAppears.end())
-            {
-                sStrAppears[str] = true;
-            }
-        }
-        for (const auto&[key, exists]: sStrAppears)
-        {
-            if (exists)
-            {
-                vIntersection.push_back(key);
-            }
-        }
-        return vIntersection;
-    }
-
     std::string ASTFigaroFirstPassVisitor::l2TailnormExpression(ASTNodeRelation* pElement)
     {
         std::string strSqrt = "\\sqrt{";
@@ -85,7 +58,7 @@ namespace Figaro
             m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
         }
         pElement->getOperand()->accept(this);
-        
+
     }
 
 }

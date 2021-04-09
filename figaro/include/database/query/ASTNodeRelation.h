@@ -11,15 +11,16 @@ namespace Figaro
     class ASTNodeRelation: public ASTNodeAbsRelation
     {
         friend class ASTVisitor;
-        std::string m_relationName;   
+        std::string m_relationName;
         std::vector<std::string> m_vAttributeNames;
         std::map<std::string, bool> m_mIsJoinAttr;
         std::vector<std::string> m_vJoinAttributeNames;
+        std::vector<std::string> m_vParJoinAttributeNames;
         std::vector<ASTNodeRelation*> m_vpASTNodeRelNumer;
         std::vector<ASTNodeRelation*> m_vpASTNodeRelDenom;
     public:
-        // TODO: Add ranges and other options. 
-        ASTNodeRelation(const std::string& relationName, 
+        // TODO: Add ranges and other options.
+        ASTNodeRelation(const std::string& relationName,
                         const std::vector<std::string>& vAttributeNames): m_relationName(relationName), m_vAttributeNames(vAttributeNames)
         {
             FIGARO_LOG_DBG("AttributeNames", vAttributeNames)
@@ -53,12 +54,32 @@ namespace Figaro
 
         void setJoinAttribute(const std::string& attrName);
 
+        /**
+         * Intersects the sets of attributes of the current node and
+         * @p pNodeAbsRelation and
+         * based on that updates @p m_vJoinAttributeNames
+         */
         void checkAndUpdateJoinAttributes(ASTNodeAbsRelation* pNodeAbsRelation);
 
-        void checkAndUpdateJoinAttributes(void) override;        
+        /**
+         * Intersects the attributes of the current node and its parrent and
+         * based on that updates @p m_vJoinAttributeNames
+         */
+        void checkAndUpdateJoinAttributes(void) override;
+
+        void updateParJoinAttrs(ASTNodeAbsRelation* pNodeAbsRelation);
+
+        void updateParJoinAttrs(void) override;
+
         const std::vector<std::string>& getAttributeNames(void) const override
         {
             return m_vAttributeNames;
+        }
+
+
+        const std::vector<std::string>& ASTNodeRelation::getParJoinAttributeNames(void) override
+        {
+            return m_vParJoinAttributeNames;
         }
 
         const std::vector<std::string>& getJoinAttributeNames(void) override;
