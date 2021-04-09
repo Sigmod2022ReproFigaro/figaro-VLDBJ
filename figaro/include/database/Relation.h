@@ -121,6 +121,11 @@ namespace Figaro
         std::vector<std::string> m_vSubTreeRelNames;
         std::vector<uint32_t> m_vSubTreeDataOffsets;
 
+        MatrixDT m_countsJoinAttrs;
+        MatrixDT m_countsParJoinAttrs;
+
+        void* m_pHTParCounts;
+
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
         /**
@@ -176,12 +181,25 @@ namespace Figaro
             const std::vector<uint32_t>& vNonJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
 
-        void getHashTableRowIdxs(const std::vector<uint32_t>& vJoinAttrIdx,
-            void*& pHashTablePt);
 
+        /**
+         *  Builds hash index where key is @p vJoinAttrIdx over the @p data
+         * returns it as a pointer @p pHashTablePt.
+         * @note Destructor needs to be called after the usage.
+         */
+        void getHashTableRowIdxs(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*& pHashTablePt,
+            const MatrixDT& data);
+
+        /**
+         * Looks up in the hash table @p hashTabRowPt for join attributes from parent
+         * @p vParJoinAttrIdxs and the value specified in @p dataParent [ @p rowIdx ]
+         */
         uint32_t getChildRowIdx(uint32_t rowIdx,
             const std::vector<uint32_t>& vParJoinAttrIdxs,
-            void*  hashTabRowPt);
+            void*  hashTabRowPt,
+            const MatrixDT& dataParent);
 
     public:
         Relation(const Relation&) = delete;
@@ -252,13 +270,11 @@ namespace Figaro
         void sortData(const std::vector<std::string>& vAttributeNames);
 
 
-        void computeCountAggregates(void);
-
-        /**
-         * Returns associative data structure whose keys are values group
-         * byed on and values are the corresponding counts.
-         */
-        const Relation::GroupByT& getCountAggregates(void) const;
+        void computeDownCounts(
+            const std::vector<Relation*>& vpChildRels,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
         void joinRelation(const Relation& relation,
              const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool bSwapAttributes);
