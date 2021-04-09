@@ -17,7 +17,7 @@ namespace Figaro
         return ErrorCode::NO_ERROR;
     }
 
-    ErrorCode Database::loadDatabaseSchema(const std::string& schemaConfigPath) 
+    ErrorCode Database::loadDatabaseSchema(const std::string& schemaConfigPath)
     {
         std::ifstream inputFileStream(schemaConfigPath);
         json jsonDbConfig;
@@ -25,18 +25,18 @@ namespace Figaro
         if (inputFileStream.fail())
         {
             FIGARO_LOG_ERROR("Database configuration path incorrect", schemaConfigPath);
-            return ErrorCode::WRONG_PATH;  
+            return ErrorCode::WRONG_PATH;
         }
         inputFileStream >> jsonDbConfig;
         FIGARO_LOG_INFO("Database Configuration", jsonDbConfig);
-        
+
         loadDatabaseRelationsSchema(jsonDbConfig["database"]["relations"]);
         return ErrorCode::NO_ERROR;
     }
 
-    Database::Database(const std::string& schemaConfigPath) 
+    Database::Database(const std::string& schemaConfigPath)
     {
-        initializationErrorCode = loadDatabaseSchema(schemaConfigPath); 
+        initializationErrorCode = loadDatabaseSchema(schemaConfigPath);
     }
 
     ErrorCode Database::loadData(void)
@@ -81,7 +81,7 @@ namespace Figaro
     MatrixEigenT* Database::computeHead(const std::string& relName, const std::string& attrName)
     {
         Relation& relation = m_relations.at(relName);//[relName];
-        relation.computeHead(attrName);
+        //relation.computeHead(attrName);
         return nullptr;
     }
 
@@ -93,7 +93,7 @@ namespace Figaro
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors)
     {
-        
+
     }
 
     void  Database::joinRelations(std::vector<std::string> vRelationNames,
@@ -101,20 +101,20 @@ namespace Figaro
     {
         Relation& relation1= m_relations.at(vRelationNames[0]);
         Relation& relation2 = m_relations.at(vRelationNames[1]);
-        
+
         relation1.joinRelation(relation2, vJoinAttributeNames, swapAttributes);
     }
 
-    
+
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
     {
         constexpr uint32_t NUM_RELATIONS = 2;
         std::array<Relation*, NUM_RELATIONS> aRelations
-        {&m_relations.at(aRelationNames.at(0)), 
+        {&m_relations.at(aRelationNames.at(0)),
          &m_relations.at(aRelationNames.at(1))};
-        std::array<std::unordered_map<double, uint32_t>, NUM_RELATIONS> 
+        std::array<std::unordered_map<double, uint32_t>, NUM_RELATIONS>
          aHashTabAttrCnt;
-        
+
         MICRO_BENCH_INIT(hash)
         MICRO_BENCH_INIT(compute)
         MICRO_BENCH_START(hash)
@@ -124,7 +124,7 @@ namespace Figaro
         for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
         {
             Relation* pRelation = aRelations[idxRel];
-            pRelation->getAttributeValuesCounts(attrIterName, 
+            pRelation->getAttributeValuesCounts(attrIterName,
                         aHashTabAttrCnt[idxRel]);
         }
         MICRO_BENCH_STOP(hash)

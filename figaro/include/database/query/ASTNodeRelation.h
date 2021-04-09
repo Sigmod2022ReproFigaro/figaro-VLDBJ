@@ -77,7 +77,7 @@ namespace Figaro
         }
 
 
-        const std::vector<std::string>& ASTNodeRelation::getParJoinAttributeNames(void) override
+        const std::vector<std::string>& getParJoinAttributeNames(void) override
         {
             return m_vParJoinAttributeNames;
         }

@@ -181,7 +181,7 @@ namespace Figaro
 
         void schemaJoin(const Relation& relation, bool swapAttributes = false);
 
-        void Relation::schemaJoins(
+        void schemaJoins(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vNonJoinAttrIdxs,

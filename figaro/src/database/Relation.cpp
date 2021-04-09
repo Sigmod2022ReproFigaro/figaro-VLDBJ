@@ -5,49 +5,53 @@
 #include <execution>
 #include <algorithm>
 #include <limits>
+#include <type_traits>
+#include <tuple>
 #include <unordered_map>
 #include "utils/Performance.h"
 #include <omp.h>
 
-    template <class T>
-    inline void hash_combine(std::size_t& seed, T v)
-    {
-        seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    }
-    template<class... TupleArgs>
-    struct std::hash<std::tuple<TupleArgs...>>
-    {
-        private:
-            //  this is a termination condition
-            //  N == sizeof...(TupleTypes)
-            //
-            template<size_t Idx = 0, typename... TupleTypes>
-            inline typename std::enable_if<N == sizeof...(TupleTypes), void>::type
-            hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
-            {
-            }
 
-            //  this is the computation workhorse
-            //  N < sizeof...(TupleTypes)
-            //
-            template<size_t Idx = 0, typename... TupleTypes>
-            inline typename std::enable_if<N < sizeof...(TupleTypes), void>::type
-            hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
-            {
-                hash_combine(seed, std::get<Idx>(tup));
+template <class T>
+inline void hash_combine(std::size_t& seed, T v)
+{
+    seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
-                //  on to next element
-                hash_combine_tup<Idx+1>(seed, tup);
-            }
+template<class... TupleArgs>
+struct std::hash<std::tuple<TupleArgs...> >
+{
+    private:
+        //  this is a termination condition
+        //  N == sizeof...(TupleTypes)
+        //
+        template<size_t Idx = 0, typename... TupleTypes>
+        inline typename std::enable_if<Idx == sizeof...(TupleTypes), void>::type
+        hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
+        {
+        }
 
-        public:
-            size_t operator()(std::tuple<TupleArgs...> tupleValue) const
-            {
-                size_t seed = 0;
-                hash_combine_tup<0>(seed, tupleValue);
-                return seed;
-            }
-    };
+        //  this is the computation workhorse
+        //  N < sizeof...(TupleTypes)
+        //
+        template<size_t Idx = 0, typename... TupleTypes>
+        inline typename std::enable_if<Idx < sizeof...(TupleTypes), void>::type
+        hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
+        {
+            hash_combine(seed, std::get<Idx>(tup));
+
+            //  on to next element
+            hash_combine_tup<Idx+1>(seed, tup);
+        }
+
+    public:
+        size_t operator()(std::tuple<TupleArgs...> tupleValue) const
+        {
+            size_t seed = 0;
+            hash_combine_tup<0>(seed, tupleValue);
+            return seed;
+        }
+};
 
 namespace Figaro
 {
@@ -778,7 +782,6 @@ namespace Figaro
             uint32_t prevSize = m_attributes.size();
             for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
             {
-                FIGARO_LOG_DBG("Schema extended, Added attribute", nonPKAttributeIdx);
                 m_attributes.push_back(vpChildRels[idxRel]->m_attributes[nonJoinAttrIdx]);
             }
 
