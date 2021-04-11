@@ -12,7 +12,9 @@ namespace Figaro
         friend class ASTVisitor;
         ASTNodeRelation* m_pCenRelation;
         std::vector<ASTNodeAbsRelation*> m_vPChild;
-        std::vector<std::vector<std::string> > m_vvChildJoinAttributeNames;
+        std::vector<std::vector<std::string> > m_vvChildParJoinAttributeNames;
+        std::vector<std::string> m_vChildrenNames;
+
     public:
         ASTNodeJoin(ASTNodeRelation* pRelation, std::vector<ASTNodeAbsRelation*> vPChild):
             m_pCenRelation(pRelation), m_vPChild(vPChild){}
@@ -27,6 +29,18 @@ namespace Figaro
             return m_pCenRelation;
         }
 
+        const std::vector<std::string>& getChildrenNames()
+        {
+            if (m_vChildrenNames.size() == 0)
+            {
+                for (const auto& child: getChildren())
+                {
+                    m_vChildrenNames.push_back(child->getRelation()->getRelationName());
+                }
+            }
+            return m_vChildrenNames;
+        }
+
         const std::vector<std::string>& getAttributeNames(void) const override
         {
             return m_pCenRelation->getAttributeNames();
@@ -38,6 +52,11 @@ namespace Figaro
         getParJoinAttributeNames(void) override
         {
             return getCentralRelation()->getParJoinAttributeNames();
+        }
+
+        const std::vector<std::vector<std::string> >& getChildrenParentJoinAttributeNames()
+        {
+            return m_vvChildParJoinAttributeNames;
         }
 
         std::vector<ASTNodeAbsRelation*> getChildren(void)

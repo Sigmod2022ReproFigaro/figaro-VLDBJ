@@ -98,12 +98,12 @@ namespace Figaro
 
     MatrixEigenT* ASTNodeRelation::computeHead(Database* pDatabase) const
     {
-        return pDatabase->computeHead(m_relationName);
+        //return pDatabase->computeHead(m_relationName);
     }
 
     MatrixEigenT* ASTNodeRelation::computeTail(Database* pDatabase) const
     {
-        return pDatabase->computeTail(m_relationName);
+        //return pDatabase->computeTail(m_relationName);
     }
 
     void ASTNodeRelation::computeHeadSingleThreaded(

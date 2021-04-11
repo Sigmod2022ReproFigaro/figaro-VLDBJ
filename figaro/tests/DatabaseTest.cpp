@@ -340,16 +340,16 @@ TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
     EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
 
     database.sortRelation("R", {"A"});
-    database.computeHead("R", "A");
+    //database.computeHead("R", "A");
 
     database.sortRelation("S", {"B", "A"});
-    database.computeHead("S", "A");
+    //database.computeHead("S", "A");
 
     database.sortRelation("T", {"B", "C"});
-    database.computeHead("T", "C");
+    //database.computeHead("T", "C");
 
     database.sortRelation("U", {"C"});
-    database.computeHead("U", "C");
+    //database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}} , true);
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
@@ -377,16 +377,16 @@ TEST(DISABLED_DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
 
     database.sortRelation("R", {"A"});
-    database.computeHead("R", "A");
+    //database.computeHead("R", "A");
 
     database.sortRelation("S", {"A", "B"});
-    database.computeHead("S", "A");
+    //database.computeHead("S", "A");
 
     database.sortRelation("T", {"C", "B"});
-    database.computeHead("T", "C");
+    //database.computeHead("T", "C");
 
     database.sortRelation("U", {"C"});
-    database.computeHead("U", "C");
+    //database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}}, true);
     database.joinRelations({"T", "U"}, {{"C", "C"}} );

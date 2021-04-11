@@ -19,9 +19,9 @@ void initGlobalState(void)
     omp_set_num_threads(numberOfCores);
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
-    std::string dumpFilePath; 
+    std::string dumpFilePath;
     std::string db_config_path;
     bool dump = false;
     uint32_t precision;
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     MICRO_BENCH_INIT(sort);
     MICRO_BENCH_INIT(main)
 
-    po::options_description desc("figaro - allowed options");   
+    po::options_description desc("figaro - allowed options");
     desc.add_options()
     ("help", "produce help message")
     ("dump_file_path", po::value<std::string>(&dumpFilePath))
@@ -70,26 +70,26 @@ int main(int argc, char *argv[])
     MICRO_BENCH_START(sort)
     database.sortRelation("R", {"A"});
     MICRO_BENCH_STOP(sort);
-    database.computeHead("R", "A");
+    //database.computeHead("R", "A");
     FIGARO_LOG_BENCH("Figaro", "sort", "sort R a", MICRO_BENCH_GET_TIMER_LAP(sort));
 
     MICRO_BENCH_START(sort)
     database.sortRelation("S", {"B", "A"});
     MICRO_BENCH_STOP(sort);
     FIGARO_LOG_BENCH("Figaro", "sort", "sort S A B", MICRO_BENCH_GET_TIMER_LAP(sort));
-    database.computeHead("S", "A");
+    //database.computeHead("S", "A");
 
     MICRO_BENCH_START(sort)
     database.sortRelation("T", {"B", "C"});
     MICRO_BENCH_STOP(sort);
     FIGARO_LOG_BENCH("Figaro", "sort", "sort T C B", MICRO_BENCH_GET_TIMER_LAP(sort));
-    database.computeHead("T", "C");
-    
+    //database.computeHead("T", "C");
+
     MICRO_BENCH_START(sort)
     database.sortRelation("U", {"C"});
     MICRO_BENCH_STOP(sort);
     FIGARO_LOG_BENCH("Figaro", "sort", "sort U C", MICRO_BENCH_GET_TIMER_LAP(sort));
-    database.computeHead("U", "C");
+    //database.computeHead("U", "C");
 
     FIGARO_LOG_DBG("PASS sort and compute head")
 
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     FIGARO_LOG_DBG("Pass Join relations T U")
     MICRO_BENCH_STOP(main)
     FIGARO_LOG_BENCH("Figaro", "main", "joinRelations",  MICRO_BENCH_GET_TIMER_LAP(main));
-    
+
     MICRO_BENCH_START(main)
     database.computeScaledCartesianProduct({"S", "T"}, "B");
     FIGARO_LOG_DBG("Pass Compute Scaled")

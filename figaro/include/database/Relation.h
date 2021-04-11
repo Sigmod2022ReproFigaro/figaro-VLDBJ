@@ -280,7 +280,8 @@ namespace Figaro
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
             const std::vector<std::string>& vParJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool isRootNode);
 
 
         void computeUpAndCircleCounts(

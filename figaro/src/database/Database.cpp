@@ -60,7 +60,7 @@ namespace Figaro
         }
     }
 
-    void Database::sortRelation(const std::string& relationName, const std::vector<std::string> vSortAttributeNames)
+    void Database::sortRelation(const std::string& relationName, const std::vector<std::string>&  vSortAttributeNames)
     {
         Relation& relation = m_relations.at(relationName);
         relation.sortData(vSortAttributeNames);
@@ -70,30 +70,6 @@ namespace Figaro
     {
         auto& relation = m_relations.at(relationName);
         return relation.getAttributeNames();
-
-    }
-
-    MatrixEigenT* Database::computeHead(const std::string& relName)
-    {
-        return nullptr;
-    }
-
-    MatrixEigenT* Database::computeHead(const std::string& relName, const std::string& attrName)
-    {
-        Relation& relation = m_relations.at(relName);//[relName];
-        //relation.computeHead(attrName);
-        return nullptr;
-    }
-
-    MatrixEigenT* Database::computeTail(const std::string& relName)
-    {
-        return nullptr;
-    }
-
-    void Database::computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
-            std::array<Eigen::VectorXd, 2> vectors)
-    {
-
     }
 
     void  Database::joinRelations(std::vector<std::string> vRelationNames,
@@ -105,6 +81,25 @@ namespace Figaro
         relation1.joinRelation(relation2, vJoinAttributeNames, swapAttributes);
     }
 
+    void Database::computeDownCounts(
+            const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool isRootNode)
+    {
+        std::vector<Relation*> vpChildRels;
+        Relation& rel = m_relations.at(relationName);
+
+        for (const auto childRelName: vChildRelNames)
+        {
+            Relation* pRel = &m_relations.at(childRelName);
+            vpChildRels.push_back(pRel);
+        }
+        rel.computeDownCounts(vpChildRels, vJoinAttrNames, vParJoinAttrNames,
+            vvJoinAttributeNames, isRootNode);
+    }
 
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
     {

@@ -106,7 +106,7 @@ namespace Figaro
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
 
         m_pASTRoot->accept(&joinAttrVisitor);
-        //m_pASTRoot->accept(&figaroFirstPassVisitor);
+        m_pASTRoot->accept(&figaroFirstPassVisitor);
         //m_pASTRoot->accept(&figaroSecondPassVisitor);
      }
 }

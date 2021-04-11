@@ -25,14 +25,25 @@ namespace Figaro
 
     void ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
+        bool isRootNode;
+        std::vector<std::string> childrenNames;
+        std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        std::string strSqrt = l2TailnormExpression(pElement);
-        FIGARO_LOG_DBG("\\vcat_{", formJoinAttrNames, "} T(", relationName, "^{", formJoinAttrNames, "})", strSqrt);
+
+        m_pDatabase->sortRelation(pElement->getRelationName(),
+                                  pElement->getJoinAttributeNames());
+        isRootNode = pElement->getParent() == nullptr;
+        m_pDatabase->computeDownCounts(relationName, childrenNames,
+            pElement->getJoinAttributeNames(), pElement->getParJoinAttributeNames(),
+            vvChildrenParentJoinAttributeNames, isRootNode);
+
+        // TODO: Add compute up counts
     }
 
     void ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
+        bool isRootNode;
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
         for (const auto& pChild: pElement->getChildren())
@@ -40,12 +51,16 @@ namespace Figaro
             FIGARO_LOG_DBG("Child");
             pChild->accept(this);
         }
-
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        const auto& strSqrt = l2TailnormExpression(pElement->getCentralRelation());
-        FIGARO_LOG_DBG("\\vcat_{", formJoinAttrNames, "} T(", relationName, "^{", formJoinAttrNames, "})",
-        strSqrt);
+        m_pDatabase->sortRelation(pElement->getCentralRelation()->getRelationName(),
+                                  pElement->getJoinAttributeNames());
+        isRootNode = pElement->getParent() == nullptr;
+        m_pDatabase->computeDownCounts(relationName, pElement->getChildrenNames(),
+            pElement->getJoinAttributeNames(), pElement->getParJoinAttributeNames(),
+            pElement->getChildrenParentJoinAttributeNames(), isRootNode);
+
+        // TODO: Add compute up counts
     }
 
     void ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
@@ -58,7 +73,6 @@ namespace Figaro
             m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
         }
         pElement->getOperand()->accept(this);
-
     }
 
 }
