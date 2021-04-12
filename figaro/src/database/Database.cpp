@@ -82,12 +82,12 @@ namespace Figaro
     }
 
     void Database::computeDownCounts(
-            const std::string& relationName,
-            const std::vector<std::string>& vChildRelNames,
-            const std::vector<std::string>& vJoinAttrNames,
-            const std::vector<std::string>& vParJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
-            bool isRootNode)
+        const std::string& relationName,
+        const std::vector<std::string>& vChildRelNames,
+        const std::vector<std::string>& vJoinAttrNames,
+        const std::vector<std::string>& vParJoinAttrNames,
+        const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+        bool isRootNode)
     {
         std::vector<Relation*> vpChildRels;
         Relation& rel = m_relations.at(relationName);
@@ -100,6 +100,25 @@ namespace Figaro
         rel.computeDownCounts(vpChildRels, vJoinAttrNames, vParJoinAttrNames,
             vvJoinAttributeNames, isRootNode);
     }
+
+
+    void Database::computeUpAndCircleCounts(
+        const std::string& relationName,
+        const std::vector<std::string>& vChildRelNames,
+        const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+        bool isRootNode)
+    {
+        std::vector<Relation*> vpChildRels;
+        Relation& rel = m_relations.at(relationName);
+
+        for (const auto childRelName: vChildRelNames)
+        {
+            Relation* pRel = &m_relations.at(childRelName);
+            vpChildRels.push_back(pRel);
+        }
+        rel.computeUpAndCircleCounts(vpChildRels, vvJoinAttributeNames, isRootNode);
+    }
+
 
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
     {

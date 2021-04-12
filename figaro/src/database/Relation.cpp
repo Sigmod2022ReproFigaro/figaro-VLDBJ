@@ -546,51 +546,48 @@ namespace Figaro
                     m_data[headRowIdx][joinAttrIdx];
             }
             // Initialize counts.
-            cntsPar[distCnt][m_cntsParIdxD] = vParDistValsRowPositions[distCnt + 1] -
                 vParDistValsRowPositions[distCnt];
+
+            cntsPar[distCnt][m_cntsParIdxD] = 0;
             cntsPar[distCnt][m_cntsParIdxU] = 0;
-            cntsPar[distCnt][m_cntsParIdxC] = 1 / cntsPar[distCnt][m_cntsParIdxD];
+            cntsPar[distCnt][m_cntsParIdxC] = 1.0 / (vParDistValsRowPositions[distCnt + 1]  -
+            vParDistValsRowPositions[distCnt]);
         }
 
         getHashTableRowIdxs(vParJoinAttrIdxs, m_pHTParCounts, cntsPar);
         FIGARO_LOG_DBG("Before Relation name", m_name, "m_countsJoinAttrs", cntsJoin)
-        FIGARO_LOG_DBG("Before Relation name", m_name, "m_countsJoinAttrs", cntsPar)
-        if (!isLeafNode)
+        FIGARO_LOG_DBG("Before Relation name", m_name, "m_countsParJoinAttrs", cntsPar)
+
+        for (uint32_t idxRow = 0; idxRow < cntsJoin.getNumRows(); idxRow++)
         {
-            for (uint32_t idxRow = 0; idxRow < cntsJoin.getNumRows(); idxRow++)
+            for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
             {
-                for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
-                {
-                    uint32_t childRowIdx = getChildRowIdx(
-                            idxRow, vvCurJoinAttrIdxs[idxChild],
-                            vpChildRels[idxChild]->m_pHTParCounts, cntsJoin);
-                    const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
-                    double childCnt = vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxD];
-                    cntsJoin[idxRow][m_cntsJoinIdxD] *= childCnt;
-                    uint32_t idxPar = (uint32_t)cntsJoin[idxRow][m_cntsJoinIdxP];
-                    if (!isRootNode)
-                    {
-                        cntsPar[idxPar][m_cntsParIdxD] *= childCnt;
-                    }
-                }
+                uint32_t childRowIdx = getChildRowIdx(
+                        idxRow, vvCurJoinAttrIdxs[idxChild],
+                        vpChildRels[idxChild]->m_pHTParCounts, cntsJoin);
+                const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
+                double childCnt = vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxD];
+                cntsJoin[idxRow][m_cntsJoinIdxD] *= childCnt;
+
+            }
+            uint32_t idxPar = (uint32_t)cntsJoin[idxRow][m_cntsJoinIdxP];
+            if (!isRootNode)
+            {
+                cntsPar[idxPar][m_cntsParIdxD] += cntsJoin[idxRow][m_cntsJoinIdxD];
             }
         }
 
         m_countsJoinAttrs = std::move(cntsJoin);
         m_countsParJoinAttrs = std::move(cntsPar);
-        FIGARO_LOG_DBG("After Relation name", m_name, "m_countsJoinAttrs", m_countsJoinAttrs)
-        FIGARO_LOG_DBG("After Relation name", m_name, "m_countsJoinAttrs", m_countsParJoinAttrs)
+        FIGARO_LOG_DBG("After Down Relation name", m_name, "m_countsJoinAttrs", m_countsJoinAttrs)
+        FIGARO_LOG_DBG("After Down Relation name", m_name, "m_countsParJoinAttrs", m_countsParJoinAttrs)
     }
 
    void Relation::computeUpAndCircleCounts(
         const std::vector<Relation*>& vpChildRels,
-        const std::vector<std::string>& vJoinAttrNames,
-        const std::vector<std::string>& vParJoinAttrNames,
         const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
-        bool isRoot)
+        bool isRootNode)
     {
-        std::vector<uint32_t> vJoinAttrIdxs;
-        std::vector<uint32_t> vParJoinAttrIdxs;
         std::vector<uint32_t> vDistValsRowPositions;
         std::vector<uint32_t> vParDistValsRowPositions;
         std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
@@ -601,9 +598,6 @@ namespace Figaro
 
         vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
-
-        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
-        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
 
         numJoinDistVals = vDistValsRowPositions.size() - 1;
         numParJoinDistVals = vParDistValsRowPositions.size() - 1;
@@ -625,7 +619,7 @@ namespace Figaro
                 const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
                 uint32_t countCur = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
 
-                if (!isRoot)
+                if (!isRootNode)
                 {
                     uint32_t idxPar = (uint32_t)m_countsJoinAttrs[idxRow][m_cntsJoinIdxP];
                     countCur *= m_countsParJoinAttrs[idxPar][m_cntsParIdxU];
@@ -637,12 +631,12 @@ namespace Figaro
 
         for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
         {
+            const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
+            const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
+            const uint32_t idxC = vpChildRels[idxChild]->m_cntsParIdxC;
             for (uint32_t idxRow = 0;
                 idxRow < vpChildRels[idxChild]->m_countsParJoinAttrs.getNumRows(); idxRow ++)
             {
-                const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
-                const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
-                const uint32_t idxC = vpChildRels[idxChild]->m_cntsParIdxC;
                 vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *=
                 1 / vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
 
@@ -650,7 +644,10 @@ namespace Figaro
                     vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *
                     vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
             }
+            FIGARO_LOG_DBG("Up and circle, Relation:", vpChildRels[idxChild]->m_name,
+                            vpChildRels[idxChild]->m_countsParJoinAttrs)
         }
+
     }
 
    // We assume join attributes are before nonJoinAttributes.

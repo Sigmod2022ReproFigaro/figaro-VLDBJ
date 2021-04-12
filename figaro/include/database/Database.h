@@ -50,6 +50,12 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
+        void computeUpAndCircleCounts(
+            const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool isRootNode);
+
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);
 
