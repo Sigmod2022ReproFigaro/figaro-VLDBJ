@@ -503,14 +503,14 @@ namespace Figaro
             getAttributesIdxs(vvJoinAttributeNames[idxChild], vvCurJoinAttrIdxs[idxChild]);
         }
 
-        MatrixDT cntsJoin {numJoinDistVals, vJoinAttrNames.size() + 2};
-        MatrixDT cntsPar {numParJoinDistVals, vParJoinAttrNames.size() + 3};
+        MatrixDT cntsJoin {numJoinDistVals, vJoinAttrNames.size() + 3};
+        MatrixDT cntsPar {numParJoinDistVals, vParJoinAttrNames.size() + 2};
 
+        m_cntsJoinIdxC = cntsJoin.getNumCols() - 3;
         m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
         m_cntsJoinIdxP = cntsJoin.getNumCols() - 1;
-        m_cntsParIdxD = cntsPar.getNumCols() - 3;
-        m_cntsParIdxU = cntsPar.getNumCols() - 2;
-        m_cntsParIdxC = cntsPar.getNumCols() - 1;
+        m_cntsParIdxD = cntsPar.getNumCols() - 2;
+        m_cntsParIdxU = cntsPar.getNumCols() - 1;
 
         uint32_t distCntPar = 0;
 
@@ -526,6 +526,7 @@ namespace Figaro
             }
             cntsJoin[distCnt][m_cntsJoinIdxD] = vDistValsRowPositions[distCnt + 1] -
                 vDistValsRowPositions[distCnt];
+            cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxD];
             cntsJoin[distCnt][m_cntsJoinIdxP] = distCntPar;
 
             // If we are ending the block of the same parent attributes, switch to new block.
@@ -550,8 +551,6 @@ namespace Figaro
 
             cntsPar[distCnt][m_cntsParIdxD] = 0;
             cntsPar[distCnt][m_cntsParIdxU] = 0;
-            cntsPar[distCnt][m_cntsParIdxC] = 1.0 / (vParDistValsRowPositions[distCnt + 1]  -
-            vParDistValsRowPositions[distCnt]);
         }
 
         getHashTableRowIdxs(vParJoinAttrIdxs, m_pHTParCounts, cntsPar);
@@ -608,8 +607,18 @@ namespace Figaro
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
         }
 
+        // TODO: Add copying of counts from cnt_u to cnt_c in leaves.
+
         for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow ++)
         {
+            uint32_t countFull = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
+            if (!isRootNode)
+            {
+                uint32_t idxPar = (uint32_t)m_countsJoinAttrs[idxRow][m_cntsJoinIdxP];
+                countFull *= m_countsParJoinAttrs[idxPar][m_cntsParIdxU];
+            }
+            m_countsJoinAttrs[idxRow][m_cntsJoinIdxC] =
+                countFull / m_countsJoinAttrs[idxRow][m_cntsJoinIdxC];
             for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
             {
                 // Hash join on child.
@@ -617,15 +626,9 @@ namespace Figaro
                         idxRow, vvCurJoinAttrIdxs[idxChild],
                         vpChildRels[idxChild]->m_pHTParCounts, m_countsJoinAttrs);
                 const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
-                uint32_t countCur = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
 
-                if (!isRootNode)
-                {
-                    uint32_t idxPar = (uint32_t)m_countsJoinAttrs[idxRow][m_cntsJoinIdxP];
-                    countCur *= m_countsParJoinAttrs[idxPar][m_cntsParIdxU];
-                }
                 vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxU]
-                    += countCur;
+                    += countFull;
             }
         }
 
@@ -633,21 +636,15 @@ namespace Figaro
         {
             const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
             const uint32_t idxU = vpChildRels[idxChild]->m_cntsParIdxU;
-            const uint32_t idxC = vpChildRels[idxChild]->m_cntsParIdxC;
             for (uint32_t idxRow = 0;
                 idxRow < vpChildRels[idxChild]->m_countsParJoinAttrs.getNumRows(); idxRow ++)
             {
-                vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *=
-                1 / vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
-
-                vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxC] *=
-                    vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] *
+                vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxU] /=
                     vpChildRels[idxChild]->m_countsParJoinAttrs[idxRow][idxD];
             }
-            FIGARO_LOG_DBG("Up and circle, Relation:", vpChildRels[idxChild]->m_name,
+            FIGARO_LOG_DBG("Up, Relation:", vpChildRels[idxChild]->m_name,
                             vpChildRels[idxChild]->m_countsParJoinAttrs)
         }
-
     }
 
    // We assume join attributes are before nonJoinAttributes.
