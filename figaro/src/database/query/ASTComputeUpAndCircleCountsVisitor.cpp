@@ -4,6 +4,17 @@ namespace Figaro
 {
     void ASTComputeUpAndCircleCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
+        bool isRootNode;
+        const auto& relationName = pElement->getRelationName();
+        const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
+        std::vector<std::string> childrenNames;
+        std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
+        m_pDatabase->sortRelation(pElement->getRelationName(),
+                                  pElement->getJoinAttributeNames());
+        isRootNode = pElement->getParent() == nullptr;
+        m_pDatabase->computeUpAndCircleCounts(relationName, childrenNames,
+                pElement->getParJoinAttributeNames(),
+                vvChildrenParentJoinAttributeNames, isRootNode);
     }
 
     void ASTComputeUpAndCircleCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
@@ -15,6 +26,7 @@ namespace Figaro
                                   pElement->getJoinAttributeNames());
         isRootNode = pElement->getParent() == nullptr;
         m_pDatabase->computeUpAndCircleCounts(relationName, pElement->getChildrenNames(),
+                pElement->getParJoinAttributeNames(),
                 pElement->getChildrenParentJoinAttributeNames(), isRootNode);
 
         FIGARO_LOG_DBG("Join");

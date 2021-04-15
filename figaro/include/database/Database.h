@@ -53,11 +53,20 @@ namespace Figaro
         void computeUpAndCircleCounts(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
 
         std::map<std::vector<double>, uint32_t> getDownCounts(const std::string& relationName);
+
+        std::map<std::vector<double>, uint32_t> getParDownCnts(
+            const std::string& relationName,
+            const std::vector<std::string>& vParJoinAttrNames);
+
+        std::map<std::vector<double>, uint32_t> getParUpCnts(
+            const std::string& relationName,
+            const std::vector<std::string>& vParJoinAttrNames);
 
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);

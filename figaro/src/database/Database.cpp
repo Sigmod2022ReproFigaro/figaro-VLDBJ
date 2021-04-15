@@ -105,6 +105,7 @@ namespace Figaro
     void Database::computeUpAndCircleCounts(
         const std::string& relationName,
         const std::vector<std::string>& vChildRelNames,
+        const std::vector<std::string>& vParJoinAttrNames,
         const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
         bool isRootNode)
     {
@@ -116,7 +117,8 @@ namespace Figaro
             Relation* pRel = &m_relations.at(childRelName);
             vpChildRels.push_back(pRel);
         }
-        rel.computeUpAndCircleCounts(vpChildRels, vvJoinAttributeNames, isRootNode);
+        rel.computeUpAndCircleCounts(vpChildRels, vParJoinAttrNames,
+            vvJoinAttributeNames, isRootNode);
     }
 
     std::map<std::vector<double>, uint32_t> Database::getDownCounts(
@@ -124,6 +126,23 @@ namespace Figaro
     {
         Relation& rel = m_relations.at(relationName);
         return rel.getDownCounts();
+    }
+
+
+    std::map<std::vector<double>, uint32_t> Database::getParDownCnts(
+            const std::string& relationName,
+            const std::vector<std::string>& vParJoinAttrNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+        return rel.getParDownCntsFromHashTable(vParJoinAttrNames);
+    }
+
+    std::map<std::vector<double>, uint32_t> Database::getParUpCnts(
+            const std::string& relationName,
+            const std::vector<std::string>& vParJoinAttrNames)
+    {
+         Relation& rel = m_relations.at(relationName);
+        return rel.getParUpCntsFromHashTable(vParJoinAttrNames);
     }
 
 

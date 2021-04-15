@@ -123,6 +123,7 @@ namespace Figaro
 
         MatrixDT m_countsJoinAttrs;
         MatrixDT m_countsParJoinAttrs;
+        std::vector<uint32_t> m_vParBlockStartIdxs;
 
         void* m_pHTParCounts;
 
@@ -308,11 +309,18 @@ namespace Figaro
             bool isRootNode);
 
 
-        std::map<std::vector<double> , uint32_t>  getDownCounts(void);
+        std::map<std::vector<double>, uint32_t> getDownCounts(void);
+
+        std::map<std::vector<double>, uint32_t> getParDownCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames);
+
+        std::map<std::vector<double>, uint32_t> getParUpCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames);
 
 
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
+            const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRoot = false);
 
