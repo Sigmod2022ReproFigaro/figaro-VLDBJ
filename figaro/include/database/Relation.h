@@ -130,6 +130,7 @@ namespace Figaro
         uint32_t m_cntsParIdxU;
         uint32_t m_cntsJoinIdxD;
         uint32_t m_cntsJoinIdxP;
+        uint32_t m_cntsJoinIdxV;
         uint32_t m_cntsJoinIdxC;
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
@@ -207,6 +208,23 @@ namespace Figaro
             void*  hashTabRowPt,
             const MatrixDT& dataParent);
 
+
+    void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
+        void*& pHashTablePt,
+        uint32_t hashTableSize);
+
+    void insertParDownCntFromHashTable(
+        const std::vector<uint32_t>& vParAttrIdx,
+        void*& pHashTablePt,
+        const double* pRow,
+        uint32_t downCnt);
+
+
+    std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  htChildRowIdx,
+        const double* pRow);
+
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
@@ -248,6 +266,12 @@ namespace Figaro
         void getRowPtrs(
             const std::string& attrName,
             std::unordered_map<double, const double*>& htRowPts) const;
+
+        void getDistinctVals(
+            const std::vector<uint32_t>& vAttrIdxs,
+            const std::vector<uint32_t>& vParAttrIdxs,
+            MatrixDT& cntDiffVals,
+            std::vector<uint32_t>& vRowIdxParDiffVals);
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
              std::vector<uint32_t>& vDistinctValuesRowPositions,

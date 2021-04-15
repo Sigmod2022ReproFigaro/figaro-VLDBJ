@@ -309,48 +309,6 @@ namespace Figaro
     }
 
     void Relation::getDistinctValuesRowPositions(
-        const std::vector<uint32_t>& vAttrIdxs,
-        std::vector<uint32_t>& vDistinctValuesRowPositions,
-        bool  preallocated) const
-    {
-        double pushVal;
-        uint32_t distCnt;
-        std::vector<double> vPrevAttrVals(vAttrIdxs.size(), std::numeric_limits<double>::max());
-
-        distCnt = 0;
-        const double* pPrevAttrVals = &vPrevAttrVals[0];
-
-        // The first entry is saved for the end of imaginary predecessor of ranges.
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            const double* pCurAttrVals = m_data[rowIdx];
-            if (compareTuples(pCurAttrVals, pPrevAttrVals, vAttrIdxs))
-            {
-                pushVal = rowIdx - 1;
-                if (preallocated)
-                {
-                    vDistinctValuesRowPositions[distCnt] = pushVal;
-                }
-                else
-                {
-                    vDistinctValuesRowPositions.push_back(pushVal);
-                }
-                pPrevAttrVals = pCurAttrVals;
-                distCnt++;
-            }
-        }
-        pushVal = m_data.getNumRows() - 1;
-        if (preallocated)
-        {
-            vDistinctValuesRowPositions[distCnt] = pushVal;
-        }
-        else
-        {
-            vDistinctValuesRowPositions.push_back(pushVal);
-        }
-    }
-
-    void Relation::getDistinctValuesRowPositions(
         const std::string& attributeName,
         std::vector<uint32_t>& vDistinctValuesRowPositions,
         bool  preallocated) const
@@ -393,6 +351,179 @@ namespace Figaro
             vDistinctValuesRowPositions.push_back(pushVal);
         }
     }
+
+    void Relation::getDistinctValuesRowPositions(
+        const std::vector<uint32_t>& vAttrIdxs,
+        std::vector<uint32_t>& vDistinctValuesRowPositions,
+        bool  preallocated) const
+    {
+        double pushVal;
+        uint32_t distCnt;
+        std::vector<double> vPrevAttrVals(vAttrIdxs.size(), std::numeric_limits<double>::max());
+
+        distCnt = 0;
+        const double* pPrevAttrVals = &vPrevAttrVals[0];
+
+        // The first entry is saved for the end of imaginary predecessor of ranges.
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            const double* pCurAttrVals = m_data[rowIdx];
+            if (compareTuples(pCurAttrVals, pPrevAttrVals, vAttrIdxs))
+            {
+                pushVal = rowIdx - 1;
+                if (preallocated)
+                {
+                    vDistinctValuesRowPositions[distCnt] = pushVal;
+                }
+                else
+                {
+                    vDistinctValuesRowPositions.push_back(pushVal);
+                }
+                pPrevAttrVals = pCurAttrVals;
+                distCnt++;
+            }
+        }
+        pushVal = m_data.getNumRows() - 1;
+        if (preallocated)
+        {
+            vDistinctValuesRowPositions[distCnt] = pushVal;
+        }
+        else
+        {
+            vDistinctValuesRowPositions.push_back(pushVal);
+        }
+    }
+
+    void Relation::getDistinctVals(
+        const std::vector<uint32_t>& vJoinAttrIdxs,
+        const std::vector<uint32_t>& vParAttrIdxs,
+        MatrixDT& cntJoinVals,
+        std::vector<uint32_t>& vRowIdxParDiffVals)
+    {
+        uint32_t distCnt;
+        uint32_t prevRowIdx;
+        uint32_t prevParDistCnt;
+        uint32_t rowIdx;
+        std::vector<double> vPrevAttrVals(vJoinAttrIdxs.size(), std::numeric_limits<double>::max());
+        std::vector<double> vParPrevAttrVals(vJoinAttrIdxs.size(), std::numeric_limits<double>::max());
+        const double* pPrevAttrVals = &vPrevAttrVals[0];
+        const double* pParPrevAttrVals = &vParPrevAttrVals[0];
+        // TODO: Memory optimization with vRowIdxParDiffVals
+        distCnt = 0;
+
+        // For counter and down count.
+        for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            const double* pCurAttrVals = m_data[rowIdx];
+            if (compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs))
+            {
+                if (distCnt > 0)
+                {
+                    cntJoinVals[distCnt-1][m_cntsJoinIdxV] = rowIdx - prevRowIdx;
+                }
+                prevRowIdx = rowIdx;
+                pPrevAttrVals = pCurAttrVals;
+                for (const auto& joinAttrIdx: vJoinAttrIdxs)
+                {
+                    cntJoinVals[distCnt][joinAttrIdx] = m_data[rowIdx][joinAttrIdx];
+                }
+                distCnt++;
+            }
+            if (compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs))
+            {
+                prevParDistCnt = distCnt - 1;
+                pParPrevAttrVals = pCurAttrVals;
+                vRowIdxParDiffVals.push_back(distCnt - 1);
+            }
+        }
+        cntJoinVals[distCnt-1][m_cntsJoinIdxV] = rowIdx - prevRowIdx;
+        cntJoinVals.resize(distCnt);
+    }
+
+    void Relation::initHashTable(const std::vector<uint32_t>& vParAttrIdx,
+        void*& pHashTablePt,
+        uint32_t hashTableSize)
+    {
+        if (vParAttrIdx.size() == 0)
+        {
+            // Do not do anything. This is a root node.
+        }
+        if (vParAttrIdx.size() == 1)
+        {
+            std::unordered_map<double, std::tuple<uint32_t, uint32_t> >* tpHashTablePt = new std::unordered_map<double, std::tuple<uint32_t, uint32_t> > ();
+            tpHashTablePt->reserve(hashTableSize);
+            pHashTablePt = tpHashTablePt;
+        }
+        else if (vParAttrIdx.size() == 2)
+        {
+            std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =
+             new std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> > ();
+            tpHashTablePt->reserve(hashTableSize);
+            pHashTablePt = tpHashTablePt;
+        }
+        else
+        {
+
+        }
+    }
+
+    void Relation::insertParDownCntFromHashTable(
+        const std::vector<uint32_t>& vParAttrIdx,
+        void*& pHashTablePt,
+        const double* pRow,
+        uint32_t downCnt)
+    {
+        if (vParAttrIdx.size() == 0)
+        {
+            // Do not do anything. This is a root node.
+        }
+        if (vParAttrIdx.size() == 1)
+        {
+            std::unordered_map<double, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =  (std::unordered_map<double, std::tuple<uint32_t, uint32_t> >*)(pHashTablePt);
+            (*tpHashTablePt)[pRow[vParAttrIdx[0]]] = std::make_tuple(downCnt, 0);
+        }
+        else if (vParAttrIdx.size() == 2)
+        {
+            std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =
+             (std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >*) (pHashTablePt);
+             (*tpHashTablePt)[std::make_tuple(pRow[vParAttrIdx[0]], pRow[vParAttrIdx[1]])] =
+             std::make_tuple(downCnt, 0);
+        }
+        else
+        {
+
+        }
+    }
+
+    std::tuple<uint32_t, uint32_t>& Relation::getParCntFromHashTable(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  htChildRowIdx,
+        const double* pRow)
+    {
+        uint32_t rowChildIdx = UINT32_MAX;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            // TODO: Extract join for relation specific from join attribute value.
+            const double joinAttrVal = pRow[vParJoinAttrIdxs[0]];
+            std::unordered_map<double, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<double, std::tuple<uint32_t, uint32_t>>*)(htChildRowIdx);
+            return htChildRowIdxOne[joinAttrVal];
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            const std::tuple<double, double> joinAttrVal =
+            std::make_tuple(pRow[vParJoinAttrIdxs[0]],
+                            pRow[vParJoinAttrIdxs[1]]);
+            std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >*)(htChildRowIdx);
+            return htChildRowIdxOne[joinAttrVal];
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+
+    }
+
 
     // TODO: Convert this to a template.
     void Relation::getHashTableRowIdxs(
@@ -473,6 +604,7 @@ namespace Figaro
     {
         std::vector<uint32_t> vJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
+        std::vector<uint32_t> vRowIdxParDiffVals;
         std::vector<uint32_t> vDistValsRowPositions;
         std::vector<uint32_t> vParDistValsRowPositions;
         std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
@@ -503,83 +635,54 @@ namespace Figaro
             getAttributesIdxs(vvJoinAttributeNames[idxChild], vvCurJoinAttrIdxs[idxChild]);
         }
 
-        MatrixDT cntsJoin {numJoinDistVals, vJoinAttrNames.size() + 3};
+        MatrixDT cntsJoin {1, vJoinAttrNames.size() + 3};
         MatrixDT cntsPar {numParJoinDistVals, vParJoinAttrNames.size() + 2};
 
         m_cntsJoinIdxC = cntsJoin.getNumCols() - 3;
         m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
-        m_cntsJoinIdxP = cntsJoin.getNumCols() - 1;
+        m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
         m_cntsParIdxD = cntsPar.getNumCols() - 2;
         m_cntsParIdxU = cntsPar.getNumCols() - 1;
 
+
+        getDistinctVals(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin, vRowIdxParDiffVals);
+        initHashTable(vParJoinAttrIdxs, m_pHTParCounts, vRowIdxParDiffVals.size());
+
+
         uint32_t distCntPar = 0;
-
-        // TODO: Combine these four cycles in one cycle.
-        for (uint32_t distCnt = 0; distCnt < numJoinDistVals; distCnt++)
+        uint32_t sum = 0;
+        uint32_t distCnt;
+        for (distCnt = 0; distCnt < cntsJoin.getNumRows(); distCnt++)
         {
-            uint32_t startRowIdx = vDistValsRowPositions[distCnt] + 1;
-            // Copy join attributes to be used as indices.
-            for (const uint32_t joinAttrIdx: vJoinAttrIdxs)
+            // Start of a new block.
+            // TODO: Be careful with checks. Check tomorrow.
+            if (vRowIdxParDiffVals[distCntPar + 1] == distCnt)
             {
-                cntsJoin[distCnt][joinAttrIdx] =
-                    m_data[startRowIdx][joinAttrIdx];
+                insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts, cntsJoin[distCnt], sum);
+                sum = 0;
             }
-            cntsJoin[distCnt][m_cntsJoinIdxD] = vDistValsRowPositions[distCnt + 1] -
-                vDistValsRowPositions[distCnt];
-            cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxD];
-            cntsJoin[distCnt][m_cntsJoinIdxP] = distCntPar;
-
-            // If we are ending the block of the same parent attributes, switch to new block.
-            if (vParDistValsRowPositions[distCntPar + 1] == vDistValsRowPositions[distCnt + 1])
+            else
             {
-                distCntPar ++;
+                sum += cntsJoin[distCnt][m_cntsJoinIdxV];
             }
-        }
+            cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
 
-        for (uint32_t distCnt = 0; distCnt < numParJoinDistVals; distCnt++)
-        {
-            uint32_t headRowIdx = vParDistValsRowPositions[distCnt] + 1;
-
-            // Copy parent join attributes to be used as indices.
-            for (const uint32_t joinAttrIdx: vParJoinAttrIdxs)
-            {
-                cntsPar[distCnt][joinAttrIdx] =
-                    m_data[headRowIdx][joinAttrIdx];
-            }
-            // Initialize counts.
-                vParDistValsRowPositions[distCnt];
-
-            cntsPar[distCnt][m_cntsParIdxD] = 0;
-            cntsPar[distCnt][m_cntsParIdxU] = 0;
-        }
-
-        getHashTableRowIdxs(vParJoinAttrIdxs, m_pHTParCounts, cntsPar);
-        FIGARO_LOG_DBG("Before Relation name", m_name, "m_countsJoinAttrs", cntsJoin)
-        FIGARO_LOG_DBG("Before Relation name", m_name, "m_countsParJoinAttrs", cntsPar)
-
-        for (uint32_t idxRow = 0; idxRow < cntsJoin.getNumRows(); idxRow++)
-        {
             for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
             {
-                uint32_t childRowIdx = getChildRowIdx(
-                        idxRow, vvCurJoinAttrIdxs[idxChild],
-                        vpChildRels[idxChild]->m_pHTParCounts, cntsJoin);
-                const uint32_t idxD = vpChildRels[idxChild]->m_cntsParIdxD;
-                double childCnt = vpChildRels[idxChild]->m_countsParJoinAttrs[childRowIdx][idxD];
-                cntsJoin[idxRow][m_cntsJoinIdxD] *= childCnt;
-
-            }
-            uint32_t idxPar = (uint32_t)cntsJoin[idxRow][m_cntsJoinIdxP];
-            if (!isRootNode)
-            {
-                cntsPar[idxPar][m_cntsParIdxD] += cntsJoin[idxRow][m_cntsJoinIdxD];
+                std::tuple<uint32_t, uint32_t>& cnts =
+                    getParCntFromHashTable(
+                        vvCurJoinAttrIdxs[idxChild],
+                        vpChildRels[idxChild]->m_pHTParCounts,
+                        cntsJoin[distCnt]);
+                uint32_t downCnt = std::get<0>(cnts);
+                cntsJoin[distCnt][m_cntsJoinIdxD] *= downCnt;
             }
         }
 
+         insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
+                cntsJoin[distCnt - 1], sum);
+
         m_countsJoinAttrs = std::move(cntsJoin);
-        m_countsParJoinAttrs = std::move(cntsPar);
-        FIGARO_LOG_DBG("After Down Relation name", m_name, "m_countsJoinAttrs", m_countsJoinAttrs)
-        FIGARO_LOG_DBG("After Down Relation name", m_name, "m_countsParJoinAttrs", m_countsParJoinAttrs)
     }
 
    void Relation::computeUpAndCircleCounts(
