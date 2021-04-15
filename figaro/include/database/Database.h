@@ -56,6 +56,9 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
+
+        std::map<std::vector<double>, uint32_t> getDownCounts(const std::string& relationName);
+
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);
 

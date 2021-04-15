@@ -119,6 +119,13 @@ namespace Figaro
         rel.computeUpAndCircleCounts(vpChildRels, vvJoinAttributeNames, isRootNode);
     }
 
+    std::map<std::vector<double>, uint32_t> Database::getDownCounts(
+        const std::string& relationName)
+    {
+        Relation& rel = m_relations.at(relationName);
+        return rel.getDownCounts();
+    }
+
 
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
     {

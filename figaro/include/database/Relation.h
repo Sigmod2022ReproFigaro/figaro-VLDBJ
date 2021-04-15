@@ -308,6 +308,9 @@ namespace Figaro
             bool isRootNode);
 
 
+        std::map<std::vector<double> , uint32_t>  getDownCounts(void);
+
+
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,

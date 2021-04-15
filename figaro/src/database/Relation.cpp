@@ -405,7 +405,7 @@ namespace Figaro
         uint32_t prevParDistCnt;
         uint32_t rowIdx;
         std::vector<double> vPrevAttrVals(vJoinAttrIdxs.size(), std::numeric_limits<double>::max());
-        std::vector<double> vParPrevAttrVals(vJoinAttrIdxs.size(), std::numeric_limits<double>::max());
+        std::vector<double> vParPrevAttrVals(vParAttrIdxs.size(), std::numeric_limits<double>::max());
         const double* pPrevAttrVals = &vPrevAttrVals[0];
         const double* pParPrevAttrVals = &vParPrevAttrVals[0];
 
@@ -619,6 +619,7 @@ namespace Figaro
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
         std::vector<void*> vpHTParCounts;
         bool isLeafNode;
+        uint32_t numDistParVals;
 
         isLeafNode = vpChildRels.empty();
         vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
@@ -644,44 +645,66 @@ namespace Figaro
         m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
 
         getDistinctVals(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin, vParBlockStartIdxs);
-        initHashTable(vParJoinAttrIdxs, m_pHTParCounts, vParBlockStartIdxs.size() - 1);
+        numDistParVals = vParBlockStartIdxs.size() - 1;
+        initHashTable(vParJoinAttrIdxs, m_pHTParCounts, numDistParVals);
 
-        uint32_t distCntPar = 0;
-        uint32_t sum = 0;
-        uint32_t distCnt;
-        for (distCnt = 0; distCnt < cntsJoin.getNumRows(); distCnt++)
+        // TODO: Replace this with template function.
+        if (isRootNode)
         {
-            cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
-
-            // SELECT COUNT(*) JOIN RELATIONS IN SUBTREE
-            // WHERE join_attributes = current join attribute
-            uint32_t curCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
-            for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+            for (uint32_t distCnt = 0;
+                distCnt < cntsJoin.getNumRows(); distCnt++)
             {
-                std::tuple<uint32_t, uint32_t>& cnts =
-                    getParCntFromHashTable(
-                        vvCurJoinAttrIdxs[idxChild],
-                        vpChildRels[idxChild]->m_pHTParCounts,
-                        cntsJoin[distCnt]);
-                uint32_t downCnt = std::get<0>(cnts);
-                curCnt *= downCnt;
-            }
-            cntsJoin[distCnt][m_cntsJoinIdxD] = curCnt;
+                cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
 
-            // Checks if we are starting a new block.
-            if (vParBlockStartIdxs[distCntPar + 1] == distCnt)
-            {
-                insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
-                    cntsJoin[distCnt-1], sum);
-                sum = 0;
-                distCntPar++;
+                // SELECT COUNT(*) JOIN RELATIONS IN SUBTREE
+                // WHERE join_attributes = current join attribute
+                uint32_t curDownCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
+                for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+                {
+                    std::tuple<uint32_t, uint32_t>& cnts =
+                        getParCntFromHashTable(
+                            vvCurJoinAttrIdxs[idxChild],
+                            vpChildRels[idxChild]->m_pHTParCounts,
+                            cntsJoin[distCnt]);
+                    uint32_t downCnt = std::get<0>(cnts);
+                    curDownCnt *= downCnt;
+                }
+                cntsJoin[distCnt][m_cntsJoinIdxD] = curDownCnt;
             }
-            sum += curCnt;
         }
-        if (!isRootNode)
+        else
         {
-            insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
-                    cntsJoin[distCnt - 1], sum);
+            for (uint32_t distCntPar = 0; distCntPar < numDistParVals; distCntPar++)
+            {
+                uint32_t sum = 0;
+                uint32_t parCurBlockStartIdx = vParBlockStartIdxs[distCntPar];
+                uint32_t parNextBlockStartIdx = vParBlockStartIdxs[distCntPar + 1];
+                for (uint32_t distCnt = parCurBlockStartIdx;
+                    distCnt < parNextBlockStartIdx; distCnt++)
+                {
+                    cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
+
+                    // SELECT COUNT(*) JOIN RELATIONS IN SUBTREE
+                    // WHERE join_attributes = current join attribute
+                    uint32_t curDownCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
+                    for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+                    {
+                        std::tuple<uint32_t, uint32_t>& cnts =
+                            getParCntFromHashTable(
+                                vvCurJoinAttrIdxs[idxChild],
+                                vpChildRels[idxChild]->m_pHTParCounts,
+                                cntsJoin[distCnt]);
+                        uint32_t downCnt = std::get<0>(cnts);
+                        curDownCnt *= downCnt;
+                    }
+                    cntsJoin[distCnt][m_cntsJoinIdxD] = curDownCnt;
+                    sum += curDownCnt;
+
+                }
+                // Checks if we are starting a new block.
+                insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
+                    cntsJoin[parCurBlockStartIdx], sum);
+            }
         }
         FIGARO_LOG_DBG("Down counts", cntsJoin);
 
@@ -751,6 +774,22 @@ namespace Figaro
             FIGARO_LOG_DBG("Up, Relation:", vpChildRels[idxChild]->m_name,
                             vpChildRels[idxChild]->m_countsParJoinAttrs)
         }
+    }
+
+    std::map<std::vector<double>, uint32_t> Relation::getDownCounts(void)
+    {
+        std::map<std::vector<double>, uint32_t> downCounts;
+        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
+        {
+            std::vector<double> curJoinAttr;
+            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 3;
+                attrIdx ++)
+            {
+                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
+            }
+            downCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
+        }
+        return downCounts;
     }
 
    // We assume join attributes are before nonJoinAttributes.

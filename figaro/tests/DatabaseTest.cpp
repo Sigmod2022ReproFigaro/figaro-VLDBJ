@@ -408,6 +408,7 @@ TEST(DatabaseConfig, BasicQueryParsing)
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
     Figaro::ErrorCode loadError;
+    std::map<std::vector<double>, uint32_t> downCounts;
 
     initError = database.getInitializationErrorCode();
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
@@ -417,4 +418,43 @@ TEST(DatabaseConfig, BasicQueryParsing)
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery();
+
+    downCounts =  database.getDownCounts("R4");
+    EXPECT_EQ(downCounts.at({1}), 2);
+    EXPECT_EQ(downCounts.at({2}), 3);
+    EXPECT_EQ(downCounts.at({3}), 1);
+
+    downCounts =  database.getDownCounts("R5");
+    EXPECT_EQ(downCounts.at({1}), 3);
+    EXPECT_EQ(downCounts.at({2}), 1);
+    EXPECT_EQ(downCounts.at({3}), 2);
+
+    downCounts =  database.getDownCounts("R3");
+    EXPECT_EQ(downCounts.at({1}), 1);
+    EXPECT_EQ(downCounts.at({2}), 2);
+    EXPECT_EQ(downCounts.at({3}), 3);
+
+    downCounts =  database.getDownCounts("R2");
+    EXPECT_EQ(downCounts.at({1, 1, 1}), 6);
+    EXPECT_EQ(downCounts.at({1, 1, 3}), 4);
+    EXPECT_EQ(downCounts.at({1, 2, 1}), 9);
+    EXPECT_EQ(downCounts.at({1, 2, 3}), 6);
+    EXPECT_EQ(downCounts.at({2, 2, 1}), 9);
+    EXPECT_EQ(downCounts.at({2, 2, 2}), 3);
+    EXPECT_EQ(downCounts.at({2, 3, 2}), 1);
+    EXPECT_EQ(downCounts.at({3, 1, 2}), 2);
+    EXPECT_EQ(downCounts.at({3, 1, 3}), 4);
+    EXPECT_EQ(downCounts.at({3, 3, 2}), 1);
+
+    downCounts =  database.getDownCounts("R1");
+    EXPECT_EQ(downCounts.at({1, 1}), 25);
+    EXPECT_EQ(downCounts.at({1, 3}), 75);
+    EXPECT_EQ(downCounts.at({2, 1}), 13);
+    EXPECT_EQ(downCounts.at({2, 2}), 26);
+    EXPECT_EQ(downCounts.at({3, 2}), 14);
+    EXPECT_EQ(downCounts.at({3, 3}), 21);
+
+
+
+
 }
