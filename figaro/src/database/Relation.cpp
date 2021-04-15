@@ -507,7 +507,7 @@ namespace Figaro
 
     std::tuple<uint32_t, uint32_t>& Relation::getParCntFromHashTable(
         const std::vector<uint32_t>& vParJoinAttrIdxs,
-        void*  htChildRowIdx,
+        void*  htChildParAttrs,
         const double* pRow)
     {
         uint32_t rowChildIdx = UINT32_MAX;
@@ -515,16 +515,18 @@ namespace Figaro
         {
             // TODO: Extract join for relation specific from join attribute value.
             const double joinAttrVal = pRow[vParJoinAttrIdxs[0]];
-            std::unordered_map<double, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<double, std::tuple<uint32_t, uint32_t>>*)(htChildRowIdx);
-            return htChildRowIdxOne[joinAttrVal];
+            std::unordered_map<double, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (std::unordered_map<double, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
+            //FIGARO_LOG_DBG("joinAttrVal", joinAttrVal, "address", &htChildOneParAttrs[joinAttrVal])
+            return (*phtChildOneParAttrs)[joinAttrVal];
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
+            FIGARO_LOG_DBG("It shouldn't be")
             const std::tuple<double, double> joinAttrVal =
             std::make_tuple(pRow[vParJoinAttrIdxs[0]],
                             pRow[vParJoinAttrIdxs[1]]);
-            std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >*)(htChildRowIdx);
-            return htChildRowIdxOne[joinAttrVal];
+            std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >*)(htChildParAttrs);
+            return (*phtChildTwoParAttrs)[joinAttrVal];
         }
         else
         {
@@ -783,7 +785,6 @@ namespace Figaro
                     sum += curDownCnt;
 
                 }
-                // Checks if we are starting a new block.
                 insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
                     cntsJoin[parCurBlockStartIdx], sum);
             }
@@ -805,8 +806,6 @@ namespace Figaro
         std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
-        uint32_t numJoinDistVals;
-        uint32_t numParJoinDistVals;
         uint32_t numDistParVals;
         std::vector<void*> vpHTParCounts;
 
@@ -814,14 +813,13 @@ namespace Figaro
         vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
 
-        numJoinDistVals = vDistValsRowPositions.size() - 1;
-        numParJoinDistVals = vParDistValsRowPositions.size() - 1;
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
             vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel]);
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
         }
+        numDistParVals = m_vParBlockStartIdxs.size() - 1;
 
         // TODO: Rethink how to refactor the code to omit these checks.
         if (isRootNode)
@@ -841,7 +839,11 @@ namespace Figaro
                                 vvCurJoinAttrIdxs[idxChild],
                                 vpChildRels[idxChild]->m_pHTParCounts,
                                 m_countsJoinAttrs[distCnt]);
+                    FIGARO_LOG_DBG("upCnt Before", std::get<1>(cnts), "downCnt", std::get<0>(cnts), "attributes", m_countsJoinAttrs[distCnt][0], m_countsJoinAttrs[distCnt][1])
                     std::get<1>(cnts) += fullCnt;
+                    uint32_t downCnt = std::get<0>(cnts);
+                    uint32_t upCnt = std::get<1>(cnts);
+                    FIGARO_LOG_DBG("upCnt after", upCnt, "downCnt", downCnt)
                 }
             }
         }
@@ -856,7 +858,10 @@ namespace Figaro
                             vParJoinAttrIdxs,
                             m_pHTParCounts,
                             m_countsJoinAttrs[parCurBlockStartIdx]);
+                // Division by downCnt
+                FIGARO_LOG_DBG("Before division", std::get<1>(cnts))
                 std::get<1>(cnts) /= std::get<0>(cnts);
+                FIGARO_LOG_DBG("After division", std::get<1>(cnts))
                 uint32_t upCnt = std::get<1>(cnts);
 
                 for (uint32_t distCnt = parCurBlockStartIdx;
@@ -869,6 +874,8 @@ namespace Figaro
                     // TODO: Add copying of counts from cnt_u to cnt_c in leaves.
                     m_countsJoinAttrs[distCnt][m_cntsJoinIdxC] = fullCnt / m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
 
+                    FIGARO_LOG_DBG("Relation", m_name, "distCnt", distCnt, "fullCnt", fullCnt)
+                    FIGARO_LOG_DBG("curDownCnt", curDownCnt, "upCnt", upCnt)
                     for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
                     {
                         std::tuple<uint32_t, uint32_t>& cnts = getParCntFromHashTable(

@@ -410,6 +410,7 @@ TEST(DatabaseConfig, BasicQueryParsing)
     Figaro::ErrorCode loadError;
     std::map<std::vector<double>, uint32_t> downCounts;
     std::map<std::vector<double>, uint32_t> downParCounts;
+    std::map<std::vector<double>, uint32_t> upParCounts;
 
     initError = database.getInitializationErrorCode();
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
@@ -419,6 +420,7 @@ TEST(DatabaseConfig, BasicQueryParsing)
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery();
+
     /*********************************** R4 ****************/
     downCounts =  database.getDownCounts("R4");
     EXPECT_EQ(downCounts.at({1}), 2);
@@ -429,6 +431,11 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(downParCounts.at({1}), 2);
     EXPECT_EQ(downParCounts.at({2}), 3);
     EXPECT_EQ(downParCounts.at({3}), 1);
+
+    upParCounts = database.getParUpCnts("R4", {"X24"});
+    EXPECT_EQ(upParCounts.at({1}), 35);
+    EXPECT_EQ(upParCounts.at({2}), 32);
+    EXPECT_EQ(upParCounts.at({3}), 8);
 
     /*********************************** R5 ****************/
     downCounts =  database.getDownCounts("R5");
@@ -441,6 +448,10 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(downParCounts.at({2}), 1);
     EXPECT_EQ(downParCounts.at({3}), 2);
 
+    upParCounts = database.getParUpCnts("R5", {"X25"});
+    EXPECT_EQ(upParCounts.at({1}), 29);
+    EXPECT_EQ(upParCounts.at({2}), 27);
+    EXPECT_EQ(upParCounts.at({3}), 30);
 
     /*********************************** R3 ****************/
     downCounts =  database.getDownCounts("R3");
@@ -452,6 +463,11 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(downParCounts.at({1}), 1);
     EXPECT_EQ(downParCounts.at({2}), 2);
     EXPECT_EQ(downParCounts.at({3}), 3);
+
+    upParCounts = database.getParUpCnts("R3", {"X13"});
+    EXPECT_EQ(upParCounts.at({1}), 38);
+    EXPECT_EQ(upParCounts.at({2}), 20);
+    EXPECT_EQ(upParCounts.at({3}), 32);
 
     /*********************************** R2 ****************/
     downCounts =  database.getDownCounts("R2");
@@ -471,6 +487,12 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(downParCounts.at({2}), 13);
     EXPECT_EQ(downParCounts.at({3}), 7);
 
+    upParCounts = database.getParUpCnts("R2", {"X12"});
+    EXPECT_EQ(upParCounts.at({1}), 4);
+    EXPECT_EQ(upParCounts.at({2}), 3);
+    EXPECT_EQ(upParCounts.at({3}), 5);
+
+    /*********************************** R1 ****************/
     downCounts =  database.getDownCounts("R1");
     EXPECT_EQ(downCounts.at({1, 1}), 25);
     EXPECT_EQ(downCounts.at({1, 3}), 75);
@@ -478,6 +500,7 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(downCounts.at({2, 2}), 26);
     EXPECT_EQ(downCounts.at({3, 2}), 14);
     EXPECT_EQ(downCounts.at({3, 3}), 21);
+
 
 
 }
