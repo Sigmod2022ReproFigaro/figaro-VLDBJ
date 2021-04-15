@@ -398,7 +398,7 @@ namespace Figaro
         const std::vector<uint32_t>& vJoinAttrIdxs,
         const std::vector<uint32_t>& vParAttrIdxs,
         MatrixDT& cntJoinVals,
-        std::vector<uint32_t>& vRowIdxParDiffVals)
+        std::vector<uint32_t>& vParBlockStartIdxs)
     {
         uint32_t distCnt;
         uint32_t prevRowIdx;
@@ -408,15 +408,24 @@ namespace Figaro
         std::vector<double> vParPrevAttrVals(vJoinAttrIdxs.size(), std::numeric_limits<double>::max());
         const double* pPrevAttrVals = &vPrevAttrVals[0];
         const double* pParPrevAttrVals = &vParPrevAttrVals[0];
-        // TODO: Memory optimization with vRowIdxParDiffVals
+
+        // TODO: Memory optimization with vParBlockStartIdxs
         distCnt = 0;
+        prevRowIdx = -1;
 
         // For counter and down count.
         for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
             const double* pCurAttrVals = m_data[rowIdx];
-            if (compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs))
+            bool parAttrsDiff = compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs);
+            if (parAttrsDiff)
             {
+                pParPrevAttrVals = pCurAttrVals;
+                vParBlockStartIdxs.push_back(distCnt);
+            }
+            if (parAttrsDiff || compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs))
+            {
+                // We have a new block of join attributes. Stores the block size.
                 if (distCnt > 0)
                 {
                     cntJoinVals[distCnt-1][m_cntsJoinIdxV] = rowIdx - prevRowIdx;
@@ -429,15 +438,13 @@ namespace Figaro
                 }
                 distCnt++;
             }
-            if (compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs))
-            {
-                prevParDistCnt = distCnt - 1;
-                pParPrevAttrVals = pCurAttrVals;
-                vRowIdxParDiffVals.push_back(distCnt - 1);
-            }
+
         }
         cntJoinVals[distCnt-1][m_cntsJoinIdxV] = rowIdx - prevRowIdx;
         cntJoinVals.resize(distCnt);
+        vParBlockStartIdxs.push_back(distCnt);
+        //FIGARO_LOG_DBG("cntJoinVals", cntJoinVals)
+        //FIGARO_LOG_DBG("vParBlockStartIdxs", vParBlockStartIdxs)
     }
 
     void Relation::initHashTable(const std::vector<uint32_t>& vParAttrIdx,
@@ -481,6 +488,7 @@ namespace Figaro
         {
             std::unordered_map<double, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =  (std::unordered_map<double, std::tuple<uint32_t, uint32_t> >*)(pHashTablePt);
             (*tpHashTablePt)[pRow[vParAttrIdx[0]]] = std::make_tuple(downCnt, 0);
+            FIGARO_LOG_DBG("Inserted in", pRow[vParAttrIdx[0]], "value", downCnt)
         }
         else if (vParAttrIdx.size() == 2)
         {
@@ -604,13 +612,11 @@ namespace Figaro
     {
         std::vector<uint32_t> vJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
-        std::vector<uint32_t> vRowIdxParDiffVals;
+        std::vector<uint32_t> vParBlockStartIdxs;
         std::vector<uint32_t> vDistValsRowPositions;
         std::vector<uint32_t> vParDistValsRowPositions;
         std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
-        uint32_t numJoinDistVals;
-        uint32_t numParJoinDistVals;
         std::vector<void*> vpHTParCounts;
         bool isLeafNode;
 
@@ -620,14 +626,10 @@ namespace Figaro
 
         getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
         getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
-        getDistinctValuesRowPositions(vJoinAttrIdxs, vDistValsRowPositions, false);
-        getDistinctValuesRowPositions(vParJoinAttrIdxs, vParDistValsRowPositions, false);
 
         FIGARO_LOG_DBG("Join attribute names", vJoinAttrNames)
         FIGARO_LOG_DBG("Parent join attribute names", vParJoinAttrNames)
 
-        numJoinDistVals = vDistValsRowPositions.size() - 1;
-        numParJoinDistVals = vParDistValsRowPositions.size() - 1;
 
         for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
         {
@@ -635,38 +637,25 @@ namespace Figaro
             getAttributesIdxs(vvJoinAttributeNames[idxChild], vvCurJoinAttrIdxs[idxChild]);
         }
 
-        MatrixDT cntsJoin {1, vJoinAttrNames.size() + 3};
-        MatrixDT cntsPar {numParJoinDistVals, vParJoinAttrNames.size() + 2};
+        MatrixDT cntsJoin {m_data.getNumRows(), vJoinAttrNames.size() + 3};
 
         m_cntsJoinIdxC = cntsJoin.getNumCols() - 3;
         m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
         m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
-        m_cntsParIdxD = cntsPar.getNumCols() - 2;
-        m_cntsParIdxU = cntsPar.getNumCols() - 1;
 
-
-        getDistinctVals(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin, vRowIdxParDiffVals);
-        initHashTable(vParJoinAttrIdxs, m_pHTParCounts, vRowIdxParDiffVals.size());
-
+        getDistinctVals(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin, vParBlockStartIdxs);
+        initHashTable(vParJoinAttrIdxs, m_pHTParCounts, vParBlockStartIdxs.size() - 1);
 
         uint32_t distCntPar = 0;
         uint32_t sum = 0;
         uint32_t distCnt;
         for (distCnt = 0; distCnt < cntsJoin.getNumRows(); distCnt++)
         {
-            // Start of a new block.
-            // TODO: Be careful with checks. Check tomorrow.
-            if (vRowIdxParDiffVals[distCntPar + 1] == distCnt)
-            {
-                insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts, cntsJoin[distCnt], sum);
-                sum = 0;
-            }
-            else
-            {
-                sum += cntsJoin[distCnt][m_cntsJoinIdxV];
-            }
             cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
 
+            // SELECT COUNT(*) JOIN RELATIONS IN SUBTREE
+            // WHERE join_attributes = current join attribute
+            uint32_t curCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
             for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
             {
                 std::tuple<uint32_t, uint32_t>& cnts =
@@ -675,12 +664,26 @@ namespace Figaro
                         vpChildRels[idxChild]->m_pHTParCounts,
                         cntsJoin[distCnt]);
                 uint32_t downCnt = std::get<0>(cnts);
-                cntsJoin[distCnt][m_cntsJoinIdxD] *= downCnt;
+                curCnt *= downCnt;
             }
-        }
+            cntsJoin[distCnt][m_cntsJoinIdxD] = curCnt;
 
-         insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
-                cntsJoin[distCnt - 1], sum);
+            // Checks if we are starting a new block.
+            if (vParBlockStartIdxs[distCntPar + 1] == distCnt)
+            {
+                insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
+                    cntsJoin[distCnt-1], sum);
+                sum = 0;
+                distCntPar++;
+            }
+            sum += curCnt;
+        }
+        if (!isRootNode)
+        {
+            insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
+                    cntsJoin[distCnt - 1], sum);
+        }
+        FIGARO_LOG_DBG("Down counts", cntsJoin);
 
         m_countsJoinAttrs = std::move(cntsJoin);
     }
