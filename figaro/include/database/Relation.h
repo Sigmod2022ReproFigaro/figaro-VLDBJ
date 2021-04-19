@@ -45,6 +45,12 @@ namespace Figaro
         typedef Figaro::Matrix<double> MatrixDT;
 
         /**
+         * 1) Allocates matrix of type MatrixEigen @p mEig in memory.
+         * 2) Copies the contend of mOur to mEigen.
+         */
+        static void copyMatrixDTToMatrixEigen(const MatrixDT& matDT, MatrixEigenT& matEig);
+
+        /**
          * @struct Attribute
          *
          * This structure containts metadata about the attribute.
@@ -286,9 +292,6 @@ namespace Figaro
 
         void sortData(const std::vector<std::string>& vAttributeNames);
 
-        void getAttributeValuesCounts(const std::string& attributeName,
-            std::unordered_map<double, uint32_t>& htCnts) const;
-
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
@@ -296,6 +299,14 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
+
+        void computeUpAndCircleCounts(
+            const std::vector<Relation*>& vpChildRels,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool isRoot = false);
+
+        /*********************** Testing getters for counts ***************/
         std::map<std::vector<double>, uint32_t> getDownCounts(void);
 
         std::map<std::vector<double>, uint32_t> getParDownCntsFromHashTable(
@@ -306,14 +317,15 @@ namespace Figaro
 
         std::map<std::vector<double>, uint32_t> getCircCounts(void);
 
-        void computeUpAndCircleCounts(
-            const std::vector<Relation*>& vpChildRels,
-            const std::vector<std::string>& vParJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
-            bool isRoot = false);
-
-        void joinRelation(const Relation& relation,
-             const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool bSwapAttributes);
+        /**
+         * It will copy the underlying data and apply head transformation onto it.
+         * The Head and Tail transformation will be applied as if we had:
+         * SELECT attrNames[0], attrNames[1], ... attrNames[n]
+         *  HEAD(remaining attributes),
+         *  TAIL(remaining attributes)
+         * GROUP BY attrNames.
+         */
+        void computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames);
 
         /**
          *  It will join relations by copying data from the children relations @p vpChildRels
@@ -329,20 +341,25 @@ namespace Figaro
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
-        /**
-         * It will copy the underlying data and apply head transformation onto it.
-         * The Head and Tail transformation will be applied as if we had:
-         * SELECT attrNames[0], attrNames[1], ... attrNames[n]
-         *  HEAD(remaining attributes),
-         *  TAIL(remaining attributes)
-         * GROUP BY attrNames.
-         */
-        void computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames);
-
         void computeAndScaleGeneralizedHeadAndTail(
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::string>& vParJoinAttributeNames
-        );
+            const std::vector<std::string>& vParJoinAttributeNames);
+
+        /**
+         *  Returns computed head for the corresponding relation, without
+         *  dividing by square roots.
+         */
+        const MatrixDT& getHead(void) const;
+
+        const MatrixDT& getTail(void) const;
+
+        /****************** OLD IMPLEMENTATION **************************/
+        void getAttributeValuesCounts(const std::string& attributeName,
+            std::unordered_map<double, uint32_t>& htCnts) const;
+
+        void joinRelation(const Relation& relation,
+             const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames,
+             bool bSwapAttributes);
 
         void computeAndScaleGeneralizedHeadAndTail(
             const std::string& attributeName,

@@ -100,7 +100,8 @@ namespace Figaro
         return errorCode;
     }
 
-     void Query::evaluateQuery(void)
+     void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
+        bool evalSecondFigaroPass)
      {
          // Create visitor
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
@@ -110,10 +111,19 @@ namespace Figaro
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase, m_mRelNameASTNodeRel);
 
         m_pASTRoot->accept(&joinAttrVisitor);
-        m_pASTRoot->accept(&computeDownVisitor);
-        m_pASTRoot->accept(&computeUpAndCircleVisitor);
+        if (evalCounts)
+        {
+            m_pASTRoot->accept(&computeDownVisitor);
+            m_pASTRoot->accept(&computeUpAndCircleVisitor);
+        }
 
-        m_pASTRoot->accept(&figaroFirstPassVisitor);
-        //m_pASTRoot->accept(&figaroSecondPassVisitor);
+        if (evalFirstFigaroPass)
+        {
+            m_pASTRoot->accept(&figaroFirstPassVisitor);
+        }
+        if (evalSecondFigaroPass)
+        {
+            m_pASTRoot->accept(&figaroSecondPassVisitor);
+        }
      }
 }

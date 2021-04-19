@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-extern std::string GL_DATA_PATH = "/home/popina/Figaro/data";
+std::string GL_DATA_PATH = "/home/popina/Figaro/data";
 
 std::string getConfigPath(uint32_t idx)
 {
@@ -11,7 +11,7 @@ std::string getConfigPath(uint32_t idx)
 
 std::string getDataPath(uint32_t idx)
 {
-    return GL_DATA_PATH + "unit_test_databases/test" + std::to_string(idx) + "/";
+    return GL_DATA_PATH + "/unit_test_databases/test" + std::to_string(idx) + "/";
 }
 
 void readMatrixDense(const std::string& sPath, Figaro::MatrixEigenT& rmA, char sep)

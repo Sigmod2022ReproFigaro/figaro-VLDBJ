@@ -377,16 +377,12 @@ TEST(DISABLED_DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
     EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
 
     database.sortRelation("R", {"A"});
-    //database.computeHead("R", "A");
 
     database.sortRelation("S", {"A", "B"});
-    //database.computeHead("S", "A");
 
     database.sortRelation("T", {"C", "B"});
-    //database.computeHead("T", "C");
 
     database.sortRelation("U", {"C"});
-    //database.computeHead("U", "C");
 
     database.joinRelations({"S", "R"}, {{"A", "A"}}, true);
     database.joinRelations({"T", "U"}, {{"C", "C"}} );
@@ -420,7 +416,29 @@ TEST(DatabaseConfig, BasicQueryParsing)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery();
+}
+
+TEST(DatabaseConfig, ComputingCounts)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+    std::map<std::vector<double>, uint32_t> downCounts;
+    std::map<std::vector<double>, uint32_t> downParCounts;
+    std::map<std::vector<double>, uint32_t> upParCounts;
+    std::map<std::vector<double>, uint32_t> circCounts;
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery(true, false, false);
 
     /*********************************** R4 ****************/
     downCounts =  database.getDownCounts("R4");
@@ -536,4 +554,54 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(circCounts.at({2, 2}), 26);
     EXPECT_EQ(circCounts.at({3, 2}), 14);
     EXPECT_EQ(circCounts.at({3, 3}), 21);
+}
+
+TEST(DatabaseConfig, FigaroFirstPass)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+    static constexpr uint32_t NUM_RELS = 5;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> head;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expHead;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> tail;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expTail;
+    std::array<std::string, NUM_RELS> fileInputExpHead;
+    std::array<std::string, NUM_RELS> fileInputExpTail;
+
+
+    for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel ++)
+    {
+        fileInputExpHead[idxRel] = getDataPath(5) + "expectedHead" +
+            std::to_string(idxRel + 1) + ".csv";
+        fileInputExpTail[idxRel] = getDataPath(5) + "expectedTail" +
+            std::to_string(idxRel + 1) + ".csv";
+        readMatrixDense(fileInputExpHead[idxRel], expHead[idxRel]);
+        readMatrixDense(fileInputExpTail[idxRel], expTail[idxRel]);
+    }
+    const std::string FILE_INPUT_EXP_HEAD = getDataPath(5) + "expectedHead";
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery(true, true, false);
+
+    for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel++)
+    {
+        const std::string relName = "R" + std::to_string(idxRel + 1);
+        FIGARO_LOG_INFO("Relation", relName)
+        const auto& headDT = database.getHead(relName);
+        const auto& tailDT = database.getTail(relName);
+        Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, head[idxRel]);
+        Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tail[idxRel]);
+        compareMatrices(head[idxRel], expHead[idxRel], true, true);
+        compareMatrices(tail[idxRel], expTail[idxRel], true, true);
+    }
 }

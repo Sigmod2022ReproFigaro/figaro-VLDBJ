@@ -32,7 +32,7 @@ namespace Figaro
 
     void ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
-         FIGARO_LOG_DBG("********************");
+        FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
         for (const auto& relName: pElement->getRelationOrder())

@@ -37,9 +37,6 @@ namespace Figaro
 
         std::vector<std::string> getRelationAttributeNames(const std::string& relationName);
 
-        void joinRelations(std::vector<std::string> vRelationNames,
-        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
-
         void computeDownCounts(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
@@ -70,6 +67,14 @@ namespace Figaro
         void computeHeadsAndTails(
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames);
+
+
+        const Relation::MatrixDT& getHead(const std::string& relationName) const;
+
+        const Relation::MatrixDT& getTail(const std::string& relationName) const;
+
+        void joinRelations(std::vector<std::string> vRelationNames,
+        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
 
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);

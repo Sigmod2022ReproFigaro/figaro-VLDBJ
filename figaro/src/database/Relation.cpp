@@ -1306,6 +1306,16 @@ namespace Figaro
         m_scales = std::move(scales);
     }
 
+    const Relation::MatrixDT& Relation::getHead(void) const
+    {
+        return m_dataHead;
+    }
+
+    const Relation::MatrixDT& Relation::getTail(void) const
+    {
+        return m_dataTails;
+    }
+
     void Relation::getAttributeValuesCounts(
         const std::string& attrName,
         std::unordered_map<double, uint32_t>& htCnts) const
@@ -1679,14 +1689,15 @@ namespace Figaro
         }
     }
 
-    static void copyMatrixToEigenMatrix(const Figaro::Relation::MatrixDT& mOur, MatrixEigenT& mEig)
+    void Relation::copyMatrixDTToMatrixEigen(
+        const MatrixDT& matDT, MatrixEigenT& matEig)
     {
-        mEig.resize(mOur.getNumRows(), mOur.getNumCols());
-        for (uint32_t rowIdx = 0; rowIdx < mOur.getNumRows(); rowIdx++)
+        matEig.resize(matDT.getNumRows(), matDT.getNumCols());
+        for (uint32_t rowIdx = 0; rowIdx < matDT.getNumRows(); rowIdx++)
         {
-            for (uint32_t colIdx = 0; colIdx < mOur.getNumCols(); colIdx++)
+            for (uint32_t colIdx = 0; colIdx < matDT.getNumCols(); colIdx++)
             {
-                mEig(rowIdx, colIdx) = mOur[rowIdx][colIdx];
+                matEig(rowIdx, colIdx) = matDT[rowIdx][colIdx];
             }
         }
     }
@@ -1739,7 +1750,7 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "concatenate", MICRO_BENCH_GET_TIMER_LAP(timer));
 
         MICRO_BENCH_START(timer);
-        copyMatrixToEigenMatrix(m_dataFull, matEigen);
+        copyMatrixDTToMatrixEigen(m_dataFull, matEigen);
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "copying", MICRO_BENCH_GET_TIMER_LAP(timer));
 
