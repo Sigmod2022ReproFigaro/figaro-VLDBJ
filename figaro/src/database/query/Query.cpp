@@ -1,8 +1,9 @@
 #include "database/query/Query.h"
 #include "database/query/ASTJoinAttributesComputeVisitor.h"
+#include "database/query/ASTComputeUpAndCircleCountsVisitor.h"
+#include "database/query/ASTComputeDownCountsVisitor.h"
 #include "database/query/ASTFigaroFirstPassVisitor.h"
 #include "database/query/ASTFigaroSecondPassVisitor.h"
-#include "database/query/ASTComputeUpAndCircleCountsVisitor.h"
 #include <fstream>
 
 namespace Figaro
@@ -105,12 +106,14 @@ namespace Figaro
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
+        ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase, m_mRelNameASTNodeRel);
 
         m_pASTRoot->accept(&joinAttrVisitor);
-        m_pASTRoot->accept(&figaroFirstPassVisitor);
+        m_pASTRoot->accept(&computeDownVisitor);
         m_pASTRoot->accept(&computeUpAndCircleVisitor);
 
+        //m_pASTRoot->accept(&figaroFirstPassVisitor);
         //m_pASTRoot->accept(&figaroSecondPassVisitor);
      }
 }
