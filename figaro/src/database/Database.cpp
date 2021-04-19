@@ -145,6 +145,13 @@ namespace Figaro
         return rel.getParUpCntsFromHashTable(vParJoinAttrNames);
     }
 
+    std::map<std::vector<double>, uint32_t> Database::getCircCounts(
+        const std::string& relationName)
+    {
+        Relation& rel = m_relations.at(relationName);
+        return rel.getCircCounts();
+    }
+
     void Database::computeHeadsAndTails(
         const std::string& relationName,
         const std::vector<std::string>& vJoinAttrNames)

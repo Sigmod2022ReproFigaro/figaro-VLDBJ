@@ -65,6 +65,7 @@ namespace Figaro
             const std::string& relationName,
             const std::vector<std::string>& vParJoinAttrNames);
 
+        std::map<std::vector<double>, uint32_t> getCircCounts(const std::string& relationName);
 
         void computeHeadsAndTails(
             const std::string& relationName,

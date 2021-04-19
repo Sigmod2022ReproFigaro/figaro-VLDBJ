@@ -304,6 +304,8 @@ namespace Figaro
         std::map<std::vector<double>, uint32_t> getParUpCntsFromHashTable(
         const std::vector<std::string>& vParJoinAttrNames);
 
+        std::map<std::vector<double>, uint32_t> getCircCounts(void);
+
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vParJoinAttrNames,

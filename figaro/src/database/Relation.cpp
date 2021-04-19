@@ -479,6 +479,40 @@ namespace Figaro
         }
     }
 
+
+    std::map<std::vector<double>, uint32_t> Relation::getDownCounts(void)
+    {
+        std::map<std::vector<double>, uint32_t> downCounts;
+        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
+        {
+            std::vector<double> curJoinAttr;
+            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 3;
+                attrIdx ++)
+            {
+                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
+            }
+            downCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
+        }
+        return downCounts;
+    }
+
+        std::map<std::vector<double>, uint32_t> Relation::getCircCounts(void)
+    {
+        std::map<std::vector<double>, uint32_t> circCounts;
+        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
+        {
+            std::vector<double> curJoinAttr;
+            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 3;
+                attrIdx ++)
+            {
+                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
+            }
+            circCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxC];
+        }
+        return circCounts;
+    }
+
+
     void Relation::insertParDownCntFromHashTable(
         const std::vector<uint32_t>& vParAttrIdx,
         void*& pHashTablePt,
@@ -882,23 +916,6 @@ namespace Figaro
             }
         }
     }
-
-    std::map<std::vector<double>, uint32_t> Relation::getDownCounts(void)
-    {
-        std::map<std::vector<double>, uint32_t> downCounts;
-        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
-        {
-            std::vector<double> curJoinAttr;
-            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 3;
-                attrIdx ++)
-            {
-                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
-            }
-            downCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
-        }
-        return downCounts;
-    }
-
 
    // We assume join attributes are before nonJoinAttributes.
     void Relation::computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames)
