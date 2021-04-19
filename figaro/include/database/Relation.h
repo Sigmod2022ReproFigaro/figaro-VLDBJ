@@ -14,7 +14,7 @@ namespace Figaro
      *
      * @brief We prevent attributes with the same name. The order of attributes
      * represent the order in which they are stored in the corresponding
-     * csf file. In the constructor, the relation schema is initalized from
+     * csv file. In the constructor, the relation schema is initalized from
      * json object. The data is not loaded until requested
      * with function @see loadData.
      */
@@ -42,8 +42,6 @@ namespace Figaro
         };
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
-        //typedef std::array<double, MAX_NUM_COLS> RowT;
-        //typedef std::vector<RowT> MatrixDT;
         typedef Figaro::Matrix<double> MatrixDT;
 
         /**
@@ -90,8 +88,6 @@ namespace Figaro
                 }
                 return *this;
             }
-
-
 
             friend void swap(Attribute& attr1, Attribute& attr2)
             {
@@ -158,7 +154,6 @@ namespace Figaro
             return m_attributes.size();
         }
 
-
         /**
          * For each part of a composite PK compute the corresponding column index. The
          * order of returned indices is the same as specified initially by the
@@ -167,10 +162,8 @@ namespace Figaro
         void getPKAttributeNames(
             std::vector<std::string>& vAttributeNamesPKs) const;
 
-
         void getNonPKAttributeNames(
             std::vector<std::string>& vAttributeNamesNonPKs) const;
-
 
         void getPKAttributeIndices(std::vector<uint32_t>& vPkAttrIdxs) const;
 
@@ -188,7 +181,6 @@ namespace Figaro
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vNonJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
-
 
         /**
          *  Builds hash index where key is @p vJoinAttrIdx over the @p data
@@ -210,47 +202,21 @@ namespace Figaro
             const MatrixDT& dataParent);
 
 
-    void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
-        void*& pHashTablePt,
-        uint32_t hashTableSize);
+        void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
+            void*& pHashTablePt,
+            uint32_t hashTableSize);
 
-    void insertParDownCntFromHashTable(
-        const std::vector<uint32_t>& vParAttrIdx,
-        void*& pHashTablePt,
-        const double* pRow,
-        uint32_t downCnt);
-
-
-    std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
-        const std::vector<uint32_t>& vParJoinAttrIdxs,
-        void*  htChildRowIdx,
-        const double* pRow);
-
-    public:
-        Relation(const Relation&) = delete;
-        Relation(Relation&& ) = default;
-        Relation(json jsonRelationSchema);
-
-        const std::vector<Attribute>& getAttributes(void) const
-        {
-            return m_attributes;
-        }
+        void insertParDownCntFromHashTable(
+            const std::vector<uint32_t>& vParAttrIdx,
+            void*& pHashTablePt,
+            const double* pRow,
+            uint32_t downCnt);
 
 
-        std::vector<std::string> getAttributeNames(void) const;
-
-        const std::string& getName(void) const { return m_name; }
-
-
-        uint32_t numberOfAttributes() const
-        {
-            return m_attributes.size();
-        }
-
-        const std::string& getAttributeName(uint32_t attributedIdx) const
-        {
-            return m_attributes.at(attributedIdx).m_name;
-        }
+        std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*  htChildRowIdx,
+            const double* pRow);
 
         uint32_t getDistinctValuesCount(const std::string& attributeName) const;
 
@@ -259,10 +225,6 @@ namespace Figaro
 
         void getAttributeDistinctValues(const std::vector<uint32_t>& vAttrIdxs,
                 std::vector<double>& vDistinctValues) const;
-
-        void getAttributeValuesCounts(const std::string& attributeName,
-            std::unordered_map<double, uint32_t>& htCnts) const;
-
 
         void getRowPtrs(
             const std::string& attrName,
@@ -281,6 +243,30 @@ namespace Figaro
         void getDistinctValuesRowPositions(const std::vector<uint32_t>& vAttrIdxs,
              std::vector<uint32_t>& vDistinctValuesRowPositions,
              bool preallocated = true) const;
+    public:
+        Relation(const Relation&) = delete;
+        Relation(Relation&& ) = default;
+        Relation(json jsonRelationSchema);
+
+        const std::vector<Attribute>& getAttributes(void) const
+        {
+            return m_attributes;
+        }
+
+        std::vector<std::string> getAttributeNames(void) const;
+
+        const std::string& getName(void) const { return m_name; }
+
+
+        uint32_t numberOfAttributes() const
+        {
+            return m_attributes.size();
+        }
+
+        const std::string& getAttributeName(uint32_t attributedIdx) const
+        {
+            return m_attributes.at(attributedIdx).m_name;
+        }
 
         /**
          * Fills the table data from the file path specified by @p filePath .
@@ -300,6 +286,8 @@ namespace Figaro
 
         void sortData(const std::vector<std::string>& vAttributeNames);
 
+        void getAttributeValuesCounts(const std::string& attributeName,
+            std::unordered_map<double, uint32_t>& htCnts) const;
 
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,
@@ -308,7 +296,6 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-
         std::map<std::vector<double>, uint32_t> getDownCounts(void);
 
         std::map<std::vector<double>, uint32_t> getParDownCntsFromHashTable(
@@ -316,7 +303,6 @@ namespace Figaro
 
         std::map<std::vector<double>, uint32_t> getParUpCntsFromHashTable(
         const std::vector<std::string>& vParJoinAttrNames);
-
 
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
@@ -327,7 +313,6 @@ namespace Figaro
         void joinRelation(const Relation& relation,
              const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool bSwapAttributes);
 
-
         /**
          *  It will join relations by copying data from the children relations @p vpChildRels
          *  in the join tree to the current head data. The join attributes that are
@@ -336,19 +321,11 @@ namespace Figaro
          *  @p vJoinAttributeNames and each @p vvJoinAttributeNames[i] is a subset of
          *  @p vJoinAttributeNames .
          */
-        void joinRelations(
+        void aggregateAwayChildrenRelations(
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
-
-        /**
-         * It will copy the underlying data and apply head transformation onto it.
-         * The Head transformation will be applied as if we had:
-         * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes)
-         * GROUP BY PK.
-         */
-        void computeHead(void);
 
         /**
          * It will copy the underlying data and apply head transformation onto it.
@@ -360,9 +337,6 @@ namespace Figaro
          */
         void computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames);
 
-        void computeHead(const std::string& attributeName);
-
-
         void computeAndScaleGeneralizedHeadAndTail(
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames
@@ -372,45 +346,13 @@ namespace Figaro
             const std::string& attributeName,
             const std::unordered_map<double, uint32_t>& hashTabAttributeCounts);
 
-
-        static void extend(std::array<Relation*, 2>& aRelations, const std::string& attrIterName);
-
         void extend(const Relation& rel, const std::string& attrIterName);
-
-         /**
-         * It will copy the underlying data and apply head transformation onto it.
-         * The Head transformation will be applied as if we had:
-         * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes, v)
-         * GROUP BY PK.
-         */
-        void computeHead(const VectorT& v);
-
-        /**
-         * It will copy the underlying data and apply head transformation onto it.
-         * The Head transformation will be applied as if we had:
-         * SELECT attrNames[0], attrtNames[1], ... attrNames[n] HEAD(remaining attributes, v)
-         * GROUP BY attrNames.
-         */
-        void computeHead(const std::vector<std::string> attrNames, const VectorT& v);
-
-        /**
-         * It will copy the underlying data and apply head transformation onto it.
-         * The Head transformation will be applied as if we had:
-         * SELECT PK.part1, PK.part2, ... PK.partn HEAD(remaining attributes)
-         * GROUP BY PK.
-         */
-        void computeTail(void);
-
-        void computeTail(const std::string& attrName);
 
         void applyEigenQR(MatrixEigenT* pR = nullptr);
 
         friend std::ostream& operator<<(
             std::ostream& out,
             const Relation& relation);
-
     };
-
-
 }
 #endif

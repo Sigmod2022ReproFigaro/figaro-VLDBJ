@@ -28,14 +28,12 @@ namespace Figaro
          */
         ErrorCode loadData(void);
 
-
         /**
          * Sorts the data of each relation from the database.
          */
         void sortData(void);
 
         void sortRelation(const std::string& relationName, const std::vector<std::string>& vSortAttributeNames);
-
 
         std::vector<std::string> getRelationAttributeNames(const std::string& relationName);
 
@@ -56,7 +54,6 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
-
 
         std::map<std::vector<double>, uint32_t> getDownCounts(const std::string& relationName);
 

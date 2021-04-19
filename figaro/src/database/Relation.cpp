@@ -1023,7 +1023,7 @@ namespace Figaro
         }
     }
 
-    void Relation::joinRelations(
+    void Relation::aggregateAwayChildrenRelations(
         const std::vector<std::string>& vJoinAttributeNames,
         const std::vector<std::string>& vParJoinAttributeNames,
         const std::vector<Relation*>& vpChildRels,
@@ -1188,15 +1188,14 @@ namespace Figaro
             std::vector<double> vCurScaleSum(numNonJoinAttrs);
 
             // TODO: Initialize up count from hash table.
-            //upCnt = std::sqrt(m_countsParJoinAttrs[distCnt]]);
 
             startIdx = vParDistValsRowPositions[distCnt] + 1;
             numDistVals =  vParDistValsRowPositions[distCnt+1] -  vParDistValsRowPositions[distCnt] + 1;
 
             std::tuple<uint32_t, uint32_t>& cnts =
                 getParCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts, m_dataHead[startIdx]);
-            double sqrtDownCnt = std::get<0>(cnts);
-            double sqrtUpCnt = std::get<1>(cnts);
+            double sqrtDownCnt = std::sqrt(std::get<0>(cnts));
+            double sqrtUpCnt = std::sqrt(std::get<1>(cnts));
 
             sumSqrScalesPrev = 0;
             sumSqrScalesCur = m_scales[startIdx][0] * m_scales[startIdx][0];
