@@ -65,6 +65,11 @@ namespace Figaro
             const std::string& relationName,
             const std::vector<std::string>& vParJoinAttrNames);
 
+
+        void computeHeadsAndTails(
+            const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames);
+
         void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
             std::array<Eigen::VectorXd, 2> vectors);
 

@@ -7,8 +7,6 @@ namespace Figaro
 {
     class ASTFigaroFirstPassVisitor: public ASTQRVisitor
     {
-        std::string l2TailnormExpression(ASTNodeRelation* pElement);
-
     public:
         ASTFigaroFirstPassVisitor(
             Database* pDatabase,

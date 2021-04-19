@@ -141,8 +141,16 @@ namespace Figaro
             const std::string& relationName,
             const std::vector<std::string>& vParJoinAttrNames)
     {
-         Relation& rel = m_relations.at(relationName);
+        Relation& rel = m_relations.at(relationName);
         return rel.getParUpCntsFromHashTable(vParJoinAttrNames);
+    }
+
+    void Database::computeHeadsAndTails(
+        const std::string& relationName,
+        const std::vector<std::string>& vJoinAttrNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+        rel.computeHeadsAndTails(vJoinAttrNames);
     }
 
 

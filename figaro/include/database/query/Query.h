@@ -8,35 +8,34 @@
 
 namespace Figaro
 {
-    class Query 
+    class Query
     {
         ASTNode* m_pASTRoot = nullptr;
-        Database* m_pDatabase = nullptr; 
+        Database* m_pDatabase = nullptr;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
         ErrorCode createAST(const json& jsonQueryConfig);
 
     public:
-        Query(Database* pDatabase): m_pDatabase(pDatabase) {} 
+        Query(Database* pDatabase): m_pDatabase(pDatabase) {}
         ~Query() { destroyAST(m_pASTRoot); }
 
-        /** Parses query and creates abstract syntax tree from 
-         * configuration specified at the path @p queryConfigPath. 
+        /** Parses query and creates abstract syntax tree from
+         * configuration specified at the path @p queryConfigPath.
          */
-        ErrorCode loadQuery(const std::string& queryConfigPath); 
-        
-        /** Evaluates expressions from abstract syntax tree. 
-         */
-        void evaluateQuery(void); 
+        ErrorCode loadQuery(const std::string& queryConfigPath);
 
-        
-        void setDatabase(Database* pDatabase) 
+        /** Evaluates expressions from abstract syntax tree.
+         */
+        void evaluateQuery(void);
+
+        void setDatabase(Database* pDatabase)
         {
-             m_pDatabase = pDatabase;     
+             m_pDatabase = pDatabase;
         }
 
-        Database* getDatabase(Database* pDatabase) 
+        Database* getDatabase(Database* pDatabase)
         {
              return pDatabase;
         }
@@ -44,4 +43,4 @@ namespace Figaro
 }
 
 
-#endif 
+#endif

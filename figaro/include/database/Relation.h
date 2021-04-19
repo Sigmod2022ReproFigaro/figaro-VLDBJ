@@ -143,7 +143,7 @@ namespace Figaro
             std::vector<uint32_t>& vAttributeIdxs) const;
 
         void getAttributesIdxsComplement(const std::vector<uint32_t>& vAttributeIdxs,
-            std::vector<uint32_t> vAttributesCompIdxs) const;
+            std::vector<uint32_t>& vAttributesCompIdxs) const;
 
         uint32_t getNumberOfPKAttributes(void) const;
 

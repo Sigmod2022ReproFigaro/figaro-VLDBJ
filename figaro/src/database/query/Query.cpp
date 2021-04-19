@@ -113,7 +113,7 @@ namespace Figaro
         m_pASTRoot->accept(&computeDownVisitor);
         m_pASTRoot->accept(&computeUpAndCircleVisitor);
 
-        //m_pASTRoot->accept(&figaroFirstPassVisitor);
+        m_pASTRoot->accept(&figaroFirstPassVisitor);
         //m_pASTRoot->accept(&figaroSecondPassVisitor);
      }
 }

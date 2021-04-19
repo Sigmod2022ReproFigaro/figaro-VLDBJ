@@ -244,12 +244,15 @@ namespace Figaro
     }
 
     void Relation::getAttributesIdxsComplement(const std::vector<uint32_t>& vAttributeIdxs,
-        std::vector<uint32_t> vAttributesCompIdxs) const
+        std::vector<uint32_t>& vAttributesCompIdxs) const
     {
+        // Index that is incremented if the current idxAttr is equal to it.
+        // In this case we do not add it to vAttributesCompIdxs.
         uint32_t idxAttrV = 0;
         for (uint32_t idxAttr = 0; idxAttr < getNumberOfAttributes(); idxAttr++)
         {
-            if (idxAttr < vAttributeIdxs[idxAttrV])
+            if ((idxAttrV >= vAttributeIdxs.size()) ||
+                (idxAttr < vAttributeIdxs[idxAttrV]))
             {
                 vAttributesCompIdxs.push_back(idxAttr);
             }
@@ -907,11 +910,14 @@ namespace Figaro
         uint32_t numNonJoinAttrs;
         uint32_t numTailRows;
 
-        std::vector<double> aggregateByAttribute;
         std::vector<uint32_t> vDistValsRowPositions;
 
         getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+
+        FIGARO_LOG_DBG("vJoinAttrNames", vJoinAttrNames, "Relation", m_name)
+        FIGARO_LOG_DBG("vJoinAttrIdxs", vJoinAttrIdxs)
+        FIGARO_LOG_DBG("vNonJoinAttrIdxs", vNonJoinAttrIdxs)
 
         // TODO: Move this to pre pass pass.
         getDistinctValuesRowPositions(vJoinAttrIdxs, vDistValsRowPositions, false);
@@ -928,6 +934,9 @@ namespace Figaro
         Matrix<double> scale{numDistinctValues, 1};
         std::vector<double> allScales(numDistinctValues);
 
+        FIGARO_LOG_DBG("numtailRows", numTailRows)
+        FIGARO_LOG_DBG("vDistValsRowPositions", vDistValsRowPositions)
+
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
         // project away these attributes.
         for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
@@ -937,20 +946,21 @@ namespace Figaro
             std::vector<double> vCurRowSum(numNonJoinAttrs);
 
             headRowIdx = vDistValsRowPositions[distCnt] + 1;
-            numDistVals =  vDistValsRowPositions[distCnt+1] -  vDistValsRowPositions[distCnt] + 1;
+            numDistVals =  vDistValsRowPositions[distCnt+1] -  vDistValsRowPositions[distCnt];
 
             for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
             {
                 vCurRowSum[nonJoinAttrIdx - numJoinAttrs] = m_data[headRowIdx][nonJoinAttrIdx];
             }
+            //FIGARO_LOG_DBG("distCnt", distCnt, headRowIdx, numDistVals)
             for (uint32_t rowIdx = headRowIdx + 1;
                 rowIdx <= vDistValsRowPositions[distCnt+1];
                 rowIdx++)
             {
-                uint32_t tailRowIdx = rowIdx - distCnt;
+                uint32_t tailRowIdx = rowIdx - distCnt - 1;
                 // Double needed due to casts.
                 double i = rowIdx - headRowIdx + 1;
-                double circCnt = std::sqrt(m_countsJoinAttrs[distCnt][m_cntsJoinIdxC]);
+                double sqrtCircCnt = std::sqrt(m_countsJoinAttrs[distCnt][m_cntsJoinIdxC]);
                 for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
                 {
                     double prevRowSum;
@@ -960,7 +970,7 @@ namespace Figaro
                     tailVal = (m_data[rowIdx][nonJoinAttrIdx] * (i - 1) - prevRowSum)
                     / std::sqrt(i * (i - 1));
                     dataTails[tailRowIdx][nonJoinAttrIdx - numJoinAttrs] =
-                        tailVal * circCnt;
+                        tailVal * sqrtCircCnt;
                 }
             }
 
@@ -991,7 +1001,9 @@ namespace Figaro
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
         m_vSubTreeRelNames.push_back(m_name);
 
-        //FIGARO_LOG_DBG("Successful head computation");
+        FIGARO_LOG_DBG("Successful head computation", m_name);
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("m_dataTails", m_dataTails)
     }
 
     void Relation::schemaJoins(
