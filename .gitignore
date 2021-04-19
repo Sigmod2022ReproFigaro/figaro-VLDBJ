@@ -11,3 +11,5 @@ venv.bak/
 /comparisons
 /data/db_generated
 log.txt
+figaro/tests_backup/*
+figaro/system_tests_backup/*
