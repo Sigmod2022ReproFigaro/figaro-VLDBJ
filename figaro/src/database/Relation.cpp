@@ -1022,31 +1022,39 @@ namespace Figaro
 
     void Relation::schemaJoins(
         const std::vector<Relation*>& vpChildRels,
-        const std::vector<uint32_t>& vJoinAttrIdxs,
-        const std::vector<uint32_t>& vNonJoinAttrIdxs,
+        const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
         const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs)
     {
         for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel++)
         {
             uint32_t prevSize = m_attributes.size();
+            uint32_t prevvSTDOffsSize = m_vSubTreeDataOffsets.size();
             for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
             {
                 m_attributes.push_back(vpChildRels[idxRel]->m_attributes[nonJoinAttrIdx]);
             }
 
-            // Copy relation names from the subtree for each children.
-            m_vSubTreeRelNames.insert(m_vSubTreeRelNames.begin(),
+            // For each child, copy relation names from the subtree.
+            m_vSubTreeRelNames.insert(m_vSubTreeRelNames.end(),
                 vpChildRels[idxRel]->m_vSubTreeRelNames.begin(),
                 vpChildRels[idxRel]->m_vSubTreeRelNames.end());
+
             // Copy the offsest to the data.
             m_vSubTreeDataOffsets.insert(m_vSubTreeDataOffsets.end(),
                 vpChildRels[idxRel]->m_vSubTreeDataOffsets.begin(),
                 vpChildRels[idxRel]->m_vSubTreeDataOffsets.end());
-            for (uint32_t idxRelSub = prevSize; idxRelSub < m_vSubTreeDataOffsets.size(); idxRelSub ++)
+
+            // Updates offsets since they are added at the end.
+            for (uint32_t idxRelSub = prevvSTDOffsSize;
+                idxRelSub < m_vSubTreeDataOffsets.size(); idxRelSub ++)
             {
-                m_vSubTreeDataOffsets[idxRelSub] += prevSize;
+                //FIGARO_LOG_DBG("Before", m_vSubTreeDataOffsets[idxRelSub])
+                m_vSubTreeDataOffsets[idxRelSub] += prevSize - vvJoinAttrIdxs[idxRel].size();
+                //FIGARO_LOG_DBG("After", m_vSubTreeDataOffsets[idxRelSub]);
             }
         }
+        FIGARO_LOG_DBG("Schema Joins", m_name, m_vSubTreeRelNames, m_vSubTreeDataOffsets)
+
     }
 
     void Relation::aggregateAwayChildrenRelations(
@@ -1073,9 +1081,11 @@ namespace Figaro
         vvNonJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vNumJoinAttrs.resize(vvJoinAttributeNames.size());
-        vCumNumNonJoinAttrs.resize(vvJoinAttributeNames.size());
+        vCumNumNonJoinAttrs.resize(vpChildRels.size());
         vCumNumRelSubTree.resize(vpChildRels.size());
+        vpHashTabRowPt.resize(vpChildRels.size());
 
+        FIGARO_LOG_DBG("Relation", m_name)
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
             vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
@@ -1096,15 +1106,18 @@ namespace Figaro
                                             vvNonJoinAttrIdxs[idxRel - 1].size();
                 vCumNumRelSubTree[idxRel] = vCumNumRelSubTree[idxRel-1] + vpChildRels[idxRel-1]->m_vSubTreeRelNames.size();
             }
+            FIGARO_LOG_DBG("idxRel", idxRel, "vvJoinAttrIdxs[idxRel]", vvJoinAttrIdxs[idxRel],
+                "vvCurJoinAttrIdxs[idxRel]", vvCurJoinAttrIdxs[idxRel],
+                "vCumNumNonJoinAttrs[idxRel]", vCumNumNonJoinAttrs[idxRel],
+                "vCumNumRelSubTree[idxRel]", vCumNumRelSubTree[idxRel])
         }
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
-
-        schemaJoins(vpChildRels, vJoinAttrIdxs, vNonJoinAttrIdxs, vvNonJoinAttrIdxs);
+        schemaJoins(vpChildRels, vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
         Matrix<double> dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
         Matrix<double> scales{m_data.getNumRows(), vpChildRels.size() + 1};
-        Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size() + 1};
+        Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size()};
 
        //#pragma omp parallel for schedule(static)
        for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
@@ -1142,9 +1155,12 @@ namespace Figaro
                     dataScales[rowIdx][shiftIdxSTRel] =
                         vpChildRels[idxRel]->m_dataScales[childRowIdx][idxSubTreeRel];
                 }
-                scales[rowIdx][idxRel] = vpChildRels[idxRel]->m_dataScales[childRowIdx][0];
-                m_allScales[rowIdx] *= scales[childRowIdx][idxRel];
+                scales[rowIdx][idxRel + 1] = vpChildRels[idxRel]->m_scales[childRowIdx][0];
+                FIGARO_LOG_DBG("scales[rowIdx][idxRel]", idxRel, scales[rowIdx][idxRel]);
+                m_allScales[rowIdx] *= scales[rowIdx][idxRel + 1];
             }
+            dataScales[rowIdx][0] = m_dataScales[rowIdx][0];
+            scales[rowIdx][0] = m_scales[rowIdx][0];
             for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
             {
                 for (uint32_t idxSubTreeRel = 0;
@@ -1153,19 +1169,23 @@ namespace Figaro
                 {
                     uint32_t shiftIdxSTRel = idxSubTreeRel + vCumNumRelSubTree[idxRel];
                     dataScales[rowIdx][shiftIdxSTRel] *= m_allScales[rowIdx];
-                    dataScales[rowIdx][shiftIdxSTRel] /= scales[rowIdx][idxRel];
+                    dataScales[rowIdx][shiftIdxSTRel] /= scales[rowIdx][idxRel + 1];
                 }
             }
             // Updated datascales for the central relation.
-            dataScales[rowIdx][0] = m_dataScales[rowIdx][0] * m_allScales[rowIdx];
+            //FIGARO_LOG_DBG("m_dataScales[rowIdx][0", m_dataScales[rowIdx][0], m_allScales[rowIdx])
+            dataScales[rowIdx][0] *= m_allScales[rowIdx];
+            //FIGARO_LOG_DBG("After dataScales[rowIdx][0", dataScales[rowIdx][0], scales[rowIdx][0])
             dataScales[rowIdx][0] /= scales[rowIdx][0];
             scales[rowIdx][0] = m_allScales[rowIdx];
         }
         m_dataHead = std::move(dataOutput);
-        m_dataScales = std::move(scales);
+        m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
 
-        FIGARO_LOG_DBG("End of Join", *this)
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
+        FIGARO_LOG_DBG("m_scales", m_scales)
     }
 
     void Relation::computeAndScaleGeneralizedHeadAndTail(
@@ -1198,6 +1218,7 @@ namespace Figaro
         Matrix<double> scales{numDistinctValues, 1};
         Matrix<double> dataScales{numDistinctValues, m_dataScales.getNumCols()};
 
+        FIGARO_LOG_DBG("HOHO")
         // TODO: temporary add element to m_vSubTreeDataOffsets to denote the limit.
         for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
         {
@@ -1524,8 +1545,6 @@ namespace Figaro
 
         getAttributeDistinctValues(attributeName, vDistinctValues);
         getDistinctValuesRowPositions(attributeName, vDistinctValuesRowPositions);
-
-
 
         #pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < distinctValuesCounter; distCnt++)

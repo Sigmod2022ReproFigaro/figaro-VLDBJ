@@ -119,8 +119,17 @@ namespace Figaro
         MatrixDT m_scales;
         MatrixDT m_dataScales;
         std::vector<double> m_allScales;
-
+        /**
+         * Contains the names of all relations in the subtree rooted
+         * at this relation including this relation. The order of relations
+         * is preorder.
+         */
         std::vector<std::string> m_vSubTreeRelNames;
+        /**
+         * Contains the data ofsets of all relations in the subtree rooted
+         * at this relation including this relation. The order of relations
+         * is preorder.
+         */
         std::vector<uint32_t> m_vSubTreeDataOffsets;
 
         MatrixDT m_countsJoinAttrs;
@@ -182,10 +191,15 @@ namespace Figaro
 
         void schemaJoin(const Relation& relation, bool swapAttributes = false);
 
+        /**
+         *  Updates schema of the current relation such that
+         * non-join attributes of @p vpChildRels are appended to the end.
+         * @p m_vSubTreeRelNames and @p m_vSubTreeDataOffsets are also
+         * updated accordingly.
+         */
         void schemaJoins(
             const std::vector<Relation*>& vpChildRels,
-            const std::vector<uint32_t>& vJoinAttrIdxs,
-            const std::vector<uint32_t>& vNonJoinAttrIdxs,
+            const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
 
         /**
