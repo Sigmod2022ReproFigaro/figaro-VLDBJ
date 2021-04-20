@@ -336,9 +336,9 @@ namespace Figaro
          *  @p vJoinAttributeNames .
          */
         void aggregateAwayChildrenRelations(
+            const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
-            const std::vector<Relation*>& vpChildRels,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
         void computeAndScaleGeneralizedHeadAndTail(

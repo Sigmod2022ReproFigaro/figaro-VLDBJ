@@ -10,7 +10,7 @@ namespace Figaro
         ASTNodeRelation* pRelInst = pAbsRel->getRelation();
         for (const auto& pCurRel: pAbsRel->getRelationPostorder())
         {
-            
+
             pCurRel->moveFromNumerToDenum(pRelInst);
             pCurRel->moveFromNumerToDenum(pParent->getRelation());
             pParent->getRelation()->moveFromNumerToDenum(pCurRel);
@@ -21,7 +21,7 @@ namespace Figaro
         }
         for (const auto& pCurRel: pParent->getRelationPostorder())
         {
-            
+
             pCurRel->moveFromNumerToDenum(pRelInst);
             pRelInst->moveFromNumerToDenum(pCurRel);
             pCurRel->moveFromNumerToDenum(pParent->getRelation());
@@ -45,14 +45,14 @@ namespace Figaro
         for (const auto& pCurRel: pRel->getNumerRelations())
         {
             std::string joinAttributes = getFormateJoinAttributeNames(pCurRel->getJoinAttributeNames());
-            str +=  pCurRel->getRelationName() + "^{" + joinAttributes + "}" + "\\join"; 
+            str +=  pCurRel->getRelationName() + "^{" + joinAttributes + "}" + "\\join";
         }
         str += "| / |";
 
         for (const auto& pCurRel: pRel->getDenomRelations())
         {
              std::string joinAttributes = getFormateJoinAttributeNames(pCurRel->getJoinAttributeNames());
-            str +=  pCurRel->getRelationName() + "^{" + joinAttributes + "}" + "\\join"; 
+            str +=  pCurRel->getRelationName() + "^{" + joinAttributes + "}" + "\\join";
         }
         str += "|}";
         return str;
@@ -60,18 +60,6 @@ namespace Figaro
 
     void ASTFigaroSecondPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
-        const auto& relationName = pElement->getRelationName();
-        const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        if (nullptr != pElement->getParent())
-        {
-            aggregateAwayRelation(pElement);
-        }
-        for (const auto& pCurRel: m_vpASTNodeRelation)
-        {
-            std::string strHeadCounts = strCountsHeadGeneralized(pCurRel);
-            FIGARO_LOG_DBG("Relation", pCurRel->getRelationName(), "HeadCounts", strHeadCounts)
-        }
-        pElement->getRelationPostorder().push_back(pElement);
         FIGARO_LOG_DBG("Finished visiting relation", pElement->getRelationName())
     }
 
@@ -84,26 +72,19 @@ namespace Figaro
         {
             FIGARO_LOG_DBG("Child");
             pChild->accept(this);
-            vRelPostorder.insert(vRelPostorder.begin(), 
-                pChild->getRelationPostorder().begin(), pChild->getRelationPostorder().end());
         }
-        FIGARO_LOG_DBG("Finished visiting children")
-
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
-        const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
+        m_pDatabase-> aggregateAwayChildrenRelations(
+            relationName,
+            pElement->getChildrenNames(),
+            pElement->getJoinAttributeNames(),
+            pElement->getParJoinAttributeNames(),
+            pElement->getChildrenParentJoinAttributeNames());
 
-
-        if (nullptr != pElement->getParent())
-        {
-            aggregateAwayRelation(pElement);
-        }
-        for (const auto& pCurRel: m_vpASTNodeRelation)
-        {
-            std::string strHeadCounts = strCountsHeadGeneralized(pCurRel);
-            FIGARO_LOG_DBG("Relation", pCurRel->getRelationName(), "HeadCounts", strHeadCounts)
-        }
-
-        vRelPostorder.push_back(pElement->getCentralRelation());
+        m_pDatabase->computeAndScaleGeneralizedHeadAndTail(
+            relationName,
+            pElement->getJoinAttributeNames(),
+            pElement->getParJoinAttributeNames());
     }
 
     void ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
@@ -117,7 +98,7 @@ namespace Figaro
         }
         pElement->getOperand()->accept(this);
         FIGARO_LOG_DBG("FInished")
-        
+
     }
 
 }

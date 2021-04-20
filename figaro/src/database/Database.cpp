@@ -160,6 +160,34 @@ namespace Figaro
         rel.computeHeadsAndTails(vJoinAttrNames);
     }
 
+    void Database::aggregateAwayChildrenRelations(
+            const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+        std::vector<Relation*> vpChildRels;
+
+        for (const auto childRelName: vChildRelNames)
+        {
+            Relation* pRel = &m_relations.at(childRelName);
+            vpChildRels.push_back(pRel);
+        }
+        rel.aggregateAwayChildrenRelations(vpChildRels,
+             vJoinAttributeNames, vParJoinAttributeNames, vvJoinAttributeNames);
+    }
+
+    void Database::computeAndScaleGeneralizedHeadAndTail(
+        const std::string& relationName,
+        const std::vector<std::string>& vJoinAttributeNames,
+        const std::vector<std::string>& vParJoinAttributeNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+        rel.computeAndScaleGeneralizedHeadAndTail(vJoinAttributeNames, vParJoinAttributeNames);
+    }
+
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const
     {
         const Relation& rel = m_relations.at(relationName);

@@ -68,6 +68,17 @@ namespace Figaro
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames);
 
+        void aggregateAwayChildrenRelations(
+            const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
+
+        void computeAndScaleGeneralizedHeadAndTail(
+            const std::string& relationName,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames);
 
         const Relation::MatrixDT& getHead(const std::string& relationName) const;
 

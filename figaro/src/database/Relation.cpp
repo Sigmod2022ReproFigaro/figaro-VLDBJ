@@ -951,9 +951,6 @@ namespace Figaro
         Matrix<double> scale{numDistinctValues, 1};
         std::vector<double> allScales(numDistinctValues);
 
-        FIGARO_LOG_DBG("numtailRows", numTailRows)
-        FIGARO_LOG_DBG("vDistValsRowPositions", vDistValsRowPositions)
-
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
         // project away these attributes.
         for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
@@ -1053,15 +1050,13 @@ namespace Figaro
     }
 
     void Relation::aggregateAwayChildrenRelations(
+        const std::vector<Relation*>& vpChildRels,
         const std::vector<std::string>& vJoinAttributeNames,
         const std::vector<std::string>& vParJoinAttributeNames,
-        const std::vector<Relation*>& vpChildRels,
         const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
     {
-        std::unordered_map<double, const double*> hashTabRowPt2;
         uint32_t numJoinAttrsCurRel;
         std::vector<uint32_t> vJoinAttrIdxs;
-        std::vector<uint32_t> vParJoinAttrIdxs;
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
         std::vector<uint32_t> vNonJoinAttrIdxs;
         std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
@@ -1083,10 +1078,12 @@ namespace Figaro
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
-            vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel]);
+            vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
+                vvJoinAttrIdxs[idxRel]);
             vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
-            vpChildRels[idxRel]->getHashTableRowIdxs(vvJoinAttrIdxs[idxRel], vpHashTabRowPt[idxRel], vpChildRels[idxRel]->m_dataHead);
+            vpChildRels[idxRel]->getHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
+                vpHashTabRowPt[idxRel], vpChildRels[idxRel]->m_dataHead);
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
             if (idxRel == 0)
             {
@@ -1102,7 +1099,6 @@ namespace Figaro
         }
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
-        getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
 
         schemaJoins(vpChildRels, vJoinAttrIdxs, vNonJoinAttrIdxs, vvNonJoinAttrIdxs);
 
@@ -1110,14 +1106,11 @@ namespace Figaro
         Matrix<double> scales{m_data.getNumRows(), vpChildRels.size() + 1};
         Matrix<double> dataScales{m_data.getNumRows(), m_vSubTreeRelNames.size() + 1};
 
-
        //#pragma omp parallel for schedule(static)
        for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
        {
             // TODO: Optimization change the way how the values are extracted to tree.
 
-            // Copies only join attributes of a parent node needed for further evaluation.
-            //for (auto joinAttrIdx: vParJoinAttrIdxs)
             for (auto joinAttrIdx: vJoinAttrIdxs)
             {
                 dataOutput[rowIdx][joinAttrIdx] = m_dataHead[rowIdx][joinAttrIdx];
@@ -1174,7 +1167,6 @@ namespace Figaro
 
         FIGARO_LOG_DBG("End of Join", *this)
     }
-
 
     void Relation::computeAndScaleGeneralizedHeadAndTail(
         const std::vector<std::string>& vJoinAttributeNames,
