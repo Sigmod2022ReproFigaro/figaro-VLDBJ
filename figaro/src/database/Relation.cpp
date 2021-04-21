@@ -1033,12 +1033,13 @@ namespace Figaro
             {
                 m_attributes.push_back(vpChildRels[idxRel]->m_attributes[nonJoinAttrIdx]);
             }
+            FIGARO_LOG_DBG("m_attributes", *this)
 
             // For each child, copy relation names from the subtree.
             m_vSubTreeRelNames.insert(m_vSubTreeRelNames.end(),
                 vpChildRels[idxRel]->m_vSubTreeRelNames.begin(),
                 vpChildRels[idxRel]->m_vSubTreeRelNames.end());
-
+            FIGARO_LOG_DBG("m_vSubTreeRelNames", m_vSubTreeRelNames)
             // Copy the offsest to the data.
             m_vSubTreeDataOffsets.insert(m_vSubTreeDataOffsets.end(),
                 vpChildRels[idxRel]->m_vSubTreeDataOffsets.begin(),
@@ -1054,7 +1055,17 @@ namespace Figaro
             }
         }
         FIGARO_LOG_DBG("Schema Joins", m_name, m_vSubTreeRelNames, m_vSubTreeDataOffsets)
+    }
 
+    void Relation::schemaRemoveNonParJoinAttrs(
+            const std::vector<uint32_t>& vJoinAttrIdxs,
+            const std::vector<uint32_t>& vParJoinAttrIdxs)
+    {
+        // TODO: Test bug with PKs
+        //FIGARO_LOG_DBG("Here", *this)
+        m_attributes.erase(m_attributes.begin() + vParJoinAttrIdxs.size(),
+            m_attributes.begin() + vJoinAttrIdxs.size());
+        //FIGARO_LOG_DBG("Here", *this)
     }
 
     void Relation::aggregateAwayChildrenRelations(
@@ -1172,9 +1183,7 @@ namespace Figaro
                 }
             }
             // Updated datascales for the central relation.
-            //FIGARO_LOG_DBG("m_dataScales[rowIdx][0", m_dataScales[rowIdx][0], m_allScales[rowIdx])
             dataScales[rowIdx][0] *= m_allScales[rowIdx];
-            //FIGARO_LOG_DBG("After dataScales[rowIdx][0", dataScales[rowIdx][0], scales[rowIdx][0])
             dataScales[rowIdx][0] /= scales[rowIdx][0];
             scales[rowIdx][0] = m_allScales[rowIdx];
         }
@@ -1324,6 +1333,8 @@ namespace Figaro
         {
             m_vSubTreeDataOffsets[idxRel] -= numOmittedAttrs;
         }
+
+        schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
 
 
         m_dataHead = std::move(dataHeadOut);

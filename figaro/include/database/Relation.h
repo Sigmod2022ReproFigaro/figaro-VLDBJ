@@ -202,6 +202,11 @@ namespace Figaro
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
 
+
+        void schemaRemoveNonParJoinAttrs(
+            const std::vector<uint32_t>& vJoinAttrIdxs,
+            const std::vector<uint32_t>& vParJoinAttrIdxs);
+
         /**
          *  Builds hash index where key is @p vJoinAttrIdx over the @p data
          * returns it as a pointer @p pHashTablePt.
