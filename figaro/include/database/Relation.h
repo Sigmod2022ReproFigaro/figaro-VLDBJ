@@ -372,6 +372,8 @@ namespace Figaro
 
         const MatrixDT& getTail(void) const;
 
+        const MatrixDT& getGeneralizedTail(void) const;
+
         /****************** OLD IMPLEMENTATION **************************/
         void getAttributeValuesCounts(const std::string& attributeName,
             std::unordered_map<double, uint32_t>& htCnts) const;

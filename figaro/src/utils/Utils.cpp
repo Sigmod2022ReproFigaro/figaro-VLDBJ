@@ -30,7 +30,6 @@ namespace Figaro
     {
         std::map<std::string, bool> sStrAppears;
         std::vector<std::string> vIntersection;
-        //FIGARO_LOG_DBG("set1", vStr1, "set2", vStr2)
         for (const auto& str: vStr1)
         {
             sStrAppears[str] = false;

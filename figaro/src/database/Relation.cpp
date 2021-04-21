@@ -1336,7 +1336,6 @@ namespace Figaro
 
         schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
 
-
         m_dataHead = std::move(dataHeadOut);
         m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
@@ -1355,6 +1354,11 @@ namespace Figaro
     const Relation::MatrixDT& Relation::getTail(void) const
     {
         return m_dataTails;
+    }
+
+    const Relation::MatrixDT& Relation::getGeneralizedTail(void) const
+    {
+        return m_dataTailsGen;
     }
 
     void Relation::getAttributeValuesCounts(

@@ -84,6 +84,8 @@ namespace Figaro
 
         const Relation::MatrixDT& getTail(const std::string& relationName) const;
 
+        const Relation::MatrixDT& getGeneralizedTail(const std::string& relationName) const;
+
         void joinRelations(std::vector<std::string> vRelationNames,
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
 

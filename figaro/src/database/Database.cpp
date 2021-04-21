@@ -200,6 +200,11 @@ namespace Figaro
         return rel.getTail();
     }
 
+    const Relation::MatrixDT& Database::getGeneralizedTail(const std::string& relationName) const
+    {
+        const Relation& rel = m_relations.at(relationName);
+        return rel.getGeneralizedTail();
+    }
 
     void Database::computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames, const std::string& attrIterName)
     {
