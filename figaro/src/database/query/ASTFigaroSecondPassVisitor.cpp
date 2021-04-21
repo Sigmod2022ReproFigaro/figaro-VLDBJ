@@ -74,6 +74,7 @@ namespace Figaro
             pChild->accept(this);
         }
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
+        FIGARO_LOG_DBG("vpChildRels", pElement->getChildrenNames())
         m_pDatabase-> aggregateAwayChildrenRelations(
             relationName,
             pElement->getChildrenNames(),
