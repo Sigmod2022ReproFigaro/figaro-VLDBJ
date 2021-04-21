@@ -4,6 +4,7 @@
 #include "database/query/ASTComputeDownCountsVisitor.h"
 #include "database/query/ASTFigaroFirstPassVisitor.h"
 #include "database/query/ASTFigaroSecondPassVisitor.h"
+#include "utils/Performance.h"
 #include <fstream>
 
 namespace Figaro
@@ -111,12 +112,19 @@ namespace Figaro
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase, m_mRelNameASTNodeRel);
 
         m_pASTRoot->accept(&joinAttrVisitor);
+        MICRO_BENCH_INIT(downCnt)
+        MICRO_BENCH_INIT(upCnt)
         if (evalCounts)
         {
+            MICRO_BENCH_START(downCnt)
             m_pASTRoot->accept(&computeDownVisitor);
+            MICRO_BENCH_STOP(downCnt)
+            MICRO_BENCH_START(upCnt)
             m_pASTRoot->accept(&computeUpAndCircleVisitor);
+            MICRO_BENCH_STOP(upCnt)
         }
-
+        FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(downCnt));
+        FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(upCnt));
         if (evalFirstFigaroPass)
         {
             m_pASTRoot->accept(&figaroFirstPassVisitor);

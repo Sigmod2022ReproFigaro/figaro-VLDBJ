@@ -1,22 +1,23 @@
 
 from enum import Enum, auto
+from os import path
 import subprocess
 import os
 import json
 import logging
 from data_management.database import Database
-from evaluation.system_test import DumpConf, LogConf, SystemTest
+from evaluation.system_test import DumpConf, LogConf, QueryConf, SystemTest
 from evaluation.system_test import SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 
 class SystemTestFigaro(SystemTest):
-    def __init__(self, log_conf: LogConf, dump_conf: DumpConf, 
-            perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
+    def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
+            perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database, query_conf: QueryConf,
             test_mode = SystemTest.TestMode.PERFORMANCE, *args, **kwargs):
-        super().__init__("FIGARO", log_conf, dump_conf, perf_conf, 
-            accur_conf, database, test_mode)
-    
+        super().__init__("FIGARO", log_conf, dump_conf, perf_conf,
+            accur_conf, database, query_conf, test_mode)
+
 
     def eval(self):
         pass
@@ -25,14 +26,14 @@ class SystemTestFigaro(SystemTest):
     def run_debug(self):
         test_mode = SystemTest.test_mode_to_str(self.test_mode)
         logging.error(test_mode)
-        args = ["/bin/bash", "setup.sh", 
+        args = ["/bin/bash", "setup.sh",
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
         result = subprocess.run(
-            args=args, cwd="/home/popina/Figaro/figaro-code/figaro", 
+            args=args, cwd="/home/popina/Figaro/figaro-code/figaro",
             capture_output=True, text=True, shell=False)
         logging.info(result.stdout)
         logging.error(result.stderr)
@@ -41,15 +42,16 @@ class SystemTestFigaro(SystemTest):
     def run_dump(self):
         test_mode = SystemTest.test_mode_to_str(self.test_mode)
         logging.error(test_mode)
-        args = ["/bin/bash", "setup.sh", 
+        args = ["/bin/bash", "setup.sh",
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--dump_file_path={}".format(self.conf_dump.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
+                "--query_config_path={}".format(self.conf_query.path),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
         result = subprocess.run(
-            args=args, cwd="/home/popina/Figaro/figaro-code/figaro", 
+            args=args, cwd="/home/popina/Figaro/figaro-code/figaro",
             capture_output=True, text=True, shell=False)
         logging.info(result.stdout)
         logging.error(result.stderr)
@@ -58,7 +60,7 @@ class SystemTestFigaro(SystemTest):
     def run_accuracy(self):
         pass
 
-    
+
     def run_performance(self):
         pass
 
@@ -67,11 +69,11 @@ class SystemTestFigaro(SystemTest):
 
     def is_paper_algorithm(self):
         return True
-        
+
 
     def is_dbms(self):
         return False
 
-    
+
     def requires_dbms_result(self):
         return False

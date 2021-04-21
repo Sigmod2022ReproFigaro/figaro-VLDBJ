@@ -5,7 +5,7 @@ project(figaro VERSION 1.0.0 LANGUAGES CXX)
 set(CMKAKE_CXX_STANDARD 17)
 set(CMKAKE_CXX_STANDARD REQUIRED)
 
-#TODO: Replace flags with compiler options. 
+#TODO: Replace flags with compiler options.
 # Checking compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -pthread -g -Wall -Wextra -Og -fopenmp")
@@ -24,13 +24,13 @@ endif()
 
 add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE )
 
-# TODO: Clean this. 
+# TODO: Clean this.
 set(FIGARO_ROOT .)
 set(FIGARO_TEST_PATH ${FIGARO_ROOT}/tests)
 set(FIGARO_INCLUDE ${FIGARO_ROOT}/include)
 
 include_directories(${FIGARO_INCLUDE})
-# TODO: Remove GLOB. Add include directories to remove this clutter. 
+# TODO: Remove GLOB. Add include directories to remove this clutter.
 file(GLOB_RECURSE SRC_FILES src/*.cpp)
 list(FILTER SRC_FILES EXCLUDE REGEX ".*src/main.cpp$")
 if (FIGARO_RUN)

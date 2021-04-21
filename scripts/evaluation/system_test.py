@@ -1,10 +1,10 @@
-# Define a class that wraps a system test where system represents 
-# either competitors or Figaro method. 
-# paths: log,  - build logsalongside output 
-#        dump, - dump data 
+# Define a class that wraps a system test where system represents
+# either competitors or Figaro method.
+# paths: log,  - build logsalongside output
+#        dump, - dump data
 #        comp/perf - performance comparison
 #        comp/prec - precision comparsion
-# 
+#
 
 from enum import IntEnum
 from abc import ABC, abstractmethod
@@ -22,13 +22,13 @@ class PerformanceConf:
     def __init__(self, glob_path: str, path: str, num_reps: int):
         self.path = path
         self.num_reps = num_reps
-        self.glob_path = glob_path 
-        
+        self.glob_path = glob_path
 
 
-# Class that wraps precisions elements 
+
+# Class that wraps precisions elements
 class AccuracyConf:
-    def __init__(self, path: str, r_comp_file_path: str, 
+    def __init__(self, path: str, r_comp_file_path: str,
                 errors_file_path: str, precision: float):
         self.path = path
         self.r_comp_file_path = r_comp_file_path
@@ -47,38 +47,44 @@ class DumpConf:
         self.path = path
         self.file_path  = file_path
 
+
+class QueryConf:
+    def __init__(self, path: str):
+        self.path = path
+
 class SystemTest(ABC):
-    # Debug test is only for debugging 
+    # Debug test is only for debugging
     # Dump is used for accuracy where data is later compared.
-    # Performance is used to run successive tests for comparisons. 
-    # Perofrmance analysis evaluates speed of the algorithm 
-    # Accuracy compares data from dumps 
-    class TestMode(IntEnum): 
+    # Performance is used to run successive tests for comparisons.
+    # Perofrmance analysis evaluates speed of the algorithm
+    # Accuracy compares data from dumps
+    class TestMode(IntEnum):
         DEBUG = 1
         DUMP = 2
         PERFORMANCE = 3
         ACCURACY = 4
         PERFORMANCE_ANALYSIS = 5
-    
-    map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP", 
-                    TestMode.PERFORMANCE: "PERFORMANCE", 
+
+    map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP",
+                    TestMode.PERFORMANCE: "PERFORMANCE",
                     TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",
                     TestMode.ACCURACY: "ACCURACY"}
 
     @staticmethod
-    def test_mode_to_str(test_mode: TestMode)->str: 
+    def test_mode_to_str(test_mode: TestMode)->str:
         return SystemTest.map_mode_to_str[test_mode]
 
 
-    def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf, 
+    def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf,
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
-    test_mode = TestMode.PERFORMANCE):
+    query_conf: QueryConf, test_mode = TestMode.PERFORMANCE):
         self.name = name
         self.conf_accur = accur_conf
         self.conf_perf = perf_conf
         self.conf_log = log_conf
         self.conf_dump = dump_conf
         self.database = database
+        self.conf_query = query_conf
         self.test_mode = test_mode
         self.system_test_paper = None
 
@@ -86,7 +92,7 @@ class SystemTest(ABC):
     @staticmethod
     def create_dir_with_name(path: str, dir_name: str)-> str:
         dir_abs_path = os.path.join(path, dir_name)
-        
+
         if not os.path.exists(dir_abs_path):
             os.makedirs(dir_abs_path)
 
@@ -95,18 +101,18 @@ class SystemTest(ABC):
 
     @classmethod
     def from_specs_path(cls, system_test_specs_path: str,
-        database: Database, test_mode: TestMode, *args, **kwargs):
+        database: Database, query_conf: QueryConf, test_mode: TestMode, *args, **kwargs):
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
-        
-        #TODO: Refactor to remove unnecessary clutter. 
+
+        #TODO: Refactor to remove unnecessary clutter.
         log_json = system_json["system"]["log"]
         log_path = SystemTest.create_dir_with_name(
                     log_json["path"], database.name)
         log_file_path = os.path.join(log_path, log_json["file"])
 
         dump_json = system_json["system"]["dump"]
-        path_dump = SystemTest.create_dir_with_name(    
+        path_dump = SystemTest.create_dir_with_name(
             dump_json["path"], database.name)
         dump_file_path = os.path.join(path_dump, dump_json["file"])
 
@@ -115,22 +121,22 @@ class SystemTest(ABC):
         path_perf = SystemTest.create_dir_with_name(
                         perf_json["path"], database.name)
         num_reps = perf_json["number_reps"]
-        
+
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
             accuracy_json["path"],  database.name)
-        path_errors_file = os.path.join(path_accuracy, 
+        path_errors_file = os.path.join(path_accuracy,
                             accuracy_json["errors_file"])
-        path_r_comp_file =os.path.join(path_accuracy, 
+        path_r_comp_file =os.path.join(path_accuracy,
                             accuracy_json["r_comp_file"])
         precision = accuracy_json["precision"]
-        
+
         system_test = cls(
-            LogConf(log_path, log_file_path), 
-            DumpConf(path_dump, dump_file_path), 
-            PerformanceConf(path_glob, path_perf, num_reps), 
-            AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision), 
-            database, test_mode, 
+            LogConf(log_path, log_file_path),
+            DumpConf(path_dump, dump_file_path),
+            PerformanceConf(path_glob, path_perf, num_reps),
+            AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision),
+            database, query_conf, test_mode,
             *args, **kwargs)
 
         return system_test
@@ -159,7 +165,7 @@ class SystemTest(ABC):
         else:
             logging.error('This type of system test does not exist')
         logging.info("End of test {}".format(self.name))
-    
+
 
     @abstractmethod
     def run_debug(self):
@@ -175,12 +181,12 @@ class SystemTest(ABC):
     def run_accuracy(self):
         pass
 
-    
+
     @abstractmethod
     def run_performance(self):
         pass
-    
-    
+
+
     def run_performance_analysis(self):
         path_log_file = self.conf_log.file_path
         path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
@@ -189,12 +195,12 @@ class SystemTest(ABC):
         logging.info(path_glob_times_file)
         gather_times(path_log_file, path_glob_times_file, self.database.name)
 
-    
+
     @abstractmethod
     def is_dbms(self):
         pass
 
-    
+
     @abstractmethod
     def requires_dbms_result(self):
         pass
@@ -217,7 +223,7 @@ class SystemTest(ABC):
             elif os.path.isdir(file_path):
                 shutil.rmtree(file_path)
 
-    
+
     # Deletes all the auxilary data from the correpsonding path
     def clean_data(self, test_mode: TestMode):
         if test_mode == SystemTest.TestMode.ACCURACY:
@@ -229,7 +235,7 @@ class SystemTest(ABC):
 
         self.delete_content_of_dir(self.path_log)
 
- 
+
     def clean_all_data(self):
         for test_mode in SystemTest.TestMode:
             self.clean_data(test_mode)

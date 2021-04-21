@@ -6,6 +6,7 @@ function init_global_paths()
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
     FIGARO_DUMP_FILE_PATH="$FIGARO_ROOT_PATH/dump/R.csv"
     FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
+    FIGARO_QUERY_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
 }
@@ -20,7 +21,7 @@ function get_str_args()
             EXTENSION="${option#*=}"
             init_global_paths $EXTENSION
         ;;
-        
+
         -l=*|--log_file_path=*)
             EXTENSION="${option#*=}"
             FIGARO_LOG_FILE_PATH="${EXTENSION}"
@@ -40,6 +41,10 @@ function get_str_args()
         --db_config_path=*)
             EXTENSION="${option#*=}"
             FIGARO_DB_CONFIG_PATH=$EXTENSION
+        ;;
+        --query_config_path=*)
+            EXTENSION="${option#*=}"
+            FIGARO_QUERY_CONFIG_PATH=$EXTENSION
         ;;
         --precision=*)
             EXTENSION="${option#*=}"
@@ -63,14 +68,14 @@ function main()
     echo "$@"
     cd "${FIGARO_BUILD_PATH}"
     echo "TESTMODE ${FIGARO_TEST_MODE}"
-    if [[ $FIGARO_TEST_MODE == DEBUG ]]; then 
+    if [[ $FIGARO_TEST_MODE == DEBUG ]]; then
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_DEBUG=ON
     elif [[ $FIGARO_TEST_MODE == UNIT_TEST ]]; then
         cmake ../. -D FIGARO_TEST=ON -D FIGARO_DEBUG=ON
     else
-         cmake ../. -D FIGARO_RUN=ON 
+         cmake ../. -D FIGARO_RUN=ON
     fi
-    # Used for generation of tests and libs. 
+    # Used for generation of tests and libs.
     #cmake ../. -D FIGARO_RUN=ON -D FIGARO_TEST=ON -D FIGARO_LIB=ON
     make -j8
     case "${FIGARO_TEST_MODE}" in
@@ -79,7 +84,8 @@ function main()
         ;;
     "DUMP")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
-            --precision "${FIGARO_PRECISION}"  >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
+            --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" --precision "${FIGARO_PRECISION}"  \
+            >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
         ;;
     "PERFORMANCE")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
@@ -87,10 +93,10 @@ function main()
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*BasicQueryParsing \
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*FigaroSecondPass \
         >   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \
-        
+
        # ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneMultipleAttributes \
         ;;
     esac
