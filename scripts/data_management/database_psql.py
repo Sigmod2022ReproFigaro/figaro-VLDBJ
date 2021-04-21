@@ -30,20 +30,20 @@ class DatabasePsql:
 
 
     def open_connection_admin(self):
-        connection = DatabasePsql.open_connection_static(host_name='', user_name=self.user_name, 
+        connection = DatabasePsql.open_connection_static(host_name='', user_name=self.user_name,
                             password=self.password, database_name='postgres')
         return connection
 
-    
+
 
     def open_connection(self, check_db: bool = True):
         if check_db and not self.check_if_db_exists(self.database_name):
             self.connection = None
         else:
-            self.connection = self.open_connection_static(self.host_name, self.user_name, 
+            self.connection = self.open_connection_static(self.host_name, self.user_name,
                      self.password, self.database_name)
         return self.connection
-    
+
 
     def close_connection(self):
         if self.connection is not None:
@@ -59,29 +59,29 @@ class DatabasePsql:
         cursor.execute(sql_query)
         db_exists = True if cursor.fetchall().__len__() > 0 else False
         connection_admin.close()
-        
+
         return db_exists
 
 
     def create_table(self, relation: Relation):
         attributes = relation.attributes
-        
+
         sql_attributes = ""
         for attribute in attributes:
-            sql_attribute = "{} {}" 
+            sql_attribute = "{} {}"
             sql_attribute = sql_attribute.format(attribute.name, attribute.type)
             sql_attributes += sql_attribute + ","
-        
+
         sql_pks = "PRIMARY KEY({})"
         sql_pk_attributes = ""
         for attribute_name in relation.get_pk_attribute_names():
             sql_pk_attributes += attribute_name + ","
         sql_pks = sql_pks.format(sql_pk_attributes[:-1])
-        
+
         sql_attributes += sql_pks
         sql_query = "CREATE TABLE {} ({});"
         sql_query = sql_query.format(relation.name, sql_attributes)
-        
+
         logging.debug(sql_query)
         cursor = self.connection.cursor()
         cursor.execute(sql_query)
@@ -96,31 +96,31 @@ class DatabasePsql:
             cursor.copy_from(data_csv, table_name, sep=',')
         cursor.close()
 
-    
+
     def drop_table(self, relation):
         pass
-    
+
 
     @staticmethod
-    def get_non_pk_order_of_attributes(relations: List[Relation]):
-        non_pk_attribute_names = []
+    def get_non_join_order_of_attributes(relations: List[Relation]):
+        non_join_attr_names = []
         for relation in relations:
-            non_pk_attribute_names += relation.get_non_pk_attribute_names()
-        
-        return non_pk_attribute_names
+            non_join_attr_names += relation.get_non_join_attribute_names()
+        logging.debug("HOHO", non_join_attr_names)
+        return non_join_attr_names
 
 
     @staticmethod
     def get_order_of_attributes(relations: List[Relation]):
-        pk_attribute_names = []
-        non_pk_attribute_names = DatabasePsql.get_non_pk_order_of_attributes(relations)
-        
+        join_attr_names = []
+        non_join_attribute_names = DatabasePsql.get_non_join_order_of_attributes(relations)
+
         for relation in relations:
-            pk_attribute_names += relation.get_pk_attribute_names() 
-        
-        pk_atrr_names_unique = list(dict.fromkeys(pk_attribute_names))
-        return pk_atrr_names_unique + non_pk_attribute_names
-    
+            join_attr_names += relation.get_join_attribute_names()
+
+        join_attr_names_unique = list(dict.fromkeys(join_attr_names))
+        return join_attr_names_unique + non_join_attribute_names
+
 
     def evaluate_join(self, relations, num_repetitions: int):
         sql_join = "DROP TABLE IF EXISTS " + JOIN_TABLE_NAME + ";CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
@@ -131,7 +131,7 @@ class DatabasePsql:
 
         for attribute_name in ord_attr_names:
             sql_select += attribute_name + ","
-        
+
         sql_select = sql_select[:-1]
         for idx, relation in enumerate(relations):
             sql_from_table_name = relation.name if idx == 0 \
@@ -144,10 +144,10 @@ class DatabasePsql:
             cursor = self.connection.cursor()
             start = timer()
             cursor.execute(sql_join)
-            end = timer() 
+            end = timer()
             logging.info("##Figaro####Join##{}".format(end - start))
             cursor.close()
-    
+
 
 
     def get_relation_size(self, relation_name) -> int:
@@ -168,19 +168,19 @@ class DatabasePsql:
     def log_relation_sizes(self, relation_names):
         for relation_name in relation_names:
             logging.info("Number of rows in relation {} is {}".
-                        format(relation_name, 
+                        format(relation_name,
                         self.get_relation_size(relation_name)))
 
 
     def dump_join(self, relations, output_file_path):
-        non_pk_attribute_names = DatabasePsql.get_non_pk_order_of_attributes(relations)
+        non_join_attribute_names = DatabasePsql.get_non_join_order_of_attributes(relations)
         cursor = self.connection.cursor()
         with open(output_file_path, 'w') as file_csv:
             cursor.copy_to(file_csv, JOIN_TABLE_NAME, sep=',',
-            columns=non_pk_attribute_names)
+            columns=non_join_attribute_names)
 
 
-    # Passes database spec to be created, 
+    # Passes database spec to be created,
     def create_database(self, database: Database):
         self.close_connection()
         self.database_name = database.name
@@ -213,7 +213,7 @@ class DatabasePsql:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--password", action="store",  
+    parser.add_argument("-p", "--password", action="store",
                         dest="password", required=True)
     parser.add_argument("-d", "--dump_path", action="store", dest="dump_path")
     args = parser.parse_args()
@@ -227,4 +227,3 @@ if __name__ == "__main__":
     database_psql.evaluate_join(database.get_relations())
     database_psql.dump_join(database.get_relations(), args.dump_path)
 
-    

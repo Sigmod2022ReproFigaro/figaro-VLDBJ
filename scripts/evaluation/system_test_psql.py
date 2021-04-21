@@ -1,4 +1,5 @@
 import logging
+import json
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from evaluation.system_test import DumpConf, LogConf, QueryConf, SystemTest
@@ -20,6 +21,12 @@ class SystemTestPsql(SystemTestDBMS):
         self.join_path = self.conf_dump.file_path
 
 
+    def get_relation_order(query_conf_path: str):
+        with open(query_conf_path) as file_query_conf:
+            query = json.load(file_query_conf)
+            return query["query"]["evaluation_hint"]["relation_order"]
+
+
     def eval(self, dump: bool, performance: bool):
         log_file_path = self.conf_log.file_path
         file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
@@ -28,6 +35,12 @@ class SystemTestPsql(SystemTestDBMS):
         password=self.password, database_name=self.database.name)
         database_psql.drop_database()
         database_psql.create_database(self.database)
+
+        relation_order = SystemTestPsql.get_relation_order(self.conf_query.path)
+        self.database.sort_relations(relation_order)
+        self.database.set_join_attrs()
+        logging.info(relation_order)
+
 
         num_repetitions = self.conf_perf.num_reps if performance else 1
         database_psql.evaluate_join(self.database.get_relations(), num_repetitions=num_repetitions)

@@ -8,7 +8,7 @@ class Attribute:
         self.primary_key = primary_key
 
 
-class Relation: 
+class Relation:
     def __init__(self, json_schema):
         self.extract_schema_from_json(json_schema)
 
@@ -17,17 +17,38 @@ class Relation:
         self.name = json_schema["name"]
         json_attributes = json_schema["attributes"]
         set_pks = set(json_schema["primary_key"])
-        
+
         attributes = []
         for json_attribute in json_attributes:
             is_attribute_pk = True if json_attribute["name"] in set_pks else False
-            attribute = Attribute(name=json_attribute["name"], 
+            attribute = Attribute(name=json_attribute["name"],
                     type=json_attribute["type"],
                     primary_key=is_attribute_pk)
             attributes.append(attribute)
-        
+
         self.attributes = attributes
         self.data_path = json_schema["data_path"] if "data_path" in json_schema else None
+
+    def set_join_attribute_names(self, join_attrs: List[str]):
+        attr_names = self.get_attribute_names()
+        def key_fun(attr_name: str):
+            return attr_names.index(attr_name)
+        join_attrs.sort(key=key_fun)
+        self.join_attrs = join_attrs
+
+
+    def get_join_attribute_names(self) -> List[str]:
+        return self.join_attrs
+
+
+    def get_non_join_attribute_names(self) -> List[str]:
+        non_join_attrs = list(set(self.get_attribute_names()).difference(self.join_attrs))
+        attr_names = self.get_attribute_names()
+        def key_fun(attr_name: str):
+            return attr_names.index(attr_name)
+        non_join_attrs.sort(key=key_fun)
+        return non_join_attrs
+
 
     def get_attributes(self):
         return self.attributes
@@ -50,8 +71,8 @@ class Relation:
 if __name__ == "__main__":
     relation = Relation({
                 "name": "T1",
-                "attributes": 
-                [ {"name": "R","type": "int"}, 
+                "attributes":
+                [ {"name": "R","type": "int"},
                 {"name": "S","type": "int"},
                 {"name": "A1","type": "int"}
                 ],
