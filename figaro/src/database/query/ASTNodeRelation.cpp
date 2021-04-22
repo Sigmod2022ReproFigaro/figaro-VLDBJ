@@ -1,7 +1,7 @@
 #include "database/query/ASTNodeRelation.h"
 #include "database/query/ASTVisitor.h"
 #include "database/Database.h"
-
+#include <set>
 namespace Figaro
 {
 
@@ -35,7 +35,15 @@ namespace Figaro
         if (nullptr != pParent)
         {
             const std::vector<std::string> vParJoinAttrs = pParent->getJoinAttributeNames();
-            m_vParJoinAttributeNames = setIntersection(getJoinAttributeNames(), vParJoinAttrs);
+            const auto& vParJoinAttrNames = setIntersection(getJoinAttributeNames(), vParJoinAttrs);
+            std::set<std::string> sParJoinAttrNames (vParJoinAttrNames.begin(), vParJoinAttrNames.end());
+            for (const auto& joinAttrName: getJoinAttributeNames())
+            {
+                if (sParJoinAttrNames.find(joinAttrName) != sParJoinAttrNames.end())
+                {
+                    m_vParJoinAttributeNames.push_back(joinAttrName);
+                }
+            }
         }
     }
 
@@ -48,9 +56,9 @@ namespace Figaro
     {
         if (m_vJoinAttributeNames.size() == 0)
         {
-            for (auto const& [attrName, isJoinAttr]: m_mIsJoinAttr)
+            for (const auto& attrName: m_vAttributeNames)
             {
-                if (isJoinAttr)
+                if (m_mIsJoinAttr[attrName])
                 {
                     m_vJoinAttributeNames.push_back(attrName);
                 }
@@ -59,59 +67,8 @@ namespace Figaro
         return m_vJoinAttributeNames;
     }
 
-
-    void ASTNodeRelation::moveFromNumerToDenum(ASTNodeRelation* pRelation)
-    {
-        const auto& itRelation = std::find(m_vpASTNodeRelNumer.begin(), m_vpASTNodeRelNumer.end(), pRelation);
-        if (itRelation != m_vpASTNodeRelNumer.end())
-        {
-            FIGARO_LOG_DBG("itRelation", (*itRelation)->getRelationName())
-            for (const auto& pCurRel: m_vpASTNodeRelNumer)
-            {
-                FIGARO_LOG_DBG("numer", pCurRel->getRelationName())
-            }
-            for (const auto& pCurRel: m_vpASTNodeRelDenom)
-            {
-                FIGARO_LOG_DBG("denom", pCurRel->getRelationName())
-            }
-
-            m_vpASTNodeRelNumer.erase(itRelation);
-            FIGARO_LOG_DBG("Erasure passed")
-
-            m_vpASTNodeRelDenom.push_back(pRelation);
-            FIGARO_LOG_DBG("AddedRElation")
-        }
-         for (const auto& pCurRel: m_vpASTNodeRelNumer)
-            {
-                FIGARO_LOG_DBG("numer", pCurRel->getRelationName())
-            }
-            for (const auto& pCurRel: m_vpASTNodeRelDenom)
-            {
-                FIGARO_LOG_DBG("denom", pCurRel->getRelationName())
-            }
-    }
-
     void ASTNodeRelation::accept(ASTVisitor *pVisitor)
     {
         pVisitor->visitNodeRelation(this);
-    }
-
-    MatrixEigenT* ASTNodeRelation::computeHead(Database* pDatabase) const
-    {
-        //return pDatabase->computeHead(m_relationName);
-    }
-
-    MatrixEigenT* ASTNodeRelation::computeTail(Database* pDatabase) const
-    {
-        //return pDatabase->computeTail(m_relationName);
-    }
-
-    void ASTNodeRelation::computeHeadSingleThreaded(
-        const std::vector<std::string>& joinAttributes) const
-    {
-        for (const auto& joinAttribute: joinAttributes)
-        {
-
-        }
     }
 }

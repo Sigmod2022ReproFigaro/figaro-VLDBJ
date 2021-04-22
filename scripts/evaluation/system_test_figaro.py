@@ -30,6 +30,7 @@ class SystemTestFigaro(SystemTest):
                 "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
+                "--query_config_path={}".format(self.conf_query.path),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

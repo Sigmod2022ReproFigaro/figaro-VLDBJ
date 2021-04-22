@@ -16,8 +16,6 @@ namespace Figaro
         std::map<std::string, bool> m_mIsJoinAttr;
         std::vector<std::string> m_vJoinAttributeNames;
         std::vector<std::string> m_vParJoinAttributeNames;
-        std::vector<ASTNodeRelation*> m_vpASTNodeRelNumer;
-        std::vector<ASTNodeRelation*> m_vpASTNodeRelDenom;
     public:
         // TODO: Add ranges and other options.
         ASTNodeRelation(const std::string& relationName,
@@ -40,17 +38,6 @@ namespace Figaro
         {
             return m_relationName;
         }
-
-        std::vector<ASTNodeRelation*>& getNumerRelations(void)
-        {
-            return m_vpASTNodeRelNumer;
-        }
-        std::vector<ASTNodeRelation*>& getDenomRelations(void)
-        {
-            return m_vpASTNodeRelDenom;
-        }
-
-        void moveFromNumerToDenum(ASTNodeRelation* pRelation);
 
         void setJoinAttribute(const std::string& attrName);
 

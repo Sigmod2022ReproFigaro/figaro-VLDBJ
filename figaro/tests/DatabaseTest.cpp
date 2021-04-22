@@ -632,7 +632,6 @@ TEST(DatabaseConfig, FigaroSecondPass)
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery(true, true, true);
-    FIGARO_LOG_INFO("Relation", "R2")
     const auto& headDT = database.getHead("R2");
     const auto& tailDT = database.getGeneralizedTail("R2");
     Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);

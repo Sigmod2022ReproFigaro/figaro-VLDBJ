@@ -2,29 +2,12 @@
 
 namespace Figaro
 {
-
-    void ASTJoinAttributesComputeVisitor::initializeEnumAndDenomRelations(ASTNodeRelation* pRelation)
-    {
-        std::vector<ASTNodeRelation*>& numRelations =  pRelation->getNumerRelations();
-        std::vector<ASTNodeRelation*>& denomRelations =  pRelation->getDenomRelations();
-
-        denomRelations.push_back(pRelation);
-        for (const auto& pCurRelation: m_vpASTNodeRelation)
-        {
-            if (pCurRelation != pRelation)
-            {
-                numRelations.push_back(pCurRelation);
-            }
-        }
-    }
-
     void ASTJoinAttributesComputeVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         pElement->checkAndUpdateJoinAttributes();
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
-        //initializeEnumAndDenomRelations(pElement);
     }
 
     void ASTJoinAttributesComputeVisitor::visitNodeJoin(ASTNodeJoin* pElement)
@@ -39,7 +22,6 @@ namespace Figaro
         pElement->checkAndUpdateJoinAttributes();
         pElement->checkAndUpdateChildrenParJoinAttributes();
 
-        //initializeEnumAndDenomRelations(pElement->getCentralRelation());
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
