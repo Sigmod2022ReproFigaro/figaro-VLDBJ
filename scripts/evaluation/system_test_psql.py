@@ -12,12 +12,13 @@ class SystemTestPsql(SystemTestDBMS):
             perf_conf: PerformanceConf, accur_conf: AccuracyConf,
             database: Database, query_conf: QueryConf,
             test_mode: SystemTest.TestMode,
-            password: str, **kwargs):
+            username: str, password: str, **kwargs):
         super().__init__("PSQL", log_conf=log_conf, dump_conf=dump_conf,
                     perf_conf=perf_conf, accur_conf = accur_conf,
                     database = database, query_conf= query_conf,
                     test_mode=test_mode)
         self.password = password
+        self.username = username
         self.join_path = self.conf_dump.file_path
 
 
@@ -31,7 +32,7 @@ class SystemTestPsql(SystemTestDBMS):
         log_file_path = self.conf_log.file_path
         file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
 
-        database_psql = DatabasePsql(host_name="",user_name="popina",
+        database_psql = DatabasePsql(host_name="",user_name=self.username,
         password=self.password, database_name=self.database.name)
         database_psql.drop_database()
         database_psql.create_database(self.database)

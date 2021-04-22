@@ -12,9 +12,10 @@ from evaluation.system_test_competitor import SystemTestCompetitor
 class SystemTestPython(SystemTestCompetitor):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
-    query_conf: QueryConf,
-    test_mode = SystemTest.TestMode.PERFORMANCE, **kwargs):
+    query_conf: QueryConf, test_mode: SystemTest.TestMode, root_path: str,
+    **kwargs):
         super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, database, query_conf, test_mode)
+        self.root_path = root_path
 
 
     def set_join_result_path(self, join_path):
@@ -26,9 +27,8 @@ class SystemTestPython(SystemTestCompetitor):
 
 
     def eval(self, dump: bool, performance: bool):
-        args = ["python3",
-            "/home/popina/Figaro/figaro-code/competitors/python/qr.py",
-            "--data_path", self.join_path]
+        script_path = os.path.join(self.root_path, "competitors/python/qr.py")
+        args = ["python3", script_path, "--data_path", self.join_path]
         if dump:
             args += [ "--dump_file", self.conf_dump.file_path,
                      "--precision", str(self.conf_accur.precision)]

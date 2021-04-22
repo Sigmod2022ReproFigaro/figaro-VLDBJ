@@ -14,10 +14,10 @@ from evaluation.system_test import PerformanceConf
 class SystemTestFigaro(SystemTest):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
             perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database, query_conf: QueryConf,
-            test_mode = SystemTest.TestMode.PERFORMANCE, *args, **kwargs):
+            test_mode, root_path: str, *args, **kwargs):
         super().__init__("FIGARO", log_conf, dump_conf, perf_conf,
             accur_conf, database, query_conf, test_mode)
-
+        self.figaro_path = os.path.join(root_path, "figaro")
 
     def eval(self):
         pass
@@ -27,13 +27,14 @@ class SystemTestFigaro(SystemTest):
         test_mode = SystemTest.test_mode_to_str(self.test_mode)
         logging.error(test_mode)
         args = ["/bin/bash", "setup.sh",
+                "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
         result = subprocess.run(
-            args=args, cwd="/home/popina/Figaro/figaro-code/figaro",
+            args=args, cwd=self.figaro_path,
             capture_output=True, text=True, shell=False)
         logging.info(result.stdout)
         logging.error(result.stderr)
@@ -43,6 +44,7 @@ class SystemTestFigaro(SystemTest):
         test_mode = SystemTest.test_mode_to_str(self.test_mode)
         logging.error(test_mode)
         args = ["/bin/bash", "setup.sh",
+                "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--dump_file_path={}".format(self.conf_dump.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
@@ -51,7 +53,7 @@ class SystemTestFigaro(SystemTest):
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
         result = subprocess.run(
-            args=args, cwd="/home/popina/Figaro/figaro-code/figaro",
+            args=args, cwd=self.figaro_path,
             capture_output=True, text=True, shell=False)
         logging.info(result.stdout)
         logging.error(result.stderr)

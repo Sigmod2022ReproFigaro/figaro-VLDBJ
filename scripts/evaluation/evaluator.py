@@ -23,10 +23,12 @@ class SystemTestsEvaluator:
         'debug': SystemTest.TestMode.DEBUG}
 
 
-    def __init__(self, tests_conf: str, password: str = None):
+    def __init__(self, tests_conf: str, root_path: str, username: str, password: str = None):
         with open(tests_conf) as json_file:
             tests_json = json.load(json_file)
 
+        self.root_path = root_path
+        self.username = username
         self.password = password
         self.load_tests(tests_json)
 
@@ -101,8 +103,9 @@ class SystemTestsEvaluator:
         system_test_mode = system_test_json["mode"]
         class_type = SystemTestsEvaluator.map_category_to_class[system_test_cat]
         test_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
-        system_test = class_type.from_specs_path(system_conf_path, database,
-                        query_conf, test_mode=test_mode, password=self.password)
+        system_test = class_type.from_specs_path(system_conf_path, database, query_conf,
+            test_mode=test_mode, root_path = self.root_path, username=self.username,
+            password=self.password)
 
         logging.debug("Category is{}".format(system_test_cat))
         logging.debug("Created category {}".format(type(system_test)))
@@ -119,14 +122,15 @@ class SystemTestsEvaluator:
 
 
 
-def eval_tests(password: str, test_conf_path: str):
-    system_tests_evaluator = SystemTestsEvaluator(test_conf_path, password)
+def eval_tests(root_path: str, username: str, password: str, test_conf_path: str):
+    system_tests_evaluator = SystemTestsEvaluator(test_conf_path, root_path,
+        username, password)
     system_tests_evaluator.eval_tests()
 
 
-def get_all_test_specs_paths(root_path: str, test_num):
+def get_all_test_specs_paths(system_tests_path: str, test_num):
     test_conf_paths = []
-    test_specs_dir = os.path.join(root_path, "system_tests/")
+    test_specs_dir = system_tests_path
     if test_num is None:
         for test_path in listdir(test_specs_dir):
             test_specs_path = os.path.join(test_specs_dir, test_path, "tests_specs.conf")
@@ -144,15 +148,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",
                         dest="password", required=True)
-    parser.add_argument("-t", "--test", action="store",
-                        dest="test", required=False)
+    parser.add_argument("-u", "--username", action="store",
+                        dest="username", required=True)
     parser.add_argument("-r", "--root", action="store",
                         dest="root_path", required=False)
+    parser.add_argument("-s", "--system_tests_path", action="store",
+                        dest="system_tests_path", required=True)
+    parser.add_argument("-t", "--test", action="store",
+                        dest="test", required=False)
     args = parser.parse_args()
 
     root_path = args.root_path if args.root_path is not None \
         else "/home/popina/Figaro/figaro-code"
-    test_conf_paths = get_all_test_specs_paths(root_path, args.test)
+    system_tests_path = args.system_tests_path
+
+    test_conf_paths = get_all_test_specs_paths(system_tests_path, args.test)
     for test_conf_path in test_conf_paths:
         logging.info("Running test specified in the path {}".format(test_conf_path))
-        eval_tests(args.password, test_conf_path)
+        eval_tests(root_path, args.username, args.password, test_conf_path)

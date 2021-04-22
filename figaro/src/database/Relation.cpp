@@ -300,7 +300,7 @@ namespace Figaro
             }
         }
         m_data = std::move(tmpMatrix);
-        FIGARO_LOG_DBG("Relation: ", m_name, "data:", m_data);
+        //FIGARO_LOG_DBG("Relation: ", m_name, "data:", m_data);
     }
 
     void Relation::sortData(void)
@@ -527,7 +527,7 @@ namespace Figaro
         {
             std::unordered_map<double, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =  (std::unordered_map<double, std::tuple<uint32_t, uint32_t> >*)(pHashTablePt);
             (*tpHashTablePt)[pRow[vParAttrIdx[0]]] = std::make_tuple(downCnt, 0);
-            FIGARO_LOG_DBG("Inserted in", pRow[vParAttrIdx[0]], "value", downCnt)
+            //FIGARO_LOG_DBG("Inserted in", pRow[vParAttrIdx[0]], "value", downCnt)
         }
         else if (vParAttrIdx.size() == 2)
         {
@@ -558,7 +558,7 @@ namespace Figaro
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
-            FIGARO_LOG_DBG("It shouldn't be")
+            //FIGARO_LOG_DBG("It shouldn't be")
             const std::tuple<double, double> joinAttrVal =
             std::make_tuple(pRow[vParJoinAttrIdxs[0]],
                             pRow[vParJoinAttrIdxs[1]]);
