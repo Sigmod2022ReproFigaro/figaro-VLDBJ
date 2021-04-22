@@ -5,6 +5,15 @@
 namespace Figaro
 {
 
+    ASTNodeJoin::~ASTNodeJoin()
+    {
+        for (uint32_t idx = 0; idx < m_vPChild.size(); idx++)
+        {
+            delete m_vPChild[idx];
+        }
+        delete m_pCenRelation;
+    }
+
     void ASTNodeJoin::checkAndUpdateJoinAttributes(void)
     {
         m_pCenRelation->checkAndUpdateJoinAttributes(getParent());

@@ -18,7 +18,7 @@ namespace Figaro
     public:
         ASTNodeJoin(ASTNodeRelation* pRelation, std::vector<ASTNodeAbsRelation*> vPChild):
             m_pCenRelation(pRelation), m_vPChild(vPChild){}
-        virtual ~ASTNodeJoin() override {}
+        virtual ~ASTNodeJoin() override;
 
         ASTNodeRelation* getRelation(void) override
         {
@@ -59,7 +59,7 @@ namespace Figaro
             return m_vvChildParJoinAttributeNames;
         }
 
-        std::vector<ASTNodeAbsRelation*> getChildren(void)
+        std::vector<ASTNodeAbsRelation*>& getChildren(void)
         {
             return m_vPChild;
         }

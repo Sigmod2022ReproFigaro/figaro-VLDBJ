@@ -15,6 +15,8 @@ namespace Figaro
         {
             return;
         }
+        delete pASTRoot;
+
     }
 
     ASTNode* Query::createASTFromJson(const json& jsonQueryConfig)

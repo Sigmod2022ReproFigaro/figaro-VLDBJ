@@ -136,6 +136,7 @@ namespace Figaro
         MatrixDT m_countsParJoinAttrs;
         std::vector<uint32_t> m_vParBlockStartIdxs;
 
+        // TODO: Delete this in children nodes since it is not needed.
         void* m_pHTParCounts;
 
         uint32_t m_cntsParIdxD;
@@ -225,6 +226,10 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  hashTabRowPt,
             const MatrixDT& dataParent);
+
+        void destroyHashTableRowIdxs(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*& pHashTablePt);
 
 
         void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
@@ -336,6 +341,9 @@ namespace Figaro
 
         std::map<std::vector<double>, uint32_t> getCircCounts(void);
 
+
+        void destroyParCntHashTable(const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*  htChildParAttrs);
         /**
          * It will copy the underlying data and apply head transformation onto it.
          * The Head and Tail transformation will be applied as if we had:

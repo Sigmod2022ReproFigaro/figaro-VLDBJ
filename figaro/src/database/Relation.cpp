@@ -573,6 +573,30 @@ namespace Figaro
 
     }
 
+    void Relation::destroyParCntHashTable(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  htChildParAttrs)
+    {
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            std::unordered_map<double, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (std::unordered_map<double, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
+            delete phtChildOneParAttrs;
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (std::unordered_map<std::tuple<double, double>, std::tuple<uint32_t, uint32_t> >*)(htChildParAttrs);
+            delete phtChildTwoParAttrs;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+
+    }
+
+
+
     std::map<std::vector<double>, uint32_t> Relation::getParDownCntsFromHashTable(
         const std::vector<std::string>& vParJoinAttrNames)
     {
@@ -704,16 +728,16 @@ namespace Figaro
         {
             // TODO: Extract join for relation specific from join attribute value.
             const double joinAttrVal = dataParent[rowIdx][vParJoinAttrIdxs[0]];
-            std::unordered_map<double, uint32_t> htChildRowIdxOne = *(std::unordered_map<double, uint32_t>*)(htChildRowIdx);
-            rowChildIdx = htChildRowIdxOne[joinAttrVal];
+            std::unordered_map<double, uint32_t>* pHtChildRowIdxOne = (std::unordered_map<double, uint32_t>*)(htChildRowIdx);
+            rowChildIdx = (*pHtChildRowIdxOne)[joinAttrVal];
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
             const std::tuple<double, double> joinAttrVal =
             std::make_tuple(dataParent[rowIdx][vParJoinAttrIdxs[0]],
                             dataParent[rowIdx][vParJoinAttrIdxs[1]]);
-            std::unordered_map<std::tuple<double, double>, uint32_t> htChildRowIdxOne = *(std::unordered_map<std::tuple<double, double>, uint32_t>*)(htChildRowIdx);
-            rowChildIdx = htChildRowIdxOne[joinAttrVal];
+            std::unordered_map<std::tuple<double, double>, uint32_t>* htChildRowIdxOne =(std::unordered_map<std::tuple<double, double>, uint32_t>*)(htChildRowIdx);
+            rowChildIdx = (*htChildRowIdxOne)[joinAttrVal];
         }
         else
         {
@@ -722,6 +746,29 @@ namespace Figaro
         }
 
         return rowChildIdx;
+    }
+
+    void Relation::destroyHashTableRowIdxs(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*& pHashTablePt)
+    {
+         uint32_t rowChildIdx = UINT32_MAX;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            std::unordered_map<double, uint32_t>* pHtChildRowIdxOne =(std::unordered_map<double, uint32_t>*)(pHashTablePt);
+            delete pHtChildRowIdxOne;
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            std::unordered_map<std::tuple<double, double>, uint32_t>* pHtChildRowIdxOne = (std::unordered_map<std::tuple<double, double>, uint32_t>*)(pHashTablePt);
+            delete pHtChildRowIdxOne;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+
     }
 
     void Relation::computeDownCounts(
@@ -1187,6 +1234,11 @@ namespace Figaro
             dataScales[rowIdx][0] /= scales[rowIdx][0];
             scales[rowIdx][0] = m_allScales[rowIdx];
         }
+        for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+        {
+            destroyHashTableRowIdxs(vvCurJoinAttrIdxs[idxChild], vpHashTabRowPt[idxChild]);
+        }
+
         m_dataHead = std::move(dataOutput);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
@@ -1335,15 +1387,17 @@ namespace Figaro
         }
 
         schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
+        // TODO: Destroy for all children.
+        destroyParCntHashTable(vParJoinAttrIdxs, m_pHTParCounts);
 
         m_dataHead = std::move(dataHeadOut);
         m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        FIGARO_LOG_DBG("m_dataHead", m_name, m_dataHead)
-        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
-        FIGARO_LOG_DBG("m_dataTailsGen", m_dataTailsGen)
-        FIGARO_LOG_DBG("m_scales", m_scales)
+        //FIGARO_LOG_DBG("m_dataHead", m_name, m_dataHead)
+        //FIGARO_LOG_DBG("m_dataScales", m_dataScales)
+        //FIGARO_LOG_DBG("m_dataTailsGen", m_dataTailsGen)
+        //FIGARO_LOG_DBG("m_scales", m_scales)
     }
 
     const Relation::MatrixDT& Relation::getHead(void) const

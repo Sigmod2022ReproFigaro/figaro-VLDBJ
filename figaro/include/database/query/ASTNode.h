@@ -6,14 +6,14 @@
 namespace Figaro
 {
     class ASTVisitor;
-    class ASTNode 
+    class ASTNode
     {
         friend class ASTVisitor;
     public:
         virtual void accept(ASTVisitor* pVisitor) = 0;
         virtual ~ASTNode() = 0;
     };
-    
+
     inline ASTNode::~ASTNode() {}
 }
 

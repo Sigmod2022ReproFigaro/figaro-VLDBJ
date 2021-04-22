@@ -15,9 +15,9 @@ namespace Figaro
         std::vector<std::string> m_vRelationOrder;
     public:
         ASTNodeQRGivens(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder) {};
-        virtual ~ASTNodeQRGivens() override {}
-        ASTNode* getOperand(void) 
-        { 
+        virtual ~ASTNodeQRGivens() override { delete m_pOperand; }
+        ASTNode* getOperand(void)
+        {
             return m_pOperand;
         };
 
@@ -27,9 +27,9 @@ namespace Figaro
         }
         void accept(ASTVisitor *pVisitor) override;
     };
-    
-    
+
+
 } // namespace Figaro
 
 
-#endif 
+#endif
