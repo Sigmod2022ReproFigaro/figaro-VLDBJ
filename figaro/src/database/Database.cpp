@@ -154,17 +154,17 @@ namespace Figaro
 
     void Database::computeHeadsAndTails(
         const std::string& relationName,
-        const std::vector<std::string>& vJoinAttrNames)
+        const std::vector<std::string>& vJoinAttrNames,
+        bool isLeafNode)
     {
         Relation& rel = m_relations.at(relationName);
-        rel.computeHeadsAndTails(vJoinAttrNames);
+        rel.computeHeadsAndTails(vJoinAttrNames, isLeafNode);
     }
 
     void Database::aggregateAwayChildrenRelations(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::string>& vParJoinAttributeNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
     {
         Relation& rel = m_relations.at(relationName);
@@ -176,7 +176,7 @@ namespace Figaro
             vpChildRels.push_back(pRel);
         }
         rel.aggregateAwayChildrenRelations(vpChildRels,
-             vJoinAttributeNames, vParJoinAttributeNames, vvJoinAttributeNames);
+             vJoinAttributeNames, vvJoinAttributeNames);
     }
 
     void Database::computeAndScaleGeneralizedHeadAndTail(

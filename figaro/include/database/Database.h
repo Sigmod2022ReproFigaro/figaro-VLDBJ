@@ -66,13 +66,13 @@ namespace Figaro
 
         void computeHeadsAndTails(
             const std::string& relationName,
-            const std::vector<std::string>& vJoinAttrNames);
+            const std::vector<std::string>& vJoinAttrNames,
+            bool isLeafNode);
 
         void aggregateAwayChildrenRelations(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::string>& vParJoinAttributeNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
         void computeAndScaleGeneralizedHeadAndTail(

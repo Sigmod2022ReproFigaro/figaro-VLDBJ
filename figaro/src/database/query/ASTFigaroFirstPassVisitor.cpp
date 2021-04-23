@@ -4,19 +4,18 @@ namespace Figaro
 {
     void ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
-        bool isRootNode;
         std::vector<std::string> childrenNames;
         std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
+        FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
 
-        isRootNode = pElement->getParent() == nullptr;
-        m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames());
+        m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
+        true);
     }
 
     void ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
-        bool isRootNode;
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
         for (const auto& pChild: pElement->getChildren())
@@ -26,8 +25,9 @@ namespace Figaro
         }
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        isRootNode = pElement->getParent() == nullptr;
-        m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames());
+        FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
+        m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
+             false);
     }
 
     void ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)

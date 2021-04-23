@@ -5,13 +5,13 @@
 
 namespace Figaro
 {
-    // Row-major order of storing elements of matrix is assumed. 
+    // Row-major order of storing elements of matrix is assumed.
     template <typename T>
-    class Matrix 
+    class Matrix
     {
         static constexpr uint32_t MIN_COLS_PAR = 100;
         uint32_t m_numRows = 0, m_numCols = 0;
-        ArrayStorage<T>* m_pStorage = nullptr; 
+        ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)
         {
             m_numRows = 0;
@@ -47,7 +47,7 @@ namespace Figaro
             other.m_numRows = 0;
             //FIGARO_LOG_DBG("Finished move constructor")
         }
-        Matrix& operator=(Matrix&& other) 
+        Matrix& operator=(Matrix&& other)
         {
             //FIGARO_LOG_DBG("Entered move assignment")
             if (this != &other)
@@ -65,7 +65,7 @@ namespace Figaro
             return *this;
         }
 
-        ~Matrix() 
+        ~Matrix()
         {
             destroyData();
         }
@@ -74,16 +74,16 @@ namespace Figaro
         T* operator[](uint32_t rowIdx)
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &(*m_pStorage)[rowIdx * m_numCols];
+            return &((*m_pStorage)[rowIdx * m_numCols]);
         }
 
         const T* operator[](uint32_t rowIdx) const
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &(*m_pStorage)[rowIdx * m_numCols];
+            return &((*m_pStorage)[rowIdx * m_numCols]);
         }
-        
-        // Changes the size of matrix while keeping the data. 
+
+        // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
             if (nullptr == m_pStorage)
@@ -108,7 +108,7 @@ namespace Figaro
         }
 
 
-        Matrix<T> getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd, 
+        Matrix<T> getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd,
                         uint32_t colIdxBegin, uint32_t colIdxEnd) const
         {
             Matrix<T> tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
@@ -122,24 +122,24 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T> getRightCols(uint32_t numCols) const 
+        Matrix<T> getRightCols(uint32_t numCols) const
         {
-            return getBlock(0, m_numRows - 1, m_numCols - numCols, m_numCols - 1);  
+            return getBlock(0, m_numRows - 1, m_numCols - numCols, m_numCols - 1);
         }
 
         Matrix<T> getLeftCols(uint32_t numCols) const
         {
-            return getBlock(0, m_numRows - 1, 0, numCols - 1);  
+            return getBlock(0, m_numRows - 1, 0, numCols - 1);
         }
 
-        Matrix<T> getTopRows(uint32_t numRows) const 
+        Matrix<T> getTopRows(uint32_t numRows) const
         {
-            return getBlock(0, numRows - 1, 0, m_numCols - 1);  
+            return getBlock(0, numRows - 1, 0, m_numCols - 1);
         }
 
-        Matrix<T> getBottomRows(uint32_t numRows) const 
+        Matrix<T> getBottomRows(uint32_t numRows) const
         {
-            return getBlock(m_numRows - numRows, m_numRows - 1, 0, m_numCols - 1);  
+            return getBlock(m_numRows - numRows, m_numRows - 1, 0, m_numCols - 1);
         }
 
         friend std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
@@ -150,11 +150,11 @@ namespace Figaro
             uint32_t colNum;
 
             colNum = m.getNumCols();
-            rowNum = m.getNumRows(); 
+            rowNum = m.getNumRows();
 
             out << "Matrix" << std::endl;
             out <<  "Matrix dimensions: " << rowNum << " " << colNum << std::endl;
-            
+
             for (uint32_t row = 0; row < rowNum; row ++)
             {
                 for (uint32_t col = 0; col < colNum; col++)
@@ -200,9 +200,9 @@ namespace Figaro
                 {
                     tmp[rowIdx][m_numCols + colIdx] = m[rowIdx][colIdx];
                 }
-            } 
+            }
             FIGARO_LOG_DBG("Exited concatenateHorizontally")
-            return tmp;   
+            return tmp;
         }
 
         Matrix<T> concatenateVertically(const Matrix<T>& m) const
@@ -217,7 +217,7 @@ namespace Figaro
                 {
                     tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
                 }
-            } 
+            }
 
             for (uint32_t rowIdx = 0; rowIdx < m.m_numRows; rowIdx++)
             {
@@ -225,7 +225,7 @@ namespace Figaro
                 {
                     tmp[rowIdx + m_numRows][colIdx] = m[rowIdx][colIdx];
                 }
-            } 
+            }
             return tmp;
         }
 
@@ -245,9 +245,9 @@ namespace Figaro
                 {
                     tmp[rowIdx][m_numCols + colIdx] = scalar;
                 }
-            } 
+            }
             FIGARO_LOG_DBG("FInished concatenateHorizontallyScalar")
-            return tmp;   
+            return tmp;
         }
 
         Matrix<T> concatenateVerticallyScalar(T scalar, uint32_t numRows) const
@@ -261,7 +261,7 @@ namespace Figaro
                 {
                     tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
                 }
-            } 
+            }
 
             for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
             {
@@ -269,16 +269,16 @@ namespace Figaro
                 {
                     tmp[rowIdx + m_numRows][colIdx] = scalar;
                 }
-            } 
+            }
             return tmp;
         }
 
-        
+
         void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx,
                          double sin, double cos)
         {
             auto& matA = *this;
-            
+
             for (uint32_t colIdx = startColIdx; colIdx < matA.m_numCols; colIdx++)
             {
                 double tmpUpperVal = matA[rowIdxUpper][colIdx];
@@ -308,7 +308,7 @@ namespace Figaro
             }
         }
 
-        
+
         void computeQRGivensParallelized(uint32_t numThreads)
         {
             auto& matA = *this;
@@ -328,7 +328,7 @@ namespace Figaro
                     threadId = omp_get_thread_num();
                     colIdx = batchIdx * batchSize + threadId;
 
-                    // Each thread will get equal number of rows to process. 
+                    // Each thread will get equal number of rows to process.
                     // Although some threads will do dummy processing in the begining
                     for (uint32_t rowIdx = m_numRows - 1 + 2 * threadId; rowIdx > colIdx; rowIdx--)
                     {
@@ -346,7 +346,7 @@ namespace Figaro
                         }
                         #pragma omp barrier
                     }
-                    // Extra dummy loops needed for barier synchronization. 
+                    // Extra dummy loops needed for barier synchronization.
                     for (uint32_t idx = 0; idx < batchSize - threadId - 1; idx++)
                     {
                         #pragma omp barrier
@@ -355,7 +355,7 @@ namespace Figaro
             }
         }
 
-        // numThreads denotes number of threads available for the computation in the case of parallelization. 
+        // numThreads denotes number of threads available for the computation in the case of parallelization.
         void computeQRGivens(uint32_t numThreads = 1)
         {
             if (m_numCols > MIN_COLS_PAR)
@@ -366,73 +366,73 @@ namespace Figaro
             {
                 computeQRGivensSequential();
             }
-            
+
         }
 
 
         class RowIterator
         {
-            T* m_rowPt = nullptr; 
+            T* m_rowPt = nullptr;
             uint32_t m_numCols = 1;
-        public: 
+        public:
             using difference_type = uint32_t;
             using pointer = const T*;
             using reference = const T*;
             using value_type = T*;
             using iterator_category = std::random_access_iterator_tag;
 
-            RowIterator(T* rowPt, uint32_t numCols): 
+            RowIterator(T* rowPt, uint32_t numCols):
                 m_rowPt(rowPt), m_numCols(numCols) {}
 
-            RowIterator& operator+=(difference_type diff) 
+            RowIterator& operator+=(difference_type diff)
             {
-                m_rowPt += diff * m_numCols; 
+                m_rowPt += diff * m_numCols;
                 return *this;
             }
-            RowIterator& operator-=(difference_type diff) 
+            RowIterator& operator-=(difference_type diff)
             {
                 m_rowPt -= diff * m_numCols;
                 return *this;
             }
             T* operator*() const { return m_rowPt; }
             T* operator->() const {return m_rowPt;}
-            T* operator[](difference_type rhs) const 
-            { 
-                return m_rowPt + rhs * m_numCols; 
+            T* operator[](difference_type rhs) const
+            {
+                return m_rowPt + rhs * m_numCols;
             }
-            
+
             RowIterator& operator++() { m_rowPt += m_numCols; return *this;}
             RowIterator& operator--() { m_rowPt -= m_numCols; return *this;}
-            RowIterator operator++(int) 
-            { 
+            RowIterator operator++(int)
+            {
                 RowIterator tmp = *this;
                 ++(*this);
                 return tmp;
             }
-            RowIterator operator--(int) 
-            { 
+            RowIterator operator--(int)
+            {
                 RowIterator tmp =*this;
                 --(*this);
-                return tmp; 
+                return tmp;
             }
-            difference_type operator-(const RowIterator& rhs) const 
-            { 
-                return (m_rowPt - rhs.m_rowPt) / m_numCols; 
-            }
-            RowIterator operator+(difference_type diff) const 
+            difference_type operator-(const RowIterator& rhs) const
             {
-                return RowIterator(m_rowPt + diff * m_numCols, m_numCols); 
+                return (m_rowPt - rhs.m_rowPt) / m_numCols;
             }
-            RowIterator operator-(difference_type diff) const 
+            RowIterator operator+(difference_type diff) const
             {
-                return RowIterator(m_rowPt - diff * m_numCols, m_numCols); 
+                return RowIterator(m_rowPt + diff * m_numCols, m_numCols);
+            }
+            RowIterator operator-(difference_type diff) const
+            {
+                return RowIterator(m_rowPt - diff * m_numCols, m_numCols);
             }
 
-            friend RowIterator operator+(difference_type diff, const RowIterator& rhs) 
+            friend RowIterator operator+(difference_type diff, const RowIterator& rhs)
             {
                 return RowIterator(diff + rhs.m_rowPt, rhs.sm_numCols);
             }
-            friend  RowIterator operator-(difference_type diff, const RowIterator& rhs) 
+            friend  RowIterator operator-(difference_type diff, const RowIterator& rhs)
             {
                 return RowIterator(diff - rhs.m_rowPt, rhs.m_numCols);
             }
@@ -454,10 +454,10 @@ namespace Figaro
         RowIterator end()
         {
             FIGARO_LOG_ASSERT(m_pStorage != nullptr)
-            return RowIterator(m_pStorage->getData() + m_pStorage->getSize(), m_numCols);    
+            return RowIterator(m_pStorage->getData() + m_pStorage->getSize(), m_numCols);
         }
     };
 
-} 
+}
 
 #endif

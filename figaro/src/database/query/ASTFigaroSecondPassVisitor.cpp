@@ -22,7 +22,6 @@ namespace Figaro
             relationName,
             pElement->getChildrenNames(),
             pElement->getJoinAttributeNames(),
-            pElement->getParJoinAttributeNames(),
             pElement->getChildrenParentJoinAttributeNames());
 
         m_pDatabase->computeAndScaleGeneralizedHeadAndTail(

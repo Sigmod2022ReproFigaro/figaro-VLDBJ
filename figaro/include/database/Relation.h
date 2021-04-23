@@ -352,7 +352,8 @@ namespace Figaro
          *  TAIL(remaining attributes)
          * GROUP BY attrNames.
          */
-        void computeHeadsAndTails(const std::vector<std::string>& vJoinAttrNames);
+        void computeHeadsAndTails(
+            const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
 
         /**
          *  It will join relations by copying data from the children relations @p vpChildRels
@@ -365,7 +366,6 @@ namespace Figaro
         void aggregateAwayChildrenRelations(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::string>& vParJoinAttributeNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
         void computeAndScaleGeneralizedHeadAndTail(

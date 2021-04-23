@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
     MICRO_BENCH_INIT(main)
     MICRO_BENCH_START(main)
-    query.evaluateQuery(true, false, false);
+    query.evaluateQuery(true, true, true);
     MICRO_BENCH_STOP(main)
     FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
 
