@@ -1443,7 +1443,6 @@ namespace Figaro
         FIGARO_LOG_ASSERT(numNonJoinAttrs <= m_dataHead.getNumCols())
         MatrixDT tmp = m_dataHead.getRightCols(numNonJoinAttrs);
         m_dataHead = std::move(tmp);
-        m_dataHead.computeQRGivens();
         FIGARO_LOG_INFO("QR generalized head", m_name)
         if (m_dataHead.getNumCols() > m_dataHead.getNumRows())
         {
@@ -1454,7 +1453,6 @@ namespace Figaro
         {
             m_dataHead.computeQRGivens(omp_get_num_procs());
         }
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         m_dataHead.resize(m_dataHead.getNumCols());
     }
 
@@ -1522,7 +1520,7 @@ namespace Figaro
             vpRels[idx-1]->m_dataTails.getNumRows() +
             vpRels[idx-1]->m_dataTailsGen.getNumRows();
         }
-        totalNumRows = vCumNumRowsUp[numRels-1];
+        totalNumRows = vCumNumRowsUp[numRels];
 
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
 
@@ -1534,15 +1532,19 @@ namespace Figaro
                 catGenHeadAndTails[rowIdx][colIdx] = m_dataHead[rowIdx][colIdx];
             }
         }
-        return;
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("vCumNumRowsUp", vCumNumRowsUp)
+        FIGARO_LOG_DBG("vLeftCumNumNonJoinAttrs", vLeftCumNumNonJoinAttrs)
 
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
             uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpRels[idxRel]->m_dataTails.getNumRows();
+            FIGARO_LOG_DBG("idxRel", idxRel, startTailIdx, startGenTailIdx)
             for (uint32_t rowIdx = startTailIdx; rowIdx < startGenTailIdx; rowIdx ++)
             {
+                FIGARO_LOG_DBG("rowIdx", idxRel, rowIdx)
                 // Set Left zeros
                 for (uint32_t colIdx = 0; colIdx < vLeftCumNumNonJoinAttrs[idxRel];
                     colIdx ++)
@@ -1550,6 +1552,7 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
                 uint32_t tailsRowIdx = rowIdx - startTailIdx;
+                FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
 
                 // Set central Relations
                 for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel];
@@ -1577,12 +1580,13 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
                 uint32_t tailsRowIdx = rowIdx - startGenTailIdx;
+                FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
 
                 // Set central Relations
                 // Since the the order of relations is preordered,
                 // generalized tails will be one after another.
                 for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel];
-                    colIdx < vLeftCumNumNonJoinAttrs[idxRel] + m_dataTailsGen.getNumCols();
+                    colIdx < vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols();
                     colIdx++ )
                 {
                     uint32_t tailsColIdx = colIdx - vLeftCumNumNonJoinAttrs[idxRel];
@@ -1590,14 +1594,22 @@ namespace Figaro
                      vpRels[idxRel]->m_dataTailsGen[tailsRowIdx][tailsColIdx];
                 }
                 // Set Right zeros
-                for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel+1];
+                for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols();
                     colIdx < totalNumCols; colIdx ++)
                 {
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
             }
         }
-        // TODO: Add copying to Eigen
+
+        MatrixEigenT matEigen;
+        Eigen::HouseholderQR<MatrixEigenT> qr{};
+        copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
+        qr.compute(matEigen);
+        MatrixEigenT R = qr.matrixQR().topLeftCorner(totalNumCols, totalNumCols).triangularView<Eigen::Upper>();
+        makeDiagonalElementsPositiveInR(R);
+
+        FIGARO_LOG_DBG("R", R)
     }
 
     const Relation::MatrixDT& Relation::getHead(void) const
@@ -1947,7 +1959,7 @@ namespace Figaro
         m_dataTails2 = std::move(tailOutput2);
     }
 
-    static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR)
+    void Relation::makeDiagonalElementsPositiveInR(MatrixEigenT& matR)
     {
         ArrayT&& aDiag = matR.diagonal().array().sign();
         for (uint32_t rowIdx = 0; rowIdx < matR.cols(); rowIdx ++)

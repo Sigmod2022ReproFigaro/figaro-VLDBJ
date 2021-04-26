@@ -45,8 +45,8 @@ namespace Figaro
         typedef Figaro::Matrix<double> MatrixDT;
 
         /**
-         * 1) Allocates matrix of type MatrixEigen @p mEig in memory.
-         * 2) Copies the contend of mOur to mEigen.
+         * 1) Allocates matrix of type MatrixEigen @p matEig in memory.
+         * 2) Copies the content of @p matDT to @p matEig.
          */
         static void copyMatrixDTToMatrixEigen(const MatrixDT& matDT, MatrixEigenT& matEig);
 
@@ -273,6 +273,8 @@ namespace Figaro
         void getDistinctValuesRowPositions(const std::vector<uint32_t>& vAttrIdxs,
              std::vector<uint32_t>& vDistinctValuesRowPositions,
              bool preallocated = true) const;
+
+        static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
