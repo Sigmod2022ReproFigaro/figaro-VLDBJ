@@ -81,6 +81,8 @@ function main()
     case "${FIGARO_TEST_MODE}" in
     "DEBUG")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
+        --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
+        --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
@@ -88,12 +90,12 @@ function main()
             >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
         ;;
     "PERFORMANCE")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
+        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
         --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*FigaroSecondPass \
+        valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*FigaroQR \
         >   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \
 

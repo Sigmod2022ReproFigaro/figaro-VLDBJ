@@ -438,7 +438,7 @@ TEST(DatabaseConfig, ComputingCounts)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, false, false);
+    query.evaluateQuery(true, false, false, false);
 
     /*********************************** R4 ****************/
     downCounts =  database.getDownCounts("R4");
@@ -590,7 +590,7 @@ TEST(DatabaseConfig, FigaroFirstPass)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, true, false);
+    query.evaluateQuery(true, true, false, false);
 
     for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel++)
     {
@@ -631,12 +631,34 @@ TEST(DatabaseConfig, FigaroSecondPass)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, true, true);
+    query.evaluateQuery(true, true, true, false);
     const auto& headDT = database.getHead("R2");
     const auto& tailDT = database.getGeneralizedTail("R2");
     Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);
     Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
     compareMatrices(headGen2, expHeadGen2, true, true);
     compareMatrices(tailGen2, expTailGen2, true, true);
-    //compareMatrices(tail[idxRel], expTail[idxRel], true, true);
+}
+
+
+TEST(DatabaseConfig, FigaroQR)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+    Figaro::MatrixEigenT headGen1, headGen2, tailGen2;
+    Figaro::MatrixEigenT expHeadGen1, expHeadGen2, expTailGen2;
+
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery(true, true, true, true);
 }

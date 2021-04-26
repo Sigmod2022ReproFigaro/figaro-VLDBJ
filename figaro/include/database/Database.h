@@ -78,7 +78,13 @@ namespace Figaro
         void computeAndScaleGeneralizedHeadAndTail(
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::string>& vParJoinAttributeNames);
+            const std::vector<std::string>& vParJoinAttributeNames,
+            bool isRootNode);
+
+
+        void computeQROfConcatenatedGeneralizedHeadAndTails(
+            const std::vector<std::string>& vRelationOrder);
+
 
         const Relation::MatrixDT& getHead(const std::string& relationName) const;
 

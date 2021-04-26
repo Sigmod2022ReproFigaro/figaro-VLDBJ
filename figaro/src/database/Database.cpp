@@ -182,10 +182,30 @@ namespace Figaro
     void Database::computeAndScaleGeneralizedHeadAndTail(
         const std::string& relationName,
         const std::vector<std::string>& vJoinAttributeNames,
-        const std::vector<std::string>& vParJoinAttributeNames)
+        const std::vector<std::string>& vParJoinAttributeNames,
+        bool isRootNode)
     {
         Relation& rel = m_relations.at(relationName);
-        rel.computeAndScaleGeneralizedHeadAndTail(vJoinAttributeNames, vParJoinAttributeNames);
+        rel.computeAndScaleGeneralizedHeadAndTail(vJoinAttributeNames, vParJoinAttributeNames,
+            isRootNode);
+    }
+
+    void Database::computeQROfConcatenatedGeneralizedHeadAndTails(
+        const std::vector<std::string>& vRelationOrder
+    )
+    {
+        std::vector<Relation*> vpRels;
+        Relation* pRootRel;
+        for (const auto relName: vRelationOrder)
+        {
+            Relation* pRel = &m_relations.at(relName);
+            FIGARO_LOG_ASSERT(pRel != nullptr)
+            vpRels.push_back(pRel);
+            pRel->computeQROfTail();
+            pRel->computeQROfGeneralizedTail();
+        }
+        pRootRel = vpRels[0];
+        pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels);
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

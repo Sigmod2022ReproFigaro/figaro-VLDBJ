@@ -24,10 +24,23 @@ namespace Figaro
             pElement->getJoinAttributeNames(),
             pElement->getChildrenParentJoinAttributeNames());
 
+        bool isRootNode = pElement->getParent() == nullptr;
+        std::vector<std::string> parJoinAttributeNames;
+        if (isRootNode)
+        {
+            parJoinAttributeNames = pElement->getJoinAttributeNames();
+        }
+        else
+        {
+            parJoinAttributeNames = pElement->getParJoinAttributeNames();
+        }
+
         m_pDatabase->computeAndScaleGeneralizedHeadAndTail(
             relationName,
             pElement->getJoinAttributeNames(),
-            pElement->getParJoinAttributeNames());
+            parJoinAttributeNames,
+            isRootNode);
+
     }
 
     void ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
@@ -40,6 +53,10 @@ namespace Figaro
             m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
         }
         pElement->getOperand()->accept(this);
+        if (m_postProcess)
+        {
+            m_pDatabase->computeQROfConcatenatedGeneralizedHeadAndTails(pElement->getRelationOrder());
+        }
         FIGARO_LOG_DBG("FInished")
 
     }

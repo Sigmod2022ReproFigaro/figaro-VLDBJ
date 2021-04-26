@@ -8,14 +8,19 @@ namespace Figaro
     class ASTFigaroSecondPassVisitor: public ASTQRVisitor
     {
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
+        bool m_postProcess = false;
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase,
-            const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel):
-                ASTQRVisitor(pDatabase, mRelNameASTNodeRel) {}
+            const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel,
+            bool postProcess):
+                ASTQRVisitor(pDatabase, mRelNameASTNodeRel),
+                m_postProcess(postProcess) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+
+
 
         virtual ~ASTFigaroSecondPassVisitor() override {}
 

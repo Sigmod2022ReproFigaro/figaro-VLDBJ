@@ -360,10 +360,12 @@ namespace Figaro
         {
             if (m_numCols > MIN_COLS_PAR)
             {
+                FIGARO_LOG_INFO("Parallelized version")
                 computeQRGivensParallelized(numThreads);
             }
             else
             {
+                FIGARO_LOG_INFO("Sequential version")
                 computeQRGivensSequential();
             }
 

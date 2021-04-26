@@ -104,12 +104,13 @@ namespace Figaro
     }
 
      void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass)
+        bool evalSecondFigaroPass, bool evalPostProcess)
      {
          // Create visitor
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase,
+                                m_mRelNameASTNodeRel, evalPostProcess);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase, m_mRelNameASTNodeRel);
 

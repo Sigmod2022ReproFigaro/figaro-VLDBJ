@@ -29,7 +29,7 @@ namespace Figaro
         /** Evaluates expressions from abstract syntax tree.
          */
         void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
-            bool evalSecondFigaroPass = true);
+            bool evalSecondFigaroPass = true, bool evalPostProcess = true);
 
         void setDatabase(Database* pDatabase)
         {
