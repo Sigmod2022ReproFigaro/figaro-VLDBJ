@@ -55,7 +55,7 @@ namespace Figaro
         pElement->getOperand()->accept(this);
         if (m_postProcess)
         {
-            m_pDatabase->computeQROfConcatenatedGeneralizedHeadAndTails(pElement->getRelationOrder());
+            m_pDatabase->computeQROfConcatenatedGeneralizedHeadAndTails(pElement->getRelationOrder(), m_pResult);
         }
         FIGARO_LOG_DBG("FInished")
 

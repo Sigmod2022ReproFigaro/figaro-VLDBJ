@@ -267,12 +267,14 @@ namespace Figaro
             std::vector<uint32_t>& vRowIdxParDiffVals);
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
-             std::vector<uint32_t>& vDistinctValuesRowPositions,
-             bool preallocated = true) const;
+            std::vector<uint32_t>& vDistinctValuesRowPositions,
+            bool preallocated = true) const;
 
-        void getDistinctValuesRowPositions(const std::vector<uint32_t>& vAttrIdxs,
-             std::vector<uint32_t>& vDistinctValuesRowPositions,
-             bool preallocated = true) const;
+        void getDistinctValuesRowPositions(
+            const std::vector<uint32_t>& vAttrIdxs,
+            std::vector<uint32_t>& vDistinctValuesRowPositions,
+            const MatrixDT& data,
+            bool preallocated = true) const;
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
     public:
@@ -384,7 +386,8 @@ namespace Figaro
 
         // Should be called for a root relation.
         void computeQROfConcatenatedGeneralizedHeadAndTails(
-            const std::vector<Relation*>& pRelationOrder);
+            const std::vector<Relation*>& pRelationOrder,
+            MatrixEigenT* pR);
 
 
 

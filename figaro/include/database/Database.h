@@ -83,7 +83,8 @@ namespace Figaro
 
 
         void computeQROfConcatenatedGeneralizedHeadAndTails(
-            const std::vector<std::string>& vRelationOrder);
+            const std::vector<std::string>& vRelationOrder,
+            MatrixEigenT* pR);
 
 
         const Relation::MatrixDT& getHead(const std::string& relationName) const;

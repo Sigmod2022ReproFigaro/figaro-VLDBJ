@@ -110,7 +110,7 @@ namespace Figaro
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase,
-                                m_mRelNameASTNodeRel, evalPostProcess);
+                                m_mRelNameASTNodeRel, evalPostProcess, &m_matResult);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase, m_mRelNameASTNodeRel);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase, m_mRelNameASTNodeRel);
 

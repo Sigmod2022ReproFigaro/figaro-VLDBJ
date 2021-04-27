@@ -72,13 +72,17 @@ class DatabasePsql:
             sql_attribute = sql_attribute.format(attribute.name, attribute.type)
             sql_attributes += sql_attribute + ","
 
-        sql_pks = "PRIMARY KEY({})"
-        sql_pk_attributes = ""
-        for attribute_name in relation.get_pk_attribute_names():
-            sql_pk_attributes += attribute_name + ","
-        sql_pks = sql_pks.format(sql_pk_attributes[:-1])
+        # Check for PK existence
+        if (relation.get_pk_attribute_names().__len__() > 0):
+            sql_pks = "PRIMARY KEY({})"
+            sql_pk_attributes = ""
+            for attribute_name in relation.get_pk_attribute_names():
+                sql_pk_attributes += attribute_name + ","
+            sql_pks = sql_pks.format(sql_pk_attributes[:-1])
+            sql_attributes += sql_pks
+        else:
+            sql_attributes = sql_attributes[:-1]
 
-        sql_attributes += sql_pks
         sql_query = "CREATE TABLE {} ({});"
         sql_query = sql_query.format(relation.name, sql_attributes)
 

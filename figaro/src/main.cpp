@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
     dbConfigPath = vm["db_config_path"].as<std::string>();
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
-    Figaro::MatrixEigenT R;
     Figaro::Database database(dbConfigPath);
     database.loadData();
     Figaro::Query query(&database);
@@ -57,18 +56,17 @@ int main(int argc, char *argv[])
 
     MICRO_BENCH_INIT(main)
     MICRO_BENCH_START(main)
-    query.evaluateQuery(true, true, true);
+    query.evaluateQuery(true, true, true, true);
     MICRO_BENCH_STOP(main)
     FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
 
-    /*
+    Figaro::MatrixEigenT& R = query.getResult();
     if (dump)
     {
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
         std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
         Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
     }
-    */
 
 
     FIGARO_LOG_INFO("Figaro program has terminated")

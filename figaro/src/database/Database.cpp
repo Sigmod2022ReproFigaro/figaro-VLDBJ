@@ -191,7 +191,9 @@ namespace Figaro
     }
 
     void Database::computeQROfConcatenatedGeneralizedHeadAndTails(
-        const std::vector<std::string>& vRelationOrder
+        const std::vector<std::string>& vRelationOrder,
+        MatrixEigenT* pR
+
     )
     {
         std::vector<Relation*> vpRels;
@@ -205,7 +207,7 @@ namespace Figaro
             pRel->computeQROfGeneralizedTail();
         }
         pRootRel = vpRels[0];
-        pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels);
+        pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, pR);
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

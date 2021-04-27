@@ -12,13 +12,14 @@ namespace Figaro
     {
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr;
+        MatrixEigenT m_matResult;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
         ErrorCode createAST(const json& jsonQueryConfig);
 
     public:
-        Query(Database* pDatabase): m_pDatabase(pDatabase) {}
+        Query(Database* pDatabase): m_pDatabase(pDatabase){}
         ~Query() { destroyAST(m_pASTRoot); }
 
         /** Parses query and creates abstract syntax tree from
@@ -39,6 +40,11 @@ namespace Figaro
         Database* getDatabase(Database* pDatabase)
         {
              return pDatabase;
+        }
+
+        MatrixEigenT& getResult(void)
+        {
+            return m_matResult;
         }
     };
 }

@@ -358,7 +358,8 @@ namespace Figaro
     void Relation::getDistinctValuesRowPositions(
         const std::vector<uint32_t>& vAttrIdxs,
         std::vector<uint32_t>& vDistinctValuesRowPositions,
-        bool  preallocated) const
+        const MatrixDT& data,
+        bool preallocated) const
     {
         double pushVal;
         uint32_t distCnt;
@@ -368,9 +369,9 @@ namespace Figaro
         const double* pPrevAttrVals = &vPrevAttrVals[0];
 
         // The first entry is saved for the end of imaginary predecessor of ranges.
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        for (uint32_t rowIdx = 0; rowIdx < data.getNumRows(); rowIdx++)
         {
-            const double* pCurAttrVals = m_data[rowIdx];
+            const double* pCurAttrVals = data[rowIdx];
             if (compareTuples(pCurAttrVals, pPrevAttrVals, vAttrIdxs))
             {
                 pushVal = rowIdx - 1;
@@ -386,7 +387,7 @@ namespace Figaro
                 distCnt++;
             }
         }
-        pushVal = m_data.getNumRows() - 1;
+        pushVal = data.getNumRows() - 1;
         if (preallocated)
         {
             vDistinctValuesRowPositions[distCnt] = pushVal;
@@ -995,7 +996,8 @@ namespace Figaro
         FIGARO_LOG_DBG("vNonJoinAttrIdxs", vNonJoinAttrIdxs)
 
         // TODO: Move this to pre pass pass.
-        getDistinctValuesRowPositions(vJoinAttrIdxs, vDistValsRowPositions, false);
+        getDistinctValuesRowPositions(vJoinAttrIdxs, vDistValsRowPositions,
+         m_data, false);
 
         numDistinctValues = vDistValsRowPositions.size() - 1;
         numJoinAttrs = vJoinAttrIdxs.size();
@@ -1079,9 +1081,10 @@ namespace Figaro
             destroyParCntHashTable(vJoinAttrIdxs, m_pHTParCounts);
         }
 
-        //FIGARO_LOG_DBG("Successful head computation", m_name);
-        //FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        //FIGARO_LOG_DBG("m_dataTails", m_dataTails)
+        FIGARO_LOG_DBG("Successful head computation", m_name);
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("m_dataTails", m_dataTails)
+        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
     }
 
     void Relation::schemaJoins(
@@ -1228,6 +1231,7 @@ namespace Figaro
                     dataScales[rowIdx][shiftIdxSTRel] =
                         vpChildRels[idxRel]->m_dataScales[childRowIdx][idxSubTreeRel];
                 }
+                // +1 because 0th is for the first relation
                 scales[rowIdx][idxRel + 1] = vpChildRels[idxRel]->m_scales[childRowIdx][0];
                 m_allScales[rowIdx] *= scales[rowIdx][idxRel + 1];
             }
@@ -1281,7 +1285,7 @@ namespace Figaro
 
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
-        getDistinctValuesRowPositions(vParJoinAttrIdxs, vParDistValsRowPositions, false);
+        getDistinctValuesRowPositions(vParJoinAttrIdxs, vParDistValsRowPositions, m_dataHead, false);
         numParDistVals = vParDistValsRowPositions.size() - 1;
         numRelsSubTree = m_vSubTreeRelNames.size();
         numJoinAttrs = vJoinAttributeNames.size();
@@ -1296,9 +1300,10 @@ namespace Figaro
 
         FIGARO_LOG_INFO("Compute Generalized Head and Tail for relation", m_name)
 
-        FIGARO_LOG_DBG("Isroot", isRootNode)
+        FIGARO_LOG_DBG("vJoinAttributeNames", vJoinAttributeNames)
         // temporary adds an element to denote the end limit.
         m_vSubTreeDataOffsets.push_back(m_attributes.size());
+        //FIGARO_LOG_DBG("distParCnt", distParCnt)
         for (uint32_t distParCnt = 0; distParCnt < numParDistVals; distParCnt++)
         {
             uint32_t startIdx;
@@ -1312,11 +1317,10 @@ namespace Figaro
             // TODO: Initialize up count from hash table.
 
             startIdx = vParDistValsRowPositions[distParCnt] + 1;
-
             //FIGARO_LOG_DBG("Getting counts")
             if (isRootNode)
             {
-                sqrtDownCnt = m_countsJoinAttrs[distParCnt][m_cntsJoinIdxD];
+                sqrtDownCnt =  std::sqrt(m_countsJoinAttrs[distParCnt][m_cntsJoinIdxD]);
                 sqrtUpCnt = 1;
             }
             else
@@ -1341,7 +1345,6 @@ namespace Figaro
                     vCurScaleSum[attrIdx - numJoinAttrs] = m_dataHead[startIdx][attrIdx] * m_scales[startIdx][0];
                 }
             }
-            //FIGARO_LOG_DBG("vCurScaleSum", vCurScaleSum)
             //FIGARO_LOG_INFO("Generalized tail computation")
             // Generalized head and tail computation.
             for (uint32_t rowIdx = startIdx + 1;
@@ -1378,14 +1381,12 @@ namespace Figaro
             scales[distParCnt][0] = sqrtDownCnt;
 
             // Copies join parent attributes to generalized head.
-            //FIGARO_LOG_INFO("Copying parent attributes")
             for (const auto& parJoinAttrIdx: vParJoinAttrIdxs)
             {
                 dataHeadOut[distParCnt][parJoinAttrIdx] = m_dataHead[startIdx][parJoinAttrIdx];
             }
 
             //  Generalized Head computation.
-            //FIGARO_LOG_INFO("Generalized head computation")
             for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
             {
                 double curDataScale = 1 / scales[distParCnt][0];
@@ -1417,7 +1418,6 @@ namespace Figaro
         }
 
         schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
-        // TODO: Destroy for all children.
         if (isRootNode)
         {
             destroyParCntHashTable({}, m_pHTParCounts);
@@ -1431,10 +1431,17 @@ namespace Figaro
         m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        //FIGARO_LOG_DBG("m_dataHead", m_name, m_dataHead)
         //FIGARO_LOG_DBG("m_dataScales", m_dataScales)
-        //FIGARO_LOG_DBG("m_dataTailsGen", m_dataTailsGen)
-        //FIGARO_LOG_DBG("m_scales", m_scales)
+        //FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        if (isRootNode)
+        {
+            FIGARO_LOG_DBG("Attributes_name")
+            for (const auto& attribute: m_attributes)
+            {
+                std::string strType = attribute.mapTypeToStr.at(attribute.m_type);
+                FIGARO_LOG_DBG(attribute.m_name, " (", strType, ")", "; ");
+            }
+        }
     }
 
 
@@ -1444,6 +1451,8 @@ namespace Figaro
         MatrixDT tmp = m_dataHead.getRightCols(numNonJoinAttrs);
         m_dataHead = std::move(tmp);
         FIGARO_LOG_INFO("QR generalized head", m_name)
+        FIGARO_LOG_INFO("m_dataHead", m_dataHead)
+        return;
         if (m_dataHead.getNumCols() > m_dataHead.getNumRows())
         {
             FIGARO_LOG_ERROR("Head", m_name)
@@ -1459,6 +1468,7 @@ namespace Figaro
     void Relation::computeQROfTail(void)
     {
         FIGARO_LOG_INFO("QR Tail", m_name)
+        return;
         if (m_dataTails.getNumCols() > m_dataTails.getNumRows())
         {
             FIGARO_LOG_ERROR("Tail", m_name)
@@ -1475,6 +1485,7 @@ namespace Figaro
     void Relation::computeQROfGeneralizedTail(void)
     {
         FIGARO_LOG_INFO("QR generalized Tail", m_name)
+        return;
         if (m_dataTailsGen.getNumCols() > m_dataTailsGen.getNumRows())
         {
             FIGARO_LOG_ERROR("Generalized tail", m_name)
@@ -1490,8 +1501,11 @@ namespace Figaro
 
 
     void Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
-            const std::vector<Relation*>& vpRels)
+        const std::vector<Relation*>& vpRels,
+        MatrixEigenT* pR)
     {
+        MatrixEigenT matEigen;
+        Eigen::HouseholderQR<MatrixEigenT> qr{};
         std::vector<uint32_t> vLeftCumNumNonJoinAttrs;
         std::vector<uint32_t> vRightCumNumNonJoinAttrs;
         std::vector<uint32_t> vCumNumRowsUp;
@@ -1536,15 +1550,16 @@ namespace Figaro
         FIGARO_LOG_DBG("vCumNumRowsUp", vCumNumRowsUp)
         FIGARO_LOG_DBG("vLeftCumNumNonJoinAttrs", vLeftCumNumNonJoinAttrs)
 
+
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
             uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpRels[idxRel]->m_dataTails.getNumRows();
-            FIGARO_LOG_DBG("idxRel", idxRel, startTailIdx, startGenTailIdx)
+            //FIGARO_LOG_DBG("idxRel", idxRel, startTailIdx, startGenTailIdx)
             for (uint32_t rowIdx = startTailIdx; rowIdx < startGenTailIdx; rowIdx ++)
             {
-                FIGARO_LOG_DBG("rowIdx", idxRel, rowIdx)
+                //FIGARO_LOG_DBG("rowIdx", idxRel, rowIdx)
                 // Set Left zeros
                 for (uint32_t colIdx = 0; colIdx < vLeftCumNumNonJoinAttrs[idxRel];
                     colIdx ++)
@@ -1552,7 +1567,7 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
                 uint32_t tailsRowIdx = rowIdx - startTailIdx;
-                FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
+                //FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
 
                 // Set central Relations
                 for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel];
@@ -1580,7 +1595,7 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
                 uint32_t tailsRowIdx = rowIdx - startGenTailIdx;
-                FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
+                //FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
 
                 // Set central Relations
                 // Since the the order of relations is preordered,
@@ -1601,15 +1616,12 @@ namespace Figaro
                 }
             }
         }
+        FIGARO_LOG_DBG("catGenHeadAndTails", catGenHeadAndTails)
 
-        MatrixEigenT matEigen;
-        Eigen::HouseholderQR<MatrixEigenT> qr{};
         copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
         qr.compute(matEigen);
-        MatrixEigenT R = qr.matrixQR().topLeftCorner(totalNumCols, totalNumCols).triangularView<Eigen::Upper>();
-        makeDiagonalElementsPositiveInR(R);
-
-        FIGARO_LOG_DBG("R", R)
+        *pR = qr.matrixQR().topLeftCorner(totalNumCols, totalNumCols).triangularView<Eigen::Upper>();
+        makeDiagonalElementsPositiveInR(*pR);
     }
 
     const Relation::MatrixDT& Relation::getHead(void) const
