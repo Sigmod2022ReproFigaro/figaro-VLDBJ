@@ -126,7 +126,8 @@ class DatabasePsql:
         return join_attr_names_unique + non_join_attribute_names
 
 
-    def evaluate_join(self, relations, num_repetitions: int):
+    def evaluate_join(self, relations, num_repetitions: int,
+    drop_attributes: List[str]):
         sql_join = "DROP TABLE IF EXISTS " + JOIN_TABLE_NAME + ";CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
         sql_from_natural_join = ""
 
@@ -134,7 +135,8 @@ class DatabasePsql:
         ord_attr_names = self.get_order_of_attributes(relations)
 
         for attribute_name in ord_attr_names:
-            sql_select += attribute_name + ","
+            if attribute_name not in drop_attributes:
+                sql_select += attribute_name + ","
 
         sql_select = sql_select[:-1]
         for idx, relation in enumerate(relations):
@@ -176,8 +178,10 @@ class DatabasePsql:
                         self.get_relation_size(relation_name)))
 
 
-    def dump_join(self, relations, output_file_path):
+    def dump_join(self, relations, skip_attributes, output_file_path):
         non_join_attribute_names = DatabasePsql.get_non_join_order_of_attributes(relations)
+        for skip_attribute in skip_attributes:
+            non_join_attribute_names.remove(skip_attribute)
         cursor = self.connection.cursor()
         with open(output_file_path, 'w') as file_csv:
             cursor.copy_to(file_csv, JOIN_TABLE_NAME, sep=',',

@@ -206,7 +206,7 @@ namespace Figaro
         cntLines = getNumberOfLines(m_dataPath);
         numAttributes = numberOfAttributes();
 
-        m_data = std::move(Matrix<double>(cntLines, numAttributes));
+        m_data = std::move(MatrixDT(cntLines, numAttributes));
 
 
         // TODO: If there is time, write regex that will parse files based on the attributes type.
@@ -496,7 +496,7 @@ namespace Figaro
         return downCounts;
     }
 
-        std::map<std::vector<double>, uint32_t> Relation::getCircCounts(void)
+    std::map<std::vector<double>, uint32_t> Relation::getCircCounts(void)
     {
         std::map<std::vector<double>, uint32_t> circCounts;
         for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
@@ -1005,10 +1005,10 @@ namespace Figaro
         numTailRows = m_data.getNumRows() - numDistinctValues;
 
         // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
-        Matrix<double> dataHeads{numDistinctValues, getNumberOfAttributes()};
-        Matrix<double> dataTails{numTailRows, numNonJoinAttrs};
-        Matrix<double> dataScale{numDistinctValues, 1};
-        Matrix<double> scale{numDistinctValues, 1};
+        MatrixDT dataHeads{numDistinctValues, getNumberOfAttributes()};
+        MatrixDT dataTails{numTailRows, numNonJoinAttrs};
+        MatrixDT dataScale{numDistinctValues, 1};
+        MatrixDT scale{numDistinctValues, 1};
         std::vector<double> allScales(numDistinctValues);
 
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
@@ -1163,6 +1163,10 @@ namespace Figaro
         vpHashTabRowPt.resize(vpChildRels.size());
 
         FIGARO_LOG_DBG("Relation", m_name)
+
+        getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
             vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
@@ -1174,7 +1178,7 @@ namespace Figaro
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
             if (idxRel == 0)
             {
-                vCumNumNonJoinAttrs[idxRel] = 1;
+                vCumNumNonJoinAttrs[idxRel] = vNonJoinAttrIdxs.size();
                 vCumNumRelSubTree[idxRel] = 1;
             }
             else
@@ -1188,8 +1192,6 @@ namespace Figaro
                 "vCumNumNonJoinAttrs[idxRel]", vCumNumNonJoinAttrs[idxRel],
                 "vCumNumRelSubTree[idxRel]", vCumNumRelSubTree[idxRel])
         }
-        getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
-        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
         schemaJoins(vpChildRels, vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
         MatrixDT dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
@@ -1262,9 +1264,9 @@ namespace Figaro
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
 
-        //FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        //FIGARO_LOG_DBG("m_dataScales", m_dataScales)
-        //FIGARO_LOG_DBG("m_scales", m_scales)
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
+        FIGARO_LOG_DBG("m_scales", m_scales)
     }
 
     void Relation::computeAndScaleGeneralizedHeadAndTail(
@@ -1295,8 +1297,8 @@ namespace Figaro
 
         MatrixDT dataHeadOut { numParDistVals, getNumberOfAttributes() - numOmittedAttrs};
         MatrixDT dataTailsOut{ m_dataHead.getNumRows() - numParDistVals, numNonJoinAttrs};
-        Matrix<double> scales{numParDistVals, 1};
-        Matrix<double> dataScales{numParDistVals, m_dataScales.getNumCols()};
+        MatrixDT scales{numParDistVals, 1};
+        MatrixDT dataScales{numParDistVals, m_dataScales.getNumCols()};
 
         FIGARO_LOG_INFO("Compute Generalized Head and Tail for relation", m_name)
 
@@ -1431,8 +1433,8 @@ namespace Figaro
         m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        //FIGARO_LOG_DBG("m_dataScales", m_dataScales)
-        //FIGARO_LOG_DBG("m_dataHead", m_dataHead)
+        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         if (isRootNode)
         {
             FIGARO_LOG_DBG("Attributes_name")
@@ -1621,6 +1623,7 @@ namespace Figaro
         copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
         qr.compute(matEigen);
         *pR = qr.matrixQR().topLeftCorner(totalNumCols, totalNumCols).triangularView<Eigen::Upper>();
+        FIGARO_LOG_DBG(*pR);
         makeDiagonalElementsPositiveInR(*pR);
     }
 
@@ -1637,6 +1640,17 @@ namespace Figaro
     const Relation::MatrixDT& Relation::getGeneralizedTail(void) const
     {
         return m_dataTailsGen;
+    }
+
+
+    const Relation::MatrixDT& Relation::getScales(void) const
+    {
+        return m_scales;
+    }
+
+    const Relation::MatrixDT& Relation::getDataScales(void) const
+    {
+        return m_dataScales;
     }
 
     void Relation::getAttributeValuesCounts(
@@ -1765,7 +1779,7 @@ namespace Figaro
         relation.getRowPtrs(joinAttrName, hashTabRowPt2);
 
         schemaJoin(relation, bSwapAttributes);
-        Matrix<double> dataOutput {m_data.getNumRows(), (uint32_t)m_attributes.size()};
+        MatrixDT dataOutput {m_data.getNumRows(), (uint32_t)m_attributes.size()};
 
 
        #pragma omp parallel for schedule(static)
@@ -2035,7 +2049,7 @@ namespace Figaro
 
         MICRO_BENCH_START(timer);
         m_dataTails1 = m_dataTails1.concatenateHorizontallyScalar(0, m_dataHead.getNumCols() - m_dataTails1.getNumCols());
-        m_dataTails2 = Matrix<double>::zeros(m_dataTails2.getNumRows(), m_dataHead.getNumCols() - m_dataTails2.getNumCols()).concatenateHorizontally(m_dataTails2);
+        m_dataTails2 = MatrixDT::zeros(m_dataTails2.getNumRows(), m_dataHead.getNumCols() - m_dataTails2.getNumCols()).concatenateHorizontally(m_dataTails2);
         auto&& m_dataFull = m_dataHead.concatenateVertically(m_dataTails1).concatenateVertically(m_dataTails2);
         MICRO_BENCH_STOP(timer);
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "concatenate", MICRO_BENCH_GET_TIMER_LAP(timer));

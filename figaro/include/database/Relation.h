@@ -346,6 +346,7 @@ namespace Figaro
         std::map<std::vector<double>, uint32_t> getCircCounts(void);
 
 
+
         void destroyParCntHashTable(const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  htChildParAttrs);
         /**
@@ -402,6 +403,10 @@ namespace Figaro
         const MatrixDT& getTail(void) const;
 
         const MatrixDT& getGeneralizedTail(void) const;
+
+        const MatrixDT& getScales(void) const;
+
+        const MatrixDT& getDataScales(void) const;
 
         /****************** OLD IMPLEMENTATION **************************/
         void getAttributeValuesCounts(const std::string& attributeName,

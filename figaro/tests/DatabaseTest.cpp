@@ -569,8 +569,14 @@ TEST(DatabaseConfig, FigaroFirstPass)
     std::array<Figaro::MatrixEigenT, NUM_RELS> expHead;
     std::array<Figaro::MatrixEigenT, NUM_RELS> tail;
     std::array<Figaro::MatrixEigenT, NUM_RELS> expTail;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> scales;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expScales;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> dataScales;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expDataScales;
     std::array<std::string, NUM_RELS> fileInputExpHead;
     std::array<std::string, NUM_RELS> fileInputExpTail;
+    std::array<std::string, NUM_RELS> fileInputExpScales;
+    std::array<std::string, NUM_RELS> fileInputExpDataScales;
 
 
     for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel ++)
@@ -579,8 +585,15 @@ TEST(DatabaseConfig, FigaroFirstPass)
             std::to_string(idxRel + 1) + ".csv";
         fileInputExpTail[idxRel] = getDataPath(5) + "expectedTail" +
             std::to_string(idxRel + 1) + ".csv";
+        fileInputExpScales[idxRel] = getDataPath(5) + "expectedScalesFirstPass" +
+            std::to_string(idxRel + 1) + ".csv";
+        fileInputExpDataScales[idxRel] = getDataPath(5) + "expectedDataScalesFirstPass" +
+            std::to_string(idxRel + 1) + ".csv";
+
         readMatrixDense(fileInputExpHead[idxRel], expHead[idxRel]);
         readMatrixDense(fileInputExpTail[idxRel], expTail[idxRel]);
+        readMatrixDense(fileInputExpScales[idxRel], expScales[idxRel]);
+        readMatrixDense(fileInputExpDataScales[idxRel], expDataScales[idxRel]);
     }
 
     initError = database.getInitializationErrorCode();
@@ -598,10 +611,17 @@ TEST(DatabaseConfig, FigaroFirstPass)
         FIGARO_LOG_INFO("Relation", relName)
         const auto& headDT = database.getHead(relName);
         const auto& tailDT = database.getTail(relName);
+        const auto& scaleDT = database.getScales(relName);
+        const auto& dataScaleDT = database.getDataScales(relName);
+
         Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, head[idxRel]);
         Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tail[idxRel]);
+        Figaro::Relation::copyMatrixDTToMatrixEigen(scaleDT, scales[idxRel]);
+        Figaro::Relation::copyMatrixDTToMatrixEigen(dataScaleDT, dataScales[idxRel]);
         compareMatrices(head[idxRel], expHead[idxRel], true, true);
         compareMatrices(tail[idxRel], expTail[idxRel], true, true);
+        compareMatrices(scales[idxRel], expScales[idxRel], true, true);
+        compareMatrices(dataScales[idxRel], expDataScales[idxRel], true, true);
     }
 }
 
@@ -638,6 +658,7 @@ TEST(DatabaseConfig, FigaroSecondPass)
     Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
     compareMatrices(headGen2, expHeadGen2, true, true);
     compareMatrices(tailGen2, expTailGen2, true, true);
+    // TODO: Add tests for scales, datascales, and allscales
 }
 
 

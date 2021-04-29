@@ -21,11 +21,20 @@ class SystemTestPsql(SystemTestDBMS):
         self.username = username
         self.join_path = self.conf_dump.file_path
 
-
+    @staticmethod
     def get_relation_order(query_conf_path: str):
         with open(query_conf_path) as file_query_conf:
             query = json.load(file_query_conf)
             return query["query"]["evaluation_hint"]["relation_order"]
+
+    @staticmethod
+    def get_skip_attrs(query_conf_path: str):
+        skip_attrs = []
+        with open(query_conf_path) as file_query_conf:
+            query = json.load(file_query_conf)
+            if "skip_attributes" in query["query"]["evaluation_hint"]:
+                skip_attrs = query["query"]["evaluation_hint"]["skip_attributes"]
+        return skip_attrs
 
 
     def eval(self, dump: bool, performance: bool):
@@ -38,19 +47,21 @@ class SystemTestPsql(SystemTestDBMS):
         database_psql.create_database(self.database)
 
         relation_order = SystemTestPsql.get_relation_order(self.conf_query.path)
+        skip_attrs = SystemTestPsql.get_skip_attrs(self.conf_query.path)
         self.database.sort_relations(relation_order)
         self.database.set_join_attrs()
         logging.info(relation_order)
+        logging.info(skip_attrs)
 
 
         num_repetitions = self.conf_perf.num_reps if performance else 1
-        database_psql.evaluate_join(self.database.get_relations(), num_repetitions=num_repetitions)
+        database_psql.evaluate_join(self.database.get_relations(), num_repetitions=num_repetitions, drop_attributes=skip_attrs)
         join_size = database_psql.get_join_size()
         logging.info("Number of rows is {}".format(join_size))
         database_psql.log_relation_sizes(self.database.get_relation_names())
         if (dump):
             database_psql.dump_join(self.database.get_relations(),
-                                self.join_path)
+                skip_attrs, self.join_path)
 
         remove_logging_file_handler(file_handler)
 
