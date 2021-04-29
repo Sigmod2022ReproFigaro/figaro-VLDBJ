@@ -24,7 +24,6 @@ namespace Figaro
                 return idx;
             }
         }
-        FIGARO_LOG_ERROR("Index out of bounds for name", attributeName);
         return UINT32_MAX;
     }
 

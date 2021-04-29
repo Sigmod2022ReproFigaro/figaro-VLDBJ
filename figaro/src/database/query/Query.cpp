@@ -125,6 +125,8 @@ namespace Figaro
         m_pASTRoot->accept(&joinAttrVisitor);
         MICRO_BENCH_INIT(downCnt)
         MICRO_BENCH_INIT(upCnt)
+        MICRO_BENCH_INIT(firstPass)
+        MICRO_BENCH_INIT(secondPass)
         if (evalCounts)
         {
             MICRO_BENCH_START(downCnt)
@@ -136,13 +138,21 @@ namespace Figaro
         }
         FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(downCnt));
         FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(upCnt));
+
+        MICRO_BENCH_START(firstPass)
         if (evalFirstFigaroPass)
         {
             m_pASTRoot->accept(&figaroFirstPassVisitor);
         }
+        MICRO_BENCH_STOP(firstPass)
+        FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(firstPass));
+
+        MICRO_BENCH_START(secondPass)
         if (evalSecondFigaroPass)
         {
             m_pASTRoot->accept(&figaroSecondPassVisitor);
         }
+        MICRO_BENCH_STOP(secondPass)
+        FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
      }
 }

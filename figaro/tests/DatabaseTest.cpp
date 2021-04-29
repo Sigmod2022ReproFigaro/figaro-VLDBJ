@@ -304,6 +304,26 @@ TEST(Storage, MatrixIterator)
     EXPECT_EQ(rowIdx, 0);
 }
 
+TEST(DatabaseConfig, DropAttrs) {
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError = database.getInitializationErrorCode();
+    Figaro::ErrorCode loadError;
+    std::vector<std::string> attrNames;
+    std::vector<std::string> expAttrNames = {"X25", "Y52", "Y53"};
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    database.dropAttributesFromRelations({"Y51"});
+
+    attrNames = database.getRelationAttributeNames("R5");
+
+    for (uint32_t idx = 0; idx < expAttrNames.size(); idx++)
+    {
+        EXPECT_EQ(attrNames[idx], expAttrNames[idx]);
+    }
+}
 
 TEST(DatabaseConfig, BasicInput) {
     static const std::string DB_CONFIG_PATH = getConfigPath(1) + DB_CONFIG_PATH_IN;
