@@ -7,13 +7,9 @@ namespace Figaro
 {
     class ASTComputeDownCountsVisitor: public ASTQRVisitor
     {
-        std::string l2TailnormExpression(ASTNodeRelation* pElement);
-
     public:
         ASTComputeDownCountsVisitor(
-            Database* pDatabase,
-            const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel):
-                ASTQRVisitor(pDatabase, mRelNameASTNodeRel) {}
+            Database* pDatabase): ASTQRVisitor(pDatabase) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;

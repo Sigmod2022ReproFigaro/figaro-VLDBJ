@@ -69,6 +69,9 @@ namespace Figaro
                 std::make_pair(AttributeType::FLOAT, "double"),
                 std::make_pair(AttributeType::CATEGORY, "category")
             };
+
+            Attribute(){}
+
             Attribute(const json& jsonAttributeInfo)
             {
                 std::string strType;
@@ -94,7 +97,6 @@ namespace Figaro
                 }
                 return *this;
             }
-
             friend void swap(Attribute& attr1, Attribute& attr2)
             {
                 std::swap(attr1.m_name, attr2.m_name);
@@ -158,6 +160,12 @@ namespace Figaro
             const std::vector<std::string>& vAttributeNames,
             std::vector<uint32_t>& vAttributeIdxs) const;
 
+        /**
+         * Computes complement set of attribute indices corresponding to
+         * the @p vAttributeIdxs from the attributes for the
+         * current relation. The order of indices in @p vAttributeIdxs
+         * should be always ascending, otherwise the function does not work.
+         */
         void getAttributesIdxsComplement(const std::vector<uint32_t>& vAttributeIdxs,
             std::vector<uint32_t>& vAttributesCompIdxs) const;
 
@@ -190,6 +198,7 @@ namespace Figaro
          */
         void getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const;
 
+
         void schemaJoin(const Relation& relation, bool swapAttributes = false);
 
         /**
@@ -207,6 +216,8 @@ namespace Figaro
         void schemaRemoveNonParJoinAttrs(
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vParJoinAttrIdxs);
+
+        void schemaDropAttrs(std::vector<uint32_t> vDropAttrIdxs);
 
         /**
          *  Builds hash index where key is @p vJoinAttrIdx over the @p data
@@ -319,6 +330,8 @@ namespace Figaro
         void sortData(void);
 
         void sortData(const std::vector<std::string>& vAttributeNames);
+
+        void dropAttributes(const std::vector<std::string>& vAttributeNames);
 
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,

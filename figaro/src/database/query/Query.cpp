@@ -28,14 +28,24 @@ namespace Figaro
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
+            std::vector<std::string> vDropAttrNames;
 
             for (const auto& relName: jsonQueryConfig["relation_order"])
             {
                 vRelationOrder.push_back(relName);
             }
 
+            if (jsonQueryConfig.find("skip_attributes") != jsonQueryConfig.end())
+            {
+                for (const auto& attrName: jsonQueryConfig["skip_attributes"])
+                {
+                    vDropAttrNames.push_back(attrName);
+                }
+            }
+
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
-            pCreatedNode = new ASTNodeQRGivens(pCreatedOperandNode, vRelationOrder);
+            pCreatedNode = new ASTNodeQRGivens(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames);
             FIGARO_LOG_DBG("GIV_QR")
         }
         else if (operatorName == "natural_join")
@@ -98,7 +108,6 @@ namespace Figaro
         }
         inputFileStream >> jsonQueryConfig;
         FIGARO_LOG_INFO("Database Configuration", jsonQueryConfig);
-
         errorCode = createAST(jsonQueryConfig["query"]["evaluation_hint"]);
         return errorCode;
     }
@@ -107,12 +116,11 @@ namespace Figaro
         bool evalSecondFigaroPass, bool evalPostProcess)
      {
          // Create visitor
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, m_mRelNameASTNodeRel);
-        ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase, m_mRelNameASTNodeRel);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase,
-                                m_mRelNameASTNodeRel, evalPostProcess, &m_matResult);
-        ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase, m_mRelNameASTNodeRel);
-        ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase, m_mRelNameASTNodeRel);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
+        ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess, &m_matResult);
+        ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
+        ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
 
         m_pASTRoot->accept(&joinAttrVisitor);
         MICRO_BENCH_INIT(downCnt)

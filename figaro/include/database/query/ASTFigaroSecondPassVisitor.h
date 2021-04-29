@@ -13,9 +13,8 @@ namespace Figaro
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase,
-            const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel,
             bool postProcess, MatrixEigenT* pResult):
-                ASTQRVisitor(pDatabase, mRelNameASTNodeRel),
+                ASTQRVisitor(pDatabase),
                 m_postProcess(postProcess), m_pResult(pResult) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;

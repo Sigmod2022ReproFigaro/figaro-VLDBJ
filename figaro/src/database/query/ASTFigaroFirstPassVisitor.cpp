@@ -35,10 +35,6 @@ namespace Figaro
         FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
-        for (const auto& relName: pElement->getRelationOrder())
-        {
-            m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
-        }
         pElement->getOperand()->accept(this);
     }
 }

@@ -10,9 +10,7 @@ namespace Figaro
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
     public:
         ASTJoinAttributesComputeVisitor(
-            Database* pDatabase, 
-            const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel): 
-                ASTQRVisitor(pDatabase, mRelNameASTNodeRel) {}
+            Database* pDatabase): ASTQRVisitor(pDatabase) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
@@ -23,4 +21,4 @@ namespace Figaro
     };
 }
 
-#endif 
+#endif

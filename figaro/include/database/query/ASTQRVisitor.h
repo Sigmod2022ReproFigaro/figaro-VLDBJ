@@ -7,16 +7,9 @@ namespace Figaro
 {
     class ASTQRVisitor: public ASTVisitor
     {
-    protected:
-        std::vector<ASTNodeRelation*> m_vpASTNodeRelation;  
-        const std::map<std::string, ASTNodeRelation*>& m_mRelNameASTNodeRel;
-
-        static std::string getFormateJoinAttributeNames(
-            const std::vector<std::string>& vJoinAttributeNames);
     public:
-        ASTQRVisitor(Database* pDatabase, 
-            const std::map<std::string, ASTNodeRelation*>& mRelNameASTNodeRel): 
-            ASTVisitor(pDatabase), m_mRelNameASTNodeRel(mRelNameASTNodeRel)
+        ASTQRVisitor(Database* pDatabase):
+            ASTVisitor(pDatabase)
          {}
         virtual ~ASTQRVisitor() override {}
 
@@ -24,4 +17,4 @@ namespace Figaro
     };
 }
 
-#endif 
+#endif

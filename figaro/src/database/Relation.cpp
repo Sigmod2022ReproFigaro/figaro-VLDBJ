@@ -5,6 +5,7 @@
 #include <execution>
 #include <algorithm>
 #include <limits>
+#include <set>
 #include <type_traits>
 #include <tuple>
 #include <unordered_map>
@@ -233,13 +234,18 @@ namespace Figaro
         return ErrorCode::NO_ERROR;
     }
 
+
+
     void Relation::getAttributesIdxs(const std::vector<std::string>& vAttributeNames,
         std::vector<uint32_t>& vAttributeIdxs) const
     {
         for (const auto& attributeName: vAttributeNames)
         {
             uint32_t attributeIdx = getAttributeIdx(attributeName);
-            vAttributeIdxs.push_back(attributeIdx);
+            if (UINT32_MAX != attributeIdx)
+            {
+                vAttributeIdxs.push_back(attributeIdx);
+            }
         }
     }
 
@@ -309,6 +315,70 @@ namespace Figaro
         getPKAttributeNames(vAttrNamesPKs);
         FIGARO_LOG_DBG("Sorted Attributes", vAttrNamesPKs);
         sortData(vAttrNamesPKs);
+    }
+
+    void Relation::schemaDropAttrs(std::vector<uint32_t> vDropAttrIdxs)
+    {
+        std::set<uint32_t> sDropIdxs{vDropAttrIdxs.begin(), vDropAttrIdxs.end()};
+        uint32_t curAttrIdx = 0;
+
+        for (uint32_t attrIdx = 0; attrIdx < m_attributes.size(); attrIdx++)
+        {
+            if (sDropIdxs.find(attrIdx) == sDropIdxs.end())
+            {
+                m_attributes[curAttrIdx] = m_attributes[attrIdx];
+                curAttrIdx++;
+            }
+            else
+            {
+                FIGARO_LOG_DBG("Found attrIdx", attrIdx)
+            }
+        }
+        m_attributes.resize(curAttrIdx);
+    }
+
+
+    void Relation::dropAttributes(const std::vector<std::string>& vDropAttrNames)
+    {
+        std::vector<uint32_t> vBeforeDropAttrIdxs;
+        std::vector<uint32_t> vDropAttrIdxs;
+        std::vector<uint32_t> vNonDropAttrIdxs;
+        std::vector<uint32_t> vAfterDropAttrIdxs;
+
+        getAttributesIdxs(vDropAttrNames, vDropAttrIdxs);
+        // TODO: Fix the bug
+        // TODO: Test complement
+        getAttributesIdxsComplement(vDropAttrIdxs, vNonDropAttrIdxs);
+        getAttributesIdxs(getAttributeNames(), vBeforeDropAttrIdxs);
+
+        FIGARO_LOG_DBG("vDropAttrNames", vDropAttrNames)
+        FIGARO_LOG_DBG("vDropAttrNames", vDropAttrIdxs)
+        FIGARO_LOG_DBG("m_attributes", m_attributes)
+        schemaDropAttrs(vDropAttrIdxs);
+        FIGARO_LOG_DBG("m_attributes", m_attributes)
+        getAttributesIdxs(getAttributeNames(), vAfterDropAttrIdxs);
+
+        MatrixDT tmpData {m_data.getNumRows(), vAfterDropAttrIdxs.size()};
+
+        FIGARO_LOG_DBG("vDropAttrIdxs", vDropAttrIdxs)
+        FIGARO_LOG_DBG("vNonDropAttrIdxs", vNonDropAttrIdxs)
+        FIGARO_LOG_DBG("vAfterDropAttrIdxs", vAfterDropAttrIdxs)
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            for (uint32_t idx = 0; idx < vNonDropAttrIdxs.size(); idx++)
+            {
+                uint32_t attrBeforeIdx = vNonDropAttrIdxs[idx];
+                uint32_t attrAfterIdx = vAfterDropAttrIdxs[idx];
+                if (rowIdx == 0)
+                {
+                    FIGARO_LOG_DBG("attrIdx", attrBeforeIdx, attrAfterIdx)
+                }
+                tmpData[rowIdx][attrAfterIdx] = m_data[rowIdx][attrBeforeIdx];
+            }
+        }
+        m_data = std::move(tmpData);
+        FIGARO_LOG_DBG("m_attributes", m_attributes)
+        FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
     }
 
     void Relation::getDistinctValuesRowPositions(
@@ -2075,6 +2145,15 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "main", "computeQRDecompositionHouseholder", "total", MICRO_BENCH_GET_TIMER(timer));
     }
 
+    std::ostream& operator<<(std::ostream& out, const Relation::Attribute& attribute)
+    {
+        std::string strPk = attribute.m_isPrimaryKey ? "PK, " : "";
+        std::string strType = attribute.mapTypeToStr.at(attribute.m_type);
+        out << attribute.m_name  << " (" << strPk
+            << strType << ")" << "; ";
+        return out;
+    }
+
     std::ostream& operator<<(std::ostream& out, const Relation& relation)
     {
         out << std::endl;
@@ -2082,10 +2161,7 @@ namespace Figaro
         out << "[ ";
         for (const auto& attribute: relation.m_attributes)
         {
-            std::string strPk = attribute.m_isPrimaryKey ? "PK, " : "";
-            std::string strType = attribute.mapTypeToStr.at(attribute.m_type);
-            out << attribute.m_name  << " (" << strPk
-                << strType << ")" << "; ";
+            out << attribute;
         }
         out << "]" << std::endl;
         out << relation.m_data;

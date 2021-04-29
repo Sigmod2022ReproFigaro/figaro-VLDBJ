@@ -2,27 +2,6 @@
 
 namespace Figaro
 {
-    std::string ASTComputeDownCountsVisitor::l2TailnormExpression(ASTNodeRelation* pElement)
-    {
-        std::string strSqrt = "\\sqrt{";
-        for (const auto& pASTNodeRel: m_vpASTNodeRelation)
-        {
-            if (pASTNodeRel->getRelationName() == pElement->getRelationName())
-            {
-                continue;
-            }
-            strSqrt += pASTNodeRel->getRelationName();
-            const auto& attrInter = getFormateJoinAttributeNames(setIntersection(pElement->getJoinAttributeNames(), pASTNodeRel->getJoinAttributeNames()));
-            strSqrt += "^{" + attrInter + "}" + " \\join ";
-        }
-        for (uint32_t idx = 0; idx < 6; idx ++)
-        {
-            strSqrt.pop_back();
-        }
-        strSqrt += "}";
-        return strSqrt;
-    }
-
     void ASTComputeDownCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         bool isRootNode;
@@ -68,10 +47,6 @@ namespace Figaro
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
-        for (const auto& relName: pElement->getRelationOrder())
-        {
-            m_vpASTNodeRelation.push_back(m_mRelNameASTNodeRel.at(relName));
-        }
         pElement->getOperand()->accept(this);
     }
 

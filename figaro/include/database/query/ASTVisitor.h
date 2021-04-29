@@ -13,6 +13,8 @@ namespace Figaro
     {
     protected:
         Database* m_pDatabase;
+        static std::string getFormateJoinAttributeNames(
+            const std::vector<std::string>& vJoinAttributeNames);
     public:
         ASTVisitor(Database* pDatabase): m_pDatabase(pDatabase) {}
         virtual void visitNodeRelation(ASTNodeRelation* pElement) = 0;
@@ -23,4 +25,4 @@ namespace Figaro
     };
 }
 
-#endif 
+#endif

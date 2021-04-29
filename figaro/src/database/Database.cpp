@@ -72,6 +72,15 @@ namespace Figaro
         return relation.getAttributeNames();
     }
 
+    void Database::dropAttributesFromRelations(
+            const std::vector<std::string>& vDropAttrNames)
+    {
+         for (auto& [relName, relation]: m_relations)
+        {
+            relation.dropAttributes(vDropAttrNames);
+        }
+    }
+
     void  Database::joinRelations(std::vector<std::string> vRelationNames,
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes)
     {

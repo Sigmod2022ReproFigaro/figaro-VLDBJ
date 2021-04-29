@@ -13,8 +13,11 @@ namespace Figaro
         friend class ASTVisitor;
         ASTNode* m_pOperand;
         std::vector<std::string> m_vRelationOrder;
+        std::vector<std::string> m_vDropAttributes;
     public:
-        ASTNodeQRGivens(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder) {};
+        ASTNodeQRGivens(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes
+        ): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
+        m_vDropAttributes(vDropAttributes) {};
         virtual ~ASTNodeQRGivens() override { delete m_pOperand; }
         ASTNode* getOperand(void)
         {
@@ -25,6 +28,12 @@ namespace Figaro
         {
             return m_vRelationOrder;
         }
+
+        const std::vector<std::string>& getDropAttributes(void)
+        {
+            return m_vDropAttributes;
+        }
+
         void accept(ASTVisitor *pVisitor) override;
     };
 

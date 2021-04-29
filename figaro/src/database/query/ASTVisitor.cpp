@@ -1,21 +1,20 @@
 #include "database/query/ASTVisitor.h"
-/*
 namespace Figaro
 {
-    void ASTVisitor::visitNodeRelation(ASTNodeRelation *pNodeRelation)
+    std::string ASTVisitor::getFormateJoinAttributeNames(
+        const std::vector<std::string>& vJoinAttributeNames)
     {
-        MatrixEigenT* pHead = pNodeRelation->computeHead(m_pDatabase);
-        MatrixEigenT* pTail = pNodeRelation->computeTail(m_pDatabase);
+        std::string formatedStr = "";
+
+        for (uint32_t idx = 0; idx < vJoinAttributeNames.size(); idx++)
+        {
+            if (idx > 0)
+            {
+                formatedStr += ",";
+            }
+            formatedStr += vJoinAttributeNames[idx];
+        }
+        return formatedStr;
     }
 
-    void ASTVisitor::visitNodeJoin(ASTNodeJoin *pElement)
-    {
-        
-    }
-    
-    void ASTVisitor::visitNodeQRGivens(ASTNodeQRGivens *pElement)
-    {
-
-    }
 }
-*/

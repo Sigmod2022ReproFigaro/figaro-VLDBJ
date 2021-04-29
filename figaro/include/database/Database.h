@@ -37,6 +37,9 @@ namespace Figaro
 
         std::vector<std::string> getRelationAttributeNames(const std::string& relationName);
 
+        void dropAttributesFromRelations(
+            const std::vector<std::string>& vDropAttrNames);
+
         void computeDownCounts(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
