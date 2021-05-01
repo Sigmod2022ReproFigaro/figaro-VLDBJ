@@ -1,4 +1,5 @@
 #include "database/query/ASTFigaroSecondPassVisitor.h"
+#include "utils/Performance.h"
 
 namespace Figaro
 {
@@ -51,7 +52,11 @@ namespace Figaro
         pElement->getOperand()->accept(this);
         if (m_postProcess)
         {
+            MICRO_BENCH_INIT(postprocess)
+            MICRO_BENCH_START(postprocess)
             m_pDatabase->computeQROfConcatenatedGeneralizedHeadAndTails(pElement->getRelationOrder(), m_pResult);
+            MICRO_BENCH_STOP(postprocess)
+            FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
         }
         FIGARO_LOG_DBG("FInished")
 

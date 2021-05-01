@@ -891,13 +891,23 @@ namespace Figaro
         // V_i
         m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
 
+        MICRO_BENCH_INIT(flagsCmp)
+        MICRO_BENCH_INIT(hashTable)
+        MICRO_BENCH_INIT(pureDownCnt)
+        MICRO_BENCH_START(flagsCmp)
         getDistinctVals(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin, vParBlockStartIdxs);
+        MICRO_BENCH_STOP(flagsCmp)
+        FIGARO_LOG_BENCH("Figaro flag computation", MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
         numDistParVals = vParBlockStartIdxs.size() - 1;
+        MICRO_BENCH_START(hashTable)
         initHashTable(vParJoinAttrIdxs, m_pHTParCounts, numDistParVals);
-
+        MICRO_BENCH_STOP(hashTable)
+        FIGARO_LOG_BENCH("Figaro hashTable computation", MICRO_BENCH_GET_TIMER_LAP(hashTable))
+        MICRO_BENCH_START(pureDownCnt)
         // TODO: Replace this with template function.
         if (isRootNode)
         {
+            #pragma omp parallel for schedule(static)
             for (uint32_t distCnt = 0;
                 distCnt < cntsJoin.getNumRows(); distCnt++)
             {
@@ -928,6 +938,7 @@ namespace Figaro
                 uint32_t parCurBlockStartIdx = vParBlockStartIdxs[distCntPar];
                 uint32_t parNextBlockStartIdx = vParBlockStartIdxs[distCntPar + 1];
                 // Distinct parent attribute
+                //#pragma omp parallel for schedule(static)
                 for (uint32_t distCnt = parCurBlockStartIdx;
                     distCnt < parNextBlockStartIdx; distCnt++)
                 {
@@ -954,7 +965,8 @@ namespace Figaro
                     cntsJoin[parCurBlockStartIdx], sum);
             }
         }
-
+        MICRO_BENCH_STOP(pureDownCnt)
+        FIGARO_LOG_BENCH("Figaro pure down count", MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
         m_countsJoinAttrs = std::move(cntsJoin);
         m_vParBlockStartIdxs = std::move(vParBlockStartIdxs);
     }
@@ -1082,6 +1094,7 @@ namespace Figaro
 
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
         // project away these attributes.
+        #pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
         {
             uint32_t headRowIdx;
@@ -1235,6 +1248,8 @@ namespace Figaro
 
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        MICRO_BENCH_INIT(aggregateAway)
+        MICRO_BENCH_START(aggregateAway)
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
@@ -1267,7 +1282,7 @@ namespace Figaro
         MatrixDT scales{m_dataHead.getNumRows(), vpChildRels.size() + 1};
         MatrixDT dataScales{m_dataHead.getNumRows(), m_vSubTreeRelNames.size()};
 
-       //#pragma omp parallel for schedule(static)
+       #pragma omp parallel for schedule(static)
        for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
        {
             // TODO: Optimization change the way how the values are extracted to tree.
@@ -1336,6 +1351,10 @@ namespace Figaro
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         FIGARO_LOG_DBG("m_dataScales", m_dataScales)
         FIGARO_LOG_DBG("m_scales", m_scales)
+
+        MICRO_BENCH_STOP(aggregateAway)
+        FIGARO_LOG_BENCH("Figaro", "aggregate away",  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+
     }
 
     void Relation::computeAndScaleGeneralizedHeadAndTail(
@@ -1354,8 +1373,11 @@ namespace Figaro
         uint32_t numOmittedAttrs;
         uint32_t numNonJoinAttrs;
 
+        MICRO_BENCH_INIT(genHT)
+        MICRO_BENCH_START(genHT)
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
+        // TODO: Replace this
         getDistinctValuesRowPositions(vParJoinAttrIdxs, vParDistValsRowPositions, m_dataHead, false);
         numParDistVals = vParDistValsRowPositions.size() - 1;
         numRelsSubTree = m_vSubTreeRelNames.size();
@@ -1374,7 +1396,10 @@ namespace Figaro
         FIGARO_LOG_DBG("vJoinAttributeNames", vJoinAttributeNames)
         // temporary adds an element to denote the end limit.
         m_vSubTreeDataOffsets.push_back(m_attributes.size());
+        MICRO_BENCH_INIT(genHTMainLoop)
+        MICRO_BENCH_START(genHTMainLoop)
         //FIGARO_LOG_DBG("distParCnt", distParCnt)
+        #pragma omp parallel for schedule(static)
         for (uint32_t distParCnt = 0; distParCnt < numParDistVals; distParCnt++)
         {
             uint32_t startIdx;
@@ -1513,6 +1538,11 @@ namespace Figaro
                 FIGARO_LOG_DBG(attribute.m_name, " (", strType, ")", "; ");
             }
         }
+        MICRO_BENCH_STOP(genHT)
+        MICRO_BENCH_STOP(genHTMainLoop)
+         FIGARO_LOG_BENCH("Figaro", "Generalized head and tail",  MICRO_BENCH_GET_TIMER_LAP(genHT));
+         FIGARO_LOG_BENCH("Figaro", "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
+
     }
 
 
@@ -1523,26 +1553,28 @@ namespace Figaro
         m_dataHead = std::move(tmp);
         FIGARO_LOG_INFO("QR generalized head", m_name)
         FIGARO_LOG_INFO("m_dataHead", m_dataHead)
-        return;
         if (m_dataHead.getNumCols() > m_dataHead.getNumRows())
         {
             FIGARO_LOG_ERROR("Head", m_name)
             return;
         }
+        MICRO_BENCH_INIT(qrHead)
+        MICRO_BENCH_START(qrHead)
         //#pragma omp parallel
         {
             m_dataHead.computeQRGivens(omp_get_num_procs());
         }
         m_dataHead.resize(m_dataHead.getNumCols());
+        MICRO_BENCH_STOP(qrHead)
+        FIGARO_LOG_BENCH("Figaro", "QR Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
     }
 
     void Relation::computeQROfTail(void)
     {
         FIGARO_LOG_INFO("QR Tail", m_name)
-        return;
         if (m_dataTails.getNumCols() > m_dataTails.getNumRows())
         {
-            FIGARO_LOG_ERROR("Tail", m_name)
+            FIGARO_LOG_INFO("Tail", m_name)
             return;
         }
         //#pragma omp parallel
@@ -1556,10 +1588,9 @@ namespace Figaro
     void Relation::computeQROfGeneralizedTail(void)
     {
         FIGARO_LOG_INFO("QR generalized Tail", m_name)
-        return;
         if (m_dataTailsGen.getNumCols() > m_dataTailsGen.getNumRows())
         {
-            FIGARO_LOG_ERROR("Generalized tail", m_name)
+            FIGARO_LOG_INFO("Generalized tail", m_name)
             return;
         }
         //#pragma omp parallel
@@ -1688,10 +1719,13 @@ namespace Figaro
             }
         }
         FIGARO_LOG_DBG("catGenHeadAndTails", catGenHeadAndTails)
-
+        MICRO_BENCH_INIT(eigen)
+        MICRO_BENCH_START(eigen)
         copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
         qr.compute(matEigen);
+        MICRO_BENCH_STOP(eigen)
         *pR = qr.matrixQR().topLeftCorner(totalNumCols, totalNumCols).triangularView<Eigen::Upper>();
+        FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));
         FIGARO_LOG_DBG(*pR);
         makeDiagonalElementsPositiveInR(*pR);
     }

@@ -153,6 +153,6 @@ namespace Figaro
             m_pASTRoot->accept(&figaroSecondPassVisitor);
         }
         MICRO_BENCH_STOP(secondPass)
-        FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
+        FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
      }
 }
