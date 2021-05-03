@@ -5,6 +5,7 @@
 #include "database/storage/Matrix.h"
 #include <vector>
 #include <unordered_map>
+#include "tbb/atomic.h"
 
 // TODO: Optimize tuple instanciated Relation based on number of attributes.
 namespace Figaro
@@ -44,6 +45,7 @@ namespace Figaro
         typedef std::map<std::vector<double>, double> GroupByT;
         typedef Figaro::Matrix<double> MatrixDT;
         typedef Figaro::Matrix<uint32_t> MatrixUI32T;
+        typedef std::tuple<uint32_t, tbb::atomic<uint32_t> > DownUpCntT;
 
         /**
          * 1) Allocates matrix of type MatrixEigen @p matEig in memory.
@@ -255,12 +257,12 @@ namespace Figaro
             uint32_t downCnt);
 
 
-        std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
+        Figaro::Relation::DownUpCntT& getParCntFromHashTable(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  htChildRowIdx,
             const uint32_t* pRow);
 
-        std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
+        Figaro::Relation::DownUpCntT& getParCntFromHashTable(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  htChildRowIdx,
             const double* pRow);
