@@ -2,14 +2,14 @@ cmake_minimum_required(VERSION 3.9)
 
 project(figaro VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMKAKE_CXX_STANDARD 17)
+set(CMKAKE_CXX_STANDARD 20)
 set(CMKAKE_CXX_STANDARD REQUIRED)
 
 #TODO: Replace flags with compiler options.
 # Checking compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++17 -pthread -g -Wall -Wextra -Og -fopenmp")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++17 -pthread -Ofast -mtune=native -fassociative-math -freciprocal-math -fno-signed-zeros -frename-registers -fopenmp")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++20 -pthread -g -Wall -Wextra -Og -fopenmp")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++20 -pthread -Ofast -mtune=native -fassociative-math -freciprocal-math -fno-signed-zeros -frename-registers -fopenmp")
 endif()
 #set(CMAKE_CXX_FLAGS_BENCHMARK "${CMAKE_CXX_FLAGS_RELEASE} -DBENCH")
 # Set to Debug, Benchmark or Release.

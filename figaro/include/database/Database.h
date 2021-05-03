@@ -55,17 +55,17 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-        std::map<std::vector<double>, uint32_t> getDownCounts(const std::string& relationName);
+        std::map<std::vector<uint32_t>, uint32_t> getDownCounts(const std::string& relationName);
 
-        std::map<std::vector<double>, uint32_t> getParDownCnts(
+        std::map<std::vector<uint32_t>, uint32_t> getParDownCnts(
             const std::string& relationName,
             const std::vector<std::string>& vParJoinAttrNames);
 
-        std::map<std::vector<double>, uint32_t> getParUpCnts(
+        std::map<std::vector<uint32_t>, uint32_t> getParUpCnts(
             const std::string& relationName,
             const std::vector<std::string>& vParJoinAttrNames);
 
-        std::map<std::vector<double>, uint32_t> getCircCounts(const std::string& relationName);
+        std::map<std::vector<uint32_t>, uint32_t> getCircCounts(const std::string& relationName);
 
         void computeHeadsAndTails(
             const std::string& relationName,

@@ -43,6 +43,7 @@ namespace Figaro
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
         typedef Figaro::Matrix<double> MatrixDT;
+        typedef Figaro::Matrix<uint32_t> MatrixUI32T;
 
         /**
          * 1) Allocates matrix of type MatrixEigen @p matEig in memory.
@@ -134,8 +135,8 @@ namespace Figaro
          */
         std::vector<uint32_t> m_vSubTreeDataOffsets;
 
-        MatrixDT m_countsJoinAttrs;
-        MatrixDT m_countsParJoinAttrs;
+        MatrixUI32T m_countsJoinAttrs;
+        MatrixUI32T m_countsParJoinAttrs;
         std::vector<uint32_t> m_vParBlockStartIdxs;
 
         // TODO: Delete this in children nodes since it is not needed.
@@ -250,9 +251,14 @@ namespace Figaro
         void insertParDownCntFromHashTable(
             const std::vector<uint32_t>& vParAttrIdx,
             void*& pHashTablePt,
-            const double* pRow,
+            const uint32_t* pRow,
             uint32_t downCnt);
 
+
+        std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*  htChildRowIdx,
+            const uint32_t* pRow);
 
         std::tuple<uint32_t, uint32_t>& getParCntFromHashTable(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
@@ -274,7 +280,7 @@ namespace Figaro
         void getDistinctVals(
             const std::vector<uint32_t>& vAttrIdxs,
             const std::vector<uint32_t>& vParAttrIdxs,
-            MatrixDT& cntDiffVals,
+            MatrixUI32T& cntDiffVals,
             std::vector<uint32_t>& vRowIdxParDiffVals);
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
@@ -348,15 +354,15 @@ namespace Figaro
             bool isRoot = false);
 
         /*********************** Testing getters for counts ***************/
-        std::map<std::vector<double>, uint32_t> getDownCounts(void);
+        std::map<std::vector<uint32_t>, uint32_t> getDownCounts(void);
 
-        std::map<std::vector<double>, uint32_t> getParDownCntsFromHashTable(
+        std::map<std::vector<uint32_t>, uint32_t> getParDownCntsFromHashTable(
         const std::vector<std::string>& vParJoinAttrNames);
 
-        std::map<std::vector<double>, uint32_t> getParUpCntsFromHashTable(
+        std::map<std::vector<uint32_t>, uint32_t> getParUpCntsFromHashTable(
         const std::vector<std::string>& vParJoinAttrNames);
 
-        std::map<std::vector<double>, uint32_t> getCircCounts(void);
+        std::map<std::vector<uint32_t>, uint32_t> getCircCounts(void);
 
 
 

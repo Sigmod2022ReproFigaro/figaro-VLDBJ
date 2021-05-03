@@ -446,10 +446,10 @@ TEST(DatabaseConfig, ComputingCounts)
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
     Figaro::ErrorCode loadError;
-    std::map<std::vector<double>, uint32_t> downCounts;
-    std::map<std::vector<double>, uint32_t> downParCounts;
-    std::map<std::vector<double>, uint32_t> upParCounts;
-    std::map<std::vector<double>, uint32_t> circCounts;
+    std::map<std::vector<uint32_t>, uint32_t> downCounts;
+    std::map<std::vector<uint32_t>, uint32_t> downParCounts;
+    std::map<std::vector<uint32_t>, uint32_t> upParCounts;
+    std::map<std::vector<uint32_t>, uint32_t> circCounts;
 
     initError = database.getInitializationErrorCode();
     EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
