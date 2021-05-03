@@ -11,6 +11,31 @@
 #include <unordered_map>
 #include "utils/Performance.h"
 #include <omp.h>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_hash_map.h>
+
+
+// Structure that defines hashing and comparison operations for user's type.
+namespace tbb
+{
+    template<typename... TupleArgs>
+    struct tbb_hash<std::tuple<TupleArgs...> >
+    {
+        tbb_hash() {}
+        size_t operator()(const std::tuple<TupleArgs...>& key) const {
+            return std::hash<std::tuple<TupleArgs...>>{}(key);
+        }
+        /*
+        static size_t hash( const std::tuple<TupleArgs...>& x ) {
+
+            return std::hash(x);
+        }
+        static bool equal(const std::tuple<TupleArgs...>& x, const std::tuple<TupleArgs...>& y ) {
+            return x == y;
+        }
+        */
+    };
+}
 
 namespace Figaro
 {
@@ -273,6 +298,8 @@ namespace Figaro
         std::vector<uint32_t> vAttributesIdxs;
         uint32_t numRows = m_data.getNumRows();
         uint32_t numCols = m_data.getNumCols();
+        MICRO_BENCH_INIT(sortData)
+        MICRO_BENCH_START(sortData)
         MatrixDT tmpMatrix(numRows, numCols);
         getAttributesIdxs(vAttributeNames, vAttributesIdxs);
 
@@ -305,11 +332,14 @@ namespace Figaro
             }
         }
         m_data = std::move(tmpMatrix);
+        MICRO_BENCH_STOP(sortData)
+        FIGARO_LOG_BENCH("Sorting", m_name, MICRO_BENCH_GET_TIMER_LAP(sortData))
         //FIGARO_LOG_DBG("Relation: ", m_name, "data:", m_data);
     }
 
     void Relation::sortData(void)
     {
+
         std::vector<std::string> vAttrNamesPKs;
         getPKAttributeNames(vAttrNamesPKs);
         FIGARO_LOG_DBG("Sorted Attributes", vAttrNamesPKs);
@@ -531,15 +561,17 @@ namespace Figaro
         }
         if (vParAttrIdx.size() == 1)
         {
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* tpHashTablePt = new std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> > ();
-            tpHashTablePt->reserve(hashTableSize);
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* tpHashTablePt = new tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> > ();
+            //tpHashTablePt->reserve(hashTableSize);
             pHashTablePt = tpHashTablePt;
+            FIGARO_LOG_DBG("HOHO")
+            FIGARO_LOG_DBG("HIHI", tpHashTablePt)
         }
         else if (vParAttrIdx.size() == 2)
         {
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =
-             new std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > ();
-            tpHashTablePt->reserve(hashTableSize);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t>>* tpHashTablePt =
+             new tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > ();
+            //tpHashTablePt->reserve(hashTableSize);
             pHashTablePt = tpHashTablePt;
         }
         else
@@ -594,14 +626,17 @@ namespace Figaro
         }
         if (vParAttrIdx.size() == 1)
         {
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =  (std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >*)(pHashTablePt);
+            FIGARO_LOG_DBG("HOHO")
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>* tpHashTablePt =  (tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >*)(pHashTablePt);
+            FIGARO_LOG_DBG("HIHI", tpHashTablePt)
             (*tpHashTablePt)[(uint32_t)pRow[vParAttrIdx[0]]] = std::make_tuple(downCnt, 0);
+            FIGARO_LOG_DBG("HOHO")
             //FIGARO_LOG_DBG("Inserted in", pRow[vParAttrIdx[0]], "value", downCnt)
         }
         else if (vParAttrIdx.size() == 2)
         {
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =
-             (std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*) (pHashTablePt);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >* tpHashTablePt =
+             (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*) (pHashTablePt);
              (*tpHashTablePt)[std::make_tuple(
                     (uint32_t)pRow[vParAttrIdx[0]], (uint32_t)pRow[vParAttrIdx[1]])] =
              std::make_tuple(downCnt, 0);
@@ -622,7 +657,7 @@ namespace Figaro
         {
             // TODO: Extract join for relation specific from join attribute value.
             const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
             //FIGARO_LOG_DBG("joinAttrVal", joinAttrVal, "address", &htChildOneParAttrs[joinAttrVal])
             return phtChildOneParAttrs->at(joinAttrVal);
             //return (*phtChildOneParAttrs)[joinAttrVal];
@@ -633,7 +668,9 @@ namespace Figaro
             const std::tuple<uint32_t, uint32_t> joinAttrVal =
             std::make_tuple(pRow[vParJoinAttrIdxs[0]],
                             pRow[vParJoinAttrIdxs[1]]);
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(htChildParAttrs);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>,
+            std::tuple<uint32_t, uint32_t>,
+            tbb::tbb_hash<std::tuple<uint32_t, uint32_t>>>*)(htChildParAttrs);
             //return (*phtChildTwoParAttrs)[joinAttrVal];
             return phtChildTwoParAttrs->at(joinAttrVal);
         }
@@ -656,7 +693,7 @@ namespace Figaro
         {
             // TODO: Extract join for relation specific from join attribute value.
             const uint32_t joinAttrVal = (uint32_t)pRow[vParJoinAttrIdxs[0]];
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
             //FIGARO_LOG_DBG("joinAttrVal", joinAttrVal, "address", &htChildOneParAttrs[joinAttrVal])
             return phtChildOneParAttrs->at(joinAttrVal);
             //return (*phtChildOneParAttrs)[joinAttrVal];
@@ -667,7 +704,7 @@ namespace Figaro
             const std::tuple<uint32_t, uint32_t> joinAttrVal =
             std::make_tuple((uint32_t)pRow[vParJoinAttrIdxs[0]],
                             (uint32_t)pRow[vParJoinAttrIdxs[1]]);
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(htChildParAttrs);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(htChildParAttrs);
             //return (*phtChildTwoParAttrs)[joinAttrVal];
             return phtChildTwoParAttrs->at(joinAttrVal);
         }
@@ -687,12 +724,16 @@ namespace Figaro
     {
         if (vParJoinAttrIdxs.size() == 1)
         {
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> >* phtChildOneParAttrs = (tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(htChildParAttrs);
             delete phtChildOneParAttrs;
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs = (std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(htChildParAttrs);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > *phtChildTwoParAttrs =
+             (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>,
+             std::tuple<uint32_t, uint32_t>,
+            tbb::tbb_hash<std::tuple<uint32_t, uint32_t>>
+             >*)(htChildParAttrs);
             delete phtChildTwoParAttrs;
         }
         else
@@ -715,7 +756,7 @@ namespace Figaro
         {
 
             // TODO: Extract join for relation specific from join attribute value.
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(m_pHTParCounts);
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(m_pHTParCounts);
             for (const auto& val: htChildRowIdxOne)
             {
                 std::vector<uint32_t> curAttrs;
@@ -726,7 +767,8 @@ namespace Figaro
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(m_pHTParCounts);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t>,
+            tbb::tbb_hash<std::tuple<uint32_t, uint32_t>> >*)(m_pHTParCounts);
             for (const auto& val: htChildRowIdxOne)
             {
                 std::vector<uint32_t> curAttrs;
@@ -755,7 +797,7 @@ namespace Figaro
         {
 
             // TODO: Extract join for relation specific from join attribute value.
-            std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(m_pHTParCounts);
+            tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, std::tuple<uint32_t, uint32_t>>*)(m_pHTParCounts);
             for (const auto& val: htChildRowIdxOne)
             {
                 std::vector<uint32_t> curAttrs;
@@ -766,7 +808,7 @@ namespace Figaro
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
-            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(std::unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(m_pHTParCounts);
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> > htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, std::tuple<uint32_t, uint32_t> >*)(m_pHTParCounts);
             for (const auto& val: htChildRowIdxOne)
             {
                 std::vector<uint32_t> curAttrs;
@@ -968,13 +1010,13 @@ namespace Figaro
         }
         else
         {
+            #pragma omp parallel for schedule(static)
             for (uint32_t distCntPar = 0; distCntPar < numDistParVals; distCntPar++)
             {
                 uint32_t sum = 0;
                 uint32_t parCurBlockStartIdx = vParBlockStartIdxs[distCntPar];
                 uint32_t parNextBlockStartIdx = vParBlockStartIdxs[distCntPar + 1];
                 // Distinct parent attribute
-                //#pragma omp parallel for schedule(static)
                 for (uint32_t distCnt = parCurBlockStartIdx;
                     distCnt < parNextBlockStartIdx; distCnt++)
                 {
