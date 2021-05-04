@@ -1620,8 +1620,8 @@ namespace Figaro
         }
         MICRO_BENCH_STOP(genHT)
         MICRO_BENCH_STOP(genHTMainLoop)
-         FIGARO_LOG_BENCH("Figaro", "Generalized head and tail",  MICRO_BENCH_GET_TIMER_LAP(genHT));
-         FIGARO_LOG_BENCH("Figaro", "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
+        FIGARO_LOG_BENCH("Figaro", "Generalized head and tail",  MICRO_BENCH_GET_TIMER_LAP(genHT));
+        FIGARO_LOG_BENCH("Figaro", "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
 
     }
 
@@ -1642,7 +1642,7 @@ namespace Figaro
         MICRO_BENCH_START(qrHead)
         //#pragma omp parallel
         {
-            m_dataHead.computeQRGivens(omp_get_num_procs());
+            m_dataHead.computeQRGivens(1);
         }
         m_dataHead.resize(m_dataHead.getNumCols());
         MICRO_BENCH_STOP(qrHead)
@@ -1657,11 +1657,15 @@ namespace Figaro
             FIGARO_LOG_INFO("Tail", m_name)
             return;
         }
+        MICRO_BENCH_INIT(qrTail)
+        MICRO_BENCH_START(qrTail)
         //#pragma omp parallel
         {
             m_dataTails.computeQRGivens(omp_get_num_procs());
         }
         m_dataTails.resize(m_dataTails.getNumCols());
+        MICRO_BENCH_STOP(qrTail)
+        FIGARO_LOG_BENCH("Figaro", "Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
         FIGARO_LOG_DBG("Tail", m_dataTails)
     }
 
@@ -1673,11 +1677,14 @@ namespace Figaro
             FIGARO_LOG_INFO("Generalized tail", m_name)
             return;
         }
-        //#pragma omp parallel
+        MICRO_BENCH_INIT(qrGenTail)
+        MICRO_BENCH_START(qrGenTail)
         {
             m_dataTailsGen.computeQRGivens(omp_get_num_procs());
         }
         m_dataTailsGen.resize(m_dataTailsGen.getNumCols());
+        MICRO_BENCH_STOP(qrGenTail)
+        FIGARO_LOG_BENCH("Figaro", "Generalized Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
         FIGARO_LOG_DBG("Generalized Tail", m_dataTailsGen)
     }
 
@@ -1728,6 +1735,7 @@ namespace Figaro
                 catGenHeadAndTails[rowIdx][colIdx] = m_dataHead[rowIdx][colIdx];
             }
         }
+
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         FIGARO_LOG_DBG("vCumNumRowsUp", vCumNumRowsUp)
         FIGARO_LOG_DBG("vLeftCumNumNonJoinAttrs", vLeftCumNumNonJoinAttrs)

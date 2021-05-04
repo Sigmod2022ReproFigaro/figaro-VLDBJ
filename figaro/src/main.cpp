@@ -13,6 +13,7 @@ void initGlobalState(void)
     omp_set_nested(1);
     omp_set_dynamic(0);
     uint32_t numberOfCores =  omp_get_num_procs();
+    FIGARO_LOG_BENCH("Number of processors", numberOfCores)
     omp_set_num_threads(numberOfCores);
 }
 

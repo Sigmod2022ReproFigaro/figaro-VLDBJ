@@ -2,6 +2,7 @@
 #define _FIGARO_MATRIX_H_
 
 #include "ArrayStorage.h"
+#include "utils/Performance.h"
 
 namespace Figaro
 {
@@ -9,7 +10,7 @@ namespace Figaro
     template <typename T>
     class Matrix
     {
-        static constexpr uint32_t MIN_COLS_PAR = 100;
+        static constexpr uint32_t MIN_COLS_PAR = 10;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)
@@ -49,7 +50,7 @@ namespace Figaro
         }
         Matrix& operator=(Matrix&& other)
         {
-            //FIGARO_LOG_DBG("Entered move assignment")
+            FIGARO_LOG_DBG("Entered move assignment")
             if (this != &other)
             {
                 destroyData();
@@ -274,6 +275,30 @@ namespace Figaro
         }
 
 
+        void copyBlockToThisMatrix(const Matrix<T>& matSource,
+            uint32_t rowSrcBeginIdx, uint32_t rowSrcEndIdx,
+            uint32_t colSrcBeginIdx, uint32_t colSrcEndIdx,
+            uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
+        {
+            uint32_t nCopiedRows;
+            uint32_t nCopiedCols;
+
+            auto& matA = *this;
+            nCopiedRows = rowSrcEndIdx - rowSrcBeginIdx + 1;
+            nCopiedCols = colSrcEndIdx - colSrcBeginIdx + 1;
+
+            for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
+            {
+                for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
+                {
+                    uint32_t colIdxDst = colIdxSrc - colSrcBeginIdx + colDstBeginIdx;
+                    uint32_t rowIdxDst = rowIdxSrc - rowSrcBeginIdx + rowDstBeginIdx;
+                    matA[rowIdxDst][colIdxDst] = matSource[rowIdxSrc][colIdxSrc];
+                }
+            }
+        }
+
+
         void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx,
                          double sin, double cos)
         {
@@ -288,12 +313,18 @@ namespace Figaro
             }
         }
 
-        void computeQRGivensSequential(void)
+
+        void computeQRGivensSequentialBlock(
+            uint32_t rowBeginIdx,
+            uint32_t rowEndIdx,
+            uint32_t colBeginIdx,
+            uint32_t colEndIdx)
         {
             auto& matA = *this;
-            for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+            for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
             {
-                for (uint32_t rowIdx = m_numRows -1 ; rowIdx > colIdx; rowIdx--)
+                for (uint32_t rowIdx = rowEndIdx;
+                    rowIdx > colIdx + rowBeginIdx; rowIdx--)
                 {
                     double upperVal = matA[rowIdx - 1][colIdx];
                     double lowerVal = matA[rowIdx][colIdx];
@@ -306,6 +337,66 @@ namespace Figaro
                     }
                 }
             }
+        }
+
+        void computeQRGivensSequential(void)
+        {
+            computeQRGivensSequentialBlock(0, m_numRows - 1, 0, m_numCols - 1);
+        }
+
+
+        /**
+         * @brief
+         *
+         * @param numThreads
+         *
+         * @pre Each of the blocks on which threads operate have at least
+         * number of rows greater than the number of cols. This does not hold
+         * only for the last block.
+         */
+        void computeQRGivensParallelizedThinMatrix(uint32_t numThreads)
+        {
+            uint32_t blockSize;
+            uint32_t numBlocks;
+            uint32_t numRedRows;
+            uint32_t rowTotalEndIdx;
+            auto& matA = *this;
+
+            numBlocks = std::min(m_numRows, numThreads);
+            // ceil(m_numRows / numBlocks)
+            blockSize =  (m_numRows + numBlocks - 1) / numBlocks;
+            numRedRows = std::min(blockSize, m_numCols);
+            omp_set_num_threads(numThreads);
+
+            MICRO_BENCH_INIT(qrGivensPar)
+            MICRO_BENCH_START(qrGivensPar)
+            #pragma omp parallel for schedule(static)
+            for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
+            {
+                uint32_t rowBeginIdx;
+                uint32_t rowEndIdx;
+                rowBeginIdx = blockIdx * blockSize;
+                rowEndIdx = std::min((blockIdx + 1) * blockSize - 1, m_numRows - 1);
+                computeQRGivensSequentialBlock(rowBeginIdx, rowEndIdx, 0, m_numCols - 1);
+            }
+            MICRO_BENCH_STOP(qrGivensPar)
+            FIGARO_LOG_BENCH("Time Parallel", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar))
+
+            MICRO_BENCH_INIT(qrGivensPar2)
+            MICRO_BENCH_START(qrGivensPar2)
+            for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
+            {
+                uint32_t rowBeginIdx;
+                uint32_t rowEndIdx;
+                rowBeginIdx = blockIdx * blockSize;
+                rowEndIdx = std::min(rowBeginIdx + numRedRows - 1, m_numRows - 1);
+                copyBlockToThisMatrix(matA, rowBeginIdx, rowEndIdx, 0, m_numCols - 1,
+                    blockIdx * numRedRows, 0);
+            }
+            rowTotalEndIdx = std::min(numBlocks * numRedRows - 1, m_numRows - 1);
+            computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
+            MICRO_BENCH_STOP(qrGivensPar2)
+            FIGARO_LOG_BENCH("Time sequential", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
         }
 
 
@@ -358,6 +449,10 @@ namespace Figaro
         // numThreads denotes number of threads available for the computation in the case of parallelization.
         void computeQRGivens(uint32_t numThreads = 1)
         {
+            if ((0 == m_numRows) || (0 == m_numCols))
+            {
+                return;
+            }
             if (m_numCols > MIN_COLS_PAR)
             {
                 FIGARO_LOG_INFO("Parallelized version")
@@ -366,7 +461,8 @@ namespace Figaro
             else
             {
                 FIGARO_LOG_INFO("Sequential version")
-                computeQRGivensSequential();
+                computeQRGivensParallelizedThinMatrix(numThreads);
+                //computeQRGivensSequential();
             }
 
         }
