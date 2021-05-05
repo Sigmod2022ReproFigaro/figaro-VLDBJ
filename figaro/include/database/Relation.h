@@ -140,16 +140,31 @@ namespace Figaro
         MatrixUI32T m_countsJoinAttrs;
         MatrixUI32T m_countsParJoinAttrs;
         std::vector<uint32_t> m_vParBlockStartIdxs;
+        std::vector<uint32_t> m_vParBlockStartIdxsAfterFirstPass;
 
-        // TODO: Delete this in children nodes since it is not needed.
+        /**
+         * @brief This a pointer to the corresponding associative container whose
+         * keys are the corresponding distinct parent attribute values and
+         * the values are the corresponding tuples of up and down counts.
+         */
         void* m_pHTParCounts;
 
-        uint32_t m_cntsParIdxD;
-        uint32_t m_cntsParIdxU;
+        /**
+         * @brief Column index in the @p m_CountsJoinAttrs. that stores the corresponding
+         * down count.
+         */
         uint32_t m_cntsJoinIdxD;
-        uint32_t m_cntsJoinIdxP;
+        /**
+         * @brief Column index in the @p m_CountsJoinAttrs. that stores the corresponding
+         * number of tuples corresponding to the key in this relation.
+         */
         uint32_t m_cntsJoinIdxV;
+        /**
+         * @brief Column index in the @p m_CountsJoinAttrs. that stores the corresponding
+         * circle count.
+         */
         uint32_t m_cntsJoinIdxC;
+        uint32_t m_cntsJoinIdxE;
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
@@ -279,20 +294,16 @@ namespace Figaro
             const std::string& attrName,
             std::unordered_map<double, const double*>& htRowPts) const;
 
-        void getDistinctVals(
+        void getDistinctValsAndBuildIndices(
             const std::vector<uint32_t>& vAttrIdxs,
             const std::vector<uint32_t>& vParAttrIdxs,
             MatrixUI32T& cntDiffVals,
-            std::vector<uint32_t>& vRowIdxParDiffVals);
+            std::vector<uint32_t>& vRowIdxParDiffVals,
+            std::vector<uint32_t>& vParBlockStartIdxsAfterFirstPass,
+            bool isRootNode);
 
         void getDistinctValuesRowPositions(const std::string& attributeName,
             std::vector<uint32_t>& vDistinctValuesRowPositions,
-            bool preallocated = true) const;
-
-        void getDistinctValuesRowPositions(
-            const std::vector<uint32_t>& vAttrIdxs,
-            std::vector<uint32_t>& vDistinctValuesRowPositions,
-            const MatrixDT& data,
             bool preallocated = true) const;
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
