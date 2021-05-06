@@ -25,15 +25,6 @@ namespace tbb
         size_t operator()(const std::tuple<TupleArgs...>& key) const {
             return std::hash<std::tuple<TupleArgs...>>{}(key);
         }
-        /*
-        static size_t hash( const std::tuple<TupleArgs...>& x ) {
-
-            return std::hash(x);
-        }
-        static bool equal(const std::tuple<TupleArgs...>& x, const std::tuple<TupleArgs...>& y ) {
-            return x == y;
-        }
-        */
     };
 }
 
@@ -73,16 +64,8 @@ namespace Figaro
 
     uint32_t Relation::getNumberOfNonPKAttributes(void) const
     {
-         uint32_t nokPKAttributes = 0;
-        /*
-        std::reduce(std::execution::par, m_attributes.begin(),
-                    m_attributes.end(), 0.0,
-                     [const& auto sum, const& auto T2]()
-                    {
-                        return ;
-                    })
-        */
-       nokPKAttributes = std::accumulate(m_attributes.begin(), m_attributes.end(), 0.0,
+        uint32_t nokPKAttributes = 0;
+         nokPKAttributes = std::accumulate(m_attributes.begin(), m_attributes.end(), 0.0,
                      [](int curCnt, const Attribute& nextAtr)
                      {
                          return nextAtr.m_isPrimaryKey ? curCnt : (curCnt + 1);
@@ -184,8 +167,6 @@ namespace Figaro
         {
             m_attributes.insert(std::end(m_attributes), std::begin(tmpV), std::end(tmpV));
         }
-
-        //FIGARO_LOG_DBG("After schema change", *this);
     }
 
     Relation::Relation(json jsonRelationSchema):
@@ -254,11 +235,8 @@ namespace Figaro
                 m_data[row][col] = val;
             }
         }
-        //FIGARO_LOG_DBG("m_data", m_data);
         return ErrorCode::NO_ERROR;
     }
-
-
 
     void Relation::getAttributesIdxs(const std::vector<std::string>& vAttributeNames,
         std::vector<uint32_t>& vAttributeIdxs) const
@@ -334,12 +312,10 @@ namespace Figaro
         m_data = std::move(tmpMatrix);
         MICRO_BENCH_STOP(sortData)
         FIGARO_LOG_BENCH("Sorting", m_name, MICRO_BENCH_GET_TIMER_LAP(sortData))
-        //FIGARO_LOG_DBG("Relation: ", m_name, "data:", m_data);
     }
 
     void Relation::sortData(void)
     {
-
         std::vector<std::string> vAttrNamesPKs;
         getPKAttributeNames(vAttrNamesPKs);
         FIGARO_LOG_DBG("Sorted Attributes", vAttrNamesPKs);
@@ -410,49 +386,6 @@ namespace Figaro
         FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
     }
 
-    void Relation::getDistinctValuesRowPositions(
-        const std::string& attributeName,
-        std::vector<uint32_t>& vDistinctValuesRowPositions,
-        bool  preallocated) const
-    {
-        uint32_t attrIdx;
-        double prevAttrVal;
-        uint32_t distCnt;
-        double pushVal;
-
-        attrIdx = getAttributeIdx(attributeName);
-        prevAttrVal = std::numeric_limits<double>::max();
-        distCnt = 0;
-
-        // The first entry is saved for the end of imaginary predecessor of ranges.
-        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
-        {
-            double curAttrVal = m_data[rowIdx][attrIdx];
-            if (prevAttrVal != curAttrVal)
-            {
-                pushVal = rowIdx - 1;
-                if (preallocated)
-                {
-                    vDistinctValuesRowPositions[distCnt] = pushVal;
-                }
-                else
-                {
-                    vDistinctValuesRowPositions.push_back(pushVal);
-                }
-                prevAttrVal = curAttrVal;
-                distCnt++;
-            }
-        }
-        pushVal = m_data.getNumRows() - 1;
-        if (preallocated)
-        {
-            vDistinctValuesRowPositions[distCnt] = pushVal;
-        }
-        else
-        {
-            vDistinctValuesRowPositions.push_back(pushVal);
-        }
-    }
 
     void Relation::getDistinctValsAndBuildIndices(
         const std::vector<uint32_t>& vJoinAttrIdxs,
@@ -522,33 +455,6 @@ namespace Figaro
         vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
     }
 
-    void Relation::initHashTable(const std::vector<uint32_t>& vParAttrIdx,
-        void*& pHashTablePt,
-        uint32_t hashTableSize)
-    {
-        if (vParAttrIdx.size() == 0)
-        {
-            // Do not do anything. This is a root node.
-        }
-        if (vParAttrIdx.size() == 1)
-        {
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT >* tpHashTablePt = new tbb::concurrent_unordered_map<uint32_t, DownUpCntT > ();
-            //tpHashTablePt->reserve(hashTableSize);
-            pHashTablePt = tpHashTablePt;
-        }
-        else if (vParAttrIdx.size() == 2)
-        {
-            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>* tpHashTablePt =
-             new tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > ();
-            //tpHashTablePt->reserve(hashTableSize);
-            pHashTablePt = tpHashTablePt;
-        }
-        else
-        {
-
-        }
-    }
-
 
     std::map<std::vector<uint32_t>, uint32_t> Relation::getDownCounts(void)
     {
@@ -565,6 +471,7 @@ namespace Figaro
         }
         return downCounts;
     }
+
 
     std::map<std::vector<uint32_t>, uint32_t> Relation::getCircCounts(void)
     {
@@ -583,9 +490,114 @@ namespace Figaro
     }
 
 
+       std::map<std::vector<uint32_t>, uint32_t> Relation::getParDownCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames)
+    {
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+        std::map<std::vector<uint32_t>, uint32_t> parDownCounts;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+
+            // TODO: Extract join for relation specific from join attribute value.
+            tbb::concurrent_unordered_map<uint32_t, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(val.first);
+                uint32_t downCount = std::get<0>(val.second);
+                parDownCounts[curAttrs] = downCount;
+            }
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(std::get<0>(val.first));
+                curAttrs.push_back(std::get<1>(val.first));
+                uint32_t downCount = std::get<0>(val.second);
+                parDownCounts[curAttrs] = downCount;
+            }
+            return parDownCounts;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+        return parDownCounts;
+    }
+
+
+    std::map<std::vector<uint32_t>, uint32_t> Relation::getParUpCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames)
+    {
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+        std::map<std::vector<uint32_t>, uint32_t> parUpCounts;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+
+            // TODO: Extract join for relation specific from join attribute value.
+            tbb::concurrent_unordered_map<uint32_t, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(val.first);
+                uint32_t upCount = std::get<1>(val.second);
+                parUpCounts[curAttrs] = upCount;
+            }
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(std::get<0>(val.first));
+                curAttrs.push_back(std::get<1>(val.first));
+                uint32_t upCount = std::get<1>(val.second);
+                parUpCounts[curAttrs] = upCount;
+            }
+            return parUpCounts;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+        return parUpCounts;
+    }
+
+
+    void Relation::initHashTable(const std::vector<uint32_t>& vParAttrIdx,
+        uint32_t hashTableSize)
+    {
+        if (vParAttrIdx.size() == 0)
+        {
+            // Do not do anything. This is a root node.
+        }
+        if (vParAttrIdx.size() == 1)
+        {
+            m_pHTParCounts = std::make_unique< tbb::concurrent_unordered_map<uint32_t, DownUpCntT> >();
+        }
+        else if (vParAttrIdx.size() == 2)
+        {
+
+            m_pHTParCounts = std::make_unique
+                <tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > > ();
+        }
+        else
+        {
+
+        }
+    }
+
+
     void Relation::insertParDownCntFromHashTable(
         const std::vector<uint32_t>& vParAttrIdx,
-        void*& pHashTablePt,
         const uint32_t* pRow,
         uint32_t downCnt)
     {
@@ -595,14 +607,14 @@ namespace Figaro
         }
         if (vParAttrIdx.size() == 1)
         {
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT>* tpHashTablePt =  (tbb::concurrent_unordered_map<uint32_t, DownUpCntT >*)(pHashTablePt);
+            tbb::concurrent_unordered_map<uint32_t, DownUpCntT>* tpHashTablePt =  (tbb::concurrent_unordered_map<uint32_t, DownUpCntT >*)(m_pHTParCounts.get());
             (*tpHashTablePt)[(uint32_t)pRow[vParAttrIdx[0]]] = std::make_tuple(downCnt, 0);
             //FIGARO_LOG_DBG("Inserted in", pRow[vParAttrIdx[0]], "value", downCnt)
         }
         else if (vParAttrIdx.size() == 2)
         {
             tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT >* tpHashTablePt =
-             (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT >*) (pHashTablePt);
+             (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT >*) (m_pHTParCounts.get());
              (*tpHashTablePt)[std::make_tuple(
                     (uint32_t)pRow[vParAttrIdx[0]], (uint32_t)pRow[vParAttrIdx[1]])] =
              std::make_tuple(downCnt, 0);
@@ -621,16 +633,13 @@ namespace Figaro
     {
         if (vParJoinAttrIdxs.size() == 1)
         {
-            // TODO: Extract join for relation specific from join attribute value.
             const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
             tbb::concurrent_unordered_map<uint32_t, DownUpCntT >* phtChildOneParAttrs = (tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(htChildParAttrs);
-            //FIGARO_LOG_DBG("joinAttrVal", joinAttrVal, "address", &htChildOneParAttrs[joinAttrVal])
             return phtChildOneParAttrs->at(joinAttrVal);
             //return (*phtChildOneParAttrs)[joinAttrVal];
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
-            //FIGARO_LOG_DBG("It shouldn't be")
             const std::tuple<uint32_t, uint32_t> joinAttrVal =
             std::make_tuple(pRow[vParJoinAttrIdxs[0]],
                             pRow[vParJoinAttrIdxs[1]]);
@@ -658,7 +667,6 @@ namespace Figaro
             // TODO: Extract join for relation specific from join attribute value.
             const uint32_t joinAttrVal = (uint32_t)pRow[vParJoinAttrIdxs[0]];
             tbb::concurrent_unordered_map<uint32_t, DownUpCntT >* phtChildOneParAttrs = (tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(htChildParAttrs);
-            //FIGARO_LOG_DBG("joinAttrVal", joinAttrVal, "address", &htChildOneParAttrs[joinAttrVal])
             return phtChildOneParAttrs->at(joinAttrVal);
             //return (*phtChildOneParAttrs)[joinAttrVal];
         }
@@ -682,119 +690,13 @@ namespace Figaro
     }
 
 
-    void Relation::destroyParCntHashTable(
-        const std::vector<uint32_t>& vParJoinAttrIdxs,
-        void*  htChildParAttrs)
-    {
-        if (vParJoinAttrIdxs.size() == 1)
-        {
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT >* phtChildOneParAttrs = (tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(htChildParAttrs);
-            delete phtChildOneParAttrs;
-        }
-        else if (vParJoinAttrIdxs.size() == 2)
-        {
-            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > *phtChildTwoParAttrs =
-             (tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT
-             >*)(htChildParAttrs);
-            delete phtChildTwoParAttrs;
-        }
-        else
-        {
-            // TODO: Consider how to handle this case.
-            //const std::vector<double> t =
-        }
-
-    }
-
-
-
-    std::map<std::vector<uint32_t>, uint32_t> Relation::getParDownCntsFromHashTable(
-        const std::vector<std::string>& vParJoinAttrNames)
-    {
-        std::vector<uint32_t> vParJoinAttrIdxs;
-        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
-        std::map<std::vector<uint32_t>, uint32_t> parDownCounts;
-        if (vParJoinAttrIdxs.size() == 1)
-        {
-
-            // TODO: Extract join for relation specific from join attribute value.
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts);
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(val.first);
-                uint32_t downCount = std::get<0>(val.second);
-                parDownCounts[curAttrs] = downCount;
-            }
-        }
-        else if (vParJoinAttrIdxs.size() == 2)
-        {
-            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts);
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(std::get<0>(val.first));
-                curAttrs.push_back(std::get<1>(val.first));
-                uint32_t downCount = std::get<0>(val.second);
-                parDownCounts[curAttrs] = downCount;
-            }
-            return parDownCounts;
-        }
-        else
-        {
-            // TODO: Consider how to handle this case.
-            //const std::vector<double> t =
-        }
-        return parDownCounts;
-    }
-
-    std::map<std::vector<uint32_t>, uint32_t> Relation::getParUpCntsFromHashTable(
-        const std::vector<std::string>& vParJoinAttrNames)
-    {
-        std::vector<uint32_t> vParJoinAttrIdxs;
-        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
-        std::map<std::vector<uint32_t>, uint32_t> parUpCounts;
-        if (vParJoinAttrIdxs.size() == 1)
-        {
-
-            // TODO: Extract join for relation specific from join attribute value.
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts);
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(val.first);
-                uint32_t upCount = std::get<1>(val.second);
-                parUpCounts[curAttrs] = upCount;
-            }
-        }
-        else if (vParJoinAttrIdxs.size() == 2)
-        {
-            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts);
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(std::get<0>(val.first));
-                curAttrs.push_back(std::get<1>(val.first));
-                uint32_t upCount = std::get<1>(val.second);
-                parUpCounts[curAttrs] = upCount;
-            }
-            return parUpCounts;
-        }
-        else
-        {
-            // TODO: Consider how to handle this case.
-            //const std::vector<double> t =
-        }
-        return parUpCounts;
-    }
-
-
     // TODO: Convert this to a template.
-    void Relation::getHashTableRowIdxs(
+    void Relation::initHashTableRowIdxs(
         const std::vector<uint32_t>& vParAttrIdx,
         void*& pHashTablePt,
         const MatrixDT& data)
     {
+        FIGARO_LOG_DBG("ADDRESS", pHashTablePt)
         if (vParAttrIdx.size() == 0)
         {
             // Do not do anything. This is a root node.
@@ -938,14 +840,14 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro flag computation", m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
         numDistParVals = vParBlockStartIdxs.size() - 1;
         MICRO_BENCH_START(hashTable)
-        initHashTable(vParJoinAttrIdxs, m_pHTParCounts, numDistParVals);
+        initHashTable(vParJoinAttrIdxs, numDistParVals);
         MICRO_BENCH_STOP(hashTable)
         FIGARO_LOG_BENCH("Figaro hashTable computation", m_name, MICRO_BENCH_GET_TIMER_LAP(hashTable))
         MICRO_BENCH_START(pureDownCnt)
         // TODO: Replace this with template function.
         if (isRootNode)
         {
-            //#pragma omp parallel for schedule(static)
+            #pragma omp parallel for schedule(static)
             for (uint32_t distCnt = 0;
                 distCnt < cntsJoin.getNumRows(); distCnt++)
             {
@@ -959,7 +861,7 @@ namespace Figaro
                     Figaro::Relation::DownUpCntT& cnts =
                         getParCntFromHashTable(
                             vvCurJoinAttrIdxs[idxChild],
-                            vpChildRels[idxChild]->m_pHTParCounts,
+                            vpChildRels[idxChild]->m_pHTParCounts.get(),
                             cntsJoin[distCnt]);
                     uint32_t downCnt = std::get<0>(cnts);
                     curDownCnt *= downCnt;
@@ -991,7 +893,7 @@ namespace Figaro
                         Figaro::Relation::DownUpCntT& cnts =
                             getParCntFromHashTable(
                                 vvCurJoinAttrIdxs[idxChild],
-                                vpChildRels[idxChild]->m_pHTParCounts,
+                                vpChildRels[idxChild]->m_pHTParCounts.get(),
                                 cntsJoin[distCnt]);
                         uint32_t downCnt = std::get<0>(cnts);
                         curDownCnt *= downCnt;
@@ -1000,7 +902,7 @@ namespace Figaro
                     sum += curDownCnt;
 
                 }
-                insertParDownCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts,
+                insertParDownCntFromHashTable(vParJoinAttrIdxs,
                     cntsJoin[parCurBlockStartIdx], sum);
             }
         }
@@ -1050,7 +952,7 @@ namespace Figaro
                 {
                     Figaro::Relation::DownUpCntT& cnts = getParCntFromHashTable(
                                 vvCurJoinAttrIdxs[idxChild],
-                                vpChildRels[idxChild]->m_pHTParCounts,
+                                vpChildRels[idxChild]->m_pHTParCounts.get(),
                                 m_countsJoinAttrs[distCnt]);
                     (std::get<1>(cnts)).fetch_and_add(fullCnt);
                 }
@@ -1066,10 +968,10 @@ namespace Figaro
                 Figaro::Relation::DownUpCntT& cnts =
                         getParCntFromHashTable(
                             vParJoinAttrIdxs,
-                            m_pHTParCounts,
+                            m_pHTParCounts.get(),
                             m_countsJoinAttrs[parCurBlockStartIdx]);
                 // Division by downCnt
-                // This does not need mutex since each attribute will be unique.
+                // This does not need mutex since each tuple will be unique.
                 //
                 std::get<1>(cnts) = std::get<1>(cnts) / std::get<0>(cnts);
                 uint32_t upCnt = std::get<1>(cnts);
@@ -1088,7 +990,7 @@ namespace Figaro
                     {
                         Figaro::Relation::DownUpCntT& cnts = getParCntFromHashTable(
                                     vvCurJoinAttrIdxs[idxChild],
-                                    vpChildRels[idxChild]->m_pHTParCounts,
+                                    vpChildRels[idxChild]->m_pHTParCounts.get(),
                                     m_countsJoinAttrs[distCnt]);
                         (std::get<1>(cnts)).fetch_and_add(fullCnt);
                     }
@@ -1193,12 +1095,6 @@ namespace Figaro
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
         m_vSubTreeRelNames.push_back(m_name);
 
-        // We don't need counts of leaf node anymore.
-        if (isLeafNode)
-        {
-            destroyParCntHashTable(vJoinAttrIdxs, m_pHTParCounts);
-        }
-
         FIGARO_LOG_DBG("Successful head computation", m_name);
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         FIGARO_LOG_DBG("m_dataTails", m_dataTails)
@@ -1218,7 +1114,6 @@ namespace Figaro
             {
                 m_attributes.push_back(vpChildRels[idxRel]->m_attributes[nonJoinAttrIdx]);
             }
-            //FIGARO_LOG_DBG("m_attributes", *this)
 
             // For each child, copy relation names from the subtree.
             m_vSubTreeRelNames.insert(m_vSubTreeRelNames.end(),
@@ -1234,9 +1129,7 @@ namespace Figaro
             for (uint32_t idxRelSub = prevvSTDOffsSize;
                 idxRelSub < m_vSubTreeDataOffsets.size(); idxRelSub ++)
             {
-                //FIGARO_LOG_DBG("Before", m_vSubTreeDataOffsets[idxRelSub])
                 m_vSubTreeDataOffsets[idxRelSub] += prevSize - vvJoinAttrIdxs[idxRel].size();
-                //FIGARO_LOG_DBG("After", m_vSubTreeDataOffsets[idxRelSub]);
             }
         }
         FIGARO_LOG_DBG("Schema Joins", m_name, m_vSubTreeRelNames, m_vSubTreeDataOffsets)
@@ -1246,11 +1139,8 @@ namespace Figaro
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vParJoinAttrIdxs)
     {
-        // TODO: Test bug with PKs
-        //FIGARO_LOG_DBG("Here", *this)
         m_attributes.erase(m_attributes.begin() + vParJoinAttrIdxs.size(),
             m_attributes.begin() + vJoinAttrIdxs.size());
-        //FIGARO_LOG_DBG("Here", *this)
     }
 
     void Relation::aggregateAwayChildrenRelations(
@@ -1293,7 +1183,7 @@ namespace Figaro
                 vvJoinAttrIdxs[idxRel]);
             vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
-            vpChildRels[idxRel]->getHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
+            vpChildRels[idxRel]->initHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
                 vpHashTabRowPt[idxRel], vpChildRels[idxRel]->m_dataHead);
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
             if (idxRel == 0)
@@ -1455,7 +1345,7 @@ namespace Figaro
             else
             {
                 Figaro::Relation::DownUpCntT& cnts =
-                getParCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts, m_dataHead[startIdx]);
+                getParCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts.get(), m_dataHead[startIdx]);
                 sqrtDownCnt = std::sqrt(std::get<0>(cnts));
                 sqrtUpCnt = std::sqrt((uint32_t)std::get<1>(cnts));
             }
@@ -1547,21 +1437,11 @@ namespace Figaro
         }
 
         schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
-        if (isRootNode)
-        {
-            destroyParCntHashTable({}, m_pHTParCounts);
-        }
-        else
-        {
-            destroyParCntHashTable(vParJoinAttrIdxs, m_pHTParCounts);
-        }
 
         m_dataHead = std::move(dataHeadOut);
         m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         if (isRootNode)
         {
             FIGARO_LOG_DBG("Attributes_name")
@@ -1879,6 +1759,50 @@ namespace Figaro
                 prevAttrVal = curAttrVal;
                 distCnt++;
             }
+        }
+    }
+
+    void Relation::getDistinctValuesRowPositions(
+        const std::string& attributeName,
+        std::vector<uint32_t>& vDistinctValuesRowPositions,
+        bool  preallocated) const
+    {
+        uint32_t attrIdx;
+        double prevAttrVal;
+        uint32_t distCnt;
+        double pushVal;
+
+        attrIdx = getAttributeIdx(attributeName);
+        prevAttrVal = std::numeric_limits<double>::max();
+        distCnt = 0;
+
+        // The first entry is saved for the end of imaginary predecessor of ranges.
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            double curAttrVal = m_data[rowIdx][attrIdx];
+            if (prevAttrVal != curAttrVal)
+            {
+                pushVal = rowIdx - 1;
+                if (preallocated)
+                {
+                    vDistinctValuesRowPositions[distCnt] = pushVal;
+                }
+                else
+                {
+                    vDistinctValuesRowPositions.push_back(pushVal);
+                }
+                prevAttrVal = curAttrVal;
+                distCnt++;
+            }
+        }
+        pushVal = m_data.getNumRows() - 1;
+        if (preallocated)
+        {
+            vDistinctValuesRowPositions[distCnt] = pushVal;
+        }
+        else
+        {
+            vDistinctValuesRowPositions.push_back(pushVal);
         }
     }
 

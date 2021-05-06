@@ -4,6 +4,7 @@
 #include "utils/Utils.h"
 #include "database/storage/Matrix.h"
 #include <vector>
+#include <memory>
 #include <unordered_map>
 #include "tbb/atomic.h"
 
@@ -147,7 +148,8 @@ namespace Figaro
          * keys are the corresponding distinct parent attribute values and
          * the values are the corresponding tuples of up and down counts.
          */
-        void* m_pHTParCounts;
+        //void* m_pHTParCounts;
+        std::shared_ptr<void> m_pHTParCounts;
 
         /**
          * @brief Column index in the @p m_CountsJoinAttrs. that stores the corresponding
@@ -237,12 +239,20 @@ namespace Figaro
 
         void schemaDropAttrs(std::vector<uint32_t> vDropAttrIdxs);
 
+        void getDistinctValsAndBuildIndices(
+            const std::vector<uint32_t>& vAttrIdxs,
+            const std::vector<uint32_t>& vParAttrIdxs,
+            MatrixUI32T& cntDiffVals,
+            std::vector<uint32_t>& vRowIdxParDiffVals,
+            std::vector<uint32_t>& vParBlockStartIdxsAfterFirstPass,
+            bool isRootNode);
+
         /**
          *  Builds hash index where key is @p vJoinAttrIdx over the @p data
          * returns it as a pointer @p pHashTablePt.
          * @note Destructor needs to be called after the usage.
          */
-        void getHashTableRowIdxs(
+        void initHashTableRowIdxs(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt,
             const MatrixDT& data);
@@ -260,17 +270,13 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
-
         void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
-            void*& pHashTablePt,
             uint32_t hashTableSize);
 
         void insertParDownCntFromHashTable(
             const std::vector<uint32_t>& vParAttrIdx,
-            void*& pHashTablePt,
             const uint32_t* pRow,
             uint32_t downCnt);
-
 
         Figaro::Relation::DownUpCntT& getParCntFromHashTable(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
@@ -282,6 +288,9 @@ namespace Figaro
             void*  htChildRowIdx,
             const double* pRow);
 
+        static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
+
+        /***************** OLD IMPLEMENTATTION ***********/
         uint32_t getDistinctValuesCount(const std::string& attributeName) const;
 
         void getAttributeDistinctValues(const std::string& attributeName,
@@ -294,19 +303,9 @@ namespace Figaro
             const std::string& attrName,
             std::unordered_map<double, const double*>& htRowPts) const;
 
-        void getDistinctValsAndBuildIndices(
-            const std::vector<uint32_t>& vAttrIdxs,
-            const std::vector<uint32_t>& vParAttrIdxs,
-            MatrixUI32T& cntDiffVals,
-            std::vector<uint32_t>& vRowIdxParDiffVals,
-            std::vector<uint32_t>& vParBlockStartIdxsAfterFirstPass,
-            bool isRootNode);
-
         void getDistinctValuesRowPositions(const std::string& attributeName,
             std::vector<uint32_t>& vDistinctValuesRowPositions,
             bool preallocated = true) const;
-
-        static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
@@ -377,10 +376,6 @@ namespace Figaro
 
         std::map<std::vector<uint32_t>, uint32_t> getCircCounts(void);
 
-
-
-        void destroyParCntHashTable(const std::vector<uint32_t>& vParJoinAttrIdxs,
-            void*  htChildParAttrs);
         /**
          * It will copy the underlying data and apply head transformation onto it.
          * The Head and Tail transformation will be applied as if we had:
@@ -421,10 +416,6 @@ namespace Figaro
         void computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
             MatrixEigenT* pR);
-
-
-
-
 
         /**
          *  Returns computed head for the corresponding relation, without
