@@ -6,17 +6,18 @@ import os
 import json
 import logging
 from data_management.database import Database
-from evaluation.system_test import DumpConf, LogConf, QueryConf, SystemTest
+from data_management.query import Query
+from evaluation.system_test import DumpConf, LogConf, SystemTest
 from evaluation.system_test import SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 
 class SystemTestFigaro(SystemTest):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
-            perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database, query_conf: QueryConf,
+            perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database, query: Query,
             test_mode, root_path: str, *args, **kwargs):
         super().__init__("FIGARO", log_conf, dump_conf, perf_conf,
-            accur_conf, database, query_conf, test_mode)
+            accur_conf, database, query, test_mode)
         self.figaro_path = os.path.join(root_path, "figaro")
 
     def eval(self):
@@ -30,7 +31,7 @@ class SystemTestFigaro(SystemTest):
                 "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
-                "--query_config_path={}".format(self.conf_query.path),
+                "--query_config_path={}".format(self.query.get_conf_path()),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
@@ -49,7 +50,7 @@ class SystemTestFigaro(SystemTest):
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--dump_file_path={}".format(self.conf_dump.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
-                "--query_config_path={}".format(self.conf_query.path),
+                "--query_config_path={}".format(self.query.get_conf_path()),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

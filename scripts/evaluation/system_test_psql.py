@@ -1,40 +1,27 @@
 import logging
-import json
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
-from evaluation.system_test import DumpConf, LogConf, QueryConf, SystemTest
+from data_management.query import Query
+from evaluation.system_test import DumpConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from evaluation.system_test_dbms import SystemTestDBMS
 from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler
+
+
 class SystemTestPsql(SystemTestDBMS):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
             perf_conf: PerformanceConf, accur_conf: AccuracyConf,
-            database: Database, query_conf: QueryConf,
+            database: Database, query: Query,
             test_mode: SystemTest.TestMode,
             username: str, password: str, **kwargs):
         super().__init__("PSQL", log_conf=log_conf, dump_conf=dump_conf,
                     perf_conf=perf_conf, accur_conf = accur_conf,
-                    database = database, query_conf= query_conf,
+                    database = database, query= query,
                     test_mode=test_mode)
         self.password = password
         self.username = username
         self.join_path = self.conf_dump.file_path
-
-    @staticmethod
-    def get_relation_order(query_conf_path: str):
-        with open(query_conf_path) as file_query_conf:
-            query = json.load(file_query_conf)
-            return query["query"]["evaluation_hint"]["relation_order"]
-
-    @staticmethod
-    def get_skip_attrs(query_conf_path: str):
-        skip_attrs = []
-        with open(query_conf_path) as file_query_conf:
-            query = json.load(file_query_conf)
-            if "skip_attributes" in query["query"]["evaluation_hint"]:
-                skip_attrs = query["query"]["evaluation_hint"]["skip_attributes"]
-        return skip_attrs
 
 
     def eval(self, dump: bool, performance: bool):
@@ -42,12 +29,12 @@ class SystemTestPsql(SystemTestDBMS):
         file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
 
         database_psql = DatabasePsql(host_name="",user_name=self.username,
-        password=self.password, database_name=self.database.name)
+        password=self.password, database_name=self.database.get_name())
         database_psql.drop_database()
         database_psql.create_database(self.database)
 
-        relation_order = SystemTestPsql.get_relation_order(self.conf_query.path)
-        skip_attrs = SystemTestPsql.get_skip_attrs(self.conf_query.path)
+        relation_order = self.query.get_relation_order()
+        skip_attrs = self.query.get_skip_attrs()
         self.database.sort_relations(relation_order)
         self.database.set_join_attrs()
         logging.info(relation_order)

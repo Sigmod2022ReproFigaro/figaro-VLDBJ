@@ -15,6 +15,7 @@ import json
 import typing
 import shutil
 from data_management.database import Database
+from data_management.query import Query
 from evaluation.performance.benchmark import gather_times
 
 # Class that wraps performance parameters used in testing
@@ -47,11 +48,6 @@ class DumpConf:
         self.path = path
         self.file_path  = file_path
 
-
-class QueryConf:
-    def __init__(self, path: str):
-        self.path = path
-
 class SystemTest(ABC):
     # Debug test is only for debugging
     # Dump is used for accuracy where data is later compared.
@@ -77,21 +73,21 @@ class SystemTest(ABC):
 
     def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf,
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
-    query_conf: QueryConf, test_mode = TestMode.PERFORMANCE):
+    query: Query, test_mode = TestMode.PERFORMANCE):
         self.name = name
         self.conf_accur = accur_conf
         self.conf_perf = perf_conf
         self.conf_log = log_conf
         self.conf_dump = dump_conf
         self.database = database
-        self.conf_query = query_conf
+        self.query = query
         self.test_mode = test_mode
         self.system_test_paper = None
 
 
     @staticmethod
-    def create_dir_with_name(path: str, dir_name: str)-> str:
-        dir_abs_path = os.path.join(path, dir_name)
+    def create_dir_with_name(path: str, dir_name: str, sub_dir_name: str)-> str:
+        dir_abs_path = os.path.join(path, dir_name, sub_dir_name)
 
         if not os.path.exists(dir_abs_path):
             os.makedirs(dir_abs_path)
@@ -101,30 +97,30 @@ class SystemTest(ABC):
 
     @classmethod
     def from_specs_path(cls, system_test_specs_path: str,
-        database: Database, query_conf: QueryConf, test_mode: TestMode, *args, **kwargs):
+        database: Database, query: Query, test_mode: TestMode, *args, **kwargs):
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
 
         #TODO: Refactor to remove unnecessary clutter.
         log_json = system_json["system"]["log"]
         log_path = SystemTest.create_dir_with_name(
-                    log_json["path"], database.name)
+                    log_json["path"], database.get_name(), query.get_name())
         log_file_path = os.path.join(log_path, log_json["file"])
 
         dump_json = system_json["system"]["dump"]
         path_dump = SystemTest.create_dir_with_name(
-            dump_json["path"], database.name)
+            dump_json["path"], database.get_name(), query.get_name())
         dump_file_path = os.path.join(path_dump, dump_json["file"])
 
         perf_json = system_json["system"]["performance"]
         path_glob = perf_json["path"]
         path_perf = SystemTest.create_dir_with_name(
-                        perf_json["path"], database.name)
+                        perf_json["path"], database.get_name(), query.get_name())
         num_reps = perf_json["number_reps"]
 
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
-            accuracy_json["path"],  database.name)
+            accuracy_json["path"],  database.get_name(), query.get_name())
         path_errors_file = os.path.join(path_accuracy,
                             accuracy_json["errors_file"])
         path_r_comp_file =os.path.join(path_accuracy,
@@ -136,7 +132,7 @@ class SystemTest(ABC):
             DumpConf(path_dump, dump_file_path),
             PerformanceConf(path_glob, path_perf, num_reps),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision),
-            database, query_conf, test_mode,
+            database, query, test_mode,
             *args, **kwargs)
 
         return system_test
@@ -191,9 +187,9 @@ class SystemTest(ABC):
         path_log_file = self.conf_log.file_path
         path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
         path_glob_times_file = os.path.join(self.conf_perf.glob_path, "time.xlsx")
-        gather_times(path_log_file, path_times_file, self.database.name)
+        gather_times(path_log_file, path_times_file, self.database.get_name())
         logging.info(path_glob_times_file)
-        gather_times(path_log_file, path_glob_times_file, self.database.name)
+        gather_times(path_log_file, path_glob_times_file, self.database.get_name())
 
 
     @abstractmethod

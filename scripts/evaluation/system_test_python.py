@@ -4,7 +4,8 @@ import os
 import json
 import logging
 from data_management.database import Database
-from evaluation.system_test import DumpConf, LogConf, QueryConf, SystemTest
+from data_management.query import Query
+from evaluation.system_test import DumpConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from evaluation.system_test_competitor import SystemTestCompetitor
@@ -12,9 +13,9 @@ from evaluation.system_test_competitor import SystemTestCompetitor
 class SystemTestPython(SystemTestCompetitor):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
     perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
-    query_conf: QueryConf, test_mode: SystemTest.TestMode, root_path: str,
+    query: Query, test_mode: SystemTest.TestMode, root_path: str,
     **kwargs):
-        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, database, query_conf, test_mode)
+        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, database, query, test_mode)
         self.root_path = root_path
 
 

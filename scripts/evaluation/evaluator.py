@@ -4,11 +4,12 @@ import logging
 import sys
 import os
 from os import listdir
-from evaluation.system_test import QueryConf, SystemTest
+from evaluation.system_test import SystemTest
 from evaluation.system_test_figaro import SystemTestFigaro
 from evaluation.system_test_psql import SystemTestPsql
 from evaluation.system_test_python import SystemTestPython
 from data_management.database import Database
+from data_management.query import Query
 from evaluation.custom_logging import init_logging
 class SystemTestsEvaluator:
     map_category_to_class = {
@@ -36,7 +37,6 @@ class SystemTestsEvaluator:
     def load_tests(self, tests_json):
         tests = []
         for test_json in tests_json["tests"]:
-            print(test_json.keys())
             system_tests_json = test_json["systems"]
             data_set_json = test_json["data_sets"]
             test = self.load_system_tests_data_sets(
@@ -53,20 +53,19 @@ class SystemTestsEvaluator:
                 database_conf_path = data_set_json["database_conf_path"]
                 database = Database(database_conf_path)
                 query_conf_path = data_set_json["query_conf_path"]
-                query_conf = QueryConf(query_conf_path)
+                query = Query(query_conf_path)
                 data_set_enabled = not data_set_json.get("disable", False)
             else:
                 logging.error("TODO")
 
             if data_set_enabled:
-                test += self.load_system_tests(system_tests_json, database,
-                    query_conf)
+                test += self.load_system_tests(system_tests_json, database, query)
 
         return test
 
 
     def load_system_tests(self, system_tests_json, database: Database,
-            query_conf: QueryConf):
+            query: Query):
         join_result_path = None
         system_test_paper = None
         batch_of_tests = []
@@ -74,8 +73,7 @@ class SystemTestsEvaluator:
             system_test_enabled = True
             if "system_conf_path" in system_test_json:
                 system_test_enabled = not system_test_json.get("disable", False)
-                system_test = self.create_system_test(system_test_json, database,
-                    query_conf)
+                system_test = self.create_system_test(system_test_json, database, query)
                 if system_test.is_dbms():
                     join_result_path = system_test.get_join_result_path()
                 if system_test.is_paper_algorithm():
@@ -97,13 +95,13 @@ class SystemTestsEvaluator:
 
 
     def create_system_test(self, system_test_json, database: Database,
-         query_conf: QueryConf):
+         query: Query):
         system_conf_path = system_test_json["system_conf_path"]
         system_test_cat = system_test_json["category"]
         system_test_mode = system_test_json["mode"]
         class_type = SystemTestsEvaluator.map_category_to_class[system_test_cat]
         test_mode = SystemTestsEvaluator.map_mode_to_enum[system_test_mode]
-        system_test = class_type.from_specs_path(system_conf_path, database, query_conf,
+        system_test = class_type.from_specs_path(system_conf_path, database, query,
             test_mode=test_mode, root_path = self.root_path, username=self.username,
             password=self.password)
 

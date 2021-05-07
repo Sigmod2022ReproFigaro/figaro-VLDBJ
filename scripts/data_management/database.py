@@ -1,6 +1,4 @@
 import json
-import logging
-import functools
 
 from typing import List
 from data_management.relation import Relation
@@ -21,6 +19,10 @@ class Database:
             relation = Relation(json_relation)
             relations.append(relation)
         self.relations = relations
+
+
+    def get_name(self):
+        return self.name
 
 
     def get_relations(self):
