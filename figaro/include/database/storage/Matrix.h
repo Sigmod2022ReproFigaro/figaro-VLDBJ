@@ -10,7 +10,7 @@ namespace Figaro
     template <typename T>
     class Matrix
     {
-        static constexpr uint32_t MIN_COLS_PAR = 10;
+        static constexpr uint32_t MIN_COLS_PAR = 100;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)

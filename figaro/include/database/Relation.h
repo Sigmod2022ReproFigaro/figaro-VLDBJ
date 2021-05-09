@@ -111,16 +111,14 @@ namespace Figaro
     private:
         std::string m_name;
         ErrorCode initializationErrorCode = ErrorCode::NO_ERROR;
+        std::vector<Attribute> m_oldAttributes;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
-
         MatrixDT m_data;
 
         MatrixDT m_dataHead;
         MatrixDT m_dataTails;
         MatrixDT m_dataTailsGen;
-        MatrixDT m_dataTails1;
-        MatrixDT m_dataTails2;
 
         MatrixDT m_scales;
         MatrixDT m_dataScales;
@@ -139,7 +137,6 @@ namespace Figaro
         std::vector<uint32_t> m_vSubTreeDataOffsets;
 
         MatrixUI32T m_countsJoinAttrs;
-        MatrixUI32T m_countsParJoinAttrs;
         std::vector<uint32_t> m_vParBlockStartIdxs;
         std::vector<uint32_t> m_vParBlockStartIdxsAfterFirstPass;
 
@@ -148,7 +145,6 @@ namespace Figaro
          * keys are the corresponding distinct parent attribute values and
          * the values are the corresponding tuples of up and down counts.
          */
-        //void* m_pHTParCounts;
         std::shared_ptr<void> m_pHTParCounts;
 
         /**
@@ -167,6 +163,9 @@ namespace Figaro
          */
         uint32_t m_cntsJoinIdxC;
         uint32_t m_cntsJoinIdxE;
+
+        MatrixDT m_dataTails1;
+        MatrixDT m_dataTails2;
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
@@ -310,6 +309,7 @@ namespace Figaro
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
         Relation(json jsonRelationSchema);
+        void resetComputations(void);
 
         const std::vector<Attribute>& getAttributes(void) const
         {

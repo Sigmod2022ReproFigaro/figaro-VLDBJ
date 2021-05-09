@@ -10,8 +10,8 @@ namespace Figaro
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
 
-        m_pDatabase->sortRelation(pElement->getRelationName(),
-                                  pElement->getJoinAttributeNames());
+        //m_pDatabase->sortRelation(pElement->getRelationName(),
+        //                          pElement->getJoinAttributeNames());
         isRootNode = pElement->getParent() == nullptr;
         m_pDatabase->computeDownCounts(relationName, childrenNames,
             pElement->getJoinAttributeNames(), pElement->getParJoinAttributeNames(),
@@ -32,8 +32,8 @@ namespace Figaro
         }
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        m_pDatabase->sortRelation(pElement->getCentralRelation()->getRelationName(),
-                                  pElement->getJoinAttributeNames());
+        //m_pDatabase->sortRelation(pElement->getCentralRelation()->getRelationName(),
+        //                          pElement->getJoinAttributeNames());
         isRootNode = pElement->getParent() == nullptr;
         m_pDatabase->computeDownCounts(relationName, pElement->getChildrenNames(),
             pElement->getJoinAttributeNames(), pElement->getParJoinAttributeNames(),

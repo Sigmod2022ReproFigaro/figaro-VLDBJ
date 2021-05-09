@@ -39,6 +39,7 @@ namespace Figaro
             "parAttrNames", vChildParJoinAttrNames)
             m_vvChildParJoinAttributeNames.push_back(vChildParJoinAttrNames);
         }
+        FIGARO_LOG_DBG("Relation parent join attributes of children", getRelation()->getRelationName(), m_vvChildParJoinAttributeNames)
     }
 
     const std::vector<std::string>& ASTNodeJoin::getJoinAttributeNames(void)

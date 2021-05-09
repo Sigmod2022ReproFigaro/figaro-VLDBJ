@@ -28,6 +28,8 @@ namespace Figaro
          */
         ErrorCode loadData(void);
 
+        void resetComputations(void);
+
         /**
          * Sorts the data of each relation from the database.
          */

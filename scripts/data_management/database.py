@@ -4,15 +4,16 @@ from typing import List
 from data_management.relation import Relation
 
 class Database:
-    def __init__(self, database_specs_path):
+    def __init__(self, database_specs_path, name_ext):
         self.db_config_path = database_specs_path
         with open(database_specs_path) as json_file:
             self.json_db_schema = json.load(json_file)["database"]
-        self.load_db_schema()
+        self.load_db_schema(name_ext)
 
 
-    def load_db_schema(self):
+    def load_db_schema(self, name_ext):
         self.name = self.json_db_schema["name"]
+        self.full_name = self.name + name_ext
         json_relations = self.json_db_schema["relations"]
         relations = []
         for json_relation in json_relations:
@@ -23,6 +24,9 @@ class Database:
 
     def get_name(self):
         return self.name
+
+    def get_full_name(self):
+        return self.full_name
 
 
     def get_relations(self):

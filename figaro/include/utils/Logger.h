@@ -66,7 +66,7 @@ std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& 
 
     for (uint32_t row = 0; row < rowNum; row ++)
     {
-        for (uint32_t col = 0; col < colNum; col++)
+        for (uint32_t col = 0; col < matrix.at(row).size(); col++)
         {
 
             out << matrix[row][col];

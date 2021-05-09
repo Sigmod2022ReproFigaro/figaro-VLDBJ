@@ -29,7 +29,7 @@ class SystemTestPsql(SystemTestDBMS):
         file_handler = add_logging_file_handler(log_file_path, debug_level=logging.INFO)
 
         database_psql = DatabasePsql(host_name="",user_name=self.username,
-        password=self.password, database_name=self.database.get_name())
+        password=self.password, database_name=self.database.get_full_name())
         database_psql.drop_database()
         database_psql.create_database(self.database)
 

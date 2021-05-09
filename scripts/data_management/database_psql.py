@@ -191,7 +191,7 @@ class DatabasePsql:
     # Passes database spec to be created,
     def create_database(self, database: Database):
         self.close_connection()
-        self.database_name = database.name
+        self.database_name = database.get_full_name()
 
         connection_admin = self.open_connection_admin()
         cursor = connection_admin.cursor()
@@ -211,6 +211,7 @@ class DatabasePsql:
         self.close_connection()
         connection_admin = self.open_connection_admin()
         cursor = connection_admin.cursor()
+        logging.info(self.database_name)
         cursor.execute(sql.SQL("DROP DATABASE IF EXISTS {} ").format(
                             sql.Identifier(self.database_name)))
         cursor.close()

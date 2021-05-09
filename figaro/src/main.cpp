@@ -24,7 +24,15 @@ int main(int argc, char *argv[])
     std::string queryConfigPath;
     bool dump = false;
     uint32_t precision;
+    uint32_t numRepetitions = 1;
 
+    std::string strArgs = "";
+    for(uint32_t idx = 0; idx < argc; idx++)
+    {
+        strArgs += argv[idx] + std::string(" ");
+    }
+
+    FIGARO_LOG_INFO("Command line args", strArgs)
     initGlobalState();
 
     po::options_description desc("figaro - allowed options");
@@ -34,6 +42,7 @@ int main(int argc, char *argv[])
     ("db_config_path", po::value<std::string>(&dbConfigPath))
     ("query_config_path", po::value<std::string>(&queryConfigPath))
     ("precision", po::value<uint32_t>(&precision))
+    ("num_repetitions", po::value<uint32_t>(&numRepetitions))
     ;
 
     po::variables_map vm;
@@ -47,28 +56,29 @@ int main(int argc, char *argv[])
         FIGARO_LOG_INFO(dumpFilePath)
     }
 
+    if (vm.count("num_repetitions"))
+    {
+        numRepetitions = vm["num_repetitions"].as<std::uint32_t>();
+    }
+
     dbConfigPath = vm["db_config_path"].as<std::string>();
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
+
     Figaro::Database database(dbConfigPath);
     database.loadData();
+
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
+    query.evaluateQuery(true, true, true, true, numRepetitions);
 
-    MICRO_BENCH_INIT(main)
-    MICRO_BENCH_START(main)
-    query.evaluateQuery(true, true, true, true);
-    MICRO_BENCH_STOP(main)
-    FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
-
-    Figaro::MatrixEigenT& R = query.getResult();
     if (dump)
     {
+        Figaro::MatrixEigenT& R = query.getResult();
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
         std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
         Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
     }
-
 
     FIGARO_LOG_INFO("Figaro program has terminated")
     return 0;

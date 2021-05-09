@@ -52,6 +52,14 @@ namespace Figaro
         return ErrorCode::NO_ERROR;
     }
 
+    void Database::resetComputations(void)
+    {
+        for (auto& [relName, relation]: m_relations)
+        {
+            relation.resetComputations();
+        }
+    }
+
     void Database::sortData(void)
     {
         for (auto& [relName, relation]: m_relations)

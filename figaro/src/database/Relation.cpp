@@ -46,14 +46,6 @@ namespace Figaro
     uint32_t Relation::getNumberOfPKAttributes(void) const
     {
         uint32_t pKAttributes = 0;
-        /*
-        std::reduce(std::execution::par, m_attributes.begin(),
-                    m_attributes.end(), 0.0,
-                     [const& auto sum, const& auto T2]()
-                    {
-                        return ;
-                    })
-        */
        pKAttributes = std::accumulate(m_attributes.begin(), m_attributes.end(), 0.0,
                      [](int curCnt, const Attribute& nextAtr)
                      {
@@ -148,16 +140,6 @@ namespace Figaro
             }
         }
 
-        for (const auto& m: tmpV)
-        {
-            FIGARO_LOG_DBG("tmpV", m.m_name)
-        }
-
-        for (const auto& m: m_attributes)
-        {
-            FIGARO_LOG_DBG("m_attributes", m.m_name)
-        }
-
         for (const auto nonPKAttributeIdx: vNonPKAttributeIdxs)
         {
             FIGARO_LOG_DBG("Schema extended, Added attribute", nonPKAttributeIdx);
@@ -172,7 +154,7 @@ namespace Figaro
     Relation::Relation(json jsonRelationSchema):
         m_data(0, 0), m_dataTails1(0, 0), m_dataTails2(0, 0), m_dataHead(0, 0),
         m_dataTails(0, 0), m_dataScales(0, 0), m_scales(0, 0), m_dataTailsGen(0, 0),
-        m_countsJoinAttrs(0, 0), m_countsParJoinAttrs(0, 0)
+        m_countsJoinAttrs(0, 0)
     {
         m_name = jsonRelationSchema["name"];
         json jsonRelationAttribute = jsonRelationSchema["attributes"];
@@ -191,6 +173,24 @@ namespace Figaro
             FIGARO_LOG_INFO("Primary key", jsonRelationPK);
         }
         m_dataPath = jsonRelationSchema["data_path"];
+    }
+
+    void Relation::resetComputations(void)
+    {
+        m_attributes = m_oldAttributes;
+        m_dataHead = std::move(MatrixDT{0, 0});
+        m_dataTails = std::move(MatrixDT{0, 0});
+        m_dataTailsGen = std::move(MatrixDT{0, 0});
+        m_scales = std::move(MatrixDT{0, 0});
+        m_dataScales = std::move(MatrixDT{0, 0});
+        m_allScales.clear();
+        m_vSubTreeRelNames.clear();
+        m_vSubTreeDataOffsets.clear();
+
+        m_countsJoinAttrs = std::move(MatrixUI32T{0, 0});
+        m_vParBlockStartIdxs.clear();
+        m_vParBlockStartIdxsAfterFirstPass.clear();
+        m_pHTParCounts.reset();
     }
 
     ErrorCode Relation::loadData(void)
@@ -384,6 +384,7 @@ namespace Figaro
         m_data = std::move(tmpData);
         FIGARO_LOG_DBG("m_attributes", m_attributes)
         FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
+        m_oldAttributes = m_attributes;
     }
 
 
@@ -395,7 +396,7 @@ namespace Figaro
         std::vector<uint32_t>& vParBlockStartIdxsAfterFirstPass,
         bool isRootNode)
     {
-        uint32_t distCnt;
+            uint32_t distCnt;
         uint32_t prevRowIdx;
         uint32_t cumParBlockSizes;
         uint32_t rowIdx;
@@ -407,52 +408,171 @@ namespace Figaro
         const double* pPrevAttrVals = &vPrevAttrVals[0];
         const double* pParPrevAttrVals = &vParPrevAttrVals[0];
 
+        std::vector<uint32_t> vPKIndices;
+
         cumParBlockSizes = 0;
         distCnt = 0;
         prevRowIdx = -1;
 
-        // For counter and down count.
-        for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        getPKAttributeIndices(vPKIndices);
+        bool areJoinAttrsPK = false;
+        if (vPKIndices.size() == vJoinAttrIdxs.size())
         {
-            const double* pCurAttrVals = m_data[rowIdx];
-            bool parAttrsDiff = compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs);
-            bool joinAttrsDiff = compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs);
-            if (parAttrsDiff || joinAttrsDiff)
+            bool theSame = true;
+            for (uint32_t idx = 0; idx < vJoinAttrIdxs.size(); idx ++)
             {
-                // We have a new block of join attributes. Stores the block size.
-                if (distCnt > 0)
+                if (vJoinAttrIdxs[idx] != vPKIndices[idx])
                 {
-                    blockSize =  rowIdx - prevRowIdx;
-                    cumParBlockSizes += blockSize - 1;
-                    cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
-                    cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
+                    theSame = false;
+                    break;
                 }
-                prevRowIdx = rowIdx;
-                pPrevAttrVals = pCurAttrVals;
-                for (const auto& joinAttrIdx: vJoinAttrIdxs)
+            }
+            areJoinAttrsPK = theSame;
+        }
+        //areJoinAttrsPK = false;
+        // TODO: Add parallel detection of
+        // For counter and down count.
+
+        if (isRootNode)
+        {
+            for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            {
+                const double* pCurAttrVals = m_data[rowIdx];
+                bool joinAttrsDiff;
+
+                if (areJoinAttrsPK)
                 {
-                    cntJoinVals[distCnt][joinAttrIdx] = (uint32_t)m_data[rowIdx][joinAttrIdx];
+                    joinAttrsDiff = true;
                 }
-                distCnt++;
+                else
+                {
+                    joinAttrsDiff = compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs);
+                }
+                if (joinAttrsDiff)
+                {
+                    // We have a new block of join attributes. Stores the block size.
+                    if (distCnt > 0)
+                    {
+                        blockSize =  rowIdx - prevRowIdx;
+                        cumParBlockSizes += blockSize - 1;
+                        cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
+                        cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
+                    }
+                    prevRowIdx = rowIdx;
+                    pPrevAttrVals = pCurAttrVals;
+                    for (const auto& joinAttrIdx: vJoinAttrIdxs)
+                    {
+                        cntJoinVals[distCnt][joinAttrIdx] = (uint32_t)m_data[rowIdx][joinAttrIdx];
+                    }
+                    distCnt++;
+                    vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
+                }
             }
-            if (parAttrsDiff)
+            blockSize = rowIdx - prevRowIdx;
+            cumParBlockSizes += blockSize - 1;
+            cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
+            cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
+            cntJoinVals.resize(distCnt);
+            // Dummy indices
+            vParBlockStartIdxs.push_back(distCnt);
+            vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
+        }
+        else
+        {
+
+            if (areJoinAttrsPK)
             {
-                pParPrevAttrVals = pCurAttrVals;
-                vParBlockStartIdxs.push_back(distCnt - 1);
+                MICRO_BENCH_INIT(testStupidLoop)
+                MICRO_BENCH_START(testStupidLoop)
+                for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+                {
+                    const double* pCurAttrVals = m_data[rowIdx];
+                    bool parAttrsDiff = compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs);
+                    if (parAttrsDiff)
+                    {
+                        pParPrevAttrVals = pCurAttrVals;
+                        vParBlockStartIdxs.push_back(rowIdx);
+                    }
+                }
+                vParBlockStartIdxs.push_back(rowIdx);
+                MICRO_BENCH_STOP(testStupidLoop)
+                FIGARO_LOG_BENCH("Stupid loop", MICRO_BENCH_GET_TIMER_LAP(testStupidLoop))
+
+                distCnt = 0;
+                pParPrevAttrVals = &vParPrevAttrVals[0];
+
+                vParBlockStartIdxsAfterFirstPass.resize(vParBlockStartIdxs.size());
+                #pragma omp parallel for schedule(static)
+                for (uint32_t distParCnt = 0; distParCnt < vParBlockStartIdxs.size() - 1; distParCnt++)
+                {
+                    uint32_t parStartIdx;
+                    uint32_t parNextStartIdx;
+                    parStartIdx = vParBlockStartIdxs[distParCnt];
+                    parNextStartIdx = vParBlockStartIdxs[distParCnt+1];
+                    vParBlockStartIdxsAfterFirstPass[distParCnt] = parStartIdx;
+                    for (uint32_t rowIdx = parStartIdx; rowIdx < parNextStartIdx; rowIdx++)
+                    {
+                        // We have a new block of join attributes. Stores the block size.
+                        cntJoinVals[rowIdx][m_cntsJoinIdxV] = 1;
+                        cntJoinVals[rowIdx ][m_cntsJoinIdxE] = rowIdx + 1;
+                        for (const auto& joinAttrIdx: vJoinAttrIdxs)
+                        {
+                            cntJoinVals[rowIdx][joinAttrIdx] = (uint32_t)m_data[rowIdx][joinAttrIdx];
+                        }
+                    }
+                    // Dummy indices
+                }
+                distCnt = m_data.getNumRows();
+                vParBlockStartIdxsAfterFirstPass.back() = distCnt;
+                cntJoinVals.resize(distCnt);
             }
-            if ((!isRootNode && parAttrsDiff) || (isRootNode && joinAttrsDiff))
+            else
             {
+                for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+                {
+                    const double* pCurAttrVals = m_data[rowIdx];
+                    bool parAttrsDiff = compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs);
+                    //bool joinAttrsDiff;// = areJoinAttrsPK;
+                    bool joinAttrsDiff = compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs);
+
+                    //if (!areJoinAttrsPK)
+                    //{
+                    //}
+                    if (parAttrsDiff || joinAttrsDiff)
+                    {
+                        // We have a new block of join attributes. Stores the block size.
+                        if (distCnt > 0)
+                        {
+                            blockSize =  rowIdx - prevRowIdx;
+                            cumParBlockSizes += blockSize - 1;
+                            cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
+                            cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
+                        }
+                        prevRowIdx = rowIdx;
+                        pPrevAttrVals = pCurAttrVals;
+                        for (const auto& joinAttrIdx: vJoinAttrIdxs)
+                        {
+                            cntJoinVals[distCnt][joinAttrIdx] = (uint32_t)m_data[rowIdx][joinAttrIdx];
+                        }
+                        distCnt++;
+                    }
+                    if (parAttrsDiff)
+                    {
+                        pParPrevAttrVals = pCurAttrVals;
+                        vParBlockStartIdxs.push_back(distCnt - 1);
+                        vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
+                    }
+                }
+                blockSize = rowIdx - prevRowIdx;
+                cumParBlockSizes += blockSize - 1;
+                cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
+                cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
+                cntJoinVals.resize(distCnt);
+                // Dummy indices
+                vParBlockStartIdxs.push_back(distCnt);
                 vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
             }
         }
-        blockSize = rowIdx - prevRowIdx;
-        cumParBlockSizes += blockSize - 1;
-        cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
-        cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
-        cntJoinVals.resize(distCnt);
-        // Dummy indices
-        vParBlockStartIdxs.push_back(distCnt);
-        vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
     }
 
 
@@ -696,11 +816,6 @@ namespace Figaro
         void*& pHashTablePt,
         const MatrixDT& data)
     {
-        FIGARO_LOG_DBG("ADDRESS", pHashTablePt)
-        if (vParAttrIdx.size() == 0)
-        {
-            // Do not do anything. This is a root node.
-        }
         if (vParAttrIdx.size() == 1)
         {
             std::unordered_map<double, uint32_t>* tpHashTablePt = new std::unordered_map<double, uint32_t> ();
@@ -831,7 +946,7 @@ namespace Figaro
         m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
 
         MICRO_BENCH_INIT(flagsCmp)
-        MICRO_BENCH_INIT(hashTable)
+        //MICRO_BENCH_INIT(hashTable)
         MICRO_BENCH_INIT(pureDownCnt)
         MICRO_BENCH_START(flagsCmp)
         getDistinctValsAndBuildIndices(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin,
@@ -839,10 +954,10 @@ namespace Figaro
         MICRO_BENCH_STOP(flagsCmp)
         FIGARO_LOG_BENCH("Figaro flag computation", m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
         numDistParVals = vParBlockStartIdxs.size() - 1;
-        MICRO_BENCH_START(hashTable)
+        //MICRO_BENCH_START(hashTable)
         initHashTable(vParJoinAttrIdxs, numDistParVals);
-        MICRO_BENCH_STOP(hashTable)
-        FIGARO_LOG_BENCH("Figaro hashTable computation", m_name, MICRO_BENCH_GET_TIMER_LAP(hashTable))
+        //MICRO_BENCH_STOP(hashTable)
+        //FIGARO_LOG_BENCH("Figaro hashTable computation", m_name, MICRO_BENCH_GET_TIMER_LAP(hashTable))
         MICRO_BENCH_START(pureDownCnt)
         // TODO: Replace this with template function.
         if (isRootNode)
@@ -1094,11 +1209,6 @@ namespace Figaro
 
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
         m_vSubTreeRelNames.push_back(m_name);
-
-        FIGARO_LOG_DBG("Successful head computation", m_name);
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        FIGARO_LOG_DBG("m_dataTails", m_dataTails)
-        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
     }
 
     void Relation::schemaJoins(
@@ -1132,13 +1242,14 @@ namespace Figaro
                 m_vSubTreeDataOffsets[idxRelSub] += prevSize - vvJoinAttrIdxs[idxRel].size();
             }
         }
-        FIGARO_LOG_DBG("Schema Joins", m_name, m_vSubTreeRelNames, m_vSubTreeDataOffsets)
+        FIGARO_LOG_DBG("Schema Joins", m_name, m_attributes, m_vSubTreeRelNames, m_vSubTreeDataOffsets)
     }
 
     void Relation::schemaRemoveNonParJoinAttrs(
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vParJoinAttrIdxs)
     {
+        // We have assumption here that the parent join attribute will be always the first one.
         m_attributes.erase(m_attributes.begin() + vParJoinAttrIdxs.size(),
             m_attributes.begin() + vJoinAttrIdxs.size());
     }
@@ -1170,8 +1281,6 @@ namespace Figaro
         vCumNumRelSubTree.resize(vpChildRels.size());
         vpHashTabRowPt.resize(vpChildRels.size());
 
-        FIGARO_LOG_DBG("Relation", m_name)
-
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
         MICRO_BENCH_INIT(aggregateAway)
@@ -1179,9 +1288,11 @@ namespace Figaro
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
+            FIGARO_LOG_DBG("Building hash indices for child", idxRel)
             vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
                 vvJoinAttrIdxs[idxRel]);
             vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
+            FIGARO_LOG_DBG("vvJoinAttrIdxs[idxRel]", vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel], vpChildRels[idxRel]->m_attributes)
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
             vpChildRels[idxRel]->initHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
                 vpHashTabRowPt[idxRel], vpChildRels[idxRel]->m_dataHead);
@@ -1197,11 +1308,8 @@ namespace Figaro
                                             vvNonJoinAttrIdxs[idxRel - 1].size();
                 vCumNumRelSubTree[idxRel] = vCumNumRelSubTree[idxRel-1] + vpChildRels[idxRel-1]->m_vSubTreeRelNames.size();
             }
-            FIGARO_LOG_DBG("idxRel", idxRel, "vvJoinAttrIdxs[idxRel]", vvJoinAttrIdxs[idxRel],
-                "vvCurJoinAttrIdxs[idxRel]", vvCurJoinAttrIdxs[idxRel],
-                "vCumNumNonJoinAttrs[idxRel]", vCumNumNonJoinAttrs[idxRel],
-                "vCumNumRelSubTree[idxRel]", vCumNumRelSubTree[idxRel])
         }
+        FIGARO_LOG_DBG("vvJoinAttributeNames", vvJoinAttributeNames)
         schemaJoins(vpChildRels, vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
         MatrixDT dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
@@ -1274,12 +1382,8 @@ namespace Figaro
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
 
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        FIGARO_LOG_DBG("m_dataScales", m_dataScales)
-        FIGARO_LOG_DBG("m_scales", m_scales)
-
         MICRO_BENCH_STOP(aggregateAway)
-        FIGARO_LOG_BENCH("Figaro", "aggregate away",  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+        FIGARO_LOG_BENCH("Figaro", m_name, "aggregate away",  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
 
     }
 
@@ -1321,7 +1425,7 @@ namespace Figaro
         // temporary adds an element to denote the end limit.
         m_vSubTreeDataOffsets.push_back(m_attributes.size());
         MICRO_BENCH_INIT(genHTMainLoop)
-        MICRO_BENCH_START(genHTMainLoop)
+        //MICRO_BENCH_START(genHTMainLoop)
         #pragma omp parallel for schedule(static)
         for (uint32_t distParCnt = 0; distParCnt < numParDistVals; distParCnt++)
         {
@@ -1442,19 +1546,11 @@ namespace Figaro
         m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        if (isRootNode)
-        {
-            FIGARO_LOG_DBG("Attributes_name")
-            for (const auto& attribute: m_attributes)
-            {
-                std::string strType = attribute.mapTypeToStr.at(attribute.m_type);
-                FIGARO_LOG_DBG(attribute.m_name, " (", strType, ")", "; ");
-            }
-        }
+        FIGARO_LOG_DBG("Attributes_name", m_attributes)
         MICRO_BENCH_STOP(genHT)
-        MICRO_BENCH_STOP(genHTMainLoop)
-        FIGARO_LOG_BENCH("Figaro", "Generalized head and tail",  MICRO_BENCH_GET_TIMER_LAP(genHT));
-        FIGARO_LOG_BENCH("Figaro", "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
+        //MICRO_BENCH_STOP(genHTMainLoop)
+        FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail",  MICRO_BENCH_GET_TIMER_LAP(genHT));
+        //FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
 
     }
 
@@ -1475,7 +1571,7 @@ namespace Figaro
         MICRO_BENCH_START(qrHead)
         //#pragma omp parallel
         {
-            m_dataHead.computeQRGivens(1);
+            m_dataHead.computeQRGivens(omp_get_num_procs());
         }
         m_dataHead.resize(m_dataHead.getNumCols());
         MICRO_BENCH_STOP(qrHead)
@@ -1499,7 +1595,6 @@ namespace Figaro
         m_dataTails.resize(m_dataTails.getNumCols());
         MICRO_BENCH_STOP(qrTail)
         FIGARO_LOG_BENCH("Figaro", "Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
-        FIGARO_LOG_DBG("Tail", m_dataTails)
     }
 
     void Relation::computeQROfGeneralizedTail(void)
@@ -1518,7 +1613,6 @@ namespace Figaro
         m_dataTailsGen.resize(m_dataTailsGen.getNumCols());
         MICRO_BENCH_STOP(qrGenTail)
         FIGARO_LOG_BENCH("Figaro", "Generalized Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
-        FIGARO_LOG_DBG("Generalized Tail", m_dataTailsGen)
     }
 
 
@@ -1568,11 +1662,6 @@ namespace Figaro
                 catGenHeadAndTails[rowIdx][colIdx] = m_dataHead[rowIdx][colIdx];
             }
         }
-
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        FIGARO_LOG_DBG("vCumNumRowsUp", vCumNumRowsUp)
-        FIGARO_LOG_DBG("vLeftCumNumNonJoinAttrs", vLeftCumNumNonJoinAttrs)
-
 
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
@@ -1639,7 +1728,6 @@ namespace Figaro
                 }
             }
         }
-        FIGARO_LOG_DBG("catGenHeadAndTails", catGenHeadAndTails)
         MICRO_BENCH_INIT(eigen)
         MICRO_BENCH_START(eigen)
         copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
