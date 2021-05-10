@@ -1,4 +1,5 @@
 import json
+import logging
 
 from typing import List
 from data_management.relation import Relation
@@ -33,7 +34,7 @@ class Database:
         return self.relations
 
 
-    def sort_relations(self, relation_order: List[Relation]):
+    def order_relations(self, relation_order: List[Relation]):
         def key_fun(r: Relation):
             return relation_order.index(r.name)
         self.relations.sort(key=key_fun)
@@ -50,16 +51,49 @@ class Database:
                     join_attrs = join_attrs.union(tmp_join_attrs)
             cur_rel.set_join_attribute_names(list(join_attrs))
 
-    def get_relation_names(self):
+    def get_relation_names(self) -> List[str]:
         relation_names = [relation.name for relation in self.relations]
         return relation_names
 
 
-    def get_relation(self, name):
+    def get_relation(self, name) -> Relation:
         for relation in self.relations:
             if relation.name == name:
                 return relation
         return None
+
+
+    def __get_non_join_attr_names_ordered(self, relations: List[Relation]) -> List[str]:
+        non_join_attr_names = []
+        for relation in relations:
+            non_join_attr_names += relation.get_non_join_attribute_names()
+        return non_join_attr_names
+
+
+    def get_non_join_attr_names_ordered(self, relation_names: List[str]) -> List[str]:
+        relations = [self.get_relation(rel_name) for rel_name in relation_names]
+        return self.__get_non_join_attr_names_ordered(relations)
+
+
+    def get_non_join_cat_attr_names_ordered(self, relation_names: List[str]) -> List[str]:
+        relations = [self.get_relation(rel_name) for rel_name in relation_names]
+        non_join_cat_attr_names = []
+        for relation in relations:
+            non_join_cat_attr_names += relation.get_non_join_cat_attr_names()
+
+        return non_join_cat_attr_names
+
+    def get_attr_names_ordered(self, relation_names: List[str]) -> List[str]:
+        relations = [self.get_relation(rel_name) for rel_name in relation_names]
+        join_attr_names = []
+        non_join_attribute_names = self.__get_non_join_attr_names_ordered(relations)
+
+        for relation in relations:
+            join_attr_names += relation.get_join_attribute_names()
+
+        join_attr_names_unique = list(dict.fromkeys(join_attr_names))
+        return join_attr_names_unique + non_join_attribute_names
+
 
 
 

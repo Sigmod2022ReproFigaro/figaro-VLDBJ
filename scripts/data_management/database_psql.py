@@ -11,12 +11,13 @@ from timeit import default_timer as timer
 JOIN_TABLE_NAME = "join_table"
 
 class DatabasePsql:
-    def __init__(self, host_name, user_name, password, database_name = None):
+    def __init__(self, host_name: str, user_name: str,
+    password: str, database: Database = None):
         self.host_name = host_name
         self.user_name = user_name
         self.password = password
-        self.database_name = database_name
-        if database_name is not None:
+        self.database = database
+        if database is not None:
             self.open_connection()
         else:
             self.connection = None
@@ -37,11 +38,11 @@ class DatabasePsql:
 
 
     def open_connection(self, check_db: bool = True):
-        if check_db and not self.check_if_db_exists(self.database_name):
+        if check_db and not self.check_if_db_exists(self.database.name):
             self.connection = None
         else:
             self.connection = self.open_connection_static(self.host_name, self.user_name,
-                     self.password, self.database_name)
+                     self.password, self.database.name)
         return self.connection
 
 
@@ -69,7 +70,7 @@ class DatabasePsql:
         sql_attributes = ""
         for attribute in attributes:
             sql_attribute = "{} {}"
-            sql_attribute = sql_attribute.format(attribute.name, attribute.type)
+            sql_attribute = sql_attribute.format(attribute.name, attribute.get_flat_type())
             sql_attributes += sql_attribute + ","
 
         # Check for PK existence
@@ -105,43 +106,22 @@ class DatabasePsql:
         pass
 
 
-    @staticmethod
-    def get_non_join_order_of_attributes(relations: List[Relation]):
-        non_join_attr_names = []
-        for relation in relations:
-            non_join_attr_names += relation.get_non_join_attribute_names()
-        logging.debug("HOHO", non_join_attr_names)
-        return non_join_attr_names
-
-
-    @staticmethod
-    def get_order_of_attributes(relations: List[Relation]):
-        join_attr_names = []
-        non_join_attribute_names = DatabasePsql.get_non_join_order_of_attributes(relations)
-
-        for relation in relations:
-            join_attr_names += relation.get_join_attribute_names()
-
-        join_attr_names_unique = list(dict.fromkeys(join_attr_names))
-        return join_attr_names_unique + non_join_attribute_names
-
-
-    def evaluate_join(self, relations, num_repetitions: int,
+    def evaluate_join(self, relation_names: List[str], num_repetitions: int,
     drop_attributes: List[str]):
         sql_join = "DROP TABLE IF EXISTS " + JOIN_TABLE_NAME + ";CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
         sql_from_natural_join = ""
 
         sql_select = ""
-        ord_attr_names = self.get_order_of_attributes(relations)
+        ord_attr_names = self.database.get_attr_names_ordered(relation_names)
 
         for attribute_name in ord_attr_names:
             if attribute_name not in drop_attributes:
                 sql_select += attribute_name + ","
 
         sql_select = sql_select[:-1]
-        for idx, relation in enumerate(relations):
-            sql_from_table_name = relation.name if idx == 0 \
-                else  " NATURAL JOIN " + relation.name
+        for idx, relation_name in enumerate(relation_names):
+            sql_from_table_name = relation_name if idx == 0 \
+                else  " NATURAL JOIN " + relation_name
             sql_from_natural_join += sql_from_table_name
         sql_join = sql_join.format(sql_select, sql_from_natural_join)
 
@@ -178,8 +158,9 @@ class DatabasePsql:
                         self.get_relation_size(relation_name)))
 
 
-    def dump_join(self, relations, skip_attributes, output_file_path):
-        non_join_attribute_names = DatabasePsql.get_non_join_order_of_attributes(relations)
+    def dump_join(self, relation_names: List[str], skip_attributes: List[str],
+    output_file_path: str):
+        non_join_attribute_names = self.database.get_non_join_attr_names_ordered(relation_names)
         for skip_attribute in skip_attributes:
             non_join_attribute_names.remove(skip_attribute)
         cursor = self.connection.cursor()
@@ -191,32 +172,30 @@ class DatabasePsql:
     # Passes database spec to be created,
     def create_database(self, database: Database):
         self.close_connection()
-        self.database_name = database.get_full_name()
 
+        self.database = database
         connection_admin = self.open_connection_admin()
         cursor = connection_admin.cursor()
         cursor.execute(sql.SQL("CREATE DATABASE {}").format(
-                            sql.Identifier(self.database_name)))
+                            sql.Identifier(self.database.name)))
         cursor.close()
         connection_admin.close()
         self.open_connection()
 
-        relations = database.get_relations()
+        relations = self.database.get_relations()
         for relation in relations:
             self.create_table(relation)
-
 
 
     def drop_database(self):
         self.close_connection()
         connection_admin = self.open_connection_admin()
         cursor = connection_admin.cursor()
-        logging.info(self.database_name)
         cursor.execute(sql.SQL("DROP DATABASE IF EXISTS {} ").format(
-                            sql.Identifier(self.database_name)))
+                            sql.Identifier(self.database.name)))
         cursor.close()
         connection_admin.close()
-        self.database_name = None
+        self.database = None
 
 
 

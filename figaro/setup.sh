@@ -9,6 +9,7 @@ function init_global_paths()
     FIGARO_QUERY_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
+    FIGARO_NUM_REPS=1
 }
 
 function get_str_args()
@@ -50,6 +51,10 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_PRECISION=$EXTENSION
         ;;
+        --num_repetitions=*)
+            EXTENSION="${option#*=}"
+            FIGARO_NUM_REPS=$EXTENSION
+        ;;
         *)    # unknown option
         echo "Wrong  argument" $option
         ;;
@@ -77,7 +82,7 @@ function main()
     fi
     # Used for generation of tests and libs.
     #cmake ../. -D FIGARO_RUN=ON -D FIGARO_TEST=ON -D FIGARO_LIB=ON
-    make -j8
+    make -j40 || exit 1
     case "${FIGARO_TEST_MODE}" in
     "DEBUG")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
@@ -91,7 +96,8 @@ function main()
         ;;
     "PERFORMANCE")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}">\
+         "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"

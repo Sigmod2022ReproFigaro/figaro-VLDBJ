@@ -164,7 +164,7 @@ namespace Figaro
             MICRO_BENCH_STOP(secondPass)
             FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
             MICRO_BENCH_STOP(main)
-            FIGARO_LOG_BENCH("Figaro", "query evaluation", rep + 1,  MICRO_BENCH_GET_TIMER_LAP(main));
+            FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
         }
      }
 }

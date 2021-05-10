@@ -50,10 +50,10 @@ class SystemTestsEvaluator:
         test = []
         for data_set_json in  data_sets_json:
             if "database_conf_path" in data_set_json:
-                database_conf_path = data_set_json["database_conf_path"]
-                database = Database(database_conf_path)
                 query_conf_path = data_set_json["query_conf_path"]
                 query = Query(query_conf_path)
+                database_conf_path = data_set_json["database_conf_path"]
+                database = Database(database_conf_path, query.get_name())
                 data_set_enabled = not data_set_json.get("disable", False)
             else:
                 logging.error("TODO")

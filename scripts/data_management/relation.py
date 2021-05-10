@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import List
 
 class Attribute:
@@ -6,6 +7,14 @@ class Attribute:
         self.name = name
         self.type = type
         self.primary_key = primary_key
+
+    def get_flat_type(self):
+        if self.type == "category":
+            return "integer"
+        elif self.type == "double":
+            return "float"
+        else:
+            return self.type
 
 
 class Relation:
@@ -28,6 +37,7 @@ class Relation:
 
         self.attributes = attributes
         self.data_path = json_schema["data_path"] if "data_path" in json_schema else None
+        self.join_attrs = []
 
     def set_join_attribute_names(self, join_attrs: List[str]):
         attr_names = self.get_attribute_names()
@@ -50,7 +60,15 @@ class Relation:
         return non_join_attrs
 
 
-    def get_attributes(self):
+    def get_non_join_cat_attr_names(self) -> List[str]:
+        non_join_cat_attr_names = []
+        for attr in self.attributes:
+            if attr.type == "category":
+                non_join_cat_attr_names.append(attr.name)
+        return non_join_cat_attr_names
+
+
+    def get_attributes(self) -> List[Attribute]:
         return self.attributes
 
     def get_attribute_names(self) -> List[str]:

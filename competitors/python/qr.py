@@ -1,14 +1,37 @@
 import sys
 import numpy as np
+from numpy.core.fromnumeric import size
 import pandas as pd
 from  argparse import ArgumentParser
 from timeit import default_timer as timer
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+
+
+class DummyEncoder(BaseEstimator, TransformerMixin):
+    def __init__(self, sparse):
+        self.sparse = sparse
+
+    def transform(self, X):
+        ohe = OneHotEncoder(handle_unknown='ignore', sparse=self.sparse)
+        return ohe.fit_transform(X)[:,:]
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+
+class IdentityTransformer(BaseEstimator, TransformerMixin):
+    def transform(self, input_array):
+        return input_array
+
+    def fit(self, X, y=None, **fit_params):
+        return self
+
 
 def make_diagonal_positive(r):
     diag_sgn_r = np.sign(r.diagonal())
-    #print(diag_sgn_r)
     matr_sgn_r = np.diag(diag_sgn_r)
-    #print(matr_sgn_r)
     r_pos =  np.dot(matr_sgn_r, r)
     return r_pos
 
@@ -17,34 +40,56 @@ def dump_qr(dump_file_path, r):
     np.savetxt(dump_file_path, np.asarray(r), delimiter=',')
 
 
+def transform_data(data, columns, cat_columns, sparse):
+    transformer_a = []
+    for column in columns:
+        if column in cat_columns:
+            transf_name = column + "_onehot"
+            transformer_a.append((transf_name, DummyEncoder(sparse), [column]))
+        else:
+            transf_name = column + "_identity"
+            transformer_a.append((transf_name, IdentityTransformer(), [column]))
+
+    preprocessor = ColumnTransformer(transformers=transformer_a)
+    one_hot_a = preprocessor.fit_transform(data)
+    return one_hot_a
+
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-d", "--data_path", dest="data_path", required=True)
     parser.add_argument("-D", "--dump_file", dest="dump_file", required=False)
     parser.add_argument("-p", "--precision", dest="precision", required=False)
+    parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=False)
+    parser.add_argument("-C", "--cat_columns", dest="cat_columns", nargs='*', required=False)
     parser.add_argument("-r", "--num_repetitions", dest="num_repetitions", required=False, default=1)
     print (sys.argv[1:])
+    #TODO: Add sparse argument
 
     args = parser.parse_args()
     data_path = args.data_path
     dump_file = args.dump_file
+    columns = args.columns
+    cat_columns = args.cat_columns
     num_reps = int(args.num_repetitions)
-    
+
     precision = 15 if args.precision is None else int(args.precision)
     print(precision)
+    print(columns)
+    print(cat_columns)
     np.set_printoptions(threshold=sys.maxsize, precision=precision)
     pd.set_option('display.max_columns', 500)
 
-    data = pd.read_csv(data_path, delimiter=",", header=None)
-    
+    data = pd.read_csv(data_path, names=columns, delimiter=",", header=None)
+    print(data)
+    data = transform_data(data, columns, cat_columns, False)
+    print(data)
     for i in range(num_reps):
         start = timer()
         r = np.linalg.qr(data, mode='r')
         end = timer()
         print("##Figaro####computation##{}".format(end - start))
-
-    #print(r)
-    r = make_diagonal_positive(r)
-    #print(r)
+        print(r.size)
     if dump_file is not None:
+        r = make_diagonal_positive(r)
         dump_qr(dump_file, r)

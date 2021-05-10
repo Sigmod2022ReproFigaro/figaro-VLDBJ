@@ -138,25 +138,27 @@ class SystemTest(ABC):
         return system_test
 
     def run(self):
+        info_str = "Run {{mode}} for database {db_name} and query {query_name}".format(
+            db_name=self.database.get_name(), query_name=self.query.get_name())
         logging.info("Cleaning old data")
-        #self.clean_data(self.test_mode)
+        self.clean_data(self.test_mode)
         logging.info("Old data cleaned")
         logging.info("Starting of test {}".format(self.name))
         if self.test_mode == SystemTest.TestMode.DEBUG:
-            logging.info("Run debug")
+            logging.info(info_str.format(mode="debug"))
             self.run_debug()
         elif self.test_mode == SystemTest.TestMode.DUMP:
-            logging.info("Run dump")
+            logging.info(info_str.format(mode="dump"))
             self.run_dump()
         elif self.test_mode == SystemTest.TestMode.ACCURACY:
-            logging.info("Run accuracy")
+            logging.info(info_str.format(mode="accuracy"))
             self.run_accuracy()
             logging.info("End accuracy")
         elif self.test_mode == SystemTest.TestMode.PERFORMANCE:
-            logging.info("Run performance")
+            logging.info(info_str.format(mode="performance"))
             self.run_performance()
         elif self.test_mode == SystemTest.TestMode.PERFORMANCE_ANALYSIS:
-            logging.info("Run performance analysis")
+            logging.info(info_str.format(mode="performance analysis"))
             self.run_performance_analysis()
         else:
             logging.error('This type of system test does not exist')
@@ -187,9 +189,11 @@ class SystemTest(ABC):
         path_log_file = self.conf_log.file_path
         path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
         path_glob_times_file = os.path.join(self.conf_perf.glob_path, "time.xlsx")
-        gather_times(path_log_file, path_times_file, self.database.get_name())
+        # Gathes all times in local xlsx
+        gather_times(path_log_file, path_times_file, self.database.get_full_name())
         logging.info(path_glob_times_file)
-        gather_times(path_log_file, path_glob_times_file, self.database.get_name())
+        # Gathers all times in globac xlsx
+        gather_times(path_log_file, path_glob_times_file, self.database.get_full_name())
 
 
     @abstractmethod
@@ -225,11 +229,11 @@ class SystemTest(ABC):
         if test_mode == SystemTest.TestMode.ACCURACY:
             self.delete_content_of_dir(self.conf_accur.path)
         elif test_mode == SystemTest.TestMode.DUMP:
-            self.delete_content_of_dir(self.path_dump)
-        elif test_mode == SystemTest.TestMode.PERFORMANCE:
-            self.delete_content_of_dir(self.conf_perf)
+            self.delete_content_of_dir(self.conf_dump.path)
+        elif test_mode == SystemTest.TestMode.PERFORMANCE_ANALYSIS:
+            self.delete_content_of_dir(self.conf_perf.path)
 
-        self.delete_content_of_dir(self.path_log)
+        #self.delete_content_of_dir(self.conf_log.file_path)
 
 
     def clean_all_data(self):

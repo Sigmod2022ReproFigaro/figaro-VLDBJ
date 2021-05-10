@@ -952,7 +952,7 @@ namespace Figaro
         getDistinctValsAndBuildIndices(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin,
             vParBlockStartIdxs, vParBlockStartIdxsAfterFirstPass, isRootNode);
         MICRO_BENCH_STOP(flagsCmp)
-        FIGARO_LOG_BENCH("Figaro flag computation", m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
+        FIGARO_LOG_BENCH("Figaro", "flag computation " + m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
         numDistParVals = vParBlockStartIdxs.size() - 1;
         //MICRO_BENCH_START(hashTable)
         initHashTable(vParJoinAttrIdxs, numDistParVals);
@@ -1383,7 +1383,7 @@ namespace Figaro
         m_scales = std::move(scales);
 
         MICRO_BENCH_STOP(aggregateAway)
-        FIGARO_LOG_BENCH("Figaro", m_name, "aggregate away",  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+        FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
 
     }
 
@@ -1549,7 +1549,7 @@ namespace Figaro
         FIGARO_LOG_DBG("Attributes_name", m_attributes)
         MICRO_BENCH_STOP(genHT)
         //MICRO_BENCH_STOP(genHTMainLoop)
-        FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail",  MICRO_BENCH_GET_TIMER_LAP(genHT));
+        FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         //FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
 
     }
