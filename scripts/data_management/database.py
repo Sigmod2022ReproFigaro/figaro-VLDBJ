@@ -63,23 +63,28 @@ class Database:
         return None
 
 
-    def __get_non_join_attr_names_ordered(self, relations: List[Relation]) -> List[str]:
+    def __get_non_join_attr_names_ordered(self, relations: List[Relation],
+        skip_attrs: List[str]=[]) -> List[str]:
+
         non_join_attr_names = []
         for relation in relations:
-            non_join_attr_names += relation.get_non_join_attribute_names()
+            non_join_attr_names += relation.get_non_join_attribute_names(skip_attrs)
         return non_join_attr_names
 
 
-    def get_non_join_attr_names_ordered(self, relation_names: List[str]) -> List[str]:
+    def get_non_join_attr_names_ordered(self, relation_names: List[str],
+        skip_attrs: List[str]=[]) -> List[str]:
+
         relations = [self.get_relation(rel_name) for rel_name in relation_names]
-        return self.__get_non_join_attr_names_ordered(relations)
+        return self.__get_non_join_attr_names_ordered(relations, skip_attrs)
 
 
-    def get_non_join_cat_attr_names_ordered(self, relation_names: List[str]) -> List[str]:
+    def get_non_join_cat_attr_names_ordered(self, relation_names: List[str],
+        skip_attrs: List[str]=[]) -> List[str]:
         relations = [self.get_relation(rel_name) for rel_name in relation_names]
         non_join_cat_attr_names = []
         for relation in relations:
-            non_join_cat_attr_names += relation.get_non_join_cat_attr_names()
+            non_join_cat_attr_names += relation.get_non_join_cat_attr_names(skip_attrs)
 
         return non_join_cat_attr_names
 

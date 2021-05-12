@@ -119,6 +119,17 @@ namespace Figaro
         }
     }
 
+    void Relation::getCategoricalAttributeIdxs(std::vector<uint32_t>& vCatAttrIdxs) const
+    {
+          for (uint32_t idx = 0; idx < m_attributes.size(); idx++)
+        {
+            if (m_attributes[idx].m_type == AttributeType::CATEGORY)
+            {
+                vCatAttrIdxs.push_back(idx);
+            }
+        }
+    }
+
     void Relation::schemaJoin(const Relation& relation, bool swapAttributes)
     {
         std::vector<uint32_t> vNonPKAttributeIdxs;
@@ -342,6 +353,38 @@ namespace Figaro
         m_attributes.resize(curAttrIdx);
     }
 
+    void Relation::schemaOneHotEncode(
+        const std::map<uint32_t, std::set<uint32_t> >& mCatAttrsDist)
+    {
+        std::vector<uint32_t> attrIdxs;
+        getAttributesIdxs(getAttributeNames(), attrIdxs);
+        std::vector<Attribute> vOneHotEncAttrs;
+        for (const auto& attrIdx: attrIdxs)
+        {
+            const auto& attribute = m_attributes[attrIdx];
+            if (attribute.m_type == AttributeType::CATEGORY)
+            {
+                for (const auto& catAttrDist: mCatAttrsDist.at(attrIdx))
+                {
+                    uint32_t catPos = std::distance(mCatAttrsDist.at(attrIdx).begin(),
+                                                mCatAttrsDist.at(attrIdx).find(catAttrDist));
+                    if (catPos != 0)
+                    {
+                        Attribute oheAttr = attribute;
+                        oheAttr.m_name += std::to_string(catAttrDist);
+                        oheAttr.m_type = AttributeType::INTEGER;
+                        vOneHotEncAttrs.push_back(oheAttr);
+                    }
+                }
+            }
+            else
+            {
+                vOneHotEncAttrs.push_back(attribute);
+            }
+        }
+        m_attributes = vOneHotEncAttrs;
+        FIGARO_LOG_INFO("One hot encoded", m_attributes)
+    }
 
     void Relation::dropAttributes(const std::vector<std::string>& vDropAttrNames)
     {
@@ -351,8 +394,6 @@ namespace Figaro
         std::vector<uint32_t> vAfterDropAttrIdxs;
 
         getAttributesIdxs(vDropAttrNames, vDropAttrIdxs);
-        // TODO: Fix the bug
-        // TODO: Test complement
         getAttributesIdxsComplement(vDropAttrIdxs, vNonDropAttrIdxs);
         getAttributesIdxs(getAttributeNames(), vBeforeDropAttrIdxs);
 
@@ -374,17 +415,94 @@ namespace Figaro
             {
                 uint32_t attrBeforeIdx = vNonDropAttrIdxs[idx];
                 uint32_t attrAfterIdx = vAfterDropAttrIdxs[idx];
-                if (rowIdx == 0)
-                {
-                    FIGARO_LOG_DBG("attrIdx", attrBeforeIdx, attrAfterIdx)
-                }
                 tmpData[rowIdx][attrAfterIdx] = m_data[rowIdx][attrBeforeIdx];
             }
         }
         m_data = std::move(tmpData);
         FIGARO_LOG_DBG("m_attributes", m_attributes)
         FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
+    }
+
+    // We assume the first variable is not categorical.
+    void Relation::oneHotEncode(void)
+    {
+        std::map<uint32_t, std::set<uint32_t> > mCatAttrsDist;
+        std::vector<uint32_t> vAttrIdxs;
+        std::vector<uint32_t> vCatAttrIdxs;
+        std::vector<uint32_t> vShiftAttrIdxs;
+        std::vector<uint32_t> vShiftIdxs;
+        uint32_t curShift;
+
+        getCategoricalAttributeIdxs(vCatAttrIdxs);
+        getAttributesIdxs(getAttributeNames(), vAttrIdxs);
+
+        FIGARO_LOG_DBG("vCatAttrIdxs", vCatAttrIdxs)
+        FIGARO_LOG_DBG("vAttrIdxs", vAttrIdxs)
+
+        for (const auto& attrIdx: vCatAttrIdxs)
+        {
+            mCatAttrsDist[attrIdx] = std::set<uint32_t>{};
+        }
+
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            for (const auto& attrIdx: vCatAttrIdxs)
+            {
+               mCatAttrsDist[attrIdx].insert(static_cast<uint32_t>(m_data[rowIdx][attrIdx]));
+            }
+        }
+
+        // Set up shifts.
+        curShift = 0;
+        vShiftIdxs.push_back(0);
+        for (const auto& attrIdx: vAttrIdxs)
+        {
+            const auto& curAttr = m_attributes[attrIdx];
+            if (curAttr.m_type == AttributeType::CATEGORY)
+            {
+                // Number of different categorical attributes  - 1 the first
+                curShift += mCatAttrsDist[attrIdx].size() - 2;
+            }
+            if (attrIdx + 1 < vAttrIdxs.size())
+            {
+                vShiftIdxs.push_back(curShift);
+            }
+        }
+        FIGARO_LOG_DBG("vShiftIdxs", vShiftIdxs)
+
+        MatrixDT oneHotEncData{0, 1};
+        oneHotEncData = std::move(MatrixDT::zeros(m_data.getNumRows(), m_data.getNumCols() + curShift));
+
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            for (const auto& attrIdx: vAttrIdxs)
+            {
+                const auto& curAttr = m_attributes[attrIdx];
+                if (curAttr.m_type == AttributeType::CATEGORY)
+                {
+                    uint32_t val = static_cast<uint32_t>(m_data[rowIdx][attrIdx]);
+                    uint32_t catPos = std::distance(mCatAttrsDist[attrIdx].begin(),
+                                                    mCatAttrsDist[attrIdx].find(val));
+                    // We skip the first category in categorical variable.
+                    if (catPos != 0)
+                    {
+                        uint32_t colIdx = attrIdx + vShiftIdxs[attrIdx] + catPos - 1;
+                        oneHotEncData[rowIdx][colIdx] = 1;
+                    }
+                }
+                else
+                {
+                    uint32_t colIdx = attrIdx + vShiftIdxs[attrIdx];
+                    oneHotEncData[rowIdx][colIdx] = m_data[rowIdx][attrIdx];
+                }
+            }
+        }
+
+        schemaOneHotEncode(mCatAttrsDist);
+
+        m_data =  std::move(oneHotEncData);
         m_oldAttributes = m_attributes;
+        FIGARO_LOG_DBG("OHE", *this)
     }
 
 

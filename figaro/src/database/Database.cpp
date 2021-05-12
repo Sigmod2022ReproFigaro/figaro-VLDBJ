@@ -83,9 +83,17 @@ namespace Figaro
     void Database::dropAttributesFromRelations(
             const std::vector<std::string>& vDropAttrNames)
     {
-         for (auto& [relName, relation]: m_relations)
+        for (auto& [relName, relation]: m_relations)
         {
             relation.dropAttributes(vDropAttrNames);
+        }
+    }
+
+    void Database::oneHotEncodeRelations(void)
+    {
+        for (auto& [relName, relation]: m_relations)
+        {
+            relation.oneHotEncode();
         }
     }
 

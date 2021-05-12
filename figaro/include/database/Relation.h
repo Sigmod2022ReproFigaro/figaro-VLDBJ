@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <set>
 #include "tbb/atomic.h"
 
 // TODO: Optimize tuple instanciated Relation based on number of attributes.
@@ -217,6 +218,8 @@ namespace Figaro
          */
         void getNonPKAttributeIdxs(std::vector<uint32_t>& vNonPkAttrIdxs) const;
 
+        void getCategoricalAttributeIdxs(std::vector<uint32_t>& vCatAttrIdxs) const;
+
 
         void schemaJoin(const Relation& relation, bool swapAttributes = false);
 
@@ -237,6 +240,9 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs);
 
         void schemaDropAttrs(std::vector<uint32_t> vDropAttrIdxs);
+
+        void schemaOneHotEncode(
+            const std::map<uint32_t, std::set<uint32_t> >& mCatAttrsDist);
 
         void getDistinctValsAndBuildIndices(
             const std::vector<uint32_t>& vAttrIdxs,
@@ -350,6 +356,8 @@ namespace Figaro
         void sortData(const std::vector<std::string>& vAttributeNames);
 
         void dropAttributes(const std::vector<std::string>& vAttributeNames);
+
+        void oneHotEncode(void);
 
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,

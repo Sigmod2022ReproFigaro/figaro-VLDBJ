@@ -51,8 +51,8 @@ class Relation:
         return self.join_attrs
 
 
-    def get_non_join_attribute_names(self) -> List[str]:
-        non_join_attrs = list(set(self.get_attribute_names()).difference(self.join_attrs))
+    def get_non_join_attribute_names(self, skip_attrs: List[str] = []) -> List[str]:
+        non_join_attrs = list(set(self.get_attribute_names(skip_attrs)).difference(self.join_attrs))
         attr_names = self.get_attribute_names()
         def key_fun(attr_name: str):
             return attr_names.index(attr_name)
@@ -60,10 +60,10 @@ class Relation:
         return non_join_attrs
 
 
-    def get_non_join_cat_attr_names(self) -> List[str]:
+    def get_non_join_cat_attr_names(self, skip_attrs: List[str] = []) -> List[str]:
         non_join_cat_attr_names = []
         for attr in self.attributes:
-            if attr.type == "category":
+            if (attr.type == "category") and (attr.name not in skip_attrs):
                 non_join_cat_attr_names.append(attr.name)
         return non_join_cat_attr_names
 
@@ -71,8 +71,8 @@ class Relation:
     def get_attributes(self) -> List[Attribute]:
         return self.attributes
 
-    def get_attribute_names(self) -> List[str]:
-        return [attribute.name for attribute in self.attributes]
+    def get_attribute_names(self, skip_attrs: List[str] = []) -> List[str]:
+        return [attribute.name for attribute in self.attributes if attribute.name not in skip_attrs]
 
 
     def get_pk_attribute_names(self)-> List[str]:

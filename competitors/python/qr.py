@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from numpy.core.fromnumeric import size
 import pandas as pd
 from  argparse import ArgumentParser
 from timeit import default_timer as timer
@@ -8,14 +7,13 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 
-
 class DummyEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, sparse):
         self.sparse = sparse
 
     def transform(self, X):
         ohe = OneHotEncoder(handle_unknown='ignore', sparse=self.sparse)
-        return ohe.fit_transform(X)[:,:]
+        return ohe.fit_transform(X)[:,1:]
 
     def fit(self, X, y=None, **fit_params):
         return self
@@ -79,17 +77,16 @@ if __name__ == "__main__":
     print(cat_columns)
     np.set_printoptions(threshold=sys.maxsize, precision=precision)
     pd.set_option('display.max_columns', 500)
-
     data = pd.read_csv(data_path, names=columns, delimiter=",", header=None)
-    print(data)
+    #print(data)
     data = transform_data(data, columns, cat_columns, False)
-    print(data)
+    #print(data)
     for i in range(num_reps):
         start = timer()
         r = np.linalg.qr(data, mode='r')
         end = timer()
         print("##Figaro####computation##{}".format(end - start))
-        print(r.size)
+
     if dump_file is not None:
         r = make_diagonal_positive(r)
         dump_qr(dump_file, r)

@@ -40,6 +40,7 @@ namespace Figaro
         FIGARO_LOG_DBG("Skipped attributes", pElement->getDropAttributes())
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
+        m_pDatabase->oneHotEncodeRelations();
         pElement->getOperand()->accept(this);
     }
 
