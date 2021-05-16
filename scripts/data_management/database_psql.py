@@ -5,12 +5,13 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import argparse
 import logging
 from data_management.database import Database
+from data_management.query import Query
 from data_management.relation import Relation
 from timeit import default_timer as timer
 
-JOIN_TABLE_NAME = "join_table"
 
 class DatabasePsql:
+    JOIN_TABLE_NAME = "join_table"
     def __init__(self, host_name: str, user_name: str,
     password: str, database: Database = None):
         self.host_name = host_name
@@ -106,20 +107,25 @@ class DatabasePsql:
         pass
 
 
-    def evaluate_join(self, relation_names: List[str], num_repetitions: int,
-    drop_attributes: List[str]):
-        sql_join = "DROP TABLE IF EXISTS " + JOIN_TABLE_NAME + ";CREATE TABLE " + JOIN_TABLE_NAME + " AS (SELECT {} FROM {});"
+    @staticmethod
+    def get_join_table_name(query: Query):
+        join_table_name = DatabasePsql.JOIN_TABLE_NAME + query.get_name()
+        return join_table_name
+
+    def evaluate_join(self, query: Query, num_repetitions: int):
+        join_table_name = DatabasePsql.get_join_table_name(query)
+        sql_join = "DROP TABLE IF EXISTS " + join_table_name + ";CREATE TABLE " + join_table_name + " AS (SELECT {} FROM {});"
         sql_from_natural_join = ""
 
         sql_select = ""
-        ord_attr_names = self.database.get_attr_names_ordered(relation_names)
+        ord_attr_names = query.get_attr_names_ordered()
 
         for attribute_name in ord_attr_names:
-            if attribute_name not in drop_attributes:
+            if attribute_name not in query.get_skip_attrs():
                 sql_select += attribute_name + ","
 
         sql_select = sql_select[:-1]
-        for idx, relation_name in enumerate(relation_names):
+        for idx, relation_name in enumerate(query.get_relation_order()):
             sql_from_table_name = relation_name if idx == 0 \
                 else  " NATURAL JOIN " + relation_name
             sql_from_natural_join += sql_from_table_name
@@ -147,8 +153,9 @@ class DatabasePsql:
         return relation_size
 
 
-    def get_join_size(self) -> int:
-        return self.get_relation_size(JOIN_TABLE_NAME)
+    def get_join_size(self, query: Query) -> int:
+        join_table_name = DatabasePsql.get_join_table_name(query)
+        return self.get_relation_size(join_table_name)
 
 
     def log_relation_sizes(self, relation_names):
@@ -158,14 +165,12 @@ class DatabasePsql:
                         self.get_relation_size(relation_name)))
 
 
-    def dump_join(self, relation_names: List[str], skip_attributes: List[str],
-    output_file_path: str):
-        non_join_attribute_names = self.database.get_non_join_attr_names_ordered(relation_names)
-        for skip_attribute in skip_attributes:
-            non_join_attribute_names.remove(skip_attribute)
+    def dump_join(self, query: Query, output_file_path: str):
+        non_join_attribute_names = query.get_non_join_attr_names_ordered()
+        join_table_name = DatabasePsql.get_join_table_name(query)
         cursor = self.connection.cursor()
         with open(output_file_path, 'w') as file_csv:
-            cursor.copy_to(file_csv, JOIN_TABLE_NAME, sep=',',
+            cursor.copy_to(file_csv, join_table_name, sep=',',
             columns=non_join_attribute_names)
 
 
@@ -174,17 +179,23 @@ class DatabasePsql:
         self.close_connection()
 
         self.database = database
-        connection_admin = self.open_connection_admin()
-        cursor = connection_admin.cursor()
-        cursor.execute(sql.SQL("CREATE DATABASE {}").format(
-                            sql.Identifier(self.database.name)))
-        cursor.close()
-        connection_admin.close()
-        self.open_connection()
-
-        relations = self.database.get_relations()
-        for relation in relations:
-            self.create_table(relation)
+        database_exists = False
+        try:
+            connection_admin = self.open_connection_admin()
+            cursor = connection_admin.cursor()
+            cursor.execute(sql.SQL("CREATE DATABASE {}").format(
+                                sql.Identifier(self.database.name)))
+        except:
+            logging.info("Database {} exists".format(database.name))
+            database_exists = True
+        finally:
+            cursor.close()
+            connection_admin.close()
+            self.open_connection()
+        if not database_exists:
+            relations = self.database.get_relations()
+            for relation in relations:
+                self.create_table(relation)
 
 
     def drop_database(self):

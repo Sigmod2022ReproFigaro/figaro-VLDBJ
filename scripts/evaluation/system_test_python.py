@@ -31,11 +31,8 @@ class SystemTestPython(SystemTestCompetitor):
 
         script_path = os.path.join(self.root_path, "competitors/python/qr.py")
 
-        relation_order = self.query.get_relation_order()
-        self.database.order_relations(relation_order)
-        self.database.set_join_attrs()
-        non_join_attr_names = self.database.get_non_join_attr_names_ordered(self.database.get_relation_names(), self.query.get_skip_attrs())
-        non_join_cat_attr_names = self.database.get_non_join_cat_attr_names_ordered(self.database.get_relation_names(), self.query.get_skip_attrs())
+        non_join_attr_names = self.query.get_non_join_attr_names_ordered()
+        non_join_cat_attr_names = self.query.get_non_join_cat_attr_names_ordered()
 
         args = ["python3", script_path, "--data_path", self.join_path,
                 "--columns", *non_join_attr_names,

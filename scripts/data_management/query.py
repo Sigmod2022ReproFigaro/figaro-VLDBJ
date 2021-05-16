@@ -1,10 +1,18 @@
 import json
 import logging
 
+from typing import List
+
+from data_management.database import Database
+
 class Query:
-    def __init__(self, query_config_path):
+    def __init__(self, query_config_path, database: Database):
         self.query_config_path = query_config_path
         self.load_query()
+        self.database = database
+        #TODO: Move database methods to query class
+        self.database.order_relations(self.relation_order)
+        self.database.set_join_attrs()
 
 
     def load_query(self):
@@ -22,13 +30,24 @@ class Query:
     def get_conf_path(self):
         return self.query_config_path
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
 
-    def get_relation_order(self):
+    def get_relation_order(self)-> List[str]:
         return self.relation_order
 
 
-    def get_skip_attrs(self):
+    def get_skip_attrs(self)-> List[str]:
         return self.skip_attrs
+
+    def get_attr_names_ordered(self):
+        return self.database.get_attr_names_ordered(self.relation_order)
+
+    def get_non_join_attr_names_ordered(self)-> List[str]:
+        return self.database.get_non_join_attr_names_ordered(
+            self.relation_order, self.skip_attrs)
+
+    def get_non_join_cat_attr_names_ordered(self):
+        return self.database.get_non_join_cat_attr_names_ordered(
+                self.relation_order, self.skip_attrs)

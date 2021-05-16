@@ -30,7 +30,7 @@ class SystemTestPsql(SystemTestDBMS):
 
         database_psql = DatabasePsql(host_name="",user_name=self.username,
         password=self.password, database=self.database)
-        database_psql.drop_database()
+        #database_psql.drop_database()
         database_psql.create_database(self.database)
 
         relation_order = self.query.get_relation_order()
@@ -42,13 +42,12 @@ class SystemTestPsql(SystemTestDBMS):
 
 
         num_repetitions = self.conf_perf.num_reps if performance else 1
-        database_psql.evaluate_join(self.database.get_relation_names(), num_repetitions=num_repetitions, drop_attributes=skip_attrs)
-        join_size = database_psql.get_join_size()
+        database_psql.evaluate_join(self.query, num_repetitions=num_repetitions)
+        join_size = database_psql.get_join_size(self.query)
         logging.info("Number of rows is {}".format(join_size))
         database_psql.log_relation_sizes(self.database.get_relation_names())
         if (dump):
-            database_psql.dump_join(self.database.get_relation_names(),
-                skip_attrs, self.join_path)
+            database_psql.dump_join(self.query, self.join_path)
 
         remove_logging_file_handler(file_handler)
 
