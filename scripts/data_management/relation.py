@@ -37,42 +37,20 @@ class Relation:
 
         self.attributes = attributes
         self.data_path = json_schema["data_path"] if "data_path" in json_schema else None
-        self.join_attrs = []
 
-    def set_join_attribute_names(self, join_attrs: List[str]):
-        attr_names = self.get_attribute_names()
-        def key_fun(attr_name: str):
-            return attr_names.index(attr_name)
-        join_attrs.sort(key=key_fun)
-        self.join_attrs = join_attrs
-
-
-    def get_join_attribute_names(self) -> List[str]:
-        return self.join_attrs
-
-
-    def get_non_join_attribute_names(self, skip_attrs: List[str] = []) -> List[str]:
-        non_join_attrs = list(set(self.get_attribute_names(skip_attrs)).difference(self.join_attrs))
-        attr_names = self.get_attribute_names()
-        def key_fun(attr_name: str):
-            return attr_names.index(attr_name)
-        non_join_attrs.sort(key=key_fun)
-        return non_join_attrs
-
-
-    def get_non_join_cat_attr_names(self, skip_attrs: List[str] = []) -> List[str]:
-        non_join_cat_attr_names = []
-        for attr in self.attributes:
-            if (attr.type == "category") and (attr.name not in skip_attrs):
-                non_join_cat_attr_names.append(attr.name)
-        return non_join_cat_attr_names
 
 
     def get_attributes(self) -> List[Attribute]:
         return self.attributes
 
-    def get_attribute_names(self, skip_attrs: List[str] = []) -> List[str]:
-        return [attribute.name for attribute in self.attributes if attribute.name not in skip_attrs]
+    def get_attribute_names(self, skip_attrs: List[str] = [], is_cat: bool = False) -> List[str]:
+        attr_names = []
+        for attribute in self.attributes:
+            if (attribute.name not in skip_attrs) and \
+                (not is_cat or (is_cat and attribute.type == "category")):
+                attr_names.append(attribute.name)
+
+        return attr_names
 
 
     def get_pk_attribute_names(self)-> List[str]:

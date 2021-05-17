@@ -158,8 +158,8 @@ class DatabasePsql:
         return self.get_relation_size(join_table_name)
 
 
-    def log_relation_sizes(self, relation_names):
-        for relation_name in relation_names:
+    def log_relation_sizes(self, query: Query):
+        for relation_name in query.get_relation_order():
             logging.info("Number of rows in relation {} is {}".
                         format(relation_name,
                         self.get_relation_size(relation_name)))
