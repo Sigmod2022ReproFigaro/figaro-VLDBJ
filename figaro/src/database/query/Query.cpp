@@ -35,7 +35,7 @@ namespace Figaro
                 vRelationOrder.push_back(relName);
             }
 
-            if (jsonQueryConfig.find("skip_attributes") != jsonQueryConfig.end())
+            if (jsonQueryConfig.contains("skip_attributes"))
             {
                 for (const auto& attrName: jsonQueryConfig["skip_attributes"])
                 {
@@ -70,10 +70,22 @@ namespace Figaro
         else if (operatorName == "relation")
         {
             const std::string& relationName = jsonQueryConfig["relation"];
-            pCreatedNode = new ASTNodeRelation(relationName, m_pDatabase->getRelationAttributeNames(relationName));
+            std::vector<std::string> vAttrNames;
+            if (jsonQueryConfig.contains("attributes_order"))
+            {
+                for (const auto& attrName: jsonQueryConfig["attributes_order"])
+                {
+                    vAttrNames.push_back(attrName);
+                }
+            }
+            else
+            {
+                vAttrNames = m_pDatabase->getRelationAttributeNames(relationName);
+            }
+            pCreatedNode = new ASTNodeRelation(relationName, vAttrNames);
             m_mRelNameASTNodeRel[relationName] = (ASTNodeRelation*)pCreatedNode;
+            m_pDatabase->updateSchemaOfRelation(relationName, vAttrNames);
             FIGARO_LOG_DBG("RELATION", relationName)
-
         }
 
         return pCreatedNode;

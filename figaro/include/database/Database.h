@@ -43,6 +43,11 @@ namespace Figaro
             const std::vector<std::string>& vDropAttrNames);
 
 
+        void updateSchemaOfRelation(
+            const std::string& relationName,
+            const std::vector<std::string>& vAttrNames);
+
+
         void oneHotEncodeRelations(void);
 
         void computeDownCounts(

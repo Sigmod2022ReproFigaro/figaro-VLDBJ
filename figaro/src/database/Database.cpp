@@ -89,6 +89,14 @@ namespace Figaro
         }
     }
 
+    void Database::updateSchemaOfRelation(
+        const std::string& relationName,
+        const std::vector<std::string>& vAttrNames)
+    {
+        auto& relation = m_relations.at(relationName);
+        return relation.updateSchema(vAttrNames);
+    }
+
     void Database::oneHotEncodeRelations(void)
     {
         for (auto& [relName, relation]: m_relations)
@@ -96,6 +104,8 @@ namespace Figaro
             relation.oneHotEncode();
         }
     }
+
+
 
     void  Database::joinRelations(std::vector<std::string> vRelationNames,
         const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes)

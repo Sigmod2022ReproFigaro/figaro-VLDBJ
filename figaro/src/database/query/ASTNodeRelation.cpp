@@ -7,7 +7,7 @@ namespace Figaro
 
     void ASTNodeRelation::setJoinAttribute(const std::string& attrName)
     {
-        if (m_mIsJoinAttr.find(attrName) != m_mIsJoinAttr.end())
+        if (m_mIsJoinAttr.contains(attrName))
         {
             m_mIsJoinAttr[attrName] = true;
         }

@@ -357,6 +357,8 @@ namespace Figaro
 
         void dropAttributes(const std::vector<std::string>& vAttributeNames);
 
+        void updateSchema(const std::vector<std::string>& vAttributeNames);
+
         void oneHotEncode(void);
 
         void computeDownCounts(

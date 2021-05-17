@@ -423,6 +423,42 @@ namespace Figaro
         FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
     }
 
+
+    void Relation::updateSchema(const std::vector<std::string>& vAttributeNames)
+    {
+        std::vector<Attribute> vNewAttributes;
+        std::vector<uint32_t> vOldAttrIdxs;
+        std::vector<uint32_t> vBeforeNewAttrIdxs;
+        std::vector<uint32_t> vAfterNewAttrIdxs;
+
+        getAttributesIdxs(getAttributeNames(), vOldAttrIdxs);
+        getAttributesIdxs(vAttributeNames,  vBeforeNewAttrIdxs);
+        for (const auto& attrIdx: vBeforeNewAttrIdxs)
+        {
+            vNewAttributes.push_back(m_attributes[attrIdx]);
+        }
+        m_attributes = vNewAttributes;
+        getAttributesIdxs(getAttributeNames(), vAfterNewAttrIdxs);
+        FIGARO_LOG_DBG("vBeforeNewAttrIdxs", vBeforeNewAttrIdxs)
+        FIGARO_LOG_DBG("vAfterNewAttrIdxs", vAfterNewAttrIdxs)
+
+        MatrixDT tmpData {m_data.getNumRows(), vAfterNewAttrIdxs.size()};
+
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+            for (uint32_t idx = 0; idx < vBeforeNewAttrIdxs.size(); idx++)
+            {
+                uint32_t attrBeforeIdx = vBeforeNewAttrIdxs[idx];
+                uint32_t attrAfterIdx = vAfterNewAttrIdxs[idx];
+                tmpData[rowIdx][attrAfterIdx] = m_data[rowIdx][attrBeforeIdx];
+            }
+        }
+        m_data = std::move(tmpData);
+        FIGARO_LOG_DBG("m_attributes", m_attributes)
+        FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
+        FIGARO_LOG_DBG(*this)
+    }
+
     // We assume the first variable is not categorical.
     void Relation::oneHotEncode(void)
     {

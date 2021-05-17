@@ -21,7 +21,6 @@ namespace Figaro
         ASTNodeRelation(const std::string& relationName,
                         const std::vector<std::string>& vAttributeNames): m_relationName(relationName), m_vAttributeNames(vAttributeNames)
         {
-            FIGARO_LOG_DBG("AttributeNames", vAttributeNames)
             for (const auto& attrName: m_vAttributeNames)
             {
                 m_mIsJoinAttr[attrName] = false;
@@ -72,12 +71,6 @@ namespace Figaro
         const std::vector<std::string>& getJoinAttributeNames(void) override;
 
         void accept(ASTVisitor *pVisitor) override;
-
-        MatrixEigenT* computeHead(Database* pDatabase) const;
-
-        MatrixEigenT* computeTail(Database* pDatabase) const;
-
-        void computeHeadSingleThreaded(const std::vector<std::string>& ) const;
     };
 } // namespace Figaro
 
