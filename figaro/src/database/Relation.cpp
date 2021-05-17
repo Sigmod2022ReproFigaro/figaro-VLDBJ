@@ -456,7 +456,10 @@ namespace Figaro
         m_data = std::move(tmpData);
         FIGARO_LOG_DBG("m_attributes", m_attributes)
         FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
-        FIGARO_LOG_DBG(*this)
+        if ((m_name != "Inventory") && (m_name != "Weather"))
+        {
+            //FIGARO_LOG_DBG(*this)
+        }
     }
 
     // We assume the first variable is not categorical.
@@ -538,7 +541,6 @@ namespace Figaro
 
         m_data =  std::move(oneHotEncData);
         m_oldAttributes = m_attributes;
-        FIGARO_LOG_DBG("OHE", *this)
     }
 
 
@@ -905,6 +907,10 @@ namespace Figaro
         void*  htChildParAttrs,
         const uint32_t* pRow)
     {
+        static DownUpCntT t = std::make_tuple<uint32_t, uint32_t>(1 ,2);
+        try {
+
+
         if (vParJoinAttrIdxs.size() == 1)
         {
             const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
@@ -926,6 +932,17 @@ namespace Figaro
             // TODO: Consider how to handle this case.
             //const std::vector<double> t =
             FIGARO_LOG_DBG("Damn")
+        }
+        }
+        catch (...)
+        {
+            if (vParJoinAttrIdxs.size() == 1)
+            {
+                const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
+                FIGARO_LOG_DBG("DAMN ", m_name, joinAttrVal)
+                return t;
+            }
+
         }
 
     }
@@ -1035,6 +1052,7 @@ namespace Figaro
         catch(...)
         {
             FIGARO_LOG_DBG("Relation", m_name, "rowChildIdx", rowChildIdx, "rowIdx", rowIdx, vParJoinAttrIdxs, dataParent[rowIdx][vParJoinAttrIdxs[0]], dataParent[rowIdx][vParJoinAttrIdxs[1]])
+            return 0;
 
         }
 
@@ -2128,8 +2146,6 @@ namespace Figaro
             }
         }
         m_data = std::move(dataOutput);
-
-        FIGARO_LOG_DBG("End of Join", *this)
     }
 
 
@@ -2189,7 +2205,6 @@ namespace Figaro
                     vCurRowSum[nonPKAttrIdx - pkOffset] * std::sqrt(scalarCnt / aggregateCnt);
             }
         }
-        //FIGARO_LOG_INFO(*this);
     }
 
     // N-N join where zero rows are omitted.
@@ -2289,7 +2304,6 @@ namespace Figaro
                 aTailIdxs[1]++;
             }
         }
-        FIGARO_LOG_INFO("After extend", *this);
         m_dataHead = std::move(headOutput);
         m_dataTails1 = std::move(tailOutput1);
         m_dataTails2 = std::move(tailOutput2);
