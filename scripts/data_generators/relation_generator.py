@@ -1,8 +1,12 @@
 import itertools as it
-import random 
+import logging
+import random
 import numpy as np
+from numpy.core import numeric
+from numpy.lib.ufunclike import _deprecate_out_named_y
 import pandas as pd
 import argparse
+from  typing import List
 
 from data_management.relation import Relation
 
@@ -12,7 +16,7 @@ class RelationGeneratedSpecs:
         self.attribute_domains = json_relation_generated_specs["attribute_domains"]
         self.num_tuples = json_relation_generated_specs["num_tuples"]
 
-    
+
     def __str__(self):
         ret = self.distribution + str(self.attribute_domains) + str(self.num_tuples)
         return ret
@@ -29,70 +33,95 @@ class RelationGeneratedSpecs:
                 attr_idx = idx
                 break
         if attr_idx is not None:
-            self.attribute_domains[attr_idx] 
+            self.attribute_domains[attr_idx]
             self.attribute_domains[attr_idx]["full"] = full_domain
 
 class RelationGenerator:
-    def __init__(self, relation: Relation):
+    def __init__(self, relation: Relation, join_attr_names: List[str]):
         self.name = relation.name
         self.setPks = set(relation.get_pk_attribute_names())
-        self.attribute_names = relation.get_attribute_names() 
+        self.attribute_names = relation.get_attribute_names()
         self.data_path = relation.data_path
+        self.join_attr_names = join_attr_names
 
 
     def dump_to_csv(self, generated_relation, output_path: str = None):
         if output_path is None:
             output_path = self.data_path
-        print("Relation generated on:", output_path)
-        generated_relation.to_csv(output_path, index=False, header=False)
+        logging.info("Relation generated on:{}".format(output_path))
+        generated_relation.to_csv(output_path, index=False, header=False, columns=self.attribute_names)
+
+
+    def cartesian_product(self, *arrays):
+        ndim = len(arrays)
+        return np.stack(np.meshgrid(*arrays), axis=-1).reshape(-1, ndim)
 
 
     # attribute_domains [{"name": "A", "start": 1, "end": 10}]
     # PKs are unique
     # We assume the same attribute order as defined by schema
-    #def generate(self, attribute_domains, num_tuples: int, pandas_format=True):
-    def generate(self, rel_specs: RelationGeneratedSpecs, dump: bool = False, 
+    #def generate(self, attribute_domains, num_tuples: int, panddas_format=True):
+    def generate(self, rel_specs: RelationGeneratedSpecs, dump: bool = False,
                 output_path: str =None)-> pd.DataFrame:
-        all_tuples_in_domain = None
-        generated_relation = []
-        first_non_PK_idx = None
-        domains = []
+        domains = {}
+        domain_pks = []
+        pk_attr_names = []
+        generated_pk = False
+        pk_exists = False
 
-        for attr_idx, attr_domain in enumerate(rel_specs.attribute_domains):
+        num_tuples = rel_specs.num_tuples
+
+        for _, attr_domain in enumerate(rel_specs.attribute_domains):
             domain_start = attr_domain["start"]
             domain_end = attr_domain["end"]
-            domain_range = [i for i in range(domain_start, domain_end + 1)]
-            domain_full = attr_domain["full"] if "full" in attr_domain \
-                            else domain_range
-            domain = list(set(domain_full) & set(domain_range))
-            if (attr_domain["name"] in self.setPks):
-                domains.append(domain)
-        #Think how to generate list only of PKs and later to 
-        all_tuples_in_domain = [list(tup) for tup in it.product(*domains)]
-        random.shuffle(all_tuples_in_domain)
-        generated_tuples = all_tuples_in_domain[:rel_specs.num_tuples]   
+            attr_name = attr_domain["name"]
+            domain = None
+            if (attr_name in self.setPks):
+                pk_exists = True
+                domain_range = [i for i in range(domain_start, domain_end + 1)]
+                domain_full = attr_domain["full"] if "full" in attr_domain \
+                                else domain_range
 
-        for attr_idx, attr_domain in enumerate(rel_specs.attribute_domains):
-            dom_start = attr_domain["start"]
-            dom_end = attr_domain["end"]
-            if (attr_domain["name"] not in self.setPks):
-                generated_tuples = [[*tuples, np.random.uniform(dom_start, dom_end)] \
-                                    for tuples in generated_tuples]
+                domain = np.array(list(set(domain_full) & set(domain_range)))
 
-        generated_tuples = pd.DataFrame(generated_tuples, 
-                                    columns=self.attribute_names)
+                domain_pks.append(domain)
+                pk_attr_names.append(attr_name)
+            else:
+                if pk_exists and not generated_pk:
+                    domain_pks = self.cartesian_product(*domain_pks)
+                    np.random.shuffle(domain_pks)
+                    domain_pks = domain_pks[:num_tuples]
+                    num_tuples = domain_pks.shape[0]
+                    num_pk_attrs = domain_pks.shape[1]
+                    for idx in range(0, num_pk_attrs):
+                        domains[pk_attr_names[idx]] = domain_pks[:, idx]
+
+                    generated_pk = True
+
+                if (attr_name in self.join_attr_names):
+                    domain = np.random.randint(low=domain_start, high=domain_end+1, size=(num_tuples))
+                else:
+                    domain = np.random.uniform(domain_start, domain_end, size=(num_tuples))
+
+                domains[attr_name] = domain
+
+        generated_tuples = pd.DataFrame(domains)
+        for column in generated_tuples:
+            if (column in self.join_attr_names or column in self.setPks):
+                generated_tuples.astype({column: 'int32'}, copy=False)
+
         if dump:
             self.dump_to_csv(generated_tuples, output_path)
 
         return generated_tuples
-        
+
 
 
 if __name__ == "__main__":
     relation = Relation({
                 "name": "T1",
-                "attributes": 
-                [ {"name": "A","type": "int"}, 
+                "attributes":
+                [ {"name": "A","type": "int"},
                 {"name": "B","type": "int"},
                 {"name": "C","type": "int"},
                 {"name": "A1","type": "double"}
@@ -107,7 +136,7 @@ if __name__ == "__main__":
             {"name": "C", "start": 3, "end": 9},
             {"name": "A1", "start": -3, "end": 3}],
         "num_tuples": 100} )
-    relation_generator = RelationGenerator(relation)    
+    relation_generator = RelationGenerator(relation)
     generated_relation = relation_generator.generate(rel_specs)
     pd.set_option('display.max_rows', 100)
     print(generated_relation)

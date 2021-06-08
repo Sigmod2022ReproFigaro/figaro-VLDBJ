@@ -107,6 +107,24 @@ class DatabasePsql:
         pass
 
 
+    def remove_dangling_tuples(self, query: Query):
+        join_table_name = DatabasePsql.get_join_table_name(query)
+        sql_delete_tuples = "DELETE FROM {} WHERE ({}) NOT IN (SELECT {} FROM {})"
+        for relation in self.database.get_relations():
+            # Join table and the table with dangling tuples have
+            # have the same named join attributes
+            rel_name = relation.name
+            join_attr_names = query.get_join_attrs(rel_name)
+            join_attr_names_str = ','.join(join_attr_names)
+            sql_delete_tuples_rel = sql_delete_tuples.format(rel_name, join_attr_names_str,
+                join_attr_names_str, join_table_name)
+            logging.info(sql_delete_tuples_rel)
+            cursor = self.connection.cursor()
+            cursor.execute(sql_delete_tuples_rel)
+            cursor.close()
+
+
+
     @staticmethod
     def get_join_table_name(query: Query):
         join_table_name = DatabasePsql.JOIN_TABLE_NAME + query.get_name()
@@ -131,7 +149,7 @@ class DatabasePsql:
             sql_from_natural_join += sql_from_table_name
         sql_join = sql_join.format(sql_select, sql_from_natural_join)
 
-        logging.debug(sql_join)
+        logging.info(sql_join)
         for i in range(num_repetitions):
             cursor = self.connection.cursor()
             start = timer()
@@ -165,6 +183,16 @@ class DatabasePsql:
                         self.get_relation_size(relation_name)))
 
 
+
+    def dump_relations(self):
+        for relation in self.database.get_relations():
+            cursor = self.connection.cursor()
+            with open(relation.data_path, 'w') as file_csv:
+                cursor.copy_to(file_csv, relation.name, sep=',',
+                columns=relation.get_attribute_names())
+            cursor.close()
+
+
     def dump_join(self, query: Query, output_file_path: str):
         non_join_attribute_names = query.get_non_join_attr_names_ordered()
         join_table_name = DatabasePsql.get_join_table_name(query)
@@ -172,6 +200,13 @@ class DatabasePsql:
         with open(output_file_path, 'w') as file_csv:
             cursor.copy_to(file_csv, join_table_name, sep=',',
             columns=non_join_attribute_names)
+        cursor.close()
+
+
+    def full_reducer_join(self, query: Query):
+        self.evaluate_join(query, num_repetitions=1)
+        self.remove_dangling_tuples(query)
+        self.dump_relations()
 
 
     # Passes database spec to be created,

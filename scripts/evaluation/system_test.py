@@ -188,12 +188,14 @@ class SystemTest(ABC):
     def run_performance_analysis(self):
         path_log_file = self.conf_log.file_path
         path_times_file = os.path.join(self.conf_perf.path, "time.xlsx")
+        path_glob_db_times_file = os.path.join(self.conf_perf.glob_path, self.database.get_name(), "time.xlsx")
         path_glob_times_file = os.path.join(self.conf_perf.glob_path, "time.xlsx")
+        #db_query_name = self.database.get_name() + self.query.get_name()
         # Gathes all times in local xlsx
-        gather_times(path_log_file, path_times_file, self.database.get_full_name())
+        gather_times(path_log_file, path_times_file, self.query.get_name())
         logging.info(path_glob_times_file)
         # Gathers all times in globac xlsx
-        gather_times(path_log_file, path_glob_times_file, self.database.get_full_name())
+        gather_times(path_log_file, path_glob_db_times_file, self.query.get_name())
 
 
     @abstractmethod

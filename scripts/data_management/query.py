@@ -135,3 +135,11 @@ class Query:
         non_join_cat_attr_names = [non_join_attr_name for non_join_attr_name in
             non_join_attr_names if non_join_attr_name in cat_attr_names]
         return non_join_cat_attr_names
+
+
+    def get_join_attrs(self, relation_name: str)-> List[str]:
+        return self.rel_join_attrs[relation_name]
+
+
+    def get_non_join_attrs(self, relation_name: str)-> List[str]:
+        return self.rel_non_join_attrs[relation_name]

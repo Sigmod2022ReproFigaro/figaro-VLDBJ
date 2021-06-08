@@ -24,14 +24,14 @@ class Database:
         self.relations = relations
 
 
-    def get_name(self):
+    def get_name(self)-> str:
         return self.name
 
-    def get_full_name(self):
+    def get_full_name(self)-> str:
         return self.full_name
 
 
-    def get_relations(self):
+    def get_relations(self)-> List[Relation]:
         return self.relations
 
 

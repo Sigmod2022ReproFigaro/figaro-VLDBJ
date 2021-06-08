@@ -30,16 +30,8 @@ class SystemTestPsql(SystemTestDBMS):
 
         database_psql = DatabasePsql(host_name="",user_name=self.username,
         password=self.password, database=self.database)
-        #database_psql.drop_database()
+        database_psql.drop_database()
         database_psql.create_database(self.database)
-
-        #relation_order = self.query.get_relation_order()
-        #skip_attrs = self.query.get_skip_attrs()
-        #self.database.order_relations(relation_order)
-        #self.database.set_join_attrs()
-        #logging.info(relation_order)
-        #logging.info(skip_attrs)
-
 
         num_repetitions = self.conf_perf.num_reps if performance else 1
         database_psql.evaluate_join(self.query, num_repetitions=num_repetitions)
