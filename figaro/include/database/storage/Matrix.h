@@ -10,7 +10,7 @@ namespace Figaro
     template <typename T>
     class Matrix
     {
-        static constexpr uint32_t MIN_COLS_PAR = 100;
+        static constexpr uint32_t MIN_COLS_PAR = 0;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)
@@ -280,13 +280,7 @@ namespace Figaro
             uint32_t colSrcBeginIdx, uint32_t colSrcEndIdx,
             uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
         {
-            uint32_t nCopiedRows;
-            uint32_t nCopiedCols;
-
             auto& matA = *this;
-            nCopiedRows = rowSrcEndIdx - rowSrcBeginIdx + 1;
-            nCopiedCols = colSrcEndIdx - colSrcBeginIdx + 1;
-
             for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
             {
                 for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
@@ -311,6 +305,7 @@ namespace Figaro
                 matA[rowIdxUpper][colIdx] = cos * tmpUpperVal - sin * tmpLowerVal;
                 matA[rowIdxLower][colIdx] = sin * tmpUpperVal + cos * tmpLowerVal;
             }
+             matA[rowIdxLower][startColIdx] = 0;
         }
 
 
@@ -328,8 +323,9 @@ namespace Figaro
                 {
                     double upperVal = matA[rowIdx - 1][colIdx];
                     double lowerVal = matA[rowIdx][colIdx];
-                    double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
-                    if (r > 0.0)
+                    double rSquare = upperVal * upperVal + lowerVal * lowerVal;
+                    double r = std::sqrt(rSquare);
+                    if (rSquare > 0.0)
                     {
                         double sinTheta = -lowerVal / r;
                         double cosTheta = upperVal / r;
@@ -368,6 +364,7 @@ namespace Figaro
             numRedRows = std::min(blockSize, m_numCols);
             omp_set_num_threads(numThreads);
 
+            FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
             MICRO_BENCH_INIT(qrGivensPar)
             MICRO_BENCH_START(qrGivensPar)
             #pragma omp parallel for schedule(static)
@@ -381,7 +378,7 @@ namespace Figaro
             }
             MICRO_BENCH_STOP(qrGivensPar)
             FIGARO_LOG_BENCH("Time Parallel", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar))
-
+            FIGARO_LOG_DBG("After parallel", matA)
             MICRO_BENCH_INIT(qrGivensPar2)
             MICRO_BENCH_START(qrGivensPar2)
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
