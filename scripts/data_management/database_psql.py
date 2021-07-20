@@ -149,7 +149,7 @@ class DatabasePsql:
             sql_from_natural_join += sql_from_table_name
         sql_join = sql_join.format(sql_select, sql_from_natural_join)
 
-        logging.info(sql_join)
+        logging.debug(sql_join)
         for i in range(num_repetitions):
             cursor = self.connection.cursor()
             start = timer()

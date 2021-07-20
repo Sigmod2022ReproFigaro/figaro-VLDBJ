@@ -32,6 +32,7 @@ class SystemTestFigaro(SystemTest):
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--query_config_path={}".format(self.query.get_conf_path()),
+                "--num_threads={}".format(self.conf_perf.num_threads),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
@@ -51,6 +52,7 @@ class SystemTestFigaro(SystemTest):
                 "--dump_file_path={}".format(self.conf_dump.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--query_config_path={}".format(self.query.get_conf_path()),
+                "--num_threads={}".format(self.conf_perf.num_threads),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
@@ -73,6 +75,7 @@ class SystemTestFigaro(SystemTest):
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--num_repetitions={}".format(self.conf_perf.num_reps),
+                "--num_threads={}".format(self.conf_perf.num_threads),
                 "--query_config_path={}".format(self.query.get_conf_path()),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format

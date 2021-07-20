@@ -456,10 +456,6 @@ namespace Figaro
         m_data = std::move(tmpData);
         FIGARO_LOG_DBG("m_attributes", m_attributes)
         FIGARO_LOG_ASSERT(m_attributes.size() == m_data.getNumCols())
-        if ((m_name != "Inventory") && (m_name != "Weather"))
-        {
-            //FIGARO_LOG_DBG(*this)
-        }
     }
 
     // We assume the first variable is not categorical.
@@ -585,6 +581,8 @@ namespace Figaro
             }
             areJoinAttrsPK = theSame;
         }
+        FIGARO_LOG_DBG("vPKIndices", m_name, vPKIndices, vJoinAttrIdxs)
+        FIGARO_LOG_DBG("areJoinAttrsPK", m_name, areJoinAttrsPK)
         //areJoinAttrsPK = false;
         // TODO: Add parallel detection of
         // For counter and down count.
@@ -681,6 +679,7 @@ namespace Figaro
                 distCnt = m_data.getNumRows();
                 vParBlockStartIdxsAfterFirstPass.back() = distCnt;
                 cntJoinVals.resize(distCnt);
+                FIGARO_LOG_DBG("cntJoinVals", m_name, cntJoinVals)
             }
             else
             {
@@ -907,7 +906,7 @@ namespace Figaro
         void*  htChildParAttrs,
         const uint32_t* pRow)
     {
-        static DownUpCntT t = std::make_tuple<uint32_t, uint32_t>(1 ,2);
+        //static DownUpCntT t = std::make_tuple<uint32_t, uint32_t>(1 ,2);
         try {
 
 
@@ -939,8 +938,14 @@ namespace Figaro
             if (vParJoinAttrIdxs.size() == 1)
             {
                 const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
-                FIGARO_LOG_DBG("DAMN ", m_name, joinAttrVal)
-                return t;
+                FIGARO_LOG_DBG("DAMN ", m_name, vParJoinAttrIdxs[0], joinAttrVal)
+                //return t;
+            }
+            else if (vParJoinAttrIdxs.size() == 2)
+            {
+                const uint32_t joinAttrVal1 = pRow[vParJoinAttrIdxs[0]];
+                const uint32_t joinAttrVal2 = pRow[vParJoinAttrIdxs[1]];
+                FIGARO_LOG_DBG("DAMN ", m_name, joinAttrVal1, joinAttrVal2)
             }
 
         }
@@ -1056,6 +1061,7 @@ namespace Figaro
 
         }
 
+
         return rowChildIdx;
     }
 
@@ -1145,6 +1151,7 @@ namespace Figaro
                 uint32_t curDownCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
                 for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
                 {
+                    FIGARO_LOG_DBG("CHILD", vpChildRels[idxChild]->m_name)
                     Figaro::Relation::DownUpCntT& cnts =
                         getParCntFromHashTable(
                             vvCurJoinAttrIdxs[idxChild],
@@ -1743,7 +1750,7 @@ namespace Figaro
         MICRO_BENCH_START(qrHead)
         //#pragma omp parallel
         {
-            m_dataHead.computeQRGivens(omp_get_num_procs());
+            m_dataHead.computeQRGivens(getNumberOfThreads());
         }
         m_dataHead.resize(m_dataHead.getNumCols());
         MICRO_BENCH_STOP(qrHead)
@@ -1758,11 +1765,12 @@ namespace Figaro
             FIGARO_LOG_INFO("Tail", m_name)
             return;
         }
+        FIGARO_LOG_DBG("m_dataTails", m_dataTails)
         MICRO_BENCH_INIT(qrTail)
         MICRO_BENCH_START(qrTail)
         //#pragma omp parallel
         {
-            m_dataTails.computeQRGivens(omp_get_num_procs());
+            m_dataTails.computeQRGivens(getNumberOfThreads());
         }
         m_dataTails.resize(m_dataTails.getNumCols());
         MICRO_BENCH_STOP(qrTail)
@@ -1780,7 +1788,7 @@ namespace Figaro
         MICRO_BENCH_INIT(qrGenTail)
         MICRO_BENCH_START(qrGenTail)
         {
-            m_dataTailsGen.computeQRGivens(omp_get_num_procs());
+            m_dataTailsGen.computeQRGivens(getNumberOfThreads());
         }
         m_dataTailsGen.resize(m_dataTailsGen.getNumCols());
         MICRO_BENCH_STOP(qrGenTail)
@@ -1800,6 +1808,7 @@ namespace Figaro
         uint32_t totalNumRows;
         uint32_t totalNumCols;
         uint32_t numRels;
+        uint32_t minNumRows;
 
         numRels = vpRels.size();
         vCumNumRowsUp.resize(numRels + 1);
@@ -1816,14 +1825,16 @@ namespace Figaro
         // TODO: Move this to database class
         computeQROfGeneralizedHead(totalNumCols);
         vCumNumRowsUp[0] = m_dataHead.getNumRows();
+        FIGARO_LOG_DBG("vCumNumRowsUp[0]", vCumNumRowsUp[0])
         for (uint32_t idx = 1; idx < vCumNumRowsUp.size(); idx++)
         {
             vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
             vpRels[idx-1]->m_dataTails.getNumRows() +
             vpRels[idx-1]->m_dataTailsGen.getNumRows();
+            FIGARO_LOG_DBG("vpRels[idx-1]->m_dataTails.getNumRows()", vpRels[idx-1]->m_dataTails.getNumRows())
+            FIGARO_LOG_DBG("vpRels[idx-1]->m_dataTailsGen.getNumRows()", vpRels[idx-1]->m_dataTailsGen.getNumRows())
         }
         totalNumRows = vCumNumRowsUp[numRels];
-
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
 
         // Copying dataHead.
@@ -1834,6 +1845,8 @@ namespace Figaro
                 catGenHeadAndTails[rowIdx][colIdx] = m_dataHead[rowIdx][colIdx];
             }
         }
+
+        FIGARO_LOG_DBG("m_dataHead",  m_dataHead)
 
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
@@ -1900,12 +1913,22 @@ namespace Figaro
                 }
             }
         }
+        FIGARO_LOG_DBG("catGenHeadAndTails", catGenHeadAndTails)
+        FIGARO_LOG_INFO("Computing QR using eigen")
         MICRO_BENCH_INIT(eigen)
         MICRO_BENCH_START(eigen)
         copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
         qr.compute(matEigen);
         MICRO_BENCH_STOP(eigen)
-        *pR = qr.matrixQR().topLeftCorner(totalNumCols, totalNumCols).triangularView<Eigen::Upper>();
+        FIGARO_LOG_INFO("Extracting R from eigen")
+        FIGARO_LOG_INFO("Extracting R from eigen", matEigen.rows(), matEigen.cols())
+        minNumRows = std::min(totalNumRows, totalNumCols);
+        FIGARO_LOG_DBG("totalNumCols", totalNumCols, totalNumRows)
+        *pR = qr.matrixQR().topLeftCorner(minNumRows, totalNumCols).triangularView<Eigen::Upper>();
+        if (totalNumCols > minNumRows)
+        {
+            appendZeroRows(*pR, totalNumCols - minNumRows);
+        }
         FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));
         FIGARO_LOG_DBG(*pR);
         makeDiagonalElementsPositiveInR(*pR);
@@ -2309,6 +2332,19 @@ namespace Figaro
         m_dataTails2 = std::move(tailOutput2);
     }
 
+    void Relation::appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows)
+    {
+        uint32_t oldNumRows = matR.rows();
+        matR.conservativeResize(matR.rows() + numAppendedRows, Eigen::NoChange_t::NoChange);
+        for (uint32_t rowIdx = oldNumRows; rowIdx < matR.rows(); rowIdx++)
+        {
+            for (uint32_t colIdx = 0; colIdx < matR.cols(); colIdx++)
+            {
+                matR(rowIdx, colIdx) = 0;
+            }
+        }
+    }
+
     void Relation::makeDiagonalElementsPositiveInR(MatrixEigenT& matR)
     {
         ArrayT&& aDiag = matR.diagonal().array().sign();
@@ -2348,7 +2384,7 @@ namespace Figaro
         // This increases size and causes all sorts of problems.
         if (m_dataHead.getNumCols() < m_dataHead.getNumRows())
         {
-            m_dataHead.computeQRGivens(omp_get_num_procs());
+            m_dataHead.computeQRGivens(getNumberOfThreads());
             m_dataHead.resize(m_dataHead.getNumCols());
         }
 

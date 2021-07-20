@@ -18,6 +18,7 @@ class SystemTestsEvaluator:
 
     map_mode_to_enum = {
         'dump': SystemTest.TestMode.DUMP,
+        'clean': SystemTest.TestMode.CLEAN,
         'accuracy': SystemTest.TestMode.ACCURACY,
         'performance': SystemTest.TestMode.PERFORMANCE,
         'performance_analysis': SystemTest.TestMode.PERFORMANCE_ANALYSIS,
@@ -155,7 +156,6 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--test", action="store",
                         dest="test", required=False)
     args = parser.parse_args()
-
     root_path = args.root_path if args.root_path is not None \
         else "/home/popina/Figaro/figaro-code"
     system_tests_path = args.system_tests_path

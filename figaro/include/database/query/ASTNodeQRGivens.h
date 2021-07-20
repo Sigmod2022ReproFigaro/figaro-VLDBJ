@@ -14,15 +14,20 @@ namespace Figaro
         ASTNode* m_pOperand;
         std::vector<std::string> m_vRelationOrder;
         std::vector<std::string> m_vDropAttributes;
+        uint32_t m_numThreads;
     public:
-        ASTNodeQRGivens(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes
+        ASTNodeQRGivens(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes,
+        uint32_t numThreads
         ): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
-        m_vDropAttributes(vDropAttributes) {};
+        m_vDropAttributes(vDropAttributes),
+        m_numThreads(numThreads) {};
         virtual ~ASTNodeQRGivens() override { delete m_pOperand; }
         ASTNode* getOperand(void)
         {
             return m_pOperand;
         };
+
+        uint32_t getNumThreads(void){ return m_numThreads; }
 
         const std::vector<std::string>& getRelationOrder(void)
         {

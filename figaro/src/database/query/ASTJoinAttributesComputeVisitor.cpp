@@ -1,4 +1,5 @@
 #include "database/query/ASTJoinAttributesComputeVisitor.h"
+#include "omp.h"
 
 namespace Figaro
 {
@@ -34,10 +35,11 @@ namespace Figaro
 
     void ASTJoinAttributesComputeVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
-
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
         FIGARO_LOG_DBG("Skipped attributes", pElement->getDropAttributes())
+        FIGARO_LOG_DBG("Number of threads", pElement->getNumThreads())
+        omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
         m_pDatabase->oneHotEncodeRelations();

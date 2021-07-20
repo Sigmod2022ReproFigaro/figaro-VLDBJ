@@ -40,7 +40,8 @@ class SystemTestPsql(SystemTestDBMS):
         database_psql.log_relation_sizes(self.query)
         if (dump):
             database_psql.dump_join(self.query, self.join_path)
-
+        # Need due to memory usage.
+        database_psql.drop_database()
         remove_logging_file_handler(file_handler)
 
 

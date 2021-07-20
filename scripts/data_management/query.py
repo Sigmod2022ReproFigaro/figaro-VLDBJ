@@ -89,8 +89,8 @@ class Query:
 
             self.compute_join_and_non_join_attrs(json_eval_hint)
 
-        logging.info("Join Attrs {}".format(self.rel_join_attrs))
-        logging.info("Non join atttrs {}".format(self.rel_non_join_attrs))
+        #logging.info("Join Attrs {}".format(self.rel_join_attrs))
+        #logging.info("Non join atttrs {}".format(self.rel_non_join_attrs))
 
 
     def get_conf_path(self):

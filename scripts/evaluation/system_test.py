@@ -20,10 +20,11 @@ from evaluation.performance.benchmark import gather_times
 
 # Class that wraps performance parameters used in testing
 class PerformanceConf:
-    def __init__(self, glob_path: str, path: str, num_reps: int):
+    def __init__(self, glob_path: str, path: str, num_reps: int, num_threads: int):
         self.path = path
         self.num_reps = num_reps
         self.glob_path = glob_path
+        self.num_threads = num_threads
 
 
 
@@ -60,11 +61,13 @@ class SystemTest(ABC):
         PERFORMANCE = 3
         ACCURACY = 4
         PERFORMANCE_ANALYSIS = 5
+        CLEAN = 6
 
     map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP",
                     TestMode.PERFORMANCE: "PERFORMANCE",
                     TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",
-                    TestMode.ACCURACY: "ACCURACY"}
+                    TestMode.ACCURACY: "ACCURACY",
+                    TestMode.CLEAN: "CLEAN"}
 
     @staticmethod
     def test_mode_to_str(test_mode: TestMode)->str:
@@ -117,6 +120,7 @@ class SystemTest(ABC):
         path_perf = SystemTest.create_dir_with_name(
                         perf_json["path"], database.get_name(), query.get_name())
         num_reps = perf_json["number_reps"]
+        num_threads = perf_json.get("num_threads", 1)
 
         accuracy_json = system_json["system"]["accuracy"]
         path_accuracy = SystemTest.create_dir_with_name(
@@ -130,7 +134,7 @@ class SystemTest(ABC):
         system_test = cls(
             LogConf(log_path, log_file_path),
             DumpConf(path_dump, dump_file_path),
-            PerformanceConf(path_glob, path_perf, num_reps),
+            PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision),
             database, query, test_mode,
             *args, **kwargs)
@@ -140,9 +144,11 @@ class SystemTest(ABC):
     def run(self):
         info_str = "Run {{mode}} for database {db_name} and query {query_name}".format(
             db_name=self.database.get_name(), query_name=self.query.get_name())
-        logging.info("Cleaning old data")
+
+        logging.info("Starting cleaning old data")
         self.clean_data(self.test_mode)
-        logging.info("Old data cleaned")
+        logging.info("End cleaning old data")
+
         logging.info("Starting of test {}".format(self.name))
         if self.test_mode == SystemTest.TestMode.DEBUG:
             logging.info(info_str.format(mode="debug"))
@@ -160,6 +166,9 @@ class SystemTest(ABC):
         elif self.test_mode == SystemTest.TestMode.PERFORMANCE_ANALYSIS:
             logging.info(info_str.format(mode="performance analysis"))
             self.run_performance_analysis()
+        elif self.test_mode == SystemTest.TestMode.CLEAN:
+            logging.info(info_str.format(mode="cleaning"))
+            self.clean_data(SystemTest.TestMode.DUMP)
         else:
             logging.error('This type of system test does not exist')
         logging.info("End of test {}".format(self.name))

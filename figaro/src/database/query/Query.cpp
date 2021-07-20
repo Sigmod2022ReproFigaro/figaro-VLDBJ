@@ -29,6 +29,7 @@ namespace Figaro
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
             std::vector<std::string> vDropAttrNames;
+            uint32_t numThreads;
 
             for (const auto& relName: jsonQueryConfig["relation_order"])
             {
@@ -43,9 +44,18 @@ namespace Figaro
                 }
             }
 
+            if (jsonQueryConfig.contains("num_threads"))
+            {
+                numThreads = jsonQueryConfig["num_threads"];
+            }
+            else
+            {
+                numThreads = getNumberOfThreads();
+            }
+
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
             pCreatedNode = new ASTNodeQRGivens(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames);
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
             FIGARO_LOG_DBG("GIV_QR")
         }
         else if (operatorName == "natural_join")

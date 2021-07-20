@@ -2,6 +2,7 @@ import json
 from logging import log
 import logging
 import os
+import sys
 import argparse
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
@@ -49,6 +50,7 @@ class DatabaseGenerator:
         database_psql.drop_database()
         database_psql.create_database(self.database)
         database_psql.full_reducer_join(self.query)
+        database_psql.drop_database()
 
 
     def generate(self):
@@ -65,8 +67,7 @@ class DatabaseGenerator:
         self.remove_dangling_tuples()
 
 
-if __name__ == "__main__":
-    init_logging()
+def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--db_config_path", action="store",
                         dest="db_config_path", required=True)
@@ -76,7 +77,7 @@ if __name__ == "__main__":
                         dest="password", required=True)
     parser.add_argument("-u", "--username", action="store",
                         dest="username", required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     db_config_path = args.db_config_path
     query_config_path = args.query_config_path
@@ -88,5 +89,10 @@ if __name__ == "__main__":
     database_generator = DatabaseGenerator(db_config_path, database, query, username, password)
     database_generator.generate()
 
+
+
+if __name__ == "__main__":
+    init_logging()
+    main(sys.argv[1:])
 
 

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <omp.h>
 
 namespace Figaro
 {
@@ -22,6 +23,17 @@ namespace Figaro
             cntLines ++;
         }
         return cntLines;
+    }
+
+    uint32_t getNumberOfThreads(void)
+    {
+        uint32_t numThreads;
+        #pragma omp parallel
+        {
+            #pragma omp single
+            numThreads = omp_get_num_threads();
+        }
+        return numThreads;
     }
 
     std::vector<std::string> setIntersection(
@@ -60,7 +72,7 @@ std::ostream& Figaro::outputMatrixTToCSV(std::ostream& out,
         for (uint32_t col = 0; col < matrix.cols(); col++)
         {
 
-            out << std::setprecision(precision) << std::fixed << matrix(row, col);
+            out << std::setprecision(precision) << std::scientific << matrix(row, col);
             if (col != (matrix.cols() - 1))
             {
                 out << sep;

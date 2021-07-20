@@ -60,7 +60,6 @@ class RelationGenerator:
     # attribute_domains [{"name": "A", "start": 1, "end": 10}]
     # PKs are unique
     # We assume the same attribute order as defined by schema
-    #def generate(self, attribute_domains, num_tuples: int, panddas_format=True):
     def generate(self, rel_specs: RelationGeneratedSpecs, dump: bool = False,
                 output_path: str =None)-> pd.DataFrame:
         domains = {}

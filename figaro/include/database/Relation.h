@@ -293,6 +293,8 @@ namespace Figaro
             void*  htChildRowIdx,
             const double* pRow);
 
+        static void appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows);
+
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
 
         /***************** OLD IMPLEMENTATTION ***********/

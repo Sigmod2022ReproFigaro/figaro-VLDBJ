@@ -21,6 +21,7 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <iomanip>
 
 #define FIGARO_LOG_ASSERT(ASSERT_CHECK) assert(ASSERT_CHECK);
 
@@ -69,7 +70,7 @@ std::ostream& operator<<(std::ostream& out, const std::vector<std::vector<T> >& 
         for (uint32_t col = 0; col < matrix.at(row).size(); col++)
         {
 
-            out << matrix[row][col];
+            out << std::setprecision(14) << matrix[row][col];
             if (col != (colNum - 1))
             {
                 out << " ";

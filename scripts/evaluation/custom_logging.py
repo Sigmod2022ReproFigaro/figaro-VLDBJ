@@ -27,12 +27,12 @@ def init_logging():
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
-    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setLevel(logging.DEBUG)
 
     add_logging_file_handler('log.txt')
 
     root = logging.getLogger()
-    root.setLevel(logging.INFO)
+    root.setLevel(logging.DEBUG)
     root.addHandler(stdout_handler)
 
 

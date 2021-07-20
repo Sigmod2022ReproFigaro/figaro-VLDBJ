@@ -1,0 +1,42 @@
+from data_management.database import Database
+from data_management.database_psql import DatabasePsql
+from data_management.query import Query
+import argparse
+import sys
+from evaluation.custom_logging import init_logging
+
+
+def remove_dangling_tuples(username: str, password: str, database: Database, query: Query):
+    database_psql = DatabasePsql(host_name="", user_name=username,
+        password=password, database=database)
+    database_psql.drop_database()
+    database_psql.create_database(database)
+    database_psql.full_reducer_join(query)
+    database_psql.drop_database()
+
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--db_config_path", action="store",
+                        dest="db_config_path", required=True)
+    parser.add_argument("-q", "--query_config_path", action="store",
+                        dest="query_config_path", required=True)
+    parser.add_argument("-p", "--password", action="store",
+                        dest="password", required=True)
+    parser.add_argument("-u", "--username", action="store",
+                        dest="username", required=True)
+    args = parser.parse_args(args)
+
+    db_config_path = args.db_config_path
+    query_config_path = args.query_config_path
+    username = args.username
+    password = args.password
+
+    database = Database(db_config_path, "")
+    query = Query(query_config_path=query_config_path, database=database)
+    remove_dangling_tuples(username, password, database, query)
+
+
+if __name__ == "__main__":
+    init_logging()
+    main(sys.argv[1:])

@@ -10,6 +10,7 @@ function init_global_paths()
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
     FIGARO_NUM_REPS=1
+    FIGARO_NUM_THREADS=1
 }
 
 function get_str_args()
@@ -51,6 +52,10 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_PRECISION=$EXTENSION
         ;;
+        --num_threads=*)
+            EXTENSION="${option#*=}"
+            FIGARO_NUM_THREADS=$EXTENSION
+        ;;
         --num_repetitions=*)
             EXTENSION="${option#*=}"
             FIGARO_NUM_REPS=$EXTENSION
@@ -87,21 +92,24 @@ function main()
     "DEBUG")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
         --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        --precision "${FIGARO_PRECISION}" \
+        --num_threads "${FIGARO_NUM_THREADS}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
-            --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" --precision "${FIGARO_PRECISION}"  \
+            --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" \
+            --num_threads "${FIGARO_NUM_THREADS}" \
             >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
         ;;
     "PERFORMANCE")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}">\
+        --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}" \
+        --num_threads "${FIGARO_NUM_THREADS}" >\
          "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
-        valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*FigaroQR \
+        valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         >   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \
 
@@ -110,4 +118,5 @@ function main()
     esac
 }
 main $@
+#valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all
 #valgrind --leak-check=yes ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneAttrName > ../log/log.txt 2>&1
