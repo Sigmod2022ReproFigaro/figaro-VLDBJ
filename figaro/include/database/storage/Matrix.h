@@ -381,16 +381,20 @@ namespace Figaro
             FIGARO_LOG_DBG("After parallel", matA)
             MICRO_BENCH_INIT(qrGivensPar2)
             MICRO_BENCH_START(qrGivensPar2)
+
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
                 uint32_t rowBeginIdx;
                 uint32_t rowEndIdx;
                 rowBeginIdx = blockIdx * blockSize;
                 rowEndIdx = std::min(rowBeginIdx + numRedRows - 1, m_numRows - 1);
+                if (rowBeginIdx < m_numRows)
+                {
+                    rowTotalEndIdx = blockIdx * numRedRows + rowEndIdx - rowBeginIdx;
+                }
                 copyBlockToThisMatrix(matA, rowBeginIdx, rowEndIdx, 0, m_numCols - 1,
                     blockIdx * numRedRows, 0);
             }
-            rowTotalEndIdx = std::min(numBlocks * numRedRows - 1, m_numRows - 1);
             computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
             MICRO_BENCH_STOP(qrGivensPar2)
             FIGARO_LOG_BENCH("Time sequential", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
