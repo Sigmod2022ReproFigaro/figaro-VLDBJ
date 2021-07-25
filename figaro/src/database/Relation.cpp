@@ -1748,11 +1748,7 @@ namespace Figaro
         }
         MICRO_BENCH_INIT(qrHead)
         MICRO_BENCH_START(qrHead)
-        //#pragma omp parallel
-        {
-            m_dataHead.computeQRGivens(getNumberOfThreads());
-        }
-        m_dataHead.resize(m_dataHead.getNumCols());
+        m_dataHead.computeQRGivens(getNumberOfThreads());
         MICRO_BENCH_STOP(qrHead)
         FIGARO_LOG_BENCH("Figaro", "QR Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
     }
@@ -1768,11 +1764,7 @@ namespace Figaro
         FIGARO_LOG_DBG("m_dataTails", m_dataTails)
         MICRO_BENCH_INIT(qrTail)
         MICRO_BENCH_START(qrTail)
-        //#pragma omp parallel
-        {
-            m_dataTails.computeQRGivens(getNumberOfThreads());
-        }
-        m_dataTails.resize(m_dataTails.getNumCols());
+        m_dataTails.computeQRGivens(getNumberOfThreads());
         MICRO_BENCH_STOP(qrTail)
         FIGARO_LOG_BENCH("Figaro", "Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
     }
@@ -1787,10 +1779,7 @@ namespace Figaro
         }
         MICRO_BENCH_INIT(qrGenTail)
         MICRO_BENCH_START(qrGenTail)
-        {
-            m_dataTailsGen.computeQRGivens(getNumberOfThreads());
-        }
-        m_dataTailsGen.resize(m_dataTailsGen.getNumCols());
+        m_dataTailsGen.computeQRGivens(getNumberOfThreads());
         MICRO_BENCH_STOP(qrGenTail)
         FIGARO_LOG_BENCH("Figaro", "Generalized Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }

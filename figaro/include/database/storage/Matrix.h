@@ -346,9 +346,6 @@ namespace Figaro
          *
          * @param numThreads
          *
-         * @pre Each of the blocks on which threads operate have at least
-         * number of rows greater than the number of cols. This does not hold
-         * only for the last block.
          */
         void computeQRGivensParallelizedThinMatrix(uint32_t numThreads)
         {
@@ -356,6 +353,14 @@ namespace Figaro
             uint32_t numBlocks;
             uint32_t numRedRows;
             uint32_t rowTotalEndIdx;
+            uint32_t numRedEndRows;
+
+            std::vector<uint32_t> vRowBlockBeginIdx;
+            std::vector<uint32_t> vRowRedBlockBeginIdx;
+            std::vector<uint32_t> vRowBlockEndIdx;
+            std::vector<uint32_t> vRowRedBlockEndIdx;
+            std::vector<uint32_t> vRowRedSrcBlockEndIdx;
+
             auto& matA = *this;
 
             numBlocks = std::min(m_numRows, numThreads);
@@ -364,17 +369,39 @@ namespace Figaro
             numRedRows = std::min(blockSize, m_numCols);
             omp_set_num_threads(numThreads);
 
+            for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
+            {
+                uint32_t beginBlockIdx = blockIdx * blockSize;
+                uint32_t rowRedSrcEndIdx;
+                // This is needed for dummy threads case.
+                if (beginBlockIdx >= m_numRows)
+                {
+                    break;
+                }
+                vRowBlockBeginIdx.push_back(beginBlockIdx);
+                vRowRedBlockBeginIdx.push_back(blockIdx * numRedRows);
+                vRowBlockEndIdx.push_back(std::min((blockIdx + 1) * blockSize - 1,
+                                        m_numRows - 1));
+                rowRedSrcEndIdx = std::min(beginBlockIdx + numRedRows - 1,
+                                m_numRows - 1);
+                vRowRedSrcBlockEndIdx.push_back(rowRedSrcEndIdx);
+                vRowRedBlockEndIdx.push_back(vRowRedBlockBeginIdx[blockIdx] +
+                    rowRedSrcEndIdx - beginBlockIdx);
+            }
+            numBlocks = vRowBlockBeginIdx.size();
+
             FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
             MICRO_BENCH_INIT(qrGivensPar)
             MICRO_BENCH_START(qrGivensPar)
             #pragma omp parallel for schedule(static)
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
-                uint32_t rowBeginIdx;
-                uint32_t rowEndIdx;
-                rowBeginIdx = blockIdx * blockSize;
-                rowEndIdx = std::min((blockIdx + 1) * blockSize - 1, m_numRows - 1);
-                computeQRGivensSequentialBlock(rowBeginIdx, rowEndIdx, 0, m_numCols - 1);
+                uint32_t rowBlockBeginIdx;
+                uint32_t rowBlockEndIdx;
+                rowBlockBeginIdx = vRowBlockBeginIdx[blockIdx];
+                rowBlockEndIdx = vRowBlockEndIdx[blockIdx];
+                computeQRGivensSequentialBlock(rowBlockBeginIdx, rowBlockEndIdx,
+                                               0, m_numCols - 1);
             }
             MICRO_BENCH_STOP(qrGivensPar)
             FIGARO_LOG_BENCH("Time Parallel", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar))
@@ -384,18 +411,24 @@ namespace Figaro
 
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
-                uint32_t rowBeginIdx;
-                uint32_t rowEndIdx;
-                rowBeginIdx = blockIdx * blockSize;
-                rowEndIdx = std::min(rowBeginIdx + numRedRows - 1, m_numRows - 1);
-                if (rowBeginIdx < m_numRows)
-                {
-                    rowTotalEndIdx = blockIdx * numRedRows + rowEndIdx - rowBeginIdx;
-                }
-                copyBlockToThisMatrix(matA, rowBeginIdx, rowEndIdx, 0, m_numCols - 1,
-                    blockIdx * numRedRows, 0);
+                uint32_t rowRedSrcBeginIdx;
+                uint32_t rowRedSrcEndIdx;
+                uint32_t rowRedBeginIdx;
+
+                rowRedSrcBeginIdx = vRowBlockBeginIdx[blockIdx];
+                rowRedSrcEndIdx = vRowRedSrcBlockEndIdx[blockIdx];
+                rowRedBeginIdx = vRowRedBlockBeginIdx[blockIdx];
+
+                copyBlockToThisMatrix(matA, rowRedSrcBeginIdx, rowRedSrcEndIdx,
+                    0, m_numCols - 1, rowRedBeginIdx, 0);
             }
+
+            rowTotalEndIdx = vRowRedBlockEndIdx.back();
+            FIGARO_LOG_BENCH("rowTotalEndIdx", rowTotalEndIdx)
             computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
+
+            numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
+            this->resize(numRedEndRows);
             MICRO_BENCH_STOP(qrGivensPar2)
             FIGARO_LOG_BENCH("Time sequential", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
         }
@@ -456,14 +489,13 @@ namespace Figaro
             }
             if (m_numCols > MIN_COLS_PAR)
             {
-                FIGARO_LOG_INFO("Parallelized version")
+                FIGARO_LOG_INFO("Thick version")
                 computeQRGivensParallelized(numThreads);
             }
             else
             {
-                FIGARO_LOG_INFO("Sequential version")
+                FIGARO_LOG_INFO("Thin version")
                 computeQRGivensParallelizedThinMatrix(numThreads);
-                //computeQRGivensSequential();
             }
 
         }
