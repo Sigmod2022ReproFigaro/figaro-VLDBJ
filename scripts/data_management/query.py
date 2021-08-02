@@ -119,6 +119,13 @@ class Query:
         return join_attr_names_unique + non_join_attr_names
 
 
+    def get_join_attr_names_ordered(self)-> List[str]:
+        join_attrs_ordered = []
+        for rel in self.relation_order:
+            join_attrs_ordered += self.rel_join_attrs[rel]
+        return join_attrs_ordered
+
+
     def get_non_join_attr_names_ordered(self)-> List[str]:
         non_join_attrs_ordered = []
         for rel in self.relation_order:

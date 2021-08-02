@@ -405,6 +405,7 @@ namespace Figaro
             }
             MICRO_BENCH_STOP(qrGivensPar)
             FIGARO_LOG_BENCH("Time Parallel", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar))
+            FIGARO_LOG_BENCH("Number of blocks", numBlocks)
             FIGARO_LOG_DBG("After parallel", matA)
             MICRO_BENCH_INIT(qrGivensPar2)
             MICRO_BENCH_START(qrGivensPar2)
@@ -424,7 +425,6 @@ namespace Figaro
             }
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
-            FIGARO_LOG_BENCH("rowTotalEndIdx", rowTotalEndIdx)
             computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);

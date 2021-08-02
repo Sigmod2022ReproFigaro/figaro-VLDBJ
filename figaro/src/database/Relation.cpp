@@ -1842,10 +1842,8 @@ namespace Figaro
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
             uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpRels[idxRel]->m_dataTails.getNumRows();
-            //FIGARO_LOG_DBG("idxRel", idxRel, startTailIdx, startGenTailIdx)
             for (uint32_t rowIdx = startTailIdx; rowIdx < startGenTailIdx; rowIdx ++)
             {
-                //FIGARO_LOG_DBG("rowIdx", idxRel, rowIdx)
                 // Set Left zeros
                 for (uint32_t colIdx = 0; colIdx < vLeftCumNumNonJoinAttrs[idxRel];
                     colIdx ++)
@@ -1853,7 +1851,6 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
                 uint32_t tailsRowIdx = rowIdx - startTailIdx;
-                //FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
 
                 // Set central Relations
                 for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel];
@@ -1881,7 +1878,6 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
                 uint32_t tailsRowIdx = rowIdx - startGenTailIdx;
-                //FIGARO_LOG_DBG("rowIdx", rowIdx, tailsRowIdx)
 
                 // Set central Relations
                 // Since the the order of relations is preordered,

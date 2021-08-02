@@ -3,6 +3,7 @@ from psycopg2 import sql
 from typing import List
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import argparse
+import os
 import logging
 from data_management.database import Database
 from data_management.query import Query
@@ -160,6 +161,47 @@ class DatabasePsql:
 
 
 
+    def limit_join(self, query: Query, percent: float):
+        join_table_name = DatabasePsql.get_join_table_name(query)
+        join_attr_names = query.get_join_attr_names_ordered()
+        sql_order_by = ""
+        for attribute_name in join_attr_names:
+            if attribute_name not in query.get_skip_attrs():
+                sql_order_by += attribute_name + ","
+
+        sql_order_by = sql_order_by[:-1]
+
+        join_table_name_per = join_table_name + "_percent"
+        sql_join_per = """SELECT * INTO {}
+            FROM {}
+            ORDER BY {} DESC
+            LIMIT (SELECT (FLOOR(count(*) * {})) AS selnum FROM {})"""
+        sql_join_drop = "DROP TABLE {}"
+        sql_rename_per_join = "ALTER TABLE {} RENAME TO {}"
+
+
+        sql_join_per = sql_join_per.format(join_table_name_per, join_table_name,
+                             sql_order_by, percent, join_table_name)
+        sql_join_drop = sql_join_drop.format(join_table_name)
+        sql_rename_per_join = sql_rename_per_join.format(join_table_name_per, join_table_name)
+
+        logging.debug(sql_join_per)
+        logging.debug(sql_join_drop)
+        logging.debug(sql_rename_per_join)
+
+        cursor = self.connection.cursor()
+        cursor.execute(sql_join_per)
+        cursor.close()
+
+        cursor = self.connection.cursor()
+        cursor.execute(sql_join_drop)
+        cursor.close()
+
+        cursor = self.connection.cursor()
+        cursor.execute(sql_rename_per_join)
+        cursor.close()
+
+
     def get_relation_size(self, relation_name) -> int:
         sql_relation_count = "SELECT COUNT(*) FROM {};"
         sql_relation_count = sql_relation_count.format(relation_name)
@@ -184,10 +226,21 @@ class DatabasePsql:
 
 
 
-    def dump_relations(self):
+    def dump_relations(self, percent: float = None):
         for relation in self.database.get_relations():
             cursor = self.connection.cursor()
-            with open(relation.data_path, 'w') as file_csv:
+            if percent is not None:
+                head_tail = os.path.split(relation.data_path)
+                db_per_dir = os.path.join(head_tail[0], str(percent))
+                if not os.path.exists(db_per_dir):
+                    os.makedirs(db_per_dir)
+                dump_path = os.path.join(db_per_dir, head_tail[1])
+            else:
+                dump_path = relation.data_path
+
+            logging.info("Dump path {} for relation {}".
+                    format(dump_path, relation.name))
+            with open(dump_path, 'w') as file_csv:
                 cursor.copy_to(file_csv, relation.name, sep=',',
                 columns=relation.get_attribute_names())
             cursor.close()
@@ -203,10 +256,12 @@ class DatabasePsql:
         cursor.close()
 
 
-    def full_reducer_join(self, query: Query):
+    def full_reducer_join(self, query: Query, percent: float=None):
         self.evaluate_join(query, num_repetitions=1)
+        if percent is not None:
+            self.limit_join(query, percent)
         self.remove_dangling_tuples(query)
-        self.dump_relations()
+        self.dump_relations(percent=percent)
 
 
     # Passes database spec to be created,
