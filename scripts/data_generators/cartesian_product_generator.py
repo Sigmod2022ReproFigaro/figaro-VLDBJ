@@ -27,8 +27,8 @@ def vary_row_and_col_num(username, password, system_tests_path):
     db_config_path = os.path.join(system_tests_path, "test_cartesian_product/databases/database_specs{db_idx}.conf")
     query_config_path = os.path.join(system_tests_path, "test_cartesian_product/queries/query_full_join.conf")
     db_idx = 1
-    num_rows_a = [256, 512, 1024, 2048, 4096, 8192]
-    num_cols_a = [1, 4, 16, 64, 256]
+    num_rows_a = [512, 1024, 2048, 4096, 8192]
+    num_cols_a = [64, 256, 1024, 4096]
     for num_rows in num_rows_a:
         for num_cols in num_cols_a:
             generate_cart_prod_two_rel(db_idx, db_config_path, query_config_path,

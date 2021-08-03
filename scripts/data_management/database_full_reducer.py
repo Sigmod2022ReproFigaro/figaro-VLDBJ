@@ -52,6 +52,8 @@ def main(args):
         remove_dangling_tuples(username, password, database, query)
 
 
+
+
 if __name__ == "__main__":
     init_logging()
     main(sys.argv[1:])

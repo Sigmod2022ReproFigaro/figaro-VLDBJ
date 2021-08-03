@@ -107,23 +107,13 @@ class Query:
     def get_skip_attrs(self)-> List[str]:
         return self.skip_attrs
 
-    def get_attr_names_ordered(self):
-        attr_names = []
-        join_attr_names = []
-        for rel in self.relation_order:
-            attr_names += self.rel_attr_names[rel]
-            join_attr_names += self.rel_join_attrs[rel]
 
-        join_attr_names_unique = list(dict.fromkeys(join_attr_names))
-        non_join_attr_names = self.get_non_join_attr_names_ordered()
-        return join_attr_names_unique + non_join_attr_names
+    def get_join_attrs(self, relation_name: str)-> List[str]:
+        return self.rel_join_attrs[relation_name]
 
 
-    def get_join_attr_names_ordered(self)-> List[str]:
-        join_attrs_ordered = []
-        for rel in self.relation_order:
-            join_attrs_ordered += self.rel_join_attrs[rel]
-        return join_attrs_ordered
+    def get_non_join_attrs(self, relation_name: str)-> List[str]:
+        return self.rel_non_join_attrs[relation_name]
 
 
     def get_non_join_attr_names_ordered(self)-> List[str]:
@@ -134,7 +124,6 @@ class Query:
 
 
     def get_non_join_cat_attr_names_ordered(self):
-
         cat_attr_names = []
         non_join_attr_names = self.get_non_join_attr_names_ordered()
         for rel in self.relation_order:
@@ -144,9 +133,20 @@ class Query:
         return non_join_cat_attr_names
 
 
-    def get_join_attrs(self, relation_name: str)-> List[str]:
-        return self.rel_join_attrs[relation_name]
+    def get_join_attr_names_ordered(self)-> List[str]:
+        join_attr_names = []
+        for rel in self.relation_order:
+            join_attr_names += self.rel_join_attrs[rel]
+        join_attr_names_unique = list(dict.fromkeys(join_attr_names))
+        return join_attr_names_unique
 
 
-    def get_non_join_attrs(self, relation_name: str)-> List[str]:
-        return self.rel_non_join_attrs[relation_name]
+    def get_attr_names_ordered(self):
+        join_attr_names = self.get_join_attr_names_ordered()
+        non_join_attr_names = self.get_non_join_attr_names_ordered()
+        return join_attr_names + non_join_attr_names
+
+
+
+
+

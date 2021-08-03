@@ -53,7 +53,7 @@ class DatabaseGenerator:
         database_psql.drop_database()
 
 
-    def generate(self):
+    def generate(self, full_reducer: bool):
         rel_data_tuples = []
 
         for rel_idx, relation_generator in enumerate(self.relation_generators):
@@ -64,7 +64,8 @@ class DatabaseGenerator:
         for rel_idx, relation_generator in enumerate(self.relation_generators):
             relation_generator.dump_to_csv(rel_data_tuples[rel_idx])
         logging.info("Removing dangling tuples")
-        self.remove_dangling_tuples()
+        if full_reducer:
+            self.remove_dangling_tuples()
 
 
 def main(args):
@@ -77,17 +78,19 @@ def main(args):
                         dest="password", required=True)
     parser.add_argument("-u", "--username", action="store",
                         dest="username", required=True)
+    parser.add_argument("-r", "--reducer", default=False, action="store_true")
     args = parser.parse_args(args)
 
     db_config_path = args.db_config_path
     query_config_path = args.query_config_path
     username = args.username
     password = args.password
+    full_reducer = args.reducer
 
     database = Database(db_config_path, "")
     query = Query(query_config_path=query_config_path, database=database)
     database_generator = DatabaseGenerator(db_config_path, database, query, username, password)
-    database_generator.generate()
+    database_generator.generate(full_reducer)
 
 
 
