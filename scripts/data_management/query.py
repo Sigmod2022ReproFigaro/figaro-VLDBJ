@@ -29,6 +29,7 @@ class Query:
         self.rel_attr_names = {rel: self.database.get_attribute_names(rel, False) for rel in self.relation_order}
         self.rel_join_attrs = {rel: [] for rel in self.relation_order}
         self.rel_non_join_attrs = {rel: [] for rel in self.relation_order}
+        self.eval_hint = json_eval_hint
         self.visit_node_join_tree(json_eval_hint["operands"][0], None)
 
 
@@ -93,7 +94,10 @@ class Query:
         #logging.info("Non join atttrs {}".format(self.rel_non_join_attrs))
 
 
-    def get_conf_path(self):
+    def get_eval_hint(self) -> dict:
+        return self.eval_hint
+
+    def get_conf_path(self) -> str:
         return self.query_config_path
 
     def get_name(self) -> str:
