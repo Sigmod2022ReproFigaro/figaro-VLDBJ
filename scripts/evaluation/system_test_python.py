@@ -41,14 +41,15 @@ class SystemTestPython(SystemTestCompetitor):
             args += [ "--dump_file", self.conf_dump.file_path,
                      "--precision", str(self.conf_accur.precision)]
 
-        if performance:
-            args += ["--num_repetitions", str(self.conf_perf.num_reps)]
+        #if performance:
+        #    args += ["--num_repetitions", str(self.conf_perf.num_reps)]
 
-        result = subprocess.run(args=args,  capture_output=True, text=True)
-        path_log_file = self.conf_log.file_path
-        with open(path_log_file, "w") as log_file:
-            log_file.write(result.stdout)
-        logging.error(result.stderr)
+        for reps in range(self.conf_perf.num_reps):
+            result = subprocess.run(args=args,  capture_output=True, text=True)
+            path_log_file = self.conf_log.file_path
+            with open(path_log_file, "a") as log_file:
+                log_file.write(result.stdout)
+            logging.error(result.stderr)
 
 
     def run_dump(self):

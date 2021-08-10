@@ -104,7 +104,7 @@ function main()
     "PERFORMANCE")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
         --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}" \
-        --num_threads "${FIGARO_NUM_THREADS}" >\
+        --num_threads "${FIGARO_NUM_THREADS}" >>\
          "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")

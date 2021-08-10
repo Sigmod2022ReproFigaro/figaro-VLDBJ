@@ -77,9 +77,18 @@ if __name__ == "__main__":
     print(cat_columns)
     np.set_printoptions(threshold=sys.maxsize, precision=precision)
     pd.set_option('display.max_columns', 500)
+
+    start = timer()
     data = pd.read_csv(data_path, names=columns, delimiter=",", header=None)
     #print(data)
+    end = timer()
+    print("##Figaro####loading##{}".format(end - start))
+
+    start = timer()
     data = transform_data(data, columns, cat_columns, False)
+    end = timer()
+    print("##Figaro####ohe##{}".format(end - start))
+
     #print(data)
     for i in range(num_reps):
         start = timer()

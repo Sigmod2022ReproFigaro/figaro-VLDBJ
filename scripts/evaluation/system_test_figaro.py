@@ -68,23 +68,23 @@ class SystemTestFigaro(SystemTest):
 
 
     def run_performance(self):
-        test_mode = SystemTest.test_mode_to_str(self.test_mode)
-        logging.error(test_mode)
         args = ["/bin/bash", "setup.sh",
                 "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
-                "--num_repetitions={}".format(self.conf_perf.num_reps),
+                "--num_repetitions={}".format("1"),
                 "--num_threads={}".format(self.conf_perf.num_threads),
                 "--query_config_path={}".format(self.query.get_conf_path()),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
-        result = subprocess.run(
-            args=args, cwd=self.figaro_path,
-            capture_output=True, text=True, shell=False)
-        logging.info(result.stdout)
-        logging.error(result.stderr)
+
+        for rep in range(self.conf_perf.num_reps):
+            result = subprocess.run(
+                args=args, cwd=self.figaro_path,
+                capture_output=True, text=True, shell=False)
+            logging.info(result.stdout)
+            logging.error(result.stderr)
 
 
     def run_performance_analysis(self):

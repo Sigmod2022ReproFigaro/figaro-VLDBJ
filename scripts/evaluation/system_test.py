@@ -244,7 +244,10 @@ class SystemTest(ABC):
         elif test_mode == SystemTest.TestMode.PERFORMANCE_ANALYSIS:
             self.delete_content_of_dir(self.conf_perf.path)
 
-        #self.delete_content_of_dir(self.conf_log.file_path)
+        if (test_mode == SystemTest.TestMode.PERFORMANCE) or\
+            (test_mode == SystemTest.TestMode.DUMP):
+            self.delete_content_of_dir(self.conf_log.path)
+
 
 
     def clean_all_data(self):

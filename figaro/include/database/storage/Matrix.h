@@ -3,6 +3,8 @@
 
 #include "ArrayStorage.h"
 #include "utils/Performance.h"
+#include <boost/math/special_functions/sign.hpp>
+#include <cmath>
 
 namespace Figaro
 {
@@ -10,7 +12,8 @@ namespace Figaro
     template <typename T>
     class Matrix
     {
-        static constexpr uint32_t MIN_COLS_PAR = 1000;
+        //static constexpr uint32_t MIN_COLS_PAR = UINT32_MAX;
+        static constexpr uint32_t MIN_COLS_PAR = 0;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)
@@ -293,6 +296,42 @@ namespace Figaro
         }
 
 
+        void computeGivensRotation(double a, double b,
+            double& cos, double& sin, double& r)
+        {
+            // TODO: Possibly replace checks with epsilon checks?
+            if (b == 0.0)
+            {
+                cos = boost::math::sign(a);
+                sin = 0;
+                r = std::abs(a);
+            }
+            else if (a == 0.0)
+            {
+                cos = 0.0;
+                sin = -boost::math::sign(b);
+                r = std::abs(b);
+            }
+            else if (std::abs(a) > std::abs(b))
+            {
+                double t = b / a;
+                double u = boost::math::sign(a) *
+                    std::abs(std::sqrt(1 + t * t));
+                cos = 1 / u;
+                sin = -cos * t;
+                r = a * u;
+            }
+            else
+            {
+                double t = a / b;
+                double u = boost::math::sign(b) * std::abs(std::sqrt(1 + t * t));
+                sin = - 1 / u;
+                cos = -sin * t;
+                r = b * u;
+            }
+        }
+
+
         void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx,
                          double sin, double cos)
         {
@@ -323,17 +362,28 @@ namespace Figaro
                 {
                     double upperVal = matA[rowIdx - 1][colIdx];
                     double lowerVal = matA[rowIdx][colIdx];
+                    double cos;
+                    double sin;
+                    double r;
+                    /*
                     double rSquare = upperVal * upperVal + lowerVal * lowerVal;
-                    double r = std::sqrt(rSquare);
+                    r = std::sqrt(rSquare);
                     if (rSquare > 0.0)
                     {
-                        double sinTheta = -lowerVal / r;
-                        double cosTheta = upperVal / r;
-                        applyGivens(rowIdx - 1, rowIdx, colIdx, sinTheta, cosTheta);
+                        sin = -lowerVal / r;
+                        cos = upperVal / r;
+                        applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                    }
+                    */
+                    computeGivensRotation(upperVal, lowerVal, cos, sin, r);
+                    if (std::abs(r) > 0.0)
+                    {
+                        applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
                     }
                 }
             }
         }
+
 
         void computeQRGivensSequential(void)
         {
@@ -434,7 +484,7 @@ namespace Figaro
         }
 
 
-        void computeQRGivensParallelized(uint32_t numThreads)
+        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads)
         {
             auto& matA = *this;
             constexpr double epsilon = 0.0;
@@ -461,13 +511,25 @@ namespace Figaro
                         {
                             double upperVal = matA[rowIdx - 1][colIdx];
                             double lowerVal = matA[rowIdx][colIdx];
+                            double cos;
+                            double sin;
+                            double r;
+
+                            /*
                             double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
                             if (r > epsilon)
                             {
-                                double sinTheta = -lowerVal / r;
-                                double cosTheta = upperVal / r;
-                                applyGivens(rowIdx - 1, rowIdx, colIdx, sinTheta, cosTheta);
+                                double sin = -lowerVal / r;
+                                double cos = upperVal / r;
+                                applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
                             }
+                            */
+                            computeGivensRotation(upperVal, lowerVal, cos, sin, r);
+                            if (std::abs(r) > 0.0)
+                            {
+                                applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                            }
+
                         }
                         #pragma omp barrier
                     }
@@ -478,9 +540,14 @@ namespace Figaro
                     }
                 }
             }
+            this->resize(std::min(m_numCols, m_numRows));
         }
 
-        // numThreads denotes number of threads available for the computation in the case of parallelization.
+        /**
+         * @brief Computes in-place upper triangular R in QR decomposition for the current matrix.
+         * Trailing zero rows are discarded, and the size is adjusted accordingly.
+         * @param numThreads denotes number of threads available for the computation in the case of parallelization.
+         */
         void computeQRGivens(uint32_t numThreads = 1)
         {
             if ((0 == m_numRows) || (0 == m_numCols))
@@ -490,7 +557,7 @@ namespace Figaro
             if (m_numCols > MIN_COLS_PAR)
             {
                 FIGARO_LOG_INFO("Thick version")
-                computeQRGivensParallelized(numThreads);
+                computeQRGivensParallelizedThickMatrix(numThreads);
             }
             else
             {

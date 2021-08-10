@@ -907,7 +907,7 @@ namespace Figaro
         const uint32_t* pRow)
     {
         //static DownUpCntT t = std::make_tuple<uint32_t, uint32_t>(1 ,2);
-        try {
+        //try {
 
 
         if (vParJoinAttrIdxs.size() == 1)
@@ -932,6 +932,7 @@ namespace Figaro
             //const std::vector<double> t =
             FIGARO_LOG_DBG("Damn")
         }
+        /*
         }
         catch (...)
         {
@@ -949,6 +950,7 @@ namespace Figaro
             }
 
         }
+        */
 
     }
 
@@ -1030,7 +1032,7 @@ namespace Figaro
         const MatrixDT& dataParent)
     {
         uint32_t rowChildIdx = UINT32_MAX;
-        try{
+        //try{
         if (vParJoinAttrIdxs.size() == 1)
         {
             // TODO: Extract join for relation specific from join attribute value.
@@ -1053,6 +1055,7 @@ namespace Figaro
             // TODO: Consider how to handle this case.
             //const std::vector<double> t =
         }
+        /*
         }
         catch(...)
         {
@@ -1060,6 +1063,7 @@ namespace Figaro
             return 0;
 
         }
+        */
 
 
         return rowChildIdx;
@@ -1902,20 +1906,25 @@ namespace Figaro
         FIGARO_LOG_INFO("Computing QR using eigen")
         MICRO_BENCH_INIT(eigen)
         MICRO_BENCH_START(eigen)
-        copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
-        qr.compute(matEigen);
+        //copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
+        //qr.compute(matEigen);
+        catGenHeadAndTails.computeQRGivens(getNumberOfThreads());
         MICRO_BENCH_STOP(eigen)
         FIGARO_LOG_INFO("Extracting R from eigen")
+        /*
         FIGARO_LOG_INFO("Extracting R from eigen", matEigen.rows(), matEigen.cols())
-        minNumRows = std::min(totalNumRows, totalNumCols);
         FIGARO_LOG_DBG("totalNumCols", totalNumCols, totalNumRows)
         *pR = qr.matrixQR().topLeftCorner(minNumRows, totalNumCols).triangularView<Eigen::Upper>();
+        */
+        minNumRows = std::min(totalNumRows, totalNumCols);
         if (totalNumCols > minNumRows)
         {
-            appendZeroRows(*pR, totalNumCols - minNumRows);
+            catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
+            //appendZeroRows(*pR, totalNumCols - minNumRows);
         }
         FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));
         FIGARO_LOG_DBG(*pR);
+        copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
         makeDiagonalElementsPositiveInR(*pR);
     }
 
