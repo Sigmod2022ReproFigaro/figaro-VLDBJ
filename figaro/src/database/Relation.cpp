@@ -1829,7 +1829,6 @@ namespace Figaro
         }
         totalNumRows = vCumNumRowsUp[numRels];
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
-
         // Copying dataHead.
         for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
         {
@@ -1924,8 +1923,11 @@ namespace Figaro
         }
         FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));
         FIGARO_LOG_DBG(*pR);
-        copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
-        makeDiagonalElementsPositiveInR(*pR);
+        if (nullptr != pR)
+        {
+            catGenHeadAndTails.makeDiagonalElementsPositiveInR();
+            copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
+        }
     }
 
     const Relation::MatrixDT& Relation::getHead(void) const

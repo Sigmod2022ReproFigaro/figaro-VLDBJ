@@ -488,12 +488,16 @@ namespace Figaro
         {
             auto& matA = *this;
             constexpr double epsilon = 0.0;
+            uint32_t rowStartIdx;
             uint32_t numBatches;
             uint32_t batchSize;
             batchSize = numThreads;
             omp_set_num_threads(numThreads);
             // Ceil division
             numBatches = (m_numCols + batchSize - 1) / batchSize;
+            // Needed for handling the case of fat tables (number of rows less than number of cols).
+            rowStartIdx = std::max(m_numRows, m_numCols) - 1;
+
             for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
             {
                 #pragma omp parallel
@@ -505,7 +509,7 @@ namespace Figaro
 
                     // Each thread will get equal number of rows to process.
                     // Although some threads will do dummy processing in the begining
-                    for (uint32_t rowIdx = m_numRows - 1 + 2 * threadId; rowIdx > colIdx; rowIdx--)
+                    for (uint32_t rowIdx = rowStartIdx + 2 * threadId; rowIdx > colIdx; rowIdx--)
                     {
                         if ((rowIdx <= (m_numRows - 1)) && (colIdx < m_numCols))
                         {
@@ -514,13 +518,12 @@ namespace Figaro
                             double cos;
                             double sin;
                             double r;
-
                             /*
-                            double r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
+                            r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
                             if (r > epsilon)
                             {
-                                double sin = -lowerVal / r;
-                                double cos = upperVal / r;
+                                sin = -lowerVal / r;
+                                cos = upperVal / r;
                                 applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
                             }
                             */
@@ -564,7 +567,21 @@ namespace Figaro
                 FIGARO_LOG_INFO("Thin version")
                 computeQRGivensParallelizedThinMatrix(numThreads);
             }
+        }
 
+        void makeDiagonalElementsPositiveInR(void)
+        {
+            auto& matA = *this;
+            uint32_t rowEnd = std::min(m_numRows, m_numCols);
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                uint32_t signDiag;
+                signDiag = boost::math::sign(matA[rowIdx][rowIdx]);
+                for (uint32_t colIdx; colIdx < m_numCols; colIdx++)
+                {
+                    matA[rowIdx][colIdx] *= signDiag;
+                }
+            }
         }
 
 
