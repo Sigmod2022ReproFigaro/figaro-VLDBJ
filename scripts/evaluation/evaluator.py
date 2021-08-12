@@ -18,12 +18,14 @@ class SystemTestsEvaluator:
         'figaro': SystemTestFigaro, 'pandas': SystemTestPandas}
 
     map_mode_to_enum = {
+        'debug': SystemTest.TestMode.DEBUG,
+        'info': SystemTest.TestMode.INFO,
         'dump': SystemTest.TestMode.DUMP,
-        'clean': SystemTest.TestMode.CLEAN,
         'accuracy': SystemTest.TestMode.ACCURACY,
         'performance': SystemTest.TestMode.PERFORMANCE,
         'performance_analysis': SystemTest.TestMode.PERFORMANCE_ANALYSIS,
-        'debug': SystemTest.TestMode.DEBUG}
+        'clean': SystemTest.TestMode.CLEAN
+        }
 
 
     def __init__(self, tests_conf: str, root_path: str, username: str, password: str = None):

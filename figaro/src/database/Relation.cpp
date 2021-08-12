@@ -1743,8 +1743,8 @@ namespace Figaro
         FIGARO_LOG_ASSERT(numNonJoinAttrs <= m_dataHead.getNumCols())
         MatrixDT tmp = m_dataHead.getRightCols(numNonJoinAttrs);
         m_dataHead = std::move(tmp);
-        FIGARO_LOG_INFO("QR generalized head", m_name)
-        FIGARO_LOG_INFO("m_dataHead", m_dataHead)
+        FIGARO_LOG_INFO("QR generalized head", m_name, m_dataHead.getNumRows(), m_dataHead.getNumCols())
+        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         if (m_dataHead.getNumCols() > m_dataHead.getNumRows())
         {
             FIGARO_LOG_ERROR("Head", m_name)
@@ -1759,7 +1759,7 @@ namespace Figaro
 
     void Relation::computeQROfTail(void)
     {
-        FIGARO_LOG_INFO("QR Tail", m_name)
+        FIGARO_LOG_INFO("QR Tail", m_name, m_dataTails.getNumRows(), m_dataTails.getNumCols())
         if (m_dataTails.getNumCols() > m_dataTails.getNumRows())
         {
             FIGARO_LOG_INFO("Tail", m_name)
@@ -1775,7 +1775,7 @@ namespace Figaro
 
     void Relation::computeQROfGeneralizedTail(void)
     {
-        FIGARO_LOG_INFO("QR generalized Tail", m_name)
+        FIGARO_LOG_INFO("QR generalized Tail", m_name, m_dataTailsGen.getNumRows(), m_dataTailsGen.getNumCols())
         if (m_dataTailsGen.getNumCols() > m_dataTailsGen.getNumRows())
         {
             FIGARO_LOG_INFO("Generalized tail", m_name)

@@ -24,9 +24,7 @@ class SystemTestFigaro(SystemTest):
         pass
 
 
-    def run_debug(self):
-        test_mode = SystemTest.test_mode_to_str(self.test_mode)
-        logging.error(test_mode)
+    def eval(self, dump = False):
         args = ["/bin/bash", "setup.sh",
                 "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
@@ -36,31 +34,27 @@ class SystemTestFigaro(SystemTest):
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]
+
+        if dump:
+            args.append("--dump_file_path={}".format(self.conf_dump.file_path))
+
         result = subprocess.run(
             args=args, cwd=self.figaro_path,
             capture_output=True, text=True, shell=False)
         logging.info(result.stdout)
         logging.error(result.stderr)
+
+
+    def run_debug(self):
+        self.eval()
+
+
+    def run_info(self):
+        self.eval()
 
 
     def run_dump(self):
-        test_mode = SystemTest.test_mode_to_str(self.test_mode)
-        logging.error(test_mode)
-        args = ["/bin/bash", "setup.sh",
-                "--root_path={}".format(self.figaro_path),
-                "--log_file_path={}".format(self.conf_log.file_path),
-                "--dump_file_path={}".format(self.conf_dump.file_path),
-                "--db_config_path={}".format(self.database.db_config_path),
-                "--query_config_path={}".format(self.query.get_conf_path()),
-                "--num_threads={}".format(self.conf_perf.num_threads),
-                "--precision={}".format(self.conf_accur.precision),
-                "--test_mode={}".format
-                (SystemTest.test_mode_to_str(self.test_mode))]
-        result = subprocess.run(
-            args=args, cwd=self.figaro_path,
-            capture_output=True, text=True, shell=False)
-        logging.info(result.stdout)
-        logging.error(result.stderr)
+        self.eval(dump=True)
 
 
     def run_accuracy(self):
@@ -68,23 +62,8 @@ class SystemTestFigaro(SystemTest):
 
 
     def run_performance(self):
-        args = ["/bin/bash", "setup.sh",
-                "--root_path={}".format(self.figaro_path),
-                "--log_file_path={}".format(self.conf_log.file_path),
-                "--db_config_path={}".format(self.database.db_config_path),
-                "--num_repetitions={}".format("1"),
-                "--num_threads={}".format(self.conf_perf.num_threads),
-                "--query_config_path={}".format(self.query.get_conf_path()),
-                "--precision={}".format(self.conf_accur.precision),
-                "--test_mode={}".format
-                (SystemTest.test_mode_to_str(self.test_mode))]
-
         for rep in range(self.conf_perf.num_reps):
-            result = subprocess.run(
-                args=args, cwd=self.figaro_path,
-                capture_output=True, text=True, shell=False)
-            logging.info(result.stdout)
-            logging.error(result.stderr)
+            self.eval()
 
 
     def run_performance_analysis(self):

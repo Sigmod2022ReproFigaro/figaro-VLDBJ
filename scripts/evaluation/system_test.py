@@ -57,13 +57,16 @@ class SystemTest(ABC):
     # Accuracy compares data from dumps
     class TestMode(IntEnum):
         DEBUG = 1
-        DUMP = 2
-        PERFORMANCE = 3
-        ACCURACY = 4
-        PERFORMANCE_ANALYSIS = 5
-        CLEAN = 6
+        INFO = 2
+        DUMP = 3
+        PERFORMANCE = 4
+        ACCURACY = 6
+        PERFORMANCE_ANALYSIS = 6
+        CLEAN = 7
 
-    map_mode_to_str = {TestMode.DEBUG : "DEBUG", TestMode.DUMP: "DUMP",
+    map_mode_to_str = {TestMode.DEBUG : "DEBUG",
+                    TestMode.INFO : "INFO",
+                    TestMode.DUMP: "DUMP",
                     TestMode.PERFORMANCE: "PERFORMANCE",
                     TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",
                     TestMode.ACCURACY: "ACCURACY",
@@ -153,6 +156,9 @@ class SystemTest(ABC):
         if self.test_mode == SystemTest.TestMode.DEBUG:
             logging.info(info_str.format(mode="debug"))
             self.run_debug()
+        elif self.test_mode == SystemTest.TestMode.INFO:
+            logging.info(info_str.format(mode="info"))
+            self.run_info()
         elif self.test_mode == SystemTest.TestMode.DUMP:
             logging.info(info_str.format(mode="dump"))
             self.run_dump()
@@ -176,6 +182,11 @@ class SystemTest(ABC):
 
     @abstractmethod
     def run_debug(self):
+        pass
+
+
+    @abstractmethod
+    def run_info(self):
         pass
 
 

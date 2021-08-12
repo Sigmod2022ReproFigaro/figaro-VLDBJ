@@ -27,6 +27,9 @@ class SystemTestPython(SystemTestCompetitor):
         pass
 
 
+    def run_info(self):
+        pass
+
     def eval(self, dump: bool, performance: bool):
 
         script_path = os.path.join(self.root_path, "competitors/python/qr.py")

@@ -36,4 +36,9 @@ def init_logging():
     root.addHandler(stdout_handler)
 
 
+def set_logging_level(level: int):
+    root = logging.getLogger()
+    root.setLevel(level)
+
+
 

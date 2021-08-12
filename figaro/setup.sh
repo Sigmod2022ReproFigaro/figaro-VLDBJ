@@ -80,6 +80,8 @@ function main()
     echo "TESTMODE ${FIGARO_TEST_MODE}"
     if [[ $FIGARO_TEST_MODE == DEBUG ]]; then
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_DEBUG=ON
+    elif [[ $FIGARO_TEST_MODE == INFO ]]; then
+        cmake ../. -D FIGARO_RUN=ON -D FIGARO_INFO=ON
     elif [[ $FIGARO_TEST_MODE == UNIT_TEST ]]; then
         cmake ../. -D FIGARO_TEST=ON -D FIGARO_DEBUG=ON
     else
@@ -89,7 +91,7 @@ function main()
     #cmake ../. -D FIGARO_RUN=ON -D FIGARO_TEST=ON -D FIGARO_LIB=ON
     make -j40 || exit 1
     case "${FIGARO_TEST_MODE}" in
-    "DEBUG")
+    "DEBUG"|"INFO")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
         --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
         --precision "${FIGARO_PRECISION}" \

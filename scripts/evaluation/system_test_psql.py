@@ -6,7 +6,7 @@ from evaluation.system_test import DumpConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from evaluation.system_test_dbms import SystemTestDBMS
-from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler
+from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler, set_logging_level
 
 
 class SystemTestPsql(SystemTestDBMS):
@@ -46,7 +46,13 @@ class SystemTestPsql(SystemTestDBMS):
 
 
     def run_debug(self):
-        self.eval()
+        set_logging_level(logging.DEBUG)
+        self.eval(dump=False, performance=False)
+
+
+    def run_info(self):
+        set_logging_level(logging.INFO)
+        self.eval(dump=False, performance=False)
 
 
     def run_dump(self):
