@@ -60,7 +60,7 @@ class SystemTest(ABC):
         INFO = 2
         DUMP = 3
         PERFORMANCE = 4
-        ACCURACY = 6
+        ACCURACY = 5
         PERFORMANCE_ANALYSIS = 6
         CLEAN = 7
 
