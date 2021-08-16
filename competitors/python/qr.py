@@ -6,6 +6,7 @@ from timeit import default_timer as timer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
+from threadpoolctl import threadpool_limits
 
 class DummyEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, sparse):
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--data_path", dest="data_path", required=True)
     parser.add_argument("-D", "--dump_file", dest="dump_file", required=False)
     parser.add_argument("-p", "--precision", dest="precision", required=False)
+    parser.add_argument("-t", "--num_threads", dest="num_threads", required=False)
     parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=False)
     parser.add_argument("-C", "--cat_columns", dest="cat_columns", nargs='*', required=False)
     parser.add_argument("-r", "--num_repetitions", dest="num_repetitions", required=False, default=1)
@@ -70,6 +72,7 @@ if __name__ == "__main__":
     columns = args.columns
     cat_columns = args.cat_columns
     num_reps = int(args.num_repetitions)
+    num_threads = int(args.num_threads)
 
     precision = 15 if args.precision is None else int(args.precision)
     print(precision)
@@ -92,7 +95,8 @@ if __name__ == "__main__":
     #print(data)
     for i in range(num_reps):
         start = timer()
-        r = np.linalg.qr(data, mode='r')
+        with threadpool_limits(limits=num_threads, user_api='blas'):
+            r = np.linalg.qr(data, mode='r')
         end = timer()
         print("##Figaro####computation##{}".format(end - start))
 

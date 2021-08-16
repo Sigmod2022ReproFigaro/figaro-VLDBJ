@@ -38,6 +38,10 @@ class SystemTestPandas(SystemTestDBMS):
         self.eval()
 
 
+    def run_info(self):
+        self.eval()
+
+
     def run_dump(self):
         self.eval(dump=True, performance=False)
 

@@ -84,9 +84,9 @@ class Query:
             json_eval_hint = json_query["evaluation_hint"]
             # TODO: Compute Change order of schema
             self.relation_order = json_eval_hint["relation_order"]
-            self.skip_attrs = []
-            if "skip_attributes" in json_eval_hint:
-                    self.skip_attrs = json_eval_hint["skip_attributes"]
+            self.num_threads = json_query.get("num_threads", None)
+            self.skip_attrs = json_eval_hint.get(
+                "skip_attributes", [])
 
             self.compute_join_and_non_join_attrs(json_eval_hint)
 
@@ -102,6 +102,9 @@ class Query:
 
     def get_name(self) -> str:
         return self.name
+
+    def get_num_threads(self) -> int:
+        return self.num_threads
 
 
     def get_relation_order(self)-> List[str]:

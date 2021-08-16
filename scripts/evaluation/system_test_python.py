@@ -37,9 +37,14 @@ class SystemTestPython(SystemTestCompetitor):
         non_join_attr_names = self.query.get_non_join_attr_names_ordered()
         non_join_cat_attr_names = self.query.get_non_join_cat_attr_names_ordered()
 
+        query_num_threads = self.query.get_num_threads()
+
+        num_threads = query_num_threads if query_num_threads is not None else self.conf_perf.num_threads
+
         args = ["python3", script_path, "--data_path", self.join_path,
                 "--columns", *non_join_attr_names,
-                "--cat_columns", *non_join_cat_attr_names]
+                "--cat_columns", *non_join_cat_attr_names,
+                "--num_threads", str(num_threads)]
         if dump:
             args += [ "--dump_file", self.conf_dump.file_path,
                      "--precision", str(self.conf_accur.precision)]
