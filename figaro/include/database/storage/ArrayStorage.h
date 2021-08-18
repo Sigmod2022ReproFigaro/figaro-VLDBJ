@@ -1,12 +1,12 @@
 #ifndef _FIGARO_ARRAY_STORAGE_H_
 #define _FIGARO_ARRAY_STORAGE_H_
 
-namespace Figaro 
+namespace Figaro
 {
     template <typename T>
     class ArrayStorage
     {
-        uint32_t m_size = 0; 
+        uint64_t m_size = 0;
         T* m_data = nullptr;
         void destroyData(void)
         {
@@ -18,21 +18,21 @@ namespace Figaro
         }
     public:
 
-        ArrayStorage(uint32_t size): m_size(size) 
+        ArrayStorage(uint64_t size): m_size(size)
         {
             if (size > 0)
             {
                 m_data = new T[size];
             }
-        } 
+        }
 
-        T& operator[](uint32_t idx) 
+        T& operator[](uint64_t idx)
         {
             FIGARO_LOG_ASSERT(idx < m_size);
             return m_data[idx];
         }
 
-        const T& operator[](uint32_t idx) const
+        const T& operator[](uint64_t idx) const
         {
             FIGARO_LOG_ASSERT(idx < m_size);
             return m_data[idx];
@@ -43,7 +43,7 @@ namespace Figaro
             destroyData();
         }
 
-        uint32_t getSize(void) const
+        uint64_t getSize(void) const
         {
             return m_size;
         }
@@ -53,8 +53,8 @@ namespace Figaro
             return m_data;
         }
 
-        void resize(uint32_t newSize)
-        {       
+        void resize(uint64_t newSize)
+        {
             T* newData = nullptr;
             if (newSize > 0)
             {

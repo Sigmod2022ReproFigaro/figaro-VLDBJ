@@ -101,6 +101,7 @@ namespace Figaro
     {
         for (auto& [relName, relation]: m_relations)
         {
+            FIGARO_LOG_INFO("One hot encoding relation", relName)
             relation.oneHotEncode();
         }
     }

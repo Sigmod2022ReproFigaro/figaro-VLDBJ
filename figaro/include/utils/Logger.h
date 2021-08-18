@@ -21,6 +21,8 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <set>
+#include <array>
 #include <iomanip>
 
 #define FIGARO_LOG_ASSERT(ASSERT_CHECK) assert(ASSERT_CHECK);
@@ -91,6 +93,21 @@ std::ostream& operator<<(std::ostream& out,
     for (const auto& [key, value]: ht)
     {
         out << key << ":" << value << " ";
+    }
+    out << std::endl;
+    return out;
+}
+
+
+template<typename Type>
+std::ostream& operator<<(std::ostream& out,
+    const std::set<Type>& set)
+{
+    out << "Set" << std::endl;
+    out << "Set size " << set.size() << std::endl;
+    for (const auto& value: set)
+    {
+        out << value << " ";
     }
     out << std::endl;
     return out;

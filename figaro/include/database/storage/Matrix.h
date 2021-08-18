@@ -29,12 +29,17 @@ namespace Figaro
             }
             //FIGARO_LOG_DBG("Destroyed data");
         }
+
+        uint64_t getNumEntries(void) const
+        {
+            return (uint64_t) m_numRows * (uint64_t)m_numCols;
+        }
     public:
         Matrix(uint32_t numRows, uint32_t numCols)
         {
             m_numRows = numRows;
             m_numCols = numCols;
-            m_pStorage = new ArrayStorage<T>(numRows * numCols);
+            m_pStorage = new ArrayStorage<T>(getNumEntries());
         }
 
         Matrix(const Matrix&) = delete;
@@ -78,27 +83,28 @@ namespace Figaro
         T* operator[](uint32_t rowIdx)
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &((*m_pStorage)[rowIdx * m_numCols]);
+            return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols)]);
         }
 
         const T* operator[](uint32_t rowIdx) const
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &((*m_pStorage)[rowIdx * m_numCols]);
+            return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols)]);
         }
 
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
+            m_numRows = newNumRows;
+            uint64_t newNumEntries = getNumEntries();
             if (nullptr == m_pStorage)
             {
-                m_pStorage = new ArrayStorage<T>(newNumRows * m_numCols);
+                m_pStorage = new ArrayStorage<T>(newNumEntries);
             }
             else
             {
-                m_pStorage->resize(newNumRows * m_numCols);
+                m_pStorage->resize(newNumEntries);
             }
-            m_numRows = newNumRows;
         }
 
         uint32_t getNumRows(void) const

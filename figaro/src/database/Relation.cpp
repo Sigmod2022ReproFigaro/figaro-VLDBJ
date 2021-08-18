@@ -427,16 +427,15 @@ namespace Figaro
     void Relation::updateSchema(const std::vector<std::string>& vAttributeNames)
     {
         std::vector<Attribute> vNewAttributes;
-        std::vector<uint32_t> vOldAttrIdxs;
         std::vector<uint32_t> vBeforeNewAttrIdxs;
         std::vector<uint32_t> vAfterNewAttrIdxs;
 
-        getAttributesIdxs(getAttributeNames(), vOldAttrIdxs);
         getAttributesIdxs(vAttributeNames,  vBeforeNewAttrIdxs);
         for (const auto& attrIdx: vBeforeNewAttrIdxs)
         {
             vNewAttributes.push_back(m_attributes[attrIdx]);
         }
+
         m_attributes = vNewAttributes;
         getAttributesIdxs(getAttributeNames(), vAfterNewAttrIdxs);
         FIGARO_LOG_DBG("vBeforeNewAttrIdxs", vBeforeNewAttrIdxs)
@@ -446,7 +445,7 @@ namespace Figaro
 
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
-            for (uint32_t idx = 0; idx < vBeforeNewAttrIdxs.size(); idx++)
+            for (uint32_t idx = 0; idx < vAfterNewAttrIdxs.size(); idx++)
             {
                 uint32_t attrBeforeIdx = vBeforeNewAttrIdxs[idx];
                 uint32_t attrAfterIdx = vAfterNewAttrIdxs[idx];
@@ -507,6 +506,9 @@ namespace Figaro
 
         MatrixDT oneHotEncData{0, 1};
         oneHotEncData = std::move(MatrixDT::zeros(m_data.getNumRows(), m_data.getNumCols() + curShift));
+        FIGARO_LOG_INFO("Pre-ohe dimensions ", m_data.getNumRows(), m_data.getNumCols())
+
+        FIGARO_LOG_INFO("OHE dimensions ", oneHotEncData.getNumRows(), oneHotEncData.getNumCols())
 
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
@@ -521,6 +523,7 @@ namespace Figaro
                     // We skip the first category in categorical variable.
                     if (catPos != 0)
                     {
+                        // -1 is for offset caused by first variable.
                         uint32_t colIdx = attrIdx + vShiftIdxs[attrIdx] + catPos - 1;
                         oneHotEncData[rowIdx][colIdx] = 1;
                     }
@@ -537,6 +540,7 @@ namespace Figaro
 
         m_data =  std::move(oneHotEncData);
         m_oldAttributes = m_attributes;
+        FIGARO_LOG_INFO("Finished schema reordering in relation ", m_name)
     }
 
 
