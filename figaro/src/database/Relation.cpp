@@ -1844,11 +1844,18 @@ namespace Figaro
 
         FIGARO_LOG_DBG("m_dataHead",  m_dataHead)
 
+        FIGARO_LOG_INFO("Number of rows in generalized head", m_dataHead.getNumRows())
+        FIGARO_LOG_INFO("Number of cols in generalized head", m_dataHead.getNumCols())
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
             uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpRels[idxRel]->m_dataTails.getNumRows();
+            FIGARO_LOG_INFO("Number of rows in tail", startGenTailIdx - startTailIdx)
+            FIGARO_LOG_INFO("Number of cols in tail",
+                vLeftCumNumNonJoinAttrs[idxRel],
+                vLeftCumNumNonJoinAttrs[idxRel+1] - vLeftCumNumNonJoinAttrs[idxRel],
+                totalNumCols - vLeftCumNumNonJoinAttrs[idxRel+1])
             for (uint32_t rowIdx = startTailIdx; rowIdx < startGenTailIdx; rowIdx ++)
             {
                 // Set Left zeros
@@ -1875,6 +1882,12 @@ namespace Figaro
                 }
             }
 
+            FIGARO_LOG_INFO("Number of rows in generalized tail",
+                vCumNumRowsUp[idxRel+1] - startGenTailIdx)
+            FIGARO_LOG_INFO("Number of cols in generalized tail",
+                vLeftCumNumNonJoinAttrs[idxRel],
+                vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols() - vLeftCumNumNonJoinAttrs[idxRel],
+                totalNumCols - (vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols()))
             for (uint32_t rowIdx = startGenTailIdx;
                 rowIdx < vCumNumRowsUp[idxRel+1]; rowIdx ++)
             {
@@ -2458,3 +2471,4 @@ namespace Figaro
         return out;
     }
 }
+
