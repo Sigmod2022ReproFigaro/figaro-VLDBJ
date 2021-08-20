@@ -366,7 +366,7 @@ namespace Figaro
                 for (uint32_t rowIdx = rowEndIdx;
                     rowIdx > colIdx + rowBeginIdx; rowIdx--)
                 {
-                    double upperVal = matA[rowIdx - 1][colIdx];
+                    double upperVal = matA[colIdx + rowBeginIdx][colIdx];
                     double lowerVal = matA[rowIdx][colIdx];
                     double cos;
                     double sin;
@@ -378,7 +378,7 @@ namespace Figaro
                     computeGivensRotation(upperVal, lowerVal, cos, sin, r);
                     if (std::abs(r) > 0.0)
                     {
-                        applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                        applyGivens(colIdx + rowBeginIdx, rowIdx, colIdx, sin, cos);
                     }
                 }
             }
@@ -426,11 +426,14 @@ namespace Figaro
 
                     // Each thread will get equal number of rows to process.
                     // Although some threads will do dummy processing in the begining
-                    for (uint32_t rowIdx = rowStartIdx + 2 * threadId; rowIdx > colIdx; rowIdx--)
+                    //for (uint32_t rowIdx = rowStartIdx + 2 * threadId; rowIdx > colIdx; rowIdx--)
+                    for (int32_t rowIdx = (int32_t)colIdx + 1 - 2 * (int32_t)threadId;
+                        rowIdx <= (int32_t)rowStartIdx; rowIdx++)
                     {
-                        if ((rowIdx <= rowEndIdx) && (colIdx <= colEndIdx) && (colIdx < rowEndIdx - 1))
+                        if ((colIdx <= colEndIdx) && (rowIdx <= (int32_t)rowEndIdx) &&
+                        (rowIdx > (int32_t)colIdx) )
                         {
-                            double upperVal = matA[rowIdx - 1][colIdx];
+                            double upperVal = matA[colIdx + rowBeginIdx][colIdx];
                             double lowerVal = matA[rowIdx][colIdx];
                             double cos;
                             double sin;
@@ -440,7 +443,7 @@ namespace Figaro
                                 computeGivensRotation(upperVal, lowerVal, cos, sin, r);
                                 if (std::abs(r) > 0.0)
                                 {
-                                    applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                                    applyGivens(colIdx + rowBeginIdx, rowIdx, colIdx, sin, cos);
                                 }
                             }
 
