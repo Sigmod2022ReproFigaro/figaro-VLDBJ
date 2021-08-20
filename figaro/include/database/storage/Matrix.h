@@ -12,8 +12,8 @@ namespace Figaro
     template <typename T>
     class Matrix
     {
-        //static constexpr uint32_t MIN_COLS_PAR = UINT32_MAX;
-        static constexpr uint32_t MIN_COLS_PAR = 0;
+        static constexpr uint32_t MIN_COLS_PAR = UINT32_MAX;
+        //static constexpr uint32_t MIN_COLS_PAR = 0;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)
@@ -547,7 +547,8 @@ namespace Figaro
             }
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
-            computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
+            computeQRGivensParallelBlock(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
+            //computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
             this->resize(numRedEndRows);
