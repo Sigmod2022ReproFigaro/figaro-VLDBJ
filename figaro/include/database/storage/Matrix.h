@@ -371,20 +371,86 @@ namespace Figaro
                     double cos;
                     double sin;
                     double r;
-                    /*
-                    double rSquare = upperVal * upperVal + lowerVal * lowerVal;
-                    r = std::sqrt(rSquare);
-                    if (rSquare > 0.0)
+                    if (lowerVal == 0.0)
                     {
-                        sin = -lowerVal / r;
-                        cos = upperVal / r;
-                        applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                        continue;
                     }
-                    */
                     computeGivensRotation(upperVal, lowerVal, cos, sin, r);
                     if (std::abs(r) > 0.0)
                     {
                         applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                    }
+                }
+            }
+        }
+
+        void computeQRGivensParallelBlock(
+            uint32_t rowBeginIdx,
+            uint32_t rowEndIdx,
+            uint32_t colBeginIdx,
+            uint32_t colEndIdx,
+            uint32_t numThreads)
+        {
+            auto& matA = *this;
+            constexpr double epsilon = 0.0;
+            uint32_t rowStartIdx;
+            uint32_t numBatches;
+            uint32_t batchSize;
+            uint32_t numRows;
+            uint32_t numCols;
+
+            numRows = rowEndIdx - rowBeginIdx + 1;
+            numCols = colEndIdx - colBeginIdx + 1;
+            batchSize = numThreads;
+            omp_set_num_threads(numThreads);
+            // Ceil division
+            numBatches = (numCols + batchSize - 1) / batchSize;
+            // Needed for handling the case of fat tables (number of rows less than number of cols).
+            if (numRows >= numCols)
+            {
+                rowStartIdx = rowEndIdx;
+            }
+            else
+            {
+                rowStartIdx = colEndIdx;
+            }
+
+            for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
+            {
+                #pragma omp parallel
+                {
+                    uint32_t threadId;
+                    uint32_t colIdx;
+                    threadId = omp_get_thread_num();
+                    colIdx = colBeginIdx + batchIdx * batchSize + threadId;
+
+                    // Each thread will get equal number of rows to process.
+                    // Although some threads will do dummy processing in the begining
+                    for (uint32_t rowIdx = rowStartIdx + 2 * threadId; rowIdx > colIdx; rowIdx--)
+                    {
+                        if ((rowIdx <= rowEndIdx) && (colIdx <= colEndIdx) && (colIdx < rowEndIdx - 1))
+                        {
+                            double upperVal = matA[rowIdx - 1][colIdx];
+                            double lowerVal = matA[rowIdx][colIdx];
+                            double cos;
+                            double sin;
+                            double r;
+                            if (lowerVal != 0.0)
+                            {
+                                computeGivensRotation(upperVal, lowerVal, cos, sin, r);
+                                if (std::abs(r) > 0.0)
+                                {
+                                    applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                                }
+                            }
+
+                        }
+                        #pragma omp barrier
+                    }
+                    // Extra dummy loops needed for barier synchronization.
+                    for (uint32_t idx = 0; idx < batchSize - threadId - 1; idx++)
+                    {
+                        #pragma omp barrier
                     }
                 }
             }
@@ -492,63 +558,7 @@ namespace Figaro
 
         void computeQRGivensParallelizedThickMatrix(uint32_t numThreads)
         {
-            auto& matA = *this;
-            constexpr double epsilon = 0.0;
-            uint32_t rowStartIdx;
-            uint32_t numBatches;
-            uint32_t batchSize;
-            batchSize = numThreads;
-            omp_set_num_threads(numThreads);
-            // Ceil division
-            numBatches = (m_numCols + batchSize - 1) / batchSize;
-            // Needed for handling the case of fat tables (number of rows less than number of cols).
-            rowStartIdx = std::max(m_numRows, m_numCols) - 1;
-
-            for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
-            {
-                #pragma omp parallel
-                {
-                    uint32_t threadId;
-                    uint32_t colIdx;
-                    threadId = omp_get_thread_num();
-                    colIdx = batchIdx * batchSize + threadId;
-
-                    // Each thread will get equal number of rows to process.
-                    // Although some threads will do dummy processing in the begining
-                    for (uint32_t rowIdx = rowStartIdx + 2 * threadId; rowIdx > colIdx; rowIdx--)
-                    {
-                        if ((rowIdx <= (m_numRows - 1)) && (colIdx < m_numCols))
-                        {
-                            double upperVal = matA[rowIdx - 1][colIdx];
-                            double lowerVal = matA[rowIdx][colIdx];
-                            double cos;
-                            double sin;
-                            double r;
-                            /*
-                            r = std::sqrt(upperVal * upperVal + lowerVal * lowerVal);
-                            if (r > epsilon)
-                            {
-                                sin = -lowerVal / r;
-                                cos = upperVal / r;
-                                applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
-                            }
-                            */
-                            computeGivensRotation(upperVal, lowerVal, cos, sin, r);
-                            if (std::abs(r) > 0.0)
-                            {
-                                applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
-                            }
-
-                        }
-                        #pragma omp barrier
-                    }
-                    // Extra dummy loops needed for barier synchronization.
-                    for (uint32_t idx = 0; idx < batchSize - threadId - 1; idx++)
-                    {
-                        #pragma omp barrier
-                    }
-                }
-            }
+            computeQRGivensParallelBlock(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
             this->resize(std::min(m_numCols, m_numRows));
         }
 
@@ -583,7 +593,7 @@ namespace Figaro
             {
                 uint32_t signDiag;
                 signDiag = boost::math::sign(matA[rowIdx][rowIdx]);
-                for (uint32_t colIdx; colIdx < m_numCols; colIdx++)
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
                     matA[rowIdx][colIdx] *= signDiag;
                 }

@@ -1749,11 +1749,6 @@ namespace Figaro
         m_dataHead = std::move(tmp);
         FIGARO_LOG_INFO("QR generalized head", m_name, m_dataHead.getNumRows(), m_dataHead.getNumCols())
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        if (m_dataHead.getNumCols() > m_dataHead.getNumRows())
-        {
-            FIGARO_LOG_ERROR("Head", m_name)
-            return;
-        }
         MICRO_BENCH_INIT(qrHead)
         MICRO_BENCH_START(qrHead)
         m_dataHead.computeQRGivens(getNumberOfThreads());
@@ -1764,11 +1759,6 @@ namespace Figaro
     void Relation::computeQROfTail(void)
     {
         FIGARO_LOG_INFO("QR Tail", m_name, m_dataTails.getNumRows(), m_dataTails.getNumCols())
-        if (m_dataTails.getNumCols() > m_dataTails.getNumRows())
-        {
-            FIGARO_LOG_INFO("Tail", m_name)
-            return;
-        }
         FIGARO_LOG_DBG("m_dataTails", m_dataTails)
         MICRO_BENCH_INIT(qrTail)
         MICRO_BENCH_START(qrTail)
@@ -1780,11 +1770,7 @@ namespace Figaro
     void Relation::computeQROfGeneralizedTail(void)
     {
         FIGARO_LOG_INFO("QR generalized Tail", m_name, m_dataTailsGen.getNumRows(), m_dataTailsGen.getNumCols())
-        if (m_dataTailsGen.getNumCols() > m_dataTailsGen.getNumRows())
-        {
-            FIGARO_LOG_INFO("Generalized tail", m_name)
-            return;
-        }
+        FIGARO_LOG_INFO("Generalized tail", m_name)
         MICRO_BENCH_INIT(qrGenTail)
         MICRO_BENCH_START(qrGenTail)
         m_dataTailsGen.computeQRGivens(getNumberOfThreads());
