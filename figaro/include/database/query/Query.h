@@ -5,6 +5,7 @@
 #include "ASTNode.h"
 #include "ASTNodeRelation.h"
 #include "database/Database.h"
+#include "database/storage/Matrix.h"
 
 namespace Figaro
 {
@@ -30,7 +31,8 @@ namespace Figaro
         /** Evaluates expressions from abstract syntax tree.
          */
         void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
-            bool evalSecondFigaroPass = true, bool evalPostProcess = true, uint32_t numResp = 1);
+            bool evalSecondFigaroPass = true, bool evalPostProcess = true, uint32_t numResp = 1,
+            Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THICK);
 
         void setDatabase(Database* pDatabase)
         {

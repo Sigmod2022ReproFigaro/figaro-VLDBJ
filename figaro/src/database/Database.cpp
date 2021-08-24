@@ -226,8 +226,9 @@ namespace Figaro
             isRootNode);
     }
 
-    void Database::computeQROfConcatenatedGeneralizedHeadAndTails(
+    void Database::computePostprocessing(
         const std::vector<std::string>& vRelationOrder,
+        MatrixD::QRGivensHintType qrHintType,
         MatrixEigenT* pR
 
     )
@@ -239,11 +240,11 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRels.push_back(pRel);
-            pRel->computeQROfTail();
-            pRel->computeQROfGeneralizedTail();
+            pRel->computeQROfTail(qrHintType);
+            pRel->computeQROfGeneralizedTail(qrHintType);
         }
         pRootRel = vpRels[0];
-        pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, pR);
+        pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, pR);
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

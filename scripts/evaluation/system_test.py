@@ -49,6 +49,42 @@ class DumpConf:
         self.path = path
         self.file_path  = file_path
 
+
+class DecompConf:
+    class PostprocessingMode(IntEnum):
+        THIN = 1
+        THICK = 2
+
+    class SparsityMode(IntEnum):
+        SPARSE = 1
+        DENSE = 2
+
+
+    map_postp_mode_to_str = {PostprocessingMode.THIN : "THIN",
+        PostprocessingMode.THICK: "THICK",
+    }
+
+    map_postprocessing_to_enum = {
+        'thick': PostprocessingMode.THICK,
+        'thin': PostprocessingMode.THIN
+        }
+
+    map_sparsity_to_enum = {
+    'sparse': SparsityMode.SPARSE,
+    'dense': SparsityMode.DENSE
+    }
+
+
+    @staticmethod
+    def postprocess_mode_to_str(test_mode: PostprocessingMode)->str:
+        return DecompConf.map_postp_mode_to_str[test_mode]
+
+
+    def __init__(self, postprocessing: str = None, sparsity: str = None):
+        self.postprocessing = DecompConf.map_postprocessing_to_enum[postprocessing]
+        self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
+
+
 class SystemTest(ABC):
     # Debug test is only for debugging
     # Dump is used for accuracy where data is later compared.
@@ -72,19 +108,21 @@ class SystemTest(ABC):
                     TestMode.ACCURACY: "ACCURACY",
                     TestMode.CLEAN: "CLEAN"}
 
+
     @staticmethod
     def test_mode_to_str(test_mode: TestMode)->str:
         return SystemTest.map_mode_to_str[test_mode]
 
 
     def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf,
-    perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
+    perf_conf: PerformanceConf, accur_conf: AccuracyConf, decomp_conf: DecompConf, database: Database,
     query: Query, test_mode = TestMode.PERFORMANCE):
         self.name = name
         self.conf_accur = accur_conf
         self.conf_perf = perf_conf
         self.conf_log = log_conf
         self.conf_dump = dump_conf
+        self.conf_decomp = decomp_conf
         self.database = database
         self.query = query
         self.test_mode = test_mode
@@ -134,11 +172,18 @@ class SystemTest(ABC):
                             accuracy_json["r_comp_file"])
         precision = accuracy_json["precision"]
 
+        decomp_json = system_json["system"]["decomposition"]
+        postprocessing = decomp_json.get("postprocessing", "thick")
+        logging.info(postprocessing)
+        sparsity = decomp_json.get("sparsity", "dense")
+
+
         system_test = cls(
             LogConf(log_path, log_file_path),
             DumpConf(path_dump, dump_file_path),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision),
+            DecompConf(postprocessing, sparsity),
             database, query, test_mode,
             *args, **kwargs)
 

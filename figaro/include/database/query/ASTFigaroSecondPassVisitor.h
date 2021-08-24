@@ -10,12 +10,14 @@ namespace Figaro
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
         bool m_postProcess = false;
         MatrixEigenT* m_pResult = nullptr;
+        MatrixD::QRGivensHintType m_qrHintType;
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase,
-            bool postProcess, MatrixEigenT* pResult):
+            bool postProcess, MatrixD::QRGivensHintType qrHintType, MatrixEigenT* pResult):
                 ASTQRVisitor(pDatabase),
-                m_postProcess(postProcess), m_pResult(pResult) {}
+                m_postProcess(postProcess), m_pResult(pResult),
+                 m_qrHintType(qrHintType) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;

@@ -21,7 +21,10 @@ int main(int argc, char *argv[])
 {
     std::string dumpFilePath;
     std::string dbConfigPath;
+    std::string postprocessMode;
     std::string queryConfigPath;
+
+    Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THICK;
     bool dump = false;
     uint32_t precision;
     uint32_t numRepetitions = 1;
@@ -44,6 +47,7 @@ int main(int argc, char *argv[])
     ("precision", po::value<uint32_t>(&precision))
     ("num_repetitions", po::value<uint32_t>(&numRepetitions))
     ("num_threads", po::value<uint32_t>(&numThreads))
+    ("postprocess", po::value<std::string>(&postprocessMode))
     ;
 
     po::variables_map vm;
@@ -67,6 +71,20 @@ int main(int argc, char *argv[])
         numThreads = vm["num_threads"].as<std::uint32_t>();
     }
 
+    if (vm.count("postprocess"))
+    {
+        postprocessMode = vm["postprocess"].as<std::string>();
+        if (postprocessMode == "THIN")
+        {
+            qrHintType = Figaro::MatrixD::QRGivensHintType::THIN;
+        }
+        else if (postprocessMode == "THICK")
+        {
+            qrHintType = Figaro::MatrixD::QRGivensHintType::THICK;
+        }
+        FIGARO_LOG_INFO("postprocessMode", postprocessMode)
+    }
+
     dbConfigPath = vm["db_config_path"].as<std::string>();
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
@@ -79,7 +97,7 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
-    query.evaluateQuery(true, true, true, true, numRepetitions);
+    query.evaluateQuery(true, true, true, true, numRepetitions, qrHintType);
 
     if (dump)
     {

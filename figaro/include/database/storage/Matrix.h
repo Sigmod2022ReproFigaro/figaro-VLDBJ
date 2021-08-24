@@ -35,6 +35,11 @@ namespace Figaro
             return (uint64_t) m_numRows * (uint64_t)m_numCols;
         }
     public:
+        enum class QRGivensHintType
+        {
+            THIN = 0,
+            THICK = 1
+        };
         Matrix(uint32_t numRows, uint32_t numCols)
         {
             m_numRows = numRows;
@@ -550,10 +555,12 @@ namespace Figaro
             }
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
+
             computeQRGivensParallelBlock(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
             //computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
+            FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
             this->resize(numRedEndRows);
             MICRO_BENCH_STOP(qrGivensPar2)
             FIGARO_LOG_BENCH("Time sequential", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
@@ -571,18 +578,36 @@ namespace Figaro
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
-        void computeQRGivens(uint32_t numThreads = 1)
+        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, QRGivensHintType qrTypeHint = QRGivensHintType::THICK)
         {
+            QRGivensHintType qrType;
             if ((0 == m_numRows) || (0 == m_numCols))
             {
                 return;
             }
-            if (m_numCols > MIN_COLS_PAR)
+
+            if (useHint)
+            {
+                qrType = qrTypeHint;
+            }
+            else
+            {
+                if (m_numCols > MIN_COLS_PAR)
+                {
+                    qrType = QRGivensHintType::THICK;
+                }
+                else
+                {
+                    qrType = QRGivensHintType::THIN;
+                }
+            }
+
+            if (qrType == QRGivensHintType::THICK)
             {
                 FIGARO_LOG_INFO("Thick version")
                 computeQRGivensParallelizedThickMatrix(numThreads);
             }
-            else
+            else if (qrType == QRGivensHintType::THIN)
             {
                 FIGARO_LOG_INFO("Thin version")
                 computeQRGivensParallelizedThinMatrix(numThreads);
@@ -692,6 +717,7 @@ namespace Figaro
             return RowIterator(m_pStorage->getData() + m_pStorage->getSize(), m_numCols);
         }
     };
+    typedef Matrix<double> MatrixD;
 
 }
 

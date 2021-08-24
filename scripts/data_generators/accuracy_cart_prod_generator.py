@@ -112,19 +112,22 @@ def vary_row_and_col_num(system_tests_path: str, data_path: str):
     db_dirs_path = os.path.join(data_path, "generated_databases/accuracy")
     db_output_path = os.path.join(db_dirs_path, "{db_idx}/{rel_name}.csv")
 
+    # 1, 2, 4, ... 256
     num_rows_a = [512, 1024, 2048, 4096]
-    num_cols_a = [1, 2, 4, 8, 16, 32, 64, 128, 256]
+    num_cols_a = [1, 4, 16, 64, 256, 1024, 4096]
     create_dirs(db_dirs_path, len(num_rows_a) * len(num_cols_a))
 
     for num_rows in num_rows_a:
         for num_cols in num_cols_a:
+            if num_rows <= num_cols:
+                continue
             X_df, Y_df = generate_cart_prod_accur(num_rows, num_cols, num_rows, num_cols)
             generate_db_schema(system_tests_path, num_cols,
                 db_output_path, db_idx)
             dump_cart_prod_accur(X_df, Y_df, db_output_path, db_idx)
             db_idx += 1
-            logging.info("Finished generation X: {} x {}".format(num_rows, num_cols))
-
+            logging.info("Finished generation X: of database {} {} x {}".format(db_idx, num_rows, num_cols))
+            logging.info("Generated: {} x {}".format(num_rows, num_cols))
 
 if __name__ == "__main__":
     init_logging()

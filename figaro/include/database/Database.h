@@ -95,8 +95,9 @@ namespace Figaro
             bool isRootNode);
 
 
-        void computeQROfConcatenatedGeneralizedHeadAndTails(
+        void computePostprocessing(
             const std::vector<std::string>& vRelationOrder,
+            MatrixD::QRGivensHintType qrHintType,
             MatrixEigenT* pR);
 
 

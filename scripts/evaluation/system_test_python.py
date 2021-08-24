@@ -5,17 +5,18 @@ import json
 import logging
 from data_management.database import Database
 from data_management.query import Query
-from evaluation.system_test import DumpConf, LogConf, SystemTest
+from evaluation.system_test import DecompConf, DumpConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from evaluation.system_test_competitor import SystemTestCompetitor
 
 class SystemTestPython(SystemTestCompetitor):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
-    perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
+    perf_conf: PerformanceConf, accur_conf: AccuracyConf,
+    decomp_conf: DecompConf, database: Database,
     query: Query, test_mode: SystemTest.TestMode, root_path: str,
     **kwargs):
-        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, database, query, test_mode)
+        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, decomp_conf, database, query, test_mode)
         self.root_path = root_path
 
 

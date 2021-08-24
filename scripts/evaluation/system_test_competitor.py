@@ -4,9 +4,10 @@ from evaluation.accuracy.accuracy import compare_accuracy_r
 
 class SystemTestCompetitor(SystemTest):
     def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf,
-    perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database,
+    perf_conf: PerformanceConf, accur_conf: AccuracyConf,
+    decomp_conf: DecompConf,  database: Database,
     query: Query, test_mode):
-        super().__init__(name, log_conf, dump_conf, perf_conf, accur_conf, database, query, test_mode)
+        super().__init__(name, log_conf, dump_conf, perf_conf, accur_conf, decomp_conf, database, query, test_mode)
 
 
     def is_paper_algorithm(self):

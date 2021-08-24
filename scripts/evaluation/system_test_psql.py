@@ -2,7 +2,7 @@ import logging
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from data_management.query import Query
-from evaluation.system_test import DumpConf, LogConf, SystemTest
+from evaluation.system_test import DecompConf, DumpConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from evaluation.system_test_dbms import SystemTestDBMS
@@ -12,12 +12,13 @@ from evaluation.custom_logging import add_logging_file_handler, remove_logging_f
 class SystemTestPsql(SystemTestDBMS):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
             perf_conf: PerformanceConf, accur_conf: AccuracyConf,
-            database: Database, query: Query,
+            decomp_conf: DecompConf, database: Database, query: Query,
             test_mode: SystemTest.TestMode,
             username: str, password: str, **kwargs):
         super().__init__("PSQL", log_conf=log_conf, dump_conf=dump_conf,
                     perf_conf=perf_conf, accur_conf = accur_conf,
-                    database = database, query= query,
+                    decomp_conf=decomp_conf, database = database,
+                     query= query,
                     test_mode=test_mode)
         self.password = password
         self.username = username

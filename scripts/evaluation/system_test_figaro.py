@@ -7,17 +7,18 @@ import json
 import logging
 from data_management.database import Database
 from data_management.query import Query
-from evaluation.system_test import DumpConf, LogConf, SystemTest
+from evaluation.system_test import DecompConf, DumpConf, LogConf, SystemTest
 from evaluation.system_test import SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 
 class SystemTestFigaro(SystemTest):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
-            perf_conf: PerformanceConf, accur_conf: AccuracyConf, database: Database, query: Query,
+            perf_conf: PerformanceConf, accur_conf: AccuracyConf,
+            decomp_conf: DecompConf, database: Database, query: Query,
             test_mode, root_path: str, *args, **kwargs):
         super().__init__("FIGARO", log_conf, dump_conf, perf_conf,
-            accur_conf, database, query, test_mode)
+            accur_conf, decomp_conf, database, query, test_mode)
         self.figaro_path = os.path.join(root_path, "figaro")
 
     def eval(self):
@@ -25,12 +26,15 @@ class SystemTestFigaro(SystemTest):
 
 
     def eval(self, dump = False):
+        postprocess_str = DecompConf.postprocess_mode_to_str(self.conf_decomp.postprocessing)
+
         args = ["/bin/bash", "setup.sh",
                 "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
                 "--db_config_path={}".format(self.database.db_config_path),
                 "--query_config_path={}".format(self.query.get_conf_path()),
                 "--num_threads={}".format(self.conf_perf.num_threads),
+                "--postprocess={}".format(postprocess_str),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

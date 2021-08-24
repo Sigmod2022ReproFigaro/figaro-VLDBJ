@@ -1742,7 +1742,8 @@ namespace Figaro
     }
 
 
-    void Relation::computeQROfGeneralizedHead(uint32_t numNonJoinAttrs)
+    void Relation::computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
+        MatrixD::QRGivensHintType qrTypeHint)
     {
         FIGARO_LOG_ASSERT(numNonJoinAttrs <= m_dataHead.getNumCols())
         MatrixDT tmp = m_dataHead.getRightCols(numNonJoinAttrs);
@@ -1751,29 +1752,30 @@ namespace Figaro
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
         MICRO_BENCH_INIT(qrHead)
         MICRO_BENCH_START(qrHead)
-        m_dataHead.computeQRGivens(getNumberOfThreads());
+        m_dataHead.computeQRGivens(getNumberOfThreads(), true, qrTypeHint);
         MICRO_BENCH_STOP(qrHead)
         FIGARO_LOG_BENCH("Figaro", "QR Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
     }
 
-    void Relation::computeQROfTail(void)
+    void Relation::computeQROfTail(MatrixD::QRGivensHintType qrHintType)
     {
         FIGARO_LOG_INFO("QR Tail", m_name, m_dataTails.getNumRows(), m_dataTails.getNumCols())
         FIGARO_LOG_DBG("m_dataTails", m_dataTails)
         MICRO_BENCH_INIT(qrTail)
         MICRO_BENCH_START(qrTail)
-        m_dataTails.computeQRGivens(getNumberOfThreads());
+        m_dataTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
         MICRO_BENCH_STOP(qrTail)
         FIGARO_LOG_BENCH("Figaro", "Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
+        FIGARO_LOG_INFO("R of tail", m_name, m_dataTails)
     }
 
-    void Relation::computeQROfGeneralizedTail(void)
+    void Relation::computeQROfGeneralizedTail(MatrixD::QRGivensHintType qrHintType)
     {
         FIGARO_LOG_INFO("QR generalized Tail", m_name, m_dataTailsGen.getNumRows(), m_dataTailsGen.getNumCols())
         FIGARO_LOG_INFO("Generalized tail", m_name)
         MICRO_BENCH_INIT(qrGenTail)
         MICRO_BENCH_START(qrGenTail)
-        m_dataTailsGen.computeQRGivens(getNumberOfThreads());
+        m_dataTailsGen.computeQRGivens(getNumberOfThreads(), true, qrHintType);
         MICRO_BENCH_STOP(qrGenTail)
         FIGARO_LOG_BENCH("Figaro", "Generalized Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }
@@ -1781,6 +1783,7 @@ namespace Figaro
 
     void Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
+        MatrixD::QRGivensHintType qrHintType,
         MatrixEigenT* pR)
     {
         MatrixEigenT matEigen;
@@ -1806,7 +1809,7 @@ namespace Figaro
         totalNumCols = vLeftCumNumNonJoinAttrs[numRels];
 
         // TODO: Move this to database class
-        computeQROfGeneralizedHead(totalNumCols);
+        computeQROfGeneralizedHead(totalNumCols, qrHintType);
         vCumNumRowsUp[0] = m_dataHead.getNumRows();
         FIGARO_LOG_DBG("vCumNumRowsUp[0]", vCumNumRowsUp[0])
         for (uint32_t idx = 1; idx < vCumNumRowsUp.size(); idx++)
@@ -1921,7 +1924,8 @@ namespace Figaro
         minNumRows = std::min(totalNumRows, totalNumCols);
         if (totalNumCols > minNumRows)
         {
-            catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
+            FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
+            catGenHeadAndTails = catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
             //appendZeroRows(*pR, totalNumCols - minNumRows);
         }
         FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));

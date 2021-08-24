@@ -5,6 +5,7 @@
 #include "database/query/ASTFigaroFirstPassVisitor.h"
 #include "database/query/ASTFigaroSecondPassVisitor.h"
 #include "utils/Performance.h"
+#include "database/storage/Matrix.h"
 #include <fstream>
 
 namespace Figaro
@@ -135,12 +136,12 @@ namespace Figaro
     }
 
      void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps)
+        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType)
      {
          // Create visitor
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess, &m_matResult);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess,qrHintType, &m_matResult);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
         MICRO_BENCH_INIT(attrComp)

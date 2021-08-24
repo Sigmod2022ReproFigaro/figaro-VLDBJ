@@ -417,16 +417,18 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttributeNames,
             bool isRootNode);
 
-        void computeQROfGeneralizedHead(uint32_t numNonJoinAttrs);
+        void computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
+            MatrixD::QRGivensHintType qrTypeHint);
 
-        void computeQROfTail(void);
+        void computeQROfTail(MatrixD::QRGivensHintType qrHintType);
 
-        void computeQROfGeneralizedTail(void);
+        void computeQROfGeneralizedTail(MatrixD::QRGivensHintType qrHintType);
 
 
         // Should be called for a root relation.
         void computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
+            MatrixD::QRGivensHintType qrHintType,
             MatrixEigenT* pR);
 
         /**
