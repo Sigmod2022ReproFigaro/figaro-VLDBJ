@@ -85,6 +85,12 @@ class DecompConf:
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
 
 
+
+class ExcecutableConf:
+    def __init__(self, interpreter_path: str = None):
+        self.interpreter_path = interpreter_path
+
+
 class SystemTest(ABC):
     # Debug test is only for debugging
     # Dump is used for accuracy where data is later compared.
@@ -115,7 +121,8 @@ class SystemTest(ABC):
 
 
     def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf,
-    perf_conf: PerformanceConf, accur_conf: AccuracyConf, decomp_conf: DecompConf, database: Database,
+    perf_conf: PerformanceConf, accur_conf: AccuracyConf, decomp_conf: DecompConf,
+    exec_conf: ExcecutableConf,  database: Database,
     query: Query, test_mode = TestMode.PERFORMANCE):
         self.name = name
         self.conf_accur = accur_conf
@@ -123,6 +130,7 @@ class SystemTest(ABC):
         self.conf_log = log_conf
         self.conf_dump = dump_conf
         self.conf_decomp = decomp_conf
+        self.conf_exec = exec_conf
         self.database = database
         self.query = query
         self.test_mode = test_mode
@@ -174,8 +182,11 @@ class SystemTest(ABC):
 
         decomp_json = system_json["system"]["decomposition"]
         postprocessing = decomp_json.get("postprocessing", "thick")
-        logging.info(postprocessing)
         sparsity = decomp_json.get("sparsity", "dense")
+
+        executable_json = system_json["system"].get("executable", {})
+        interpreter = executable_json.get("interpreter", "")
+
 
 
         system_test = cls(
@@ -184,6 +195,7 @@ class SystemTest(ABC):
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision),
             DecompConf(postprocessing, sparsity),
+            ExcecutableConf(interpreter),
             database, query, test_mode,
             *args, **kwargs)
 

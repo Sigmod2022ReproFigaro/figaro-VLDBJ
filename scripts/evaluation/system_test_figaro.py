@@ -7,7 +7,7 @@ import json
 import logging
 from data_management.database import Database
 from data_management.query import Query
-from evaluation.system_test import DecompConf, DumpConf, LogConf, SystemTest
+from evaluation.system_test import DecompConf, DumpConf, ExcecutableConf, LogConf, SystemTest
 from evaluation.system_test import SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
@@ -15,10 +15,10 @@ from evaluation.system_test import PerformanceConf
 class SystemTestFigaro(SystemTest):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
             perf_conf: PerformanceConf, accur_conf: AccuracyConf,
-            decomp_conf: DecompConf, database: Database, query: Query,
-            test_mode, root_path: str, *args, **kwargs):
+            decomp_conf: DecompConf, exec_conf: ExcecutableConf, database: Database,
+            query: Query, test_mode, root_path: str, *args, **kwargs):
         super().__init__("FIGARO", log_conf, dump_conf, perf_conf,
-            accur_conf, decomp_conf, database, query, test_mode)
+            accur_conf, decomp_conf, exec_conf, database, query, test_mode)
         self.figaro_path = os.path.join(root_path, "figaro")
 
     def eval(self):

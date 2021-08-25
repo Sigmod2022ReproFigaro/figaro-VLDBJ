@@ -5,7 +5,7 @@ import json
 import logging
 from data_management.database import Database
 from data_management.query import Query
-from evaluation.system_test import DecompConf, DumpConf, LogConf, SystemTest
+from evaluation.system_test import DecompConf, DumpConf, ExcecutableConf, LogConf, SystemTest
 from evaluation.system_test import AccuracyConf
 from evaluation.system_test import PerformanceConf
 from evaluation.system_test_competitor import SystemTestCompetitor
@@ -13,10 +13,11 @@ from evaluation.system_test_competitor import SystemTestCompetitor
 class SystemTestPython(SystemTestCompetitor):
     def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
     perf_conf: PerformanceConf, accur_conf: AccuracyConf,
-    decomp_conf: DecompConf, database: Database,
+    decomp_conf: DecompConf, exec_conf: ExcecutableConf, database: Database,
     query: Query, test_mode: SystemTest.TestMode, root_path: str,
     **kwargs):
-        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, decomp_conf, database, query, test_mode)
+        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, decomp_conf,
+            exec_conf, database, query, test_mode)
         self.root_path = root_path
 
 
@@ -42,7 +43,9 @@ class SystemTestPython(SystemTestCompetitor):
 
         num_threads = query_num_threads if query_num_threads is not None else self.conf_perf.num_threads
 
-        args = ["python3", script_path, "--data_path", self.join_path,
+        logging.debug(self.conf_exec.interpreter_path)
+        args = [self.conf_exec.interpreter_path, script_path,
+                 "--data_path", self.join_path,
                 "--columns", *non_join_attr_names,
                 "--cat_columns", *non_join_cat_attr_names,
                 "--num_threads", str(num_threads)]

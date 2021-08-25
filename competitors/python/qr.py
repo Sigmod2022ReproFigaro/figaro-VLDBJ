@@ -66,6 +66,9 @@ if __name__ == "__main__":
     print (sys.argv[1:])
     #TODO: Add sparse argument
 
+    print(sys.executable)
+    np.show_config()
+
     args = parser.parse_args()
     data_path = args.data_path
     dump_file = args.dump_file
