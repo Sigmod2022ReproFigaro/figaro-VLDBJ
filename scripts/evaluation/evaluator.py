@@ -71,7 +71,7 @@ class SystemTestsEvaluator:
     def load_system_tests(self, system_tests_json, database: Database,
             query: Query):
         join_result_path = None
-        system_test_papers = []
+        dict_name_system_test_papers = {}
         batch_of_tests = []
         for system_test_json in system_tests_json:
             system_test_enabled = True
@@ -81,7 +81,7 @@ class SystemTestsEvaluator:
                 if system_test.is_dbms():
                     join_result_path = system_test.get_join_result_path()
                 if system_test.is_paper_algorithm():
-                    system_test_papers.append(system_test)
+                    dict_name_system_test_papers[system_test.name] = system_test
             else:
                 logging.error("TODO")
 
@@ -93,7 +93,7 @@ class SystemTestsEvaluator:
                 system_test.set_join_result_path(join_result_path)
 
             if not system_test.is_paper_algorithm():
-                system_test.set_paper_system_test(system_test_papers)
+                system_test.set_paper_system_test(list(dict_name_system_test_papers.values()))
 
         return batch_of_tests
 

@@ -4,46 +4,40 @@ import math
 import csv
 import os
 import pandas as pd
-
-def read_csv_as_list(path: str):
-    rows = None
-    #df = pd.read_csv(path, header=None)
-    #df.
-    with open(path, 'r') as csv_file:
-        csv_reader = csv.reader(csv_file)
-        rows = list(csv_reader)
-
-    return rows
-
+import numpy as np
 
 def compare_accuracy_r(figaro_path: str , competitor_path: str,
         accuracy_path: str, r_comp_file_path: str, errors_file_path: str,
-        precision: float, operation: str):
+        precision: float, operation: str, generate_xlsx: bool):
     abs_err = 0.0
     abs_err_comp = 0.0
     precision = math.pow(10, -precision)
-    comp_wb = AccuracyWorkbook(output_file=r_comp_file_path,
-                precision=precision, operation=operation)
 
-    figaro_rows = read_csv_as_list(figaro_path)
-    comp_rows = read_csv_as_list(competitor_path)
+    pd_figaro = pd.read_csv(figaro_path, header=None).astype(float)
+    pd_comp = pd.read_csv(competitor_path, header=None).astype(float)
+    np_figaro = pd_figaro.to_numpy()
+    np_comp = pd_comp.to_numpy()
+    num_rows_fig, num_cols_fig = np_figaro.shape
 
-    for row_idx, figaro_row in enumerate(figaro_rows):
-        for col_idx, figaro_col in enumerate(figaro_row):
-            figaro_val = float(figaro_col)
-            comp_val = float(comp_rows[row_idx][col_idx])
-            #print("figaro_val ", figaro_val, " comp_val", comp_val)
-            diff = figaro_val - comp_val
-            abs_err += diff * diff
-            abs_err_comp += comp_val * comp_val
-            comp_wb.save_entry(row_idx + 1, col_idx + 1, figaro_val, comp_val)
-    comp_wb.save()
+    if generate_xlsx:
+        comp_wb = AccuracyWorkbook(output_file=r_comp_file_path,
+                    precision=precision, operation=operation)
+        for row_idx in range(num_rows_fig):
+            for col_idx in range(num_cols_fig):
+                figaro_val = np_figaro[row_idx][col_idx]
+                comp_val = np_comp[row_idx][col_idx]
+                comp_wb.save_entry(row_idx + 1, col_idx + 1, figaro_val, comp_val)
+        comp_wb.save()
+
+    np_diff = np_figaro - np_comp
+    abs_err = np.linalg.norm(np_diff, ord='fro')
+    abs_err_comp  = np.linalg.norm(np_comp, ord='fro')
+    relative_frob_norm = abs_err / abs_err_comp
 
 
-    relative_frob_norm = math.sqrt(abs_err) / math.sqrt(abs_err_comp)
     with open(errors_file_path, 'w') as file_errors:
-        file_errors.write("Absolute error is: {}\n".format(math.sqrt(abs_err)))
-        file_errors.write("Frobenius norm of comp is: {}\n".format(math.sqrt(abs_err_comp)))
+        file_errors.write("Absolute error is: {}\n".format(abs_err))
+        file_errors.write("Frobenius norm of comp is: {}\n".format(abs_err_comp))
         file_errors.write("Relative error is: {}\n".format(relative_frob_norm))
 
     if relative_frob_norm > precision:

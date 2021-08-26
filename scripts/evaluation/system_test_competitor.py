@@ -40,6 +40,7 @@ class SystemTestCompetitor(SystemTest):
                 errors_file_path=errors_file_path,
                 accuracy_path=self.conf_accur.path,
                 precision=self.conf_accur.precision,
-                operation='qr')
+                operation='qr',
+                generate_xlsx=self.conf_accur.generate_xlsx)
 
 

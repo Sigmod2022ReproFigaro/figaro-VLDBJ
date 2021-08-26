@@ -31,11 +31,13 @@ class PerformanceConf:
 # Class that wraps precisions elements
 class AccuracyConf:
     def __init__(self, path: str, r_comp_file_path: str,
-                errors_file_path: str, precision: float):
+                errors_file_path: str, precision: float,
+                generate_xlsx: bool):
         self.path = path
         self.r_comp_file_path = r_comp_file_path
         self.errors_file_path = errors_file_path
         self.precision = precision
+        self.generate_xlsx = generate_xlsx
 
 
 class LogConf:
@@ -188,6 +190,7 @@ class SystemTest(ABC):
         path_r_comp_file =os.path.join(path_accuracy,
                             accuracy_json["r_comp_file"])
         precision = accuracy_json["precision"]
+        generate_xlsx = accuracy_json.get("generate_xlsx", True)
 
         decomp_json = system_json["system"]["decomposition"]
         postprocessing = decomp_json.get("postprocessing", "thin_diag")
@@ -203,7 +206,7 @@ class SystemTest(ABC):
             LogConf(log_path, log_file_path),
             DumpConf(path_dump, dump_file_path),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
-            AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision),
+            AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
             DecompConf(postprocessing, sparsity),
             ExcecutableConf(interpreter),
             database, query, test_mode,
