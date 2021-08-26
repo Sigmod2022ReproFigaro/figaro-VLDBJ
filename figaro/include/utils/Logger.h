@@ -13,6 +13,8 @@
 #define FIGARO_LOG_LEVEL FIGARO_LOG_LEVEL_BENCH
 #endif
 
+#pragma message "Figaro log level" FIGARO_LOG_LEVEL
+
 // Used to exclude assertions from the generated code
 #if FIGARO_LOG_LEVEL > FIGARO_LOG_LEVEL_DEBUG && ! defined(NDEBUG)
 #define NDEBUG

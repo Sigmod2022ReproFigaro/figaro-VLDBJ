@@ -37,8 +37,10 @@ namespace Figaro
     public:
         enum class QRGivensHintType
         {
-            THIN = 0,
-            THICK = 1
+            THIN_BOTTOM = 0,
+            THIN_DIAG = 1,
+            THICK_BOTTOM = 2,
+            THICK_DIAG = 3
         };
         Matrix(uint32_t numRows, uint32_t numCols)
         {
@@ -359,7 +361,38 @@ namespace Figaro
         }
 
 
-        void computeQRGivensSequentialBlock(
+        void computeQRGivensSequentialBlockBottom(
+            uint32_t rowBeginIdx,
+            uint32_t rowEndIdx,
+            uint32_t colBeginIdx,
+            uint32_t colEndIdx)
+        {
+            auto& matA = *this;
+            for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
+            {
+                for (uint32_t rowIdx = rowEndIdx;
+                    rowIdx > colIdx + rowBeginIdx; rowIdx--)
+                {
+                    double upperVal = matA[rowIdx - 1][colIdx];
+                    double lowerVal = matA[rowIdx][colIdx];
+                    double cos;
+                    double sin;
+                    double r;
+                    if (lowerVal == 0.0)
+                    {
+                        continue;
+                    }
+                    computeGivensRotation(upperVal, lowerVal, cos, sin, r);
+                    if (std::abs(r) > 0.0)
+                    {
+                        applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                    }
+                }
+            }
+        }
+
+
+        void computeQRGivensSequentialBlockDiag(
             uint32_t rowBeginIdx,
             uint32_t rowEndIdx,
             uint32_t colBeginIdx,
@@ -389,7 +422,80 @@ namespace Figaro
             }
         }
 
-        void computeQRGivensParallelBlock(
+
+        void computeQRGivensParallelBlockBottom(
+            uint32_t rowBeginIdx,
+            uint32_t rowEndIdx,
+            uint32_t colBeginIdx,
+            uint32_t colEndIdx,
+            uint32_t numThreads)
+        {
+            auto& matA = *this;
+            constexpr double epsilon = 0.0;
+            uint32_t rowStartIdx;
+            uint32_t numBatches;
+            uint32_t batchSize;
+            uint32_t numRows;
+            uint32_t numCols;
+
+            numRows = rowEndIdx - rowBeginIdx + 1;
+            numCols = colEndIdx - colBeginIdx + 1;
+            batchSize = numThreads;
+            omp_set_num_threads(numThreads);
+            // Ceil division
+            numBatches = (numCols + batchSize - 1) / batchSize;
+            // Needed for handling the case of fat tables (number of rows less than number of cols).
+            if (numRows >= numCols)
+            {
+                rowStartIdx = rowEndIdx;
+            }
+            else
+            {
+                rowStartIdx = colEndIdx;
+            }
+
+            for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
+            {
+                #pragma omp parallel
+                {
+                    uint32_t threadId;
+                    uint32_t colIdx;
+                    threadId = omp_get_thread_num();
+                    colIdx = colBeginIdx + batchIdx * batchSize + threadId;
+
+                    // Each thread will get equal number of rows to process.
+                    // Although some threads will do dummy processing in the begining
+                    for (uint32_t rowIdx = rowStartIdx + 2 * threadId; rowIdx > colIdx; rowIdx--)
+                    {
+                        if ((rowIdx <= rowEndIdx) && (colIdx <= colEndIdx) && (colIdx < rowEndIdx - 1))
+                        {
+                            double upperVal = matA[rowIdx - 1][colIdx];
+                            double lowerVal = matA[rowIdx][colIdx];
+                            double cos;
+                            double sin;
+                            double r;
+                            if (lowerVal != 0.0)
+                            {
+                                computeGivensRotation(upperVal, lowerVal, cos, sin, r);
+                                if (std::abs(r) > 0.0)
+                                {
+                                    applyGivens(rowIdx - 1, rowIdx, colIdx, sin, cos);
+                                }
+                            }
+
+                        }
+                        #pragma omp barrier
+                    }
+                    // Extra dummy loops needed for barier synchronization.
+                    for (uint32_t idx = 0; idx < batchSize - threadId - 1; idx++)
+                    {
+                        #pragma omp barrier
+                    }
+                }
+            }
+        }
+
+        void computeQRGivensParallelBlockDiag(
             uint32_t rowBeginIdx,
             uint32_t rowEndIdx,
             uint32_t colBeginIdx,
@@ -467,7 +573,7 @@ namespace Figaro
 
         void computeQRGivensSequential(void)
         {
-            computeQRGivensSequentialBlock(0, m_numRows - 1, 0, m_numCols - 1);
+            computeQRGivensSequentialBlock(0, m_numRows - 1, 0, m_numCols - 1, QRGivensHintType::THIN_DIAG);
         }
 
 
@@ -477,7 +583,8 @@ namespace Figaro
          * @param numThreads
          *
          */
-        void computeQRGivensParallelizedThinMatrix(uint32_t numThreads)
+        void computeQRGivensParallelizedThinMatrix(uint32_t numThreads,
+            QRGivensHintType qrType)
         {
             uint32_t blockSize;
             uint32_t numBlocks;
@@ -530,8 +637,16 @@ namespace Figaro
                 uint32_t rowBlockEndIdx;
                 rowBlockBeginIdx = vRowBlockBeginIdx[blockIdx];
                 rowBlockEndIdx = vRowBlockEndIdx[blockIdx];
-                computeQRGivensSequentialBlock(rowBlockBeginIdx, rowBlockEndIdx,
-                                               0, m_numCols - 1);
+                if (qrType == QRGivensHintType::THIN_BOTTOM)
+                {
+                    computeQRGivensSequentialBlockBottom(rowBlockBeginIdx,
+                        rowBlockEndIdx, 0, m_numCols - 1);
+                }
+                else if (qrType == QRGivensHintType::THIN_DIAG)
+                {
+                    computeQRGivensSequentialBlockDiag(rowBlockBeginIdx,
+                        rowBlockEndIdx, 0, m_numCols - 1);
+                }
             }
             MICRO_BENCH_STOP(qrGivensPar)
             FIGARO_LOG_BENCH("Time Parallel", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar))
@@ -556,7 +671,14 @@ namespace Figaro
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
 
-            computeQRGivensParallelBlock(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
+            if (qrType == QRGivensHintType::THIN_BOTTOM)
+            {
+                computeQRGivensParallelBlockBottom(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
+            }
+            else if (qrType == QRGivensHintType::THIN_DIAG)
+            {
+                computeQRGivensParallelBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
+            }
             //computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
@@ -567,9 +689,17 @@ namespace Figaro
         }
 
 
-        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads)
+        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, QRGivensHintType qrType)
         {
-            computeQRGivensParallelBlock(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
+            if (qrType == QRGivensHintType::THICK_DIAG)
+            {
+                computeQRGivensParallelBlockDiag(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
+
+            }
+            else if (qrType == QRGivensHintType::THICK_BOTTOM)
+            {
+                computeQRGivensParallelBlockBottom(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
+            }
             this->resize(std::min(m_numCols, m_numRows));
         }
 
@@ -578,7 +708,7 @@ namespace Figaro
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
-        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, QRGivensHintType qrTypeHint = QRGivensHintType::THICK)
+        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG)
         {
             QRGivensHintType qrType;
             if ((0 == m_numRows) || (0 == m_numCols))
@@ -594,23 +724,25 @@ namespace Figaro
             {
                 if (m_numCols > MIN_COLS_PAR)
                 {
-                    qrType = QRGivensHintType::THICK;
+                    qrType = QRGivensHintType::THICK_DIAG;
                 }
                 else
                 {
-                    qrType = QRGivensHintType::THIN;
+                    qrType = QRGivensHintType::THIN_DIAG;
                 }
             }
 
-            if (qrType == QRGivensHintType::THICK)
+            if ((qrType == QRGivensHintType::THICK_DIAG) ||
+                (qrType == QRGivensHintType::THICK_BOTTOM))
             {
                 FIGARO_LOG_INFO("Thick version")
-                computeQRGivensParallelizedThickMatrix(numThreads);
+                computeQRGivensParallelizedThickMatrix(numThreads, qrType);
             }
-            else if (qrType == QRGivensHintType::THIN)
+            else if ((qrType == QRGivensHintType::THIN_DIAG) ||
+                (qrType == QRGivensHintType::THIN_BOTTOM))
             {
                 FIGARO_LOG_INFO("Thin version")
-                computeQRGivensParallelizedThinMatrix(numThreads);
+                computeQRGivensParallelizedThinMatrix(numThreads, qrType);
             }
         }
 

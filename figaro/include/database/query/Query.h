@@ -32,7 +32,7 @@ namespace Figaro
          */
         void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
             bool evalSecondFigaroPass = true, bool evalPostProcess = true, uint32_t numResp = 1,
-            Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THICK);
+            Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG);
 
         void setDatabase(Database* pDatabase)
         {

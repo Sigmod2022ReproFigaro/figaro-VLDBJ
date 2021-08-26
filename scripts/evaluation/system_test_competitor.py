@@ -21,15 +21,25 @@ class SystemTestCompetitor(SystemTest):
 
 
     def run_accuracy(self):
-        system_test_paper_path = self.system_test_paper.conf_dump.file_path
-        competitor_path = self.conf_dump.file_path
+        for system_paper in self.system_test_papers:
+            system_test_paper_path = system_paper.conf_dump.file_path
+            competitor_path = self.conf_dump.file_path
 
-        compare_accuracy_r(figaro_path=system_test_paper_path,
-            competitor_path=competitor_path,
-            r_comp_file_path=self.conf_accur.r_comp_file_path,
-            errors_file_path=self.conf_accur.errors_file_path,
-            accuracy_path=self.conf_accur.path,
-            precision=self.conf_accur.precision,
-            operation='qr')
+            r_comp_file_path = self.conf_accur.r_comp_file_path
+            errors_file_path = self.conf_accur.errors_file_path
+
+            head_r, tail_r = os.path.split(r_comp_file_path)
+            r_comp_file_path = os.path.join(head_r, system_paper.name+tail_r)
+
+            head_e, tail_e = os.path.split(errors_file_path)
+            errors_file_path = os.path.join(head_e, system_paper.name+ tail_e)
+
+            compare_accuracy_r(figaro_path=system_test_paper_path,
+                competitor_path=competitor_path,
+                r_comp_file_path=r_comp_file_path,
+                errors_file_path=errors_file_path,
+                accuracy_path=self.conf_accur.path,
+                precision=self.conf_accur.precision,
+                operation='qr')
 
 

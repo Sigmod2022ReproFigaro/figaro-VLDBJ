@@ -11,7 +11,7 @@ function init_global_paths()
     FIGARO_PRECISION=14
     FIGARO_NUM_REPS=1
     FIGARO_NUM_THREADS=1
-    FIGARO_POSTPROCESS="THICK"
+    FIGARO_POSTPROCESS="THICK_DIAG"
 }
 
 function get_str_args()
@@ -84,7 +84,6 @@ function main()
     cd "${FIGARO_BUILD_PATH}"
     echo "TESTMODE ${FIGARO_TEST_MODE}"
     echo "POSTPROCESSING ${FIGARO_POSTPROCESS}"
-    echo "POSTPROCESSING ${FIGARO_LOG_FILE_PATH}"
     if [[ $FIGARO_TEST_MODE == DEBUG ]]; then
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_DEBUG=ON
     elif [[ $FIGARO_TEST_MODE == INFO ]]; then

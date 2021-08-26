@@ -11,13 +11,13 @@ from evaluation.custom_logging import add_logging_file_handler, remove_logging_f
 
 
 class SystemTestPandas(SystemTestDBMS):
-    def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
+    def __init__(self, name: str, log_conf: LogConf, dump_conf: DumpConf,
             perf_conf: PerformanceConf, accur_conf: AccuracyConf,
             decomp_conf: DecompConf, exec_conf: ExcecutableConf,
             database: Database, query: Query,
             test_mode: SystemTest.TestMode,
             username: str, password: str, **kwargs):
-        super().__init__("PSQL", log_conf=log_conf, dump_conf=dump_conf,
+        super().__init__(name, log_conf=log_conf, dump_conf=dump_conf,
                     perf_conf=perf_conf, accur_conf = accur_conf,
                     decomp_conf = decomp_conf, exec_conf = exec_conf,
                     database = database, query= query,

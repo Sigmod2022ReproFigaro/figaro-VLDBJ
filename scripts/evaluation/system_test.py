@@ -52,21 +52,28 @@ class DumpConf:
 
 class DecompConf:
     class PostprocessingMode(IntEnum):
-        THIN = 1
-        THICK = 2
+        THIN_BOTTOM = 1
+        THIN_DIAG = 2
+        THICK_BOTTOM = 3
+        THICK_DIAG = 4
 
     class SparsityMode(IntEnum):
         SPARSE = 1
         DENSE = 2
 
 
-    map_postp_mode_to_str = {PostprocessingMode.THIN : "THIN",
-        PostprocessingMode.THICK: "THICK",
+    map_postp_mode_to_str = {
+        PostprocessingMode.THIN_BOTTOM : "THIN_BOTTOM",
+        PostprocessingMode.THIN_DIAG : "THIN_DIAG",
+        PostprocessingMode.THICK_BOTTOM: "THICK_BOTTOM",
+        PostprocessingMode.THICK_DIAG: "THICK_DIAG",
     }
 
     map_postprocessing_to_enum = {
-        'thick': PostprocessingMode.THICK,
-        'thin': PostprocessingMode.THIN
+        'thick_bottom': PostprocessingMode.THICK_BOTTOM,
+        'thick_diag': PostprocessingMode.THICK_DIAG,
+        'thin_bottom': PostprocessingMode.THIN_BOTTOM,
+        'thin_diag': PostprocessingMode.THIN_DIAG
         }
 
     map_sparsity_to_enum = {
@@ -134,7 +141,7 @@ class SystemTest(ABC):
         self.database = database
         self.query = query
         self.test_mode = test_mode
-        self.system_test_paper = None
+        self.system_test_papers = []
 
 
     @staticmethod
@@ -152,6 +159,8 @@ class SystemTest(ABC):
         database: Database, query: Query, test_mode: TestMode, *args, **kwargs):
         with open(system_test_specs_path) as json_file:
             system_json = json.load(json_file)
+
+        name = system_json["system"]["name"]
 
         #TODO: Refactor to remove unnecessary clutter.
         log_json = system_json["system"]["log"]
@@ -181,7 +190,7 @@ class SystemTest(ABC):
         precision = accuracy_json["precision"]
 
         decomp_json = system_json["system"]["decomposition"]
-        postprocessing = decomp_json.get("postprocessing", "thick")
+        postprocessing = decomp_json.get("postprocessing", "thin_diag")
         sparsity = decomp_json.get("sparsity", "dense")
 
         executable_json = system_json["system"].get("executable", {})
@@ -190,6 +199,7 @@ class SystemTest(ABC):
 
 
         system_test = cls(
+            name,
             LogConf(log_path, log_file_path),
             DumpConf(path_dump, dump_file_path),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
@@ -290,8 +300,8 @@ class SystemTest(ABC):
         return False
 
 
-    def set_paper_system_test(self, system_test_paper):
-        self.system_test_paper = system_test_paper
+    def set_paper_system_test(self, system_test_papers: list):
+        self.system_test_papers = system_test_papers
 
 
     def delete_content_of_dir(self, dir):

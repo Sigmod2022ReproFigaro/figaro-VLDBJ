@@ -13,3 +13,6 @@ venv.bak/
 log.txt
 figaro/tests_backup/*
 system_tests_backup/*
+scripts/run-env/*
+scripts/run-env-mkl/*
+scripts/run-env-openblas/*

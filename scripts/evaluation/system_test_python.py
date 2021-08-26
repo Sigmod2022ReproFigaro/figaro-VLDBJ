@@ -11,12 +11,12 @@ from evaluation.system_test import PerformanceConf
 from evaluation.system_test_competitor import SystemTestCompetitor
 
 class SystemTestPython(SystemTestCompetitor):
-    def __init__(self, log_conf: LogConf, dump_conf: DumpConf,
+    def __init__(self, name: str, log_conf: LogConf, dump_conf: DumpConf,
     perf_conf: PerformanceConf, accur_conf: AccuracyConf,
     decomp_conf: DecompConf, exec_conf: ExcecutableConf, database: Database,
     query: Query, test_mode: SystemTest.TestMode, root_path: str,
     **kwargs):
-        super().__init__("PYTHON", log_conf, dump_conf, perf_conf, accur_conf, decomp_conf,
+        super().__init__(name, log_conf, dump_conf, perf_conf, accur_conf, decomp_conf,
             exec_conf, database, query, test_mode)
         self.root_path = root_path
 

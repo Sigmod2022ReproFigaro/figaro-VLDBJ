@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     std::string postprocessMode;
     std::string queryConfigPath;
 
-    Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THICK;
+    Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG;
     bool dump = false;
     uint32_t precision;
     uint32_t numRepetitions = 1;
@@ -74,13 +74,21 @@ int main(int argc, char *argv[])
     if (vm.count("postprocess"))
     {
         postprocessMode = vm["postprocess"].as<std::string>();
-        if (postprocessMode == "THIN")
+        if (postprocessMode == "THIN_BOTTOM")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::THIN;
+            qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_BOTTOM;
         }
-        else if (postprocessMode == "THICK")
+        else if (postprocessMode == "THIN_DIAG")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::THICK;
+            qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG;
+        }
+        else if (postprocessMode == "THICK_BOTTOM")
+        {
+            qrHintType = Figaro::MatrixD::QRGivensHintType::THICK_BOTTOM;
+        }
+         else if (postprocessMode == "THICK_DIAG")
+        {
+            qrHintType = Figaro::MatrixD::QRGivensHintType::THICK_DIAG;
         }
         FIGARO_LOG_INFO("postprocessMode", postprocessMode)
     }
