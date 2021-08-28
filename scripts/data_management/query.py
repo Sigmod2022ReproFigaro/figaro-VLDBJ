@@ -84,7 +84,7 @@ class Query:
             json_eval_hint = json_query["evaluation_hint"]
             # TODO: Compute Change order of schema
             self.relation_order = json_eval_hint["relation_order"]
-            self.num_threads = json_query.get("num_threads", None)
+            self.num_threads = json_eval_hint.get("num_threads", None)
             self.skip_attrs = json_eval_hint.get(
                 "skip_attributes", [])
 
