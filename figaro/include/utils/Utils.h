@@ -16,6 +16,7 @@ namespace Figaro
 {
     typedef nlohmann::json json;
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixEigenT;
+    typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixEigenTR;
     typedef Eigen::VectorXd VectorT;
     typedef Eigen::ArrayXd ArrayT;
 

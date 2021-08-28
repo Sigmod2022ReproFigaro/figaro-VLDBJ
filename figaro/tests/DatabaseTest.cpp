@@ -703,3 +703,40 @@ TEST(DatabaseConfig, FigaroQR)
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery(true, true, true, true);
 }
+
+TEST(Matrix, QRLAPACK)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 4;
+    Figaro::MatrixD matrix(NUM_ROWS, NUM_COLS);
+
+    EXPECT_EQ(matrix.getNumRows(), NUM_ROWS);
+    EXPECT_EQ(matrix.getNumCols(), NUM_COLS);
+    matrix[0][0] = 0.421761282626275;
+    matrix[0][1] = 0.0357116785741896;
+    matrix[0][2] = 0.743132468124916;
+    matrix[0][3] = 0.0318328463774207;
+
+    matrix[1][0] = 0.915735525189067;
+    matrix[1][1] = 0.849129305868777;
+    matrix[1][2] = 0.392227019534168;
+    matrix[1][3] = 0.276922984960890;
+
+    matrix[2][0] = 0.792207329559554;
+    matrix[2][1] = 0.933993247757551;
+    matrix[2][2] = 0.655477890177557;
+    matrix[2][3] = 0.0461713906311539;
+
+    matrix[3][0] = 0.959492426392903;
+    matrix[3][1] = 0.678735154857774;
+    matrix[3][2] = 0.171186687811562;
+    matrix[3][3] = 0.0971317812358475;
+
+    matrix[4][0] = 0.655740699156587;
+    matrix[4][1] = 0.757740130578333;
+    matrix[4][2] = 0.706046088019609;
+    matrix[4][3] = 0.823457828327293;
+
+    matrix.computeQRGivens(1, true, Figaro::MatrixD::QRGivensHintType::LAPACK);
+    FIGARO_LOG_DBG(matrix)
+
+}

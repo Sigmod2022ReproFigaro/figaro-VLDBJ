@@ -86,9 +86,13 @@ int main(int argc, char *argv[])
         {
             qrHintType = Figaro::MatrixD::QRGivensHintType::THICK_BOTTOM;
         }
-         else if (postprocessMode == "THICK_DIAG")
+        else if (postprocessMode == "THICK_DIAG")
         {
             qrHintType = Figaro::MatrixD::QRGivensHintType::THICK_DIAG;
+        }
+        else if (postprocessMode == "LAPACK")
+        {
+            qrHintType = Figaro::MatrixD::QRGivensHintType::LAPACK;
         }
         FIGARO_LOG_INFO("postprocessMode", postprocessMode)
     }
@@ -105,7 +109,7 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
-    query.evaluateQuery(true, true, true, true, numRepetitions, qrHintType);
+    query.evaluateQuery(true, true, true, true, numRepetitions, qrHintType, dump);
 
     if (dump)
     {
