@@ -136,12 +136,12 @@ namespace Figaro
     }
 
      void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType)
+        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
      {
          // Create visitor
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess,qrHintType, &m_matResult);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess,qrHintType, &m_matResult, saveResult);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
         MICRO_BENCH_INIT(attrComp)

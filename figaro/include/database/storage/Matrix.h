@@ -1,6 +1,7 @@
 #ifndef _FIGARO_MATRIX_H_
 #define _FIGARO_MATRIX_H_
 
+#include "utils/Logger.h"
 #include "ArrayStorage.h"
 #include "utils/Performance.h"
 #include <boost/math/special_functions/sign.hpp>
@@ -40,7 +41,8 @@ namespace Figaro
             THIN_BOTTOM = 0,
             THIN_DIAG = 1,
             THICK_BOTTOM = 2,
-            THICK_DIAG = 3
+            THICK_DIAG = 3,
+            LAPACK = 4
         };
         Matrix(uint32_t numRows, uint32_t numCols)
         {
@@ -684,6 +686,7 @@ namespace Figaro
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
             FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
             this->resize(numRedEndRows);
+            FIGARO_LOG_INFO("After processing", matA)
             MICRO_BENCH_STOP(qrGivensPar2)
             FIGARO_LOG_BENCH("Time sequential", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
         }
@@ -703,6 +706,40 @@ namespace Figaro
             this->resize(std::min(m_numCols, m_numRows));
         }
 
+        void computeQRGivensParallelizedLaPack(void)
+        {
+            Eigen::HouseholderQR<MatrixEigenT> qr{};
+            MatrixEigenT matEigen;
+            MatrixEigenT R;
+            auto& matA = *this;
+            uint32_t rowNumR = std::min(getNumRows(), getNumCols());
+
+            matEigen.resize(getNumRows(), getNumCols());
+            for (uint32_t rowIdx = 0; rowIdx < getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                {
+                    matEigen(rowIdx, colIdx) = matA[rowIdx][colIdx];
+                }
+            }
+            FIGARO_LOG_INFO("Succesful copying to LAPACK", rowNumR, m_numCols)
+            qr.compute(matEigen);
+            R = qr.matrixQR().topLeftCorner(m_numCols, m_numCols).triangularView<Eigen::Upper>();
+            FIGARO_LOG_INFO("Succesful extracting of R")
+            matA.resize(rowNumR);
+
+            for (uint32_t rowIdx = 0; rowIdx < rowNumR; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                {
+                    matA[rowIdx][colIdx] = R(rowIdx, colIdx);
+                }
+            }
+            FIGARO_LOG_INFO("Mat R", R)
+            FIGARO_LOG_INFO("Mat A", matA)
+            FIGARO_LOG_INFO("Succesful copying of R back")
+        }
+
         /**
          * @brief Computes in-place upper triangular R in QR decomposition for the current matrix.
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
@@ -715,8 +752,11 @@ namespace Figaro
             {
                 return;
             }
-
-            if (useHint)
+            if (m_numCols > m_numRows)
+            {
+                 qrType = QRGivensHintType::THIN_DIAG;
+            }
+            else if (useHint)
             {
                 qrType = qrTypeHint;
             }
@@ -744,6 +784,11 @@ namespace Figaro
                 FIGARO_LOG_INFO("Thin version")
                 computeQRGivensParallelizedThinMatrix(numThreads, qrType);
             }
+            else if (qrType == QRGivensHintType::LAPACK)
+            {
+                FIGARO_LOG_INFO("Lapack")
+                computeQRGivensParallelizedLaPack();
+            }
         }
 
         void makeDiagonalElementsPositiveInR(void)
@@ -752,7 +797,7 @@ namespace Figaro
             uint32_t rowEnd = std::min(m_numRows, m_numCols);
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
-                uint32_t signDiag;
+                double signDiag;
                 signDiag = boost::math::sign(matA[rowIdx][rowIdx]);
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
