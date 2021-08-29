@@ -1,11 +1,13 @@
 import sys
 import numpy as np
 import pandas as pd
+from ctypes import CDLL
 from  argparse import ArgumentParser
 from timeit import default_timer as timer
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
+import threadpoolctl
 from threadpoolctl import threadpool_limits
 
 class DummyEncoder(BaseEstimator, TransformerMixin):
@@ -97,11 +99,28 @@ if __name__ == "__main__":
 
     #print(data)
     for i in range(num_reps):
-        start = timer()
+        #mkl = CDLL('/local/scratch/local/intel/mkl/2021.2.0/lib/intel64/libmkl_rt.so')
+        #print(mkl.MKL_Get_Max_Threads())
+        #mkl.MKL_Set_Dynamic(1)
+        #mkl.MKL_Set_Num_Threads(48)
+        #print(mkl.MKL_Get_Max_Threads())
+
+        #start = timer()
+        #r = np.linalg.qr(data, mode='r')
+        #end = timer()
+        #print("##Figaro####computation##{}".format(end - start))
+
+
+        #print(mkl.MKL_Get_Max_Threads())
+        #mkl.MKL_Set_Dynamic(0)
+        #mkl.MKL_Set_Num_Threads(48)
+        #print(mkl.MKL_Get_Max_Threads())
+
         with threadpool_limits(limits=num_threads, user_api='blas'):
+            start = timer()
             r = np.linalg.qr(data, mode='r')
-        end = timer()
-        print("##Figaro####computation##{}".format(end - start))
+            end = timer()
+            print("##Figaro####computation##{}".format(end - start))
 
     if dump_file is not None:
         r = make_diagonal_positive(r)
