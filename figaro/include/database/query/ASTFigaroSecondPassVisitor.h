@@ -14,10 +14,16 @@ namespace Figaro
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase,
-            bool postProcess, MatrixD::QRGivensHintType qrHintType, MatrixEigenT* pResult):
+            bool postProcess, MatrixD::QRGivensHintType qrHintType, MatrixEigenT* pResult,
+                bool saveResult):
                 ASTQRVisitor(pDatabase),
                 m_postProcess(postProcess), m_pResult(pResult),
-                 m_qrHintType(qrHintType) {}
+                 m_qrHintType(qrHintType) {
+                     if (!saveResult)
+                     {
+                         m_pResult = nullptr;
+                     }
+                 }
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;

@@ -58,6 +58,7 @@ class DecompConf:
         THIN_DIAG = 2
         THICK_BOTTOM = 3
         THICK_DIAG = 4
+        LAPACK = 5
 
     class SparsityMode(IntEnum):
         SPARSE = 1
@@ -69,13 +70,16 @@ class DecompConf:
         PostprocessingMode.THIN_DIAG : "THIN_DIAG",
         PostprocessingMode.THICK_BOTTOM: "THICK_BOTTOM",
         PostprocessingMode.THICK_DIAG: "THICK_DIAG",
+        PostprocessingMode.LAPACK: "LAPACK",
     }
 
     map_postprocessing_to_enum = {
         'thick_bottom': PostprocessingMode.THICK_BOTTOM,
         'thick_diag': PostprocessingMode.THICK_DIAG,
         'thin_bottom': PostprocessingMode.THIN_BOTTOM,
-        'thin_diag': PostprocessingMode.THIN_DIAG
+        'thin_diag': PostprocessingMode.THIN_DIAG,
+        'lapack': PostprocessingMode.LAPACK,
+
         }
 
     map_sparsity_to_enum = {

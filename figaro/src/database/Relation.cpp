@@ -1913,7 +1913,7 @@ namespace Figaro
         MICRO_BENCH_START(eigen)
         //copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
         //qr.compute(matEigen);
-        catGenHeadAndTails.computeQRGivens(getNumberOfThreads());
+        catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
         MICRO_BENCH_STOP(eigen)
         FIGARO_LOG_INFO("Extracting R from eigen")
         /*
@@ -1929,11 +1929,13 @@ namespace Figaro
             //appendZeroRows(*pR, totalNumCols - minNumRows);
         }
         FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));
-        FIGARO_LOG_DBG(*pR);
         if (nullptr != pR)
         {
+            FIGARO_LOG_INFO("R Final Before", catGenHeadAndTails)
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
+            FIGARO_LOG_INFO("R Final Before 2", catGenHeadAndTails)
             copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
+            FIGARO_LOG_INFO("R Final after ", *pR)
         }
     }
 

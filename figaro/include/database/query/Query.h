@@ -14,6 +14,7 @@ namespace Figaro
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr;
         MatrixEigenT m_matResult;
+        bool m_saveResult;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
@@ -32,7 +33,7 @@ namespace Figaro
          */
         void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
             bool evalSecondFigaroPass = true, bool evalPostProcess = true, uint32_t numResp = 1,
-            Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG);
+            Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG, bool saveResult = false);
 
         void setDatabase(Database* pDatabase)
         {
