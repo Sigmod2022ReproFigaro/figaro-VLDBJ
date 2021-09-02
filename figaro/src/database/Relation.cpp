@@ -13,6 +13,7 @@
 #include <omp.h>
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_hash_map.h>
+#include <tbb/parallel_sort.h>
 
 
 // Structure that defines hashing and comparison operations for user's type.
@@ -297,6 +298,7 @@ namespace Figaro
         {
             vRowPts[rowIdx] = m_data[rowIdx];
         }
+        /*
         std::sort(std::execution::par_unseq,
                   vRowPts.begin(),
                   vRowPts.end(),
@@ -312,7 +314,22 @@ namespace Figaro
                       }
                       return false;
                   });
-
+        */
+        tbb::parallel_sort(
+                  vRowPts.begin(),
+                  vRowPts.end(),
+                  [&vAttributesIdxs]
+                  (const double* row1, const double* row2)
+                  {
+                      for (const auto& vAttributesIdx: vAttributesIdxs)
+                      {
+                        if (row1[vAttributesIdx] != row2[vAttributesIdx])
+                        {
+                            return row1[vAttributesIdx] < row2[vAttributesIdx];
+                        }
+                      }
+                      return false;
+                  });
         for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
         {
             for (uint32_t colIdx = 0; colIdx < numCols; colIdx++)
@@ -1757,6 +1774,24 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "QR Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
     }
 
+
+    void Relation::computeQROfGeneralizedHead(
+        const std::vector<Relation*>& vpRels,
+        MatrixD::QRGivensHintType qrHintType)
+    {
+        uint32_t totalNumCols;
+        uint32_t numRels;
+
+        totalNumCols = 0;
+        numRels = vpRels.size();
+
+        for (uint32_t idx = 0; idx < numRels; idx++)
+        {
+            totalNumCols += vpRels[idx]->m_dataTails.getNumCols();
+        }
+        computeQROfGeneralizedHead(totalNumCols, qrHintType);
+    }
+
     void Relation::computeQROfTail(MatrixD::QRGivensHintType qrHintType)
     {
         FIGARO_LOG_INFO("QR Tail", m_name, m_dataTails.getNumRows(), m_dataTails.getNumCols())
@@ -1779,7 +1814,6 @@ namespace Figaro
         MICRO_BENCH_STOP(qrGenTail)
         FIGARO_LOG_BENCH("Figaro", "Generalized Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }
-
 
     void Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
@@ -1807,11 +1841,7 @@ namespace Figaro
                     vpRels[idx-1]->m_dataTails.getNumCols();
         }
         totalNumCols = vLeftCumNumNonJoinAttrs[numRels];
-
-        // TODO: Move this to database class
-        computeQROfGeneralizedHead(totalNumCols, qrHintType);
         vCumNumRowsUp[0] = m_dataHead.getNumRows();
-        FIGARO_LOG_DBG("vCumNumRowsUp[0]", vCumNumRowsUp[0])
         for (uint32_t idx = 1; idx < vCumNumRowsUp.size(); idx++)
         {
             vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
@@ -1830,8 +1860,6 @@ namespace Figaro
                 catGenHeadAndTails[rowIdx][colIdx] = m_dataHead[rowIdx][colIdx];
             }
         }
-
-        FIGARO_LOG_DBG("m_dataHead",  m_dataHead)
 
         FIGARO_LOG_INFO("Number of rows in generalized head", m_dataHead.getNumRows())
         FIGARO_LOG_INFO("Number of cols in generalized head", m_dataHead.getNumCols())

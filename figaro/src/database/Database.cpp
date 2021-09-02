@@ -244,6 +244,7 @@ namespace Figaro
             pRel->computeQROfGeneralizedTail(qrHintType);
         }
         pRootRel = vpRels[0];
+        pRootRel->computeQROfGeneralizedHead(vpRels, qrHintType);
         pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, pR);
     }
 

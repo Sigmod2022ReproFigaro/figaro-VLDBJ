@@ -420,6 +420,10 @@ namespace Figaro
         void computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
             MatrixD::QRGivensHintType qrTypeHint);
 
+        void computeQROfGeneralizedHead(
+            const std::vector<Relation*>& vpRels,
+            MatrixD::QRGivensHintType qrHintType);
+
         void computeQROfTail(MatrixD::QRGivensHintType qrHintType);
 
         void computeQROfGeneralizedTail(MatrixD::QRGivensHintType qrHintType);
