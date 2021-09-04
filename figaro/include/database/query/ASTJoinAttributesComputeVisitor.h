@@ -14,6 +14,7 @@ namespace Figaro
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        void visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
 
         virtual ~ASTJoinAttributesComputeVisitor() override {}
 

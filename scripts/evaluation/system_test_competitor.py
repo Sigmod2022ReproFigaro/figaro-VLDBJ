@@ -20,6 +20,10 @@ class SystemTestCompetitor(SystemTest):
         return False
 
 
+    def set_join_result_path(self, join_path):
+        self.join_path = join_path
+
+
     def run_accuracy(self):
         for system_paper in self.system_test_papers:
             system_test_paper_path = system_paper.conf_dump.file_path

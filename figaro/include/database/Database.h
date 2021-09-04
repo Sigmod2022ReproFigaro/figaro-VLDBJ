@@ -101,6 +101,12 @@ namespace Figaro
             MatrixEigenT* pR);
 
 
+        void evalPostprocessing(
+            const std::string& relName,
+            MatrixD::QRGivensHintType qrHintType,
+            MatrixEigenT* pR);
+
+
         const Relation::MatrixDT& getHead(const std::string& relationName) const;
 
         const Relation::MatrixDT& getTail(const std::string& relationName) const;

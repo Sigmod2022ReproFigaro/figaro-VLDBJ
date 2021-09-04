@@ -11,6 +11,7 @@ namespace Figaro
         ASTQRVisitor(Database* pDatabase):
             ASTVisitor(pDatabase)
          {}
+        virtual void visitNodePostProcQR(ASTNodePostProcQR* pElement) override {}
         virtual ~ASTQRVisitor() override {}
 
 

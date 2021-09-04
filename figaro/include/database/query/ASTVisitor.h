@@ -4,6 +4,7 @@
 #include "ASTNode.h"
 #include "ASTNodeJoin.h"
 #include "ASTNodeQRGivens.h"
+#include "ASTNodePostProcQR.h"
 #include "ASTNodeRelation.h"
 #include "database/Database.h"
 
@@ -20,6 +21,7 @@ namespace Figaro
         virtual void visitNodeRelation(ASTNodeRelation* pElement) = 0;
         virtual void visitNodeJoin(ASTNodeJoin* pElement) = 0;
         virtual void visitNodeQRGivens(ASTNodeQRGivens* pElement) = 0;
+        virtual void visitNodePostProcQR(ASTNodePostProcQR* pElement) = 0;
 
         virtual ~ASTVisitor() {}
     };

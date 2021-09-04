@@ -4,6 +4,7 @@
 #include "database/query/ASTComputeDownCountsVisitor.h"
 #include "database/query/ASTFigaroFirstPassVisitor.h"
 #include "database/query/ASTFigaroSecondPassVisitor.h"
+#include "database/query/ASTPostProcQRVisitor.h"
 #include "utils/Performance.h"
 #include "database/storage/Matrix.h"
 #include <fstream>
@@ -25,7 +26,8 @@ namespace Figaro
         std::string operatorName = jsonQueryConfig["operator"];
         ASTNode* pCreatedNode = nullptr;
         // TODO: Replace with factory pattern.
-        if (operatorName == "GIV_QR")
+        // TODO: Rename GIV_QR with FIGARO_QR
+        if ((operatorName == "GIV_QR") || (operatorName == "POSTPROCESS_QR"))
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -55,9 +57,18 @@ namespace Figaro
             }
 
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
-            pCreatedNode = new ASTNodeQRGivens(
+            if (operatorName == "GIV_QR")
+            {
+                pCreatedNode = new ASTNodeQRGivens(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
-            FIGARO_LOG_DBG("GIV_QR")
+                FIGARO_LOG_INFO("CREATE GIV_QR NODE")
+            }
+            else
+            {
+                pCreatedNode = new ASTNodePostProcQR(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
+            }
         }
         else if (operatorName == "natural_join")
         {
@@ -76,7 +87,7 @@ namespace Figaro
             {
                 pChild->setParent((ASTNodeAbsRelation*)pCreatedNode);
             }
-            FIGARO_LOG_DBG("JOIN")
+            FIGARO_LOG_INFO("CREATE JOIN NODE")
         }
         else if (operatorName == "relation")
         {
@@ -96,7 +107,7 @@ namespace Figaro
             pCreatedNode = new ASTNodeRelation(relationName, vAttrNames);
             m_mRelNameASTNodeRel[relationName] = (ASTNodeRelation*)pCreatedNode;
             m_pDatabase->updateSchemaOfRelation(relationName, vAttrNames);
-            FIGARO_LOG_DBG("RELATION", relationName)
+            FIGARO_LOG_INFO("CREATE RELATION NODE", relationName)
         }
 
         return pCreatedNode;
@@ -135,9 +146,9 @@ namespace Figaro
         return errorCode;
     }
 
-     void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
+    void Query::evaluateQueryFigaro(bool evalCounts, bool evalFirstFigaroPass,
         bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
-     {
+    {
          // Create visitor
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
@@ -154,6 +165,8 @@ namespace Figaro
         m_pASTRoot->accept(&joinAttrVisitor);
         MICRO_BENCH_STOP(attrComp)
         FIGARO_LOG_BENCH("Figaro", "attribute comp",  MICRO_BENCH_GET_TIMER_LAP(attrComp));
+
+        // If postprocess, apply computeQRGivens to the corresponding database
         for (uint32_t rep = 0; rep < numReps; rep++)
         {
             m_pDatabase->resetComputations();
@@ -189,5 +202,37 @@ namespace Figaro
             MICRO_BENCH_STOP(main)
             FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
         }
+    }
+
+    void Query::evaluateQueryPostprocess(uint32_t numReps,
+            Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
+    {
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
+        ASTPostProcQRVisitor postpProcQRVisitor(m_pDatabase, qrHintType,
+                                                &m_matResult, saveResult);
+
+        m_pASTRoot->accept(&joinAttrVisitor);
+        FIGARO_LOG_INFO("Finished joinAttrVisitor")
+        for (uint32_t rep = 0; rep < numReps; rep++)
+        {
+            MICRO_BENCH_INIT(main)
+            MICRO_BENCH_START(main)
+            m_pASTRoot->accept(&postpProcQRVisitor);
+            MICRO_BENCH_STOP(main)
+            FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
+        }
+    }
+
+     void Query::evaluateQuery(bool isPureFigaro, bool evalCounts, bool evalFirstFigaroPass,
+        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
+     {
+         if (isPureFigaro)
+         {
+             evaluateQueryFigaro(evalCounts, evalFirstFigaroPass, evalSecondFigaroPass, evalPostProcess, numReps, qrHintType, saveResult);
+         }
+         else
+         {
+             evaluateQueryPostprocess(numReps, qrHintType, saveResult);
+         }
      }
 }

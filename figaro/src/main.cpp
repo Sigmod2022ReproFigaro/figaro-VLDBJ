@@ -19,6 +19,7 @@ void initGlobalState(uint32_t numThreads = 48)
 
 int main(int argc, char *argv[])
 {
+    std::string implementation;
     std::string dumpFilePath;
     std::string dbConfigPath;
     std::string postprocessMode;
@@ -26,6 +27,7 @@ int main(int argc, char *argv[])
 
     Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG;
     bool dump = false;
+    bool pureFigaro;
     uint32_t precision;
     uint32_t numRepetitions = 1;
     uint32_t numThreads = 1;
@@ -35,12 +37,12 @@ int main(int argc, char *argv[])
     {
         strArgs += argv[idx] + std::string(" ");
     }
-
     FIGARO_LOG_INFO("Command line args", strArgs)
 
     po::options_description desc("figaro - allowed options");
     desc.add_options()
     ("help", "produce help message")
+    ("implementation", po::value<std::string>(&implementation))
     ("dump_file_path", po::value<std::string>(&dumpFilePath))
     ("db_config_path", po::value<std::string>(&dbConfigPath))
     ("query_config_path", po::value<std::string>(&queryConfigPath))
@@ -97,6 +99,19 @@ int main(int argc, char *argv[])
         FIGARO_LOG_INFO("postprocessMode", postprocessMode)
     }
 
+    if (vm.count("implementation"))
+    {
+        implementation = vm["implementation"].as<std::string>();
+        if (implementation == "figaro")
+        {
+            pureFigaro = true;
+        }
+        else if (implementation == "postprocess")
+        {
+            pureFigaro = false;
+        }
+    }
+
     dbConfigPath = vm["db_config_path"].as<std::string>();
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
@@ -109,7 +124,7 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
-    query.evaluateQuery(true, true, true, true, numRepetitions, qrHintType, dump);
+    query.evaluateQuery(pureFigaro, true, true, true, true, numRepetitions, qrHintType, dump);
 
     if (dump)
     {

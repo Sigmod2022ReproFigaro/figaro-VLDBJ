@@ -12,6 +12,7 @@ function init_global_paths()
     FIGARO_NUM_REPS=1
     FIGARO_NUM_THREADS=1
     FIGARO_POSTPROCESS="THICK_DIAG"
+    FIGARO_IMPLEMENTATION="FIGARO"
 }
 
 function get_str_args()
@@ -24,7 +25,10 @@ function get_str_args()
             EXTENSION="${option#*=}"
             init_global_paths $EXTENSION
         ;;
-
+        -i=*|--implementation=*)
+            EXTENSION="${option#*=}"
+            FIGARO_IMPLEMENTATION="${EXTENSION}"
+        ;;
         -l=*|--log_file_path=*)
             EXTENSION="${option#*=}"
             FIGARO_LOG_FILE_PATH="${EXTENSION}"
@@ -83,7 +87,6 @@ function main()
     echo "$@"
     cd "${FIGARO_BUILD_PATH}"
     echo "TESTMODE ${FIGARO_TEST_MODE}"
-    echo "POSTPROCESSING ${FIGARO_POSTPROCESS}"
     if [[ $FIGARO_TEST_MODE == DEBUG ]]; then
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_DEBUG=ON
     elif [[ $FIGARO_TEST_MODE == INFO ]]; then
@@ -101,20 +104,21 @@ function main()
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
         --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
         --precision "${FIGARO_PRECISION}" \
-        --num_threads "${FIGARO_NUM_THREADS}" \
-        --postprocess "${FIGARO_POSTPROCESS}" > "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
+        --postprocess "${FIGARO_POSTPROCESS}" \
+        > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
             --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" \
-            --num_threads "${FIGARO_NUM_THREADS}" \
+            --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
             --postprocess "${FIGARO_POSTPROCESS}" \
-            >  "${FIGARO_LOG_FILE_PATH}"  2>&1;
+            > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PERFORMANCE")
         ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
         --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}" \
-        --num_threads "${FIGARO_NUM_THREADS}" \
+        --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
         --postprocess "${FIGARO_POSTPROCESS}" >> \
          "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
