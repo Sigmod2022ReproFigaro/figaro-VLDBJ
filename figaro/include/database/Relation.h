@@ -435,6 +435,9 @@ namespace Figaro
             MatrixD::QRGivensHintType qrHintType,
             MatrixEigenT* pR);
 
+        void computeQR(MatrixD::QRGivensHintType qrHintType,
+            MatrixEigenT* pR);
+
         /**
          *  Returns computed head for the corresponding relation, without
          *  dividing by square roots.

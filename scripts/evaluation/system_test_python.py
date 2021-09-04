@@ -21,9 +21,6 @@ class SystemTestPython(SystemTestCompetitor):
         self.root_path = root_path
 
 
-    def set_join_result_path(self, join_path):
-        self.join_path = join_path
-
 
     def run_debug(self):
         pass
@@ -31,6 +28,7 @@ class SystemTestPython(SystemTestCompetitor):
 
     def run_info(self):
         pass
+
 
     def eval(self, dump: bool, performance: bool):
 

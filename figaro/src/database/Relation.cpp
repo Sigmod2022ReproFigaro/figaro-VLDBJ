@@ -298,23 +298,6 @@ namespace Figaro
         {
             vRowPts[rowIdx] = m_data[rowIdx];
         }
-        /*
-        std::sort(std::execution::par_unseq,
-                  vRowPts.begin(),
-                  vRowPts.end(),
-                  [&vAttributesIdxs]
-                  (const double* row1, const double* row2)
-                  {
-                      for (const auto& vAttributesIdx: vAttributesIdxs)
-                      {
-                        if (row1[vAttributesIdx] != row2[vAttributesIdx])
-                        {
-                            return row1[vAttributesIdx] < row2[vAttributesIdx];
-                        }
-                      }
-                      return false;
-                  });
-        */
         tbb::parallel_sort(
                   vRowPts.begin(),
                   vRowPts.end(),
@@ -1964,6 +1947,19 @@ namespace Figaro
         {
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
             copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
+        }
+    }
+
+    void Relation::computeQR(MatrixD::QRGivensHintType qrHintType, MatrixEigenT* pR)
+    {
+        FIGARO_LOG_INFO("Compute QR", m_name, m_data.getNumRows(), m_data.getNumCols())
+        m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType);
+        if (nullptr != pR)
+        {
+            FIGARO_LOG_INFO("R before positive diagonal", m_data)
+            m_data.makeDiagonalElementsPositiveInR();
+            FIGARO_LOG_INFO("R after positive diagonal", m_data)
+            copyMatrixDTToMatrixEigen(m_data, *pR);
         }
     }
 

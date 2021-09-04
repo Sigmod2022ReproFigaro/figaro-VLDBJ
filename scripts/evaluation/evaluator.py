@@ -6,6 +6,7 @@ import os
 from os import listdir
 from evaluation.system_test import SystemTest
 from evaluation.system_test_dbms_pandas import SystemTestPandas
+from evaluation.system_test_postprocessing import SystemTestPostprocess
 from evaluation.system_test_figaro import SystemTestFigaro
 from evaluation.system_test_psql import SystemTestPsql
 from evaluation.system_test_python import SystemTestPython
@@ -15,7 +16,8 @@ from evaluation.custom_logging import init_logging
 class SystemTestsEvaluator:
     map_category_to_class = {
         'psql': SystemTestPsql, 'python': SystemTestPython,
-        'figaro': SystemTestFigaro, 'pandas': SystemTestPandas}
+        'figaro': SystemTestFigaro, 'pandas': SystemTestPandas,
+        'postprocess': SystemTestPostprocess}
 
     map_mode_to_enum = {
         'debug': SystemTest.TestMode.DEBUG,
