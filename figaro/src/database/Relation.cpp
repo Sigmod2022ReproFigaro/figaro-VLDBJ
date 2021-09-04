@@ -1771,7 +1771,7 @@ namespace Figaro
         MICRO_BENCH_START(qrHead)
         m_dataHead.computeQRGivens(getNumberOfThreads(), true, qrTypeHint);
         MICRO_BENCH_STOP(qrHead)
-        FIGARO_LOG_BENCH("Figaro", "QR Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
+        FIGARO_LOG_BENCH("Figaro", "QR Gen Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
     }
 
 
@@ -1800,7 +1800,7 @@ namespace Figaro
         MICRO_BENCH_START(qrTail)
         m_dataTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
         MICRO_BENCH_STOP(qrTail)
-        FIGARO_LOG_BENCH("Figaro", "Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
+        FIGARO_LOG_BENCH("Figaro", "Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
         FIGARO_LOG_INFO("R of tail", m_name, m_dataTails)
     }
 
@@ -1812,7 +1812,7 @@ namespace Figaro
         MICRO_BENCH_START(qrGenTail)
         m_dataTailsGen.computeQRGivens(getNumberOfThreads(), true, qrHintType);
         MICRO_BENCH_STOP(qrGenTail)
-        FIGARO_LOG_BENCH("Figaro", "Generalized Tail", m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
+        FIGARO_LOG_BENCH("Figaro", "Generalized Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }
 
     void Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
@@ -1851,6 +1851,8 @@ namespace Figaro
             FIGARO_LOG_DBG("vpRels[idx-1]->m_dataTailsGen.getNumRows()", vpRels[idx-1]->m_dataTailsGen.getNumRows())
         }
         totalNumRows = vCumNumRowsUp[numRels];
+        MICRO_BENCH_INIT(copyMatrices)
+        MICRO_BENCH_START(copyMatrices)
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
         // Copying dataHead.
         for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
@@ -1935,35 +1937,33 @@ namespace Figaro
                 }
             }
         }
+        MICRO_BENCH_STOP(copyMatrices)
         FIGARO_LOG_DBG("catGenHeadAndTails", catGenHeadAndTails)
-        FIGARO_LOG_INFO("Computing QR using eigen")
-        MICRO_BENCH_INIT(eigen)
-        MICRO_BENCH_START(eigen)
-        //copyMatrixDTToMatrixEigen(catGenHeadAndTails, matEigen);
-        //qr.compute(matEigen);
+
+        FIGARO_LOG_INFO("Computing final R")
+
+        MICRO_BENCH_INIT(finalQR)
+        MICRO_BENCH_START(finalQR)
         catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        MICRO_BENCH_STOP(eigen)
-        FIGARO_LOG_INFO("Extracting R from eigen")
-        /*
-        FIGARO_LOG_INFO("Extracting R from eigen", matEigen.rows(), matEigen.cols())
-        FIGARO_LOG_DBG("totalNumCols", totalNumCols, totalNumRows)
-        *pR = qr.matrixQR().topLeftCorner(minNumRows, totalNumCols).triangularView<Eigen::Upper>();
-        */
+        MICRO_BENCH_STOP(finalQR)
+        FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
+        FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
+
+        MICRO_BENCH_INIT(addingZeros)
+        MICRO_BENCH_START(addingZeros)
         minNumRows = std::min(totalNumRows, totalNumCols);
         if (totalNumCols > minNumRows)
         {
             FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
             catGenHeadAndTails = catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
-            //appendZeroRows(*pR, totalNumCols - minNumRows);
         }
-        FIGARO_LOG_BENCH("Figaro", "Eigen QR",  MICRO_BENCH_GET_TIMER_LAP(eigen));
+        MICRO_BENCH_STOP(addingZeros)
+        FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
+
         if (nullptr != pR)
         {
-            FIGARO_LOG_INFO("R Final Before", catGenHeadAndTails)
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
-            FIGARO_LOG_INFO("R Final Before 2", catGenHeadAndTails)
             copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
-            FIGARO_LOG_INFO("R Final after ", *pR)
         }
     }
 

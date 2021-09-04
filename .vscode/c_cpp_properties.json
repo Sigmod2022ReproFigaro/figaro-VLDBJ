@@ -3,10 +3,12 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/figaro/**",
+                "/local/scratch/local/include",
+                "/local/scratch/local/intel/mkl/2021.2.0/include"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/g++-10",
+            "compilerPath": "/local/scratch/local/gcc-10.1/bin/g++-10",
             "cStandard": "c11",
             "cppStandard": "c++20",
             "intelliSenseMode": "gcc-x64"

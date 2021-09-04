@@ -6,6 +6,7 @@
 #include "utils/Performance.h"
 #include <boost/math/special_functions/sign.hpp>
 #include <cmath>
+#include <mkl.h>
 
 namespace Figaro
 {
@@ -713,31 +714,25 @@ namespace Figaro
             MatrixEigenT R;
             auto& matA = *this;
             uint32_t rowNumR = std::min(getNumRows(), getNumCols());
+            double* tau = new double [getNumCols()];
 
-            matEigen.resize(getNumRows(), getNumCols());
-            for (uint32_t rowIdx = 0; rowIdx < getNumRows(); rowIdx++)
-            {
-                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
-                {
-                    matEigen(rowIdx, colIdx) = matA[rowIdx][colIdx];
-                }
-            }
-            FIGARO_LOG_INFO("Succesful copying to LAPACK", rowNumR, m_numCols)
-            qr.compute(matEigen);
-            R = qr.matrixQR().topLeftCorner(m_numCols, m_numCols).triangularView<Eigen::Upper>();
-            FIGARO_LOG_INFO("Succesful extracting of R")
+            LAPACKE_dgeqrf(
+                LAPACK_ROW_MAJOR,
+                m_numRows,
+                m_numCols,
+                &((*m_pStorage)[0]) /* *a */,
+                m_numCols,/*lda*/
+                tau/* tau */
+                );
+
             matA.resize(rowNumR);
-
             for (uint32_t rowIdx = 0; rowIdx < rowNumR; rowIdx++)
             {
-                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                for (uint32_t colIdx = 0; colIdx < std::min(rowIdx, m_numCols); colIdx++)
                 {
-                    matA[rowIdx][colIdx] = R(rowIdx, colIdx);
+                    matA[rowIdx][colIdx] = 0;
                 }
             }
-            FIGARO_LOG_INFO("Mat R", R)
-            FIGARO_LOG_INFO("Mat A", matA)
-            FIGARO_LOG_INFO("Succesful copying of R back")
         }
 
         /**
