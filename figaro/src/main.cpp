@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
         std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
         Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
-        FIGARO_LOG_BENCH("precision", precision)
+        ////FIGARO_LOG_BENCH("precision", precision)
     }
 
     FIGARO_LOG_INFO("Figaro program has terminated")

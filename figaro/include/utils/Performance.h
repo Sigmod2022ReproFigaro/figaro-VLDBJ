@@ -20,4 +20,4 @@ global_time_##timer += time_spent_##timer;
 #define MICRO_BENCH_GET_TIMER(timer)  std::to_string(global_time_##timer)
 #define MICRO_BENCH_GET_TIMER_LAP(timer)  std::to_string(time_spent_##timer)
 
-#endif 
+#endif

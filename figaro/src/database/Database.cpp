@@ -295,10 +295,10 @@ namespace Figaro
         std::array<std::unordered_map<double, uint32_t>, NUM_RELATIONS>
          aHashTabAttrCnt;
 
-        MICRO_BENCH_INIT(hash)
-        MICRO_BENCH_INIT(compute)
-        MICRO_BENCH_START(hash)
-        MICRO_BENCH_INIT(extend)
+        //MICRO_BENCH_INIT(hash)
+        //MICRO_BENCH_INIT(compute)
+        //MICRO_BENCH_START(hash)
+        //MICRO_BENCH_INIT(extend)
 
         #pragma omp parallel for schedule(static)
         for (uint32_t idxRel = 0; idxRel < aRelations.size(); idxRel++)
@@ -307,24 +307,24 @@ namespace Figaro
             pRelation->getAttributeValuesCounts(attrIterName,
                         aHashTabAttrCnt[idxRel]);
         }
-        MICRO_BENCH_STOP(hash)
-        FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "hash", MICRO_BENCH_GET_TIMER(hash));
+        //MICRO_BENCH_STOP(hash)
+        //FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "hash", MICRO_BENCH_GET_TIMER(hash));
 
-        MICRO_BENCH_START(compute)
+        //MICRO_BENCH_START(compute)
         aRelations[0]->computeAndScaleGeneralizedHeadAndTail(
             attrIterName, aHashTabAttrCnt[1]);
-        MICRO_BENCH_STOP(compute)
-        FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
-        MICRO_BENCH_START(compute)
+        //MICRO_BENCH_STOP(compute)
+        //FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
+        //MICRO_BENCH_START(compute)
         aRelations[1]->computeAndScaleGeneralizedHeadAndTail(
             attrIterName, aHashTabAttrCnt[0]);
-        MICRO_BENCH_STOP(compute)
-        FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
+        //MICRO_BENCH_STOP(compute)
+        //FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "scale", MICRO_BENCH_GET_TIMER_LAP(compute));
 
-        MICRO_BENCH_START(extend)
+        //MICRO_BENCH_START(extend)
         aRelations[0]->extend(*aRelations[1], attrIterName);
-        MICRO_BENCH_STOP(extend)
-        FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "extend", MICRO_BENCH_GET_TIMER(extend));
+        //MICRO_BENCH_STOP(extend)
+        //FIGARO_LOG_BENCH("Figaro", "main", "computeScaledCartesianProduct", "extend", MICRO_BENCH_GET_TIMER(extend));
 
     }
 
