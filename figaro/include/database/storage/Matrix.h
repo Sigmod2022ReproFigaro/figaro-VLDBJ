@@ -733,6 +733,7 @@ namespace Figaro
                     matA[rowIdx][colIdx] = 0;
                 }
             }
+            delete [] tau;
         }
 
         /**
@@ -747,11 +748,7 @@ namespace Figaro
             {
                 return;
             }
-            if (m_numCols > m_numRows)
-            {
-                 qrType = QRGivensHintType::THIN_DIAG;
-            }
-            else if (useHint)
+            if (useHint)
             {
                 qrType = qrTypeHint;
             }
