@@ -121,6 +121,8 @@ def vary_row_and_col_num(system_tests_path: str, data_path: str):
         for num_cols in num_cols_a:
             if num_rows <= num_cols:
                 continue
+            # Reproducible generation of datasets.
+            np.random.seed(1)
             X_df, Y_df = generate_cart_prod_accur(num_rows, num_cols, num_rows, num_cols)
             generate_db_schema(system_tests_path, num_cols,
                 db_output_path, db_idx)

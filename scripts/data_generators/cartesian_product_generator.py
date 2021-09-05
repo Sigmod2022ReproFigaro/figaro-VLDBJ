@@ -3,6 +3,7 @@ import os
 import argparse
 import data_generators.database_generator as dg
 import data_generators.relation_schema_generator as rsg
+import numpy as np
 
 from evaluation.custom_logging import init_logging
 
@@ -31,6 +32,8 @@ def vary_row_and_col_num(username, password, system_tests_path):
     num_cols_a = [64, 256, 1024, 4096]
     for num_rows in num_rows_a:
         for num_cols in num_cols_a:
+            # Reproducible generation of datasets.
+            np.random.seed(1)
             generate_cart_prod_two_rel(db_idx, db_config_path, query_config_path,
                 username, password, num_rows, num_cols)
             db_idx += 1
