@@ -1,6 +1,5 @@
 import itertools as it
 import logging
-import random
 import numpy as np
 from numpy.core import numeric
 from numpy.lib.ufunclike import _deprecate_out_named_y

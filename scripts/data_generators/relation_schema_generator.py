@@ -1,6 +1,5 @@
 import itertools as it
 import logging
-import random
 import sys
 import numpy as np
 import pandas as pd

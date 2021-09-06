@@ -4,6 +4,7 @@ from data_management.database_psql import DatabasePsql
 from data_management.query import Query
 import argparse
 import sys
+import numpy as np
 from evaluation.custom_logging import init_logging
 
 
@@ -18,8 +19,10 @@ def remove_dangling_tuples(username: str, password: str, database: Database, que
 
 
 def vary_percentage(username: str, password: str, database: Database, query: Query):
-    for percent in range(10, 101, 10):
-        per_float = percent / 100
+    perc_range = np.append(np.linspace(0.01, 0.1, 10), np.linspace(0.1, 1, 10))
+    for percent in perc_range:
+        per_float = round(percent, 2)
+        print(per_float)
         remove_dangling_tuples(username=username, password=password,
             database=database, query=query, percent=per_float)
 
