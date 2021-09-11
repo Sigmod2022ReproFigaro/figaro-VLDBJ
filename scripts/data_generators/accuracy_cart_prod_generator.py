@@ -29,7 +29,7 @@ def generate_cart_prod_accur(m_1: int, n_1: int, m_2: int, n_2: int):
     norm_v = np.linalg.norm(v)
     v /= norm_v
 
-    logging.info(v)
+    #logging.info(v)
     for col_idx in range(0, n_1):
         for row_idx in range(m_1):
             if col_idx == 0:
@@ -43,8 +43,8 @@ def generate_cart_prod_accur(m_1: int, n_1: int, m_2: int, n_2: int):
             Q_x[row_idx, col_idx] = val
 
     R_x = arrange_up_triang(n_1)
-    logging.info(R_x)
-    logging.info(Q_x[:, 0])
+    #logging.info(R_x)
+    #logging.info(Q_x[:, 0])
 
     X = Q_x @ R_x
     #Y = np.arange(m_1 * n_1, m_1 * n_1 + m_2 * n_2).reshape((m_2, n_2))
@@ -112,9 +112,9 @@ def vary_row_and_col_num(system_tests_path: str, data_path: str):
     db_dirs_path = os.path.join(data_path, "generated_databases/accuracy")
     db_output_path = os.path.join(db_dirs_path, "{db_idx}/{rel_name}.csv")
 
-    # 1, 2, 4, ... 256
-    num_rows_a = [512, 1024, 2048, 4096]
-    num_cols_a = [1, 4, 16, 64, 256, 1024, 4096]
+
+    num_rows_a = [512, 1024, 2048, 4096, 8192]
+    num_cols_a = [16, 64, 256, 1024, 4096]
     create_dirs(db_dirs_path, len(num_rows_a) * len(num_cols_a))
 
     for num_rows in num_rows_a:
@@ -127,9 +127,9 @@ def vary_row_and_col_num(system_tests_path: str, data_path: str):
             generate_db_schema(system_tests_path, num_cols,
                 db_output_path, db_idx)
             dump_cart_prod_accur(X_df, Y_df, db_output_path, db_idx)
-            db_idx += 1
             logging.info("Finished generation X: of database {} {} x {}".format(db_idx, num_rows, num_cols))
             logging.info("Generated: {} x {}".format(num_rows, num_cols))
+            db_idx += 1
 
 if __name__ == "__main__":
     init_logging()
