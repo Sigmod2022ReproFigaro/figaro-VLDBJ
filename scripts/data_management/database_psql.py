@@ -133,11 +133,19 @@ class DatabasePsql:
 
     def evaluate_join(self, query: Query, num_repetitions: int):
         join_table_name = DatabasePsql.get_join_table_name(query)
-        sql_join = "DROP TABLE IF EXISTS " + join_table_name + ";CREATE TABLE " + join_table_name + " AS (SELECT {} FROM {});"
+        sql_join = "DROP TABLE IF EXISTS " + join_table_name + ";CREATE TABLE " + join_table_name + " AS (SELECT {} FROM {} ORDER BY {});"
         sql_from_natural_join = ""
 
         sql_select = ""
         ord_attr_names = query.get_attr_names_ordered()
+
+        join_attr_names = query.get_join_attr_names_ordered()
+        sql_order_by = ""
+        for attribute_name in join_attr_names:
+            if attribute_name not in query.get_skip_attrs():
+                sql_order_by += attribute_name + ","
+
+        sql_order_by = sql_order_by[:-1]
 
         for attribute_name in ord_attr_names:
             if attribute_name not in query.get_skip_attrs():
@@ -148,7 +156,7 @@ class DatabasePsql:
             sql_from_table_name = relation_name if idx == 0 \
                 else  " NATURAL JOIN " + relation_name
             sql_from_natural_join += sql_from_table_name
-        sql_join = sql_join.format(sql_select, sql_from_natural_join)
+        sql_join = sql_join.format(sql_select, sql_from_natural_join, sql_order_by)
 
         logging.debug(sql_join)
         for i in range(num_repetitions):
