@@ -23,11 +23,11 @@ def generate_cart_prod_accur(m_1: int, n_1: int, m_2: int, n_2: int):
     for idx in range(v.size):
         i = idx + 1 if idx < v.size - 1 else idx
         #v[idx] = 2. ** (-i / 2.)
-        v[idx] = np.random.uniform()
-        #v[idx] = 1 / math.sqrt(m_1)
+        #v[idx] = np.random.uniform()
+        v[idx] = 1 / math.sqrt(m_1)
 
-    norm_v = np.linalg.norm(v)
-    v /= norm_v
+    #norm_v = np.linalg.norm(v)
+    #v /= norm_v
 
     #logging.info(v)
     for col_idx in range(0, n_1):
