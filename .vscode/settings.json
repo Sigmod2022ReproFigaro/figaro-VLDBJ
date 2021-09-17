@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/popina/Figaro/figaro-code/scripts/run-env/bin/python",
+    "python.pythonPath": "/home/popina/Figaro/figaro-code/scripts/run-env-mkl/bin/python",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
