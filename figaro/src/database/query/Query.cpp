@@ -150,7 +150,7 @@ namespace Figaro
         bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
     {
          // Create visitor
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess,qrHintType, &m_matResult, saveResult);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
@@ -207,7 +207,7 @@ namespace Figaro
     void Query::evaluateQueryPostprocess(uint32_t numReps,
             Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
     {
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false);
         ASTPostProcQRVisitor postpProcQRVisitor(m_pDatabase, qrHintType,
                                                 &m_matResult, saveResult);
 
