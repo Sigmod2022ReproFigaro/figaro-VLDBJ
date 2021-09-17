@@ -6,8 +6,11 @@ namespace Figaro
     void ASTJoinAttributesComputeVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         pElement->checkAndUpdateJoinAttributes();
-         m_pDatabase->sortRelation(pElement->getRelation()->getRelationName(),
+        if (m_sortValues)
+        {
+            m_pDatabase->sortRelation(pElement->getRelation()->getRelationName(),
                                   pElement->getJoinAttributeNames());
+        }
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
@@ -23,8 +26,11 @@ namespace Figaro
             pChild->accept(this);
         }
         pElement->checkAndUpdateJoinAttributes();
-        m_pDatabase->sortRelation(pElement->getCentralRelation()->getRelationName(),
-                                  pElement->getJoinAttributeNames());
+        if (m_sortValues)
+        {
+            m_pDatabase->sortRelation(pElement->getCentralRelation()->getRelationName(),
+                                    pElement->getJoinAttributeNames());
+        }
 
         pElement->checkAndUpdateChildrenParJoinAttributes();
 

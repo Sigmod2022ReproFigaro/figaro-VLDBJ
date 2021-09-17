@@ -8,9 +8,10 @@ namespace Figaro
     class ASTJoinAttributesComputeVisitor: public ASTQRVisitor
     {
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
+        bool m_sortValues;
     public:
         ASTJoinAttributesComputeVisitor(
-            Database* pDatabase): ASTQRVisitor(pDatabase) {}
+            Database* pDatabase, bool sortValues): ASTQRVisitor(pDatabase), m_sortValues(sortValues) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
