@@ -36,3 +36,6 @@ Running experiments
 1. Run experiments: python -m evaluation.evaluator -u psql_username -p psql_password -r figaro_code_path_full -s systems_path_full --test test_name
 
 ## Scripts collecting
+1. Real dataset percent: python -m plots_and_results.real_data.performance_percent --root_path /local/scratch/Figaro/figaro-code --exp_names figaro_thin post_proc_mkl post_proc_thin --dump_results
+2. Real dataset join_order and threading:
+python -m plots_and_results.real_data.performance_threads_join_orders --root_path /local/scratch/Figaro/figaro-code --exp_names figaro.
