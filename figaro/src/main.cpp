@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 
     Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG;
     bool dump = false;
-    bool pureFigaro;
+    bool pureFigaro = false;
     uint32_t precision;
     uint32_t numRepetitions = 1;
     uint32_t numThreads = 1;

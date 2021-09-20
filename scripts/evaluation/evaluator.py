@@ -30,27 +30,48 @@ class SystemTestsEvaluator:
         }
 
 
-    def __init__(self, tests_conf: str, root_path: str, username: str, password: str = None):
+    def __init__(self, tests_conf: str, root_path: str, username: str, password: str = None, subtest: str = None):
         with open(tests_conf) as json_file:
             tests_json = json.load(json_file)
 
         self.root_path = root_path
         self.username = username
         self.password = password
+        self.subtest = subtest
         self.load_tests(tests_json)
 
 
     def load_tests(self, tests_json):
         tests = []
         for test_json in tests_json["tests"]:
-            system_tests_json = test_json["systems"]
-            data_sets_json = test_json["data_sets"]
+            if test_json.get('disable', False):
+                continue
+            if (self.subtest is not None) and \
+                (test_json["name"] !=  self.subtest):
+                continue
 
-            test = self.load_system_tests_data_sets(
-                        system_tests_json, data_sets_json)
-            tests += test
+            test_path_conf = test_json["test_path_conf"]
+            sub_tests = self.load_test(test_path_conf)
+            tests += sub_tests
 
         self.tests = tests
+
+
+    def load_test(self, test_path_conf: str):
+        with open(test_path_conf, "r") as test_conf_file:
+            test_json = json.load(test_conf_file)
+
+        logging.debug("Loaded subtest{}".format(test_path_conf))
+        system_tests_json = test_json["systems"]
+        data_sets_json_conf = test_json["data_sets"]
+        data_sets_json = []
+        with open(data_sets_json_conf["dataset_conf_path"],
+            "r") as ds_file:
+            data_sets_json = json.load(ds_file)["data_sets"]
+
+        tests = self.load_system_tests_data_sets(
+                    system_tests_json, data_sets_json)
+        return tests
 
 
     def load_system_tests_data_sets(self, system_tests_json, data_sets_json):
@@ -127,9 +148,9 @@ class SystemTestsEvaluator:
 
 
 
-def eval_tests(root_path: str, username: str, password: str, test_conf_path: str):
+def eval_tests(root_path: str, username: str, password: str, test_conf_path: str, subtest: str):
     system_tests_evaluator = SystemTestsEvaluator(test_conf_path, root_path,
-        username, password)
+        username, password, subtest)
     system_tests_evaluator.eval_tests()
 
 
@@ -161,12 +182,13 @@ if __name__ == "__main__":
                         dest="system_tests_path", required=True)
     parser.add_argument("-t", "--test", action="store",
                         dest="test", required=False)
+    parser.add_argument("--subtest", action="store",
+                        dest="subtest", required=False)
     args = parser.parse_args()
-    root_path = args.root_path if args.root_path is not None \
-        else "/home/popina/Figaro/figaro-code"
+    root_path = args.root_path
     system_tests_path = args.system_tests_path
 
     test_conf_paths = get_all_test_specs_paths(system_tests_path, args.test)
     for test_conf_path in test_conf_paths:
         logging.info("Running test specified in the path {}".format(test_conf_path))
-        eval_tests(root_path, args.username, args.password, test_conf_path)
+        eval_tests(root_path, args.username, args.password, test_conf_path, args.subtest)

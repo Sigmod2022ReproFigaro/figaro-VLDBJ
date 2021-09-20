@@ -6,7 +6,7 @@ The following applications must be installed to run experiments:
 1. [gcc-10.1 (built from source)](https://solarianprogrammer.com/2016/10/07/building-gcc-ubuntu-linux/);
 2. cmake 3.13.4;
 3. python 3.7.3;
-4. psql 11.12.
+4. psql 11.12 where a new user with all admin priviliges is created (create database, roles ...)
 
 
 The following C++ libraries must be installed to run experiments:
