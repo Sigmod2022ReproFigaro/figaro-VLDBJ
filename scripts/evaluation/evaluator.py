@@ -44,9 +44,10 @@ class SystemTestsEvaluator:
         tests = []
         for test_json in tests_json["tests"]:
             system_tests_json = test_json["systems"]
-            data_set_json = test_json["data_sets"]
+            data_sets_json = test_json["data_sets"]
+
             test = self.load_system_tests_data_sets(
-                        system_tests_json, data_set_json)
+                        system_tests_json, data_sets_json)
             tests += test
 
         self.tests = tests

@@ -22,6 +22,10 @@ else()
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# MKL linkage
+set(FIGARO_MKL_GCC_LINK_PATH "/local/scratch/local/intel/tbb/2021.2.0/lib/intel64/gcc4.8")
+set(FIGARO_MKL_INCLUDE_PATH "/local/scratch/local/intel/mkl/2021.2.0/include")
+
 add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE -DEIGEN_USE_MKL_ALL	 -DMKL_ILP64 )
 #add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE)
 
@@ -58,20 +62,22 @@ elseif(FIGARO_INFO)
   add_compile_definitions(FIGARO_LOG_LEVEL=1)
 endif()
 
+
+link_directories(${FIGARO_MKL_GCC_LINK_PATH})
+
 # Add libraries.
 if (FIGARO_RUN)
   #target_link_libraries(figaro ${Boost_LIBRARIES} -ltbb -lopenblas -llapacke)
-  link_directories("/local/scratch/local/intel/tbb/2021.2.0/lib/intel64/gcc4.8")
-  target_include_directories(figaro PRIVATE "/local/scratch/local/intel/mkl/2021.2.0/include")
+
+  target_include_directories(figaro PRIVATE ${FIGARO_MKL_INCLUDE_PATH})
   target_link_libraries(figaro -Wl,--start-group libmkl_intel_ilp64.a libmkl_gnu_thread.a libmkl_core.a -Wl,--end-group -lgomp  -lstdc++ -lpthread -ltbb  -lm -ldl ${Boost_LIBRARIES})
 endif()
 
 if (FIGARO_TEST)
   # Take care of Gtest library.
   #target_link_libraries(figaro_test ${Boost_LIBRARIES} ${GTEST_LIBRARIES} -ltbb -lopenblas -llapacke  -Wl,--verbose)
-  link_directories("/local/scratch/local/intel/tbb/2021.2.0/lib/intel64/gcc4.8")
   find_package(GTest REQUIRED)
-  target_include_directories(figaro_test PRIVATE ${GTEST_INCLUDE_DIRS} "/local/scratch/local/intel/mkl/2021.2.0/include")
+  target_include_directories(figaro_test PRIVATE ${GTEST_INCLUDE_DIRS} ${FIGARO_MKL_INCLUDE_PATH})
   target_link_libraries(figaro_test -Wl,--start-group libmkl_intel_ilp64.a libmkl_gnu_thread.a libmkl_core.a -Wl,--end-group -lgomp  -lstdc++ -lpthread -ltbb  -lm -ldl  ${Boost_LIBRARIES} ${GTEST_LIBRARIES} -Wl,--verbose )
 endif()
 
