@@ -18,7 +18,7 @@ from evaluation.custom_logging import init_logging, set_logging_level
 import matplotlib.pyplot as plt
 
 
-def collect_times(root_path: str, exp_name: str, db_names: list,
+def collect_times(ohe: bool, root_path: str, exp_name: str, db_names: list,
         exp_paths: dict, join_orders: dict, thread_nums_exp: dict,
             num_measurement: int):
     XLSX_NAME = "time.xlsx"
@@ -33,11 +33,15 @@ def collect_times(root_path: str, exp_name: str, db_names: list,
         out_workbook.remove(out_workbook.active)
         out_sheet = out_workbook.create_sheet("Times")
         df_measurement = pd.DataFrame(columns=join_orders[db_name])
-
         for join_idx, join_order in enumerate(join_orders[db_name]):
             for thread_idx, thread_num in enumerate(thread_nums_exp[exp_name]):
-                db_name_full = "{} {} {}".format(db_name, join_order, thread_num)
-                path_xlsx = os.path.join(perf_path, db_name, join_order+str(thread_num), XLSX_NAME)
+                if ohe:
+                    db_name_pref =  "{}PK1C100".format(db_name)
+                else:
+                    db_name_pref = db_name
+                db_name_full = "{} {} {}".format(db_name_pref, join_order, thread_num)
+                path_xlsx = os.path.join(perf_path, db_name_pref, join_order+str(thread_num), XLSX_NAME)
+                print(path_xlsx)
                 if os.path.isfile(path_xlsx):
                     print("PATH", path_xlsx)
                     workbook = load_workbook(filename=path_xlsx, data_only=True)
@@ -70,7 +74,7 @@ def collect_times(root_path: str, exp_name: str, db_names: list,
     return df_measurement_exp_dbs
 
 
-def dump_results_to_dat(db_names: list, df_measurement_exps: dict,
+def dump_results_to_dat(ohe: bool, db_names: list, df_measurement_exps: dict,
     thread_nums_exp: dict):
     exp_name = "figaro_thin"
     exp_dat_name = "exp2cores.dat"
@@ -87,10 +91,15 @@ def dump_results_to_dat(db_names: list, df_measurement_exps: dict,
     df_db_results = pd.concat(dbs_results, axis=1)
     df_db_results = df_db_results.reset_index().rename(columns={df_db_results.index.name:'index'})
     df_db_results.columns = exp_dat_names
-    df_db_results.to_csv(exp_dat_name, float_format='%.2f', sep='\t', index=False, quoting=csv.QUOTE_NONE,  escapechar=" ")
+    dir_out_root = "results"
+    dir_out = "ohe" if ohe else "non-ohe"
+    dir_out = os.path.join(dir_out_root, dir_out)
+    os.makedirs(dir_out, exist_ok=True)
+    out_name = os.path.join(dir_out, exp_dat_name)
+    df_db_results.to_csv(out_name, float_format='%.2f', sep='\t', index=False, quoting=csv.QUOTE_NONE,  escapechar=" ")
 
 
-def plot_performance(db_names: list, df_measurement_exp_dbs: dict, thread_nums_exp: dict):
+def plot_performance(ohe: bool, db_names: list, df_measurement_exp_dbs: dict, thread_nums_exp: dict):
     plt.figure("name", figsize=(16, 8), dpi=80)
     plt.xlabel("Number of threads")
     plt.ylabel("wall-clock-time[s]")
@@ -137,7 +146,12 @@ def plot_performance(db_names: list, df_measurement_exp_dbs: dict, thread_nums_e
     #formatter.set_powerlimits((0,48))
     ax.xaxis.set_major_formatter(formatter)
     plt.legend(loc="upper right")
-    plt.savefig("exp2threads.pdf", bbox_inches='tight')
+    dir_out_root = "results"
+    dir_out = "ohe" if ohe else "non-ohe"
+    dir_out = os.path.join(dir_out_root, dir_out)
+    os.makedirs(dir_out, exist_ok=True)
+    out_path = os.path.join(dir_out, "exp2threads.png")
+    plt.savefig(out_path)
 
     plt.show()
 
@@ -148,14 +162,18 @@ def main(args):
     parser.add_argument("-e", "--exp_name", dest="exp_name",  required=True)
     parser.add_argument("--dump_results", action="store_true",
         dest="dump_results", required=False)
+    parser.add_argument("--ohe", action="store_true",
+        dest="ohe", required=False)
     args = parser.parse_args(args)
 
 
     root_path = args.root_path
     exp_name = args.exp_name
     dump_results = args.dump_results
+    ohe = args.ohe
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
+    #db_names = ["DBRetailerPK1C100", "DBFavoritaPK1C100", "DBYelpPK1C100"]
     figaro_threads = [1, 2, 4, 8, 16, 24, 32, 48]
     thread_nums_exp = {"mkl": [48], "figaro_thin": figaro_threads}
 
@@ -175,12 +193,12 @@ def main(args):
 
     num_measurement = 5
 
-    df_measurement_exps = collect_times(root_path, exp_name, db_names,
+    df_measurement_exps = collect_times(ohe, root_path, exp_name, db_names,
         exp_paths, join_orders, thread_nums_exp,
         num_measurement)
     if dump_results:
-        dump_results_to_dat(db_names, df_measurement_exps, thread_nums_exp)
-    plot_performance(db_names,  df_measurement_exps,  thread_nums_exp)
+        dump_results_to_dat(ohe, db_names, df_measurement_exps, thread_nums_exp)
+    plot_performance(ohe, db_names,  df_measurement_exps,  thread_nums_exp)
 
 if __name__ == "__main__":
     init_logging()
