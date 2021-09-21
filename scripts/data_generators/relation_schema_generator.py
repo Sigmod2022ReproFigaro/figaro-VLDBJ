@@ -21,7 +21,7 @@ gl_db_config_str = """
 {R_non_k_attr_specs}
                 ],
                 "primary_key": ["A"],
-                "data_path": "/home/popina/Figaro/data/generated_databases/{test_num}/R.csv"
+                "data_path": "{data_path}/generated_databases/{test_num}/R.csv"
             },
             {
                 "name": "S",
@@ -31,7 +31,7 @@ gl_db_config_str = """
 {S_non_k_attr_specs}
                 ],
                 "primary_key": ["A", "B"],
-                "data_path": "/home/popina/Figaro/data/generated_databases/{test_num}/S.csv"
+                "data_path": "{data_path}/generated_databases/{test_num}/S.csv"
             },
             {
                 "name": "T",
@@ -41,7 +41,7 @@ gl_db_config_str = """
 {T_non_k_attr_specs}
                 ],
                 "primary_key": ["B", "C"],
-                "data_path": "/home/popina/Figaro/data/generated_databases/{test_num}/T.csv"
+                "data_path": "{data_path}/generated_databases/{test_num}/T.csv"
             },
             {
                 "name": "U",
@@ -50,7 +50,7 @@ gl_db_config_str = """
 {U_non_k_attr_specs}
                 ],
                 "primary_key": ["C"],
-                "data_path": "/home/popina/Figaro/data/generated_databases/{test_num}/U.csv"
+                "data_path": "{data_path}/generated_databases/{test_num}/U.csv"
             }
         ],
         "stats":
@@ -125,7 +125,7 @@ gl_db_config_cart_prod_str = """
 {R_non_join_attr_specs}
                 ],
                 "primary_key": [],
-                "data_path": "/local/scratch/Figaro/data/generated_databases/cartesian_product/{test_num}/R.csv"
+                "data_path": "{data_path}/generated_databases/cartesian_product/{test_num}/R.csv"
             },
             {
                 "name": "S",
@@ -135,7 +135,7 @@ gl_db_config_cart_prod_str = """
 {S_non_join_attr_specs}
                 ],
                 "primary_key": [],
-                "data_path": "/local/scratch/Figaro/data/generated_databases/cartesian_product/{test_num}/S.csv"
+                "data_path": "{data_path}/generated_databases/cartesian_product/{test_num}/S.csv"
             }
         ],
         "stats":
@@ -259,6 +259,8 @@ def two_cart_prod_add_cmd_args(subparser):
                     dest="r_relation_num_rows", required=True)
     subparser.add_argument("-s", "--s_relation_num_rows", action="store",
                     dest="s_relation_num_rows", required=True)
+    subparser.add_argument("-d", "--data_path", action="store",
+                    dest="data_path", required=True)
 
 
 def two_cart_prod_config_gen(args):
@@ -276,6 +278,7 @@ def two_cart_prod_config_gen(args):
     test_num = int(args.test_num)
 
     db_config_cart_prod_str = gl_db_config_cart_prod_str
+    db_config_cart_prod_str = db_config_cart_prod_str.replace("{data_path}", str(args.data_path))
     db_config_cart_prod_str = db_config_cart_prod_str.replace("{test_num}", str(test_num))
 
     db_config_cart_prod_str = db_config_cart_prod_str.replace("{R_domain_size}", str(r_domain_size))

@@ -5,6 +5,7 @@ from numpy.core import numeric
 from numpy.lib.ufunclike import _deprecate_out_named_y
 import pandas as pd
 import argparse
+import os
 from  typing import List
 
 from data_management.relation import Relation
@@ -48,6 +49,8 @@ class RelationGenerator:
         if output_path is None:
             output_path = self.data_path
         logging.info("Relation generated on:{}".format(output_path))
+        head_tail = os.path.split(output_path)
+        os.makedirs(head_tail[0], exist_ok=True)
         generated_relation.to_csv(output_path, index=False, header=False, columns=self.attribute_names)
 
 
