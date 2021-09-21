@@ -154,10 +154,16 @@ python -m plots_and_results.real_data.performance_threads_join_orders --root_pat
 python -m plots_and_results.real_data.performance_percent --root_path $FIGARO_CODE_PATH --exp_names figaro_thin post_proc_mkl post_proc_thin --dump_results --ohe
  ```
 
-4. Real dataset join order and threading:
+4. Real dataset join order and threading ohe:
 ```bash
 python -m plots_and_results.real_data.performance_threads_join_orders --root_path $FIGARO_CODE_PATH --exp_name figaro_thin --dump_results --ohe
 ```
 
 5. Synthetic accuracy:
+```bash
+python -m plots_and_results.synthetic_data.synthetic_accuracy --root_path /local/scratch/Figaro/figaro-code --dump_results
+```
 6. Synthetic performance:
+```bash
+python -m plots_and_results.synthetic_data.synthetic_performance --root_path /local/scratch/Figaro/figaro-code --dump_results
+ ```

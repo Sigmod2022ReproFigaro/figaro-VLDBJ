@@ -169,8 +169,7 @@ def get_all_test_specs_paths(system_tests_path: str, test_num):
     return test_conf_paths
 
 
-if __name__ == "__main__":
-    init_logging()
+def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--password", action="store",
                         dest="password", required=True)
@@ -192,3 +191,9 @@ if __name__ == "__main__":
     for test_conf_path in test_conf_paths:
         logging.info("Running test specified in the path {}".format(test_conf_path))
         eval_tests(root_path, args.username, args.password, test_conf_path, args.subtest)
+
+
+if __name__ == "__main__":
+    init_logging()
+    main(sys.argv[1:])
+
