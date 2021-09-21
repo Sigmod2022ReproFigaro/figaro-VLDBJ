@@ -15,11 +15,11 @@ from data_management.query import Query
 import argparse
 import sys
 import numpy as np
-from evaluation.custom_logging import init_logging
+from evaluation.custom_logging import init_logging, set_logging_level
 import matplotlib.pyplot as plt
 
 
-def collect_times(root_path: str, exp_names: list, db_names: list,
+def collect_times(ohe: bool, root_path: str, exp_names: list, db_names: list,
      exp_paths: dict, join_orders: dict, start_per: int, end_per: int,
          per_inc: int, num_measurement: int):
     XLSX_NAME = "time.xlsx"
@@ -31,7 +31,10 @@ def collect_times(root_path: str, exp_names: list, db_names: list,
 
         for db_name in db_names:
             for db_idx, percent in enumerate(range(start_per, end_per + 1, per_inc)):
-                db_name_per = "{}{}".format(db_name, percent)
+                if not ohe:
+                    db_name_per = "{}{}".format(db_name, percent)
+                else:
+                    db_name_per = "{}PK1C{}".format(db_name, percent)
                 join_order = join_orders[db_name]
                 path_xlsx = os.path.join(perf_path, db_name_per, join_order, XLSX_NAME)
                 workbook = load_workbook(filename=path_xlsx, data_only=True)
@@ -60,7 +63,7 @@ def collect_times(root_path: str, exp_names: list, db_names: list,
     return df_measurement_exps
 
 
-def dump_results_to_dat(db_names: list, df_measurement_exps: dict):
+def dump_results_to_dat(ohe: bool, db_names: list, df_measurement_exps: dict):
     db_name_map = {
     "DBFavorita": "exp1perf-favorita.dat",
     "DBRetailer": "exp1perf-retailer.dat",
@@ -76,9 +79,15 @@ def dump_results_to_dat(db_names: list, df_measurement_exps: dict):
         df_db_results = pd.concat(dbs_results, axis=1)
         df_db_results = df_db_results.reset_index().rename(columns={df_db_results.index.name:'index'})
         df_db_results.columns = exp_dat_names
-        df_db_results.to_csv(db_name_map[db_name], float_format='%.2f', sep='\t', index=False, quoting=csv.QUOTE_NONE,  escapechar=" ")
+        dir_out_root = "results"
+        dir_out = "ohe" if ohe else "non-ohe"
+        dir_out = os.path.join(dir_out_root, dir_out)
+        os.makedirs(dir_out, exist_ok=True)
+        out_name = os.path.join(dir_out, db_name_map[db_name])
+        df_db_results.to_csv(out_name, float_format='%.2f', sep='\t', index=False, quoting=csv.QUOTE_NONE,  escapechar=" ")
 
-def plot_performance(exp_names: list,  df_measurement_exps: dict):
+def plot_performance(ohe: bool, exp_names: list,
+        df_measurement_exps: dict):
     plt.figure("name", figsize=(16, 8), dpi=80)
     plt.xlabel("Percentage of input matrix")
     plt.ylabel("wall-clock-time[s]")
@@ -104,7 +113,12 @@ def plot_performance(exp_names: list,  df_measurement_exps: dict):
     plt.legend(loc="upper left")
 
     plt.show()
-    plt.savefig("performance_percent.png")
+    dir_out_root = "results"
+    dir_out = "ohe" if ohe else "non-ohe"
+    dir_out = os.path.join(dir_out_root, dir_out)
+    os.makedirs(dir_out, exist_ok=True)
+    out_path = os.path.join(dir_out, "performance_percent.png")
+    plt.savefig(out_path)
 
 
 def main(args):
@@ -114,12 +128,15 @@ def main(args):
     parser.add_argument("-e", "--exp_names", dest="exp_names", nargs='*', required=True)
     parser.add_argument("--dump_results", action="store_true",
         dest="dump_results", required=False)
+    parser.add_argument("--ohe", action="store_true",
+        dest="ohe", required=False)
     args = parser.parse_args(args)
 
 
     root_path = args.root_path
     exp_names = args.exp_names
     dump_results = args.dump_results
+    ohe = args.ohe
     #exp_names = ["figaro_thin",  "post_proc_mkl", "post_proc_thin"]
 
     exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag", "mkl": "comparisons/performance/python/mkl",
@@ -129,8 +146,12 @@ def main(args):
     "post_proc_mkl": "comparisons/performance/postprocess/lapack"}
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
-    join_orders = {"DBRetailer": "LocationRoot48",
-        "DBFavorita": "StoresRoot48", "DBYelp": "BusinessRoot48"}
+    if ohe:
+        join_orders = {"DBRetailer": "ItemRoot48",
+        "DBFavorita": "ItemsRoot48", "DBYelp": "UserRoot48"}
+    else:
+        join_orders = {"DBRetailer": "LocationRoot48",
+            "DBFavorita": "StoresRoot48", "DBYelp": "BusinessRoot48"}
 
     start_per = 10
     end_per = 100
@@ -138,13 +159,14 @@ def main(args):
 
     num_measurement = 5
 
-    df_measurement_exps = collect_times(root_path, exp_names, db_names,
+    df_measurement_exps = collect_times(ohe, root_path, exp_names, db_names,
         exp_paths, join_orders, start_per, end_per, per_inc,
         num_measurement)
     if dump_results:
-        dump_results_to_dat(db_names, df_measurement_exps)
-    plot_performance(exp_names, df_measurement_exps)
+        dump_results_to_dat(ohe, db_names, df_measurement_exps)
+    plot_performance(ohe, exp_names, df_measurement_exps)
 
 if __name__ == "__main__":
     init_logging()
+    set_logging_level(logging.INFO)
     main(sys.argv[1:])
