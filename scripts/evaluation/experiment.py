@@ -171,7 +171,6 @@ def main(args):
                         dest="experiment", required=False)
     args = parser.parse_args(args)
 
-    args = parser.parse_args()
     root_path = args.root_path
     system_tests_path = args.system_tests_path
     username = args.username

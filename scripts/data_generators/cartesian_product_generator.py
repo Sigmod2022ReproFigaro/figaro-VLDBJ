@@ -4,7 +4,7 @@ import argparse
 import data_generators.database_generator as dg
 import data_generators.relation_schema_generator as rsg
 import numpy as np
-
+import sys
 from evaluation.custom_logging import init_logging
 
 
@@ -40,8 +40,8 @@ def vary_row_and_col_num(username, password, system_tests_path: str, data_path: 
                 username, password, num_rows, num_cols, system_tests_path, data_path)
             db_idx += 1
 
-if __name__ == "__main__":
-    init_logging()
+
+def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--system_tests_path", action="store",
                         dest="system_tests_path", required=True)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
                         dest="password", required=True)
     parser.add_argument("-u", "--username", action="store",
                         dest="username", required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     username = args.username
     password = args.password
@@ -59,3 +59,9 @@ if __name__ == "__main__":
     data_path = args.data_path
 
     vary_row_and_col_num(username, password, system_tests_path, data_path)
+
+
+if __name__ == "__main__":
+    init_logging()
+    main(sys.argv[1:])
+

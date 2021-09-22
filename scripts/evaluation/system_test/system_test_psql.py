@@ -2,10 +2,10 @@ import logging
 from data_management.database import Database
 from data_management.database_psql import DatabasePsql
 from data_management.query import Query
-from evaluation.system_test import DecompConf, DumpConf, ExcecutableConf, LogConf, SystemTest
-from evaluation.system_test import AccuracyConf
-from evaluation.system_test import PerformanceConf
-from evaluation.system_test_dbms import SystemTestDBMS
+from evaluation.system_test.system_test import DecompConf, DumpConf, ExcecutableConf, LogConf, SystemTest
+from evaluation.system_test.system_test import AccuracyConf
+from evaluation.system_test.system_test import PerformanceConf
+from evaluation.system_test.system_test_dbms import SystemTestDBMS
 from evaluation.custom_logging import add_logging_file_handler, remove_logging_file_handler, set_logging_level
 
 

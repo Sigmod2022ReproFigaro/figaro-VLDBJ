@@ -6,6 +6,7 @@ from evaluation.custom_logging import init_logging
 import os
 import argparse
 import json
+import sys
 
 def arrange_up_triang(n: int):
     A  = np.zeros( (n, n))
@@ -131,15 +132,14 @@ def vary_row_and_col_num(system_tests_path: str, data_path: str):
             logging.info("Generated: {} x {}".format(num_rows, num_cols))
             db_idx += 1
 
-if __name__ == "__main__":
-    init_logging()
 
+def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--system_tests_path", action="store",
                     dest="system_tests_path", required=True)
     parser.add_argument("-d", "--data_path", action="store",
                         dest="data_path", required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     data_path = args.data_path
     system_tests_path = args.system_tests_path
@@ -147,4 +147,7 @@ if __name__ == "__main__":
     vary_row_and_col_num(system_tests_path, data_path)
 
 
-#python -m data_generators.accuracy_cart_prod_generator -d /local/scratch/Figaro/data -s /local/scratch/Figaro/figaro-code/system_tests
+if __name__ == "__main__":
+    init_logging()
+    main(sys.argv[1:])
+

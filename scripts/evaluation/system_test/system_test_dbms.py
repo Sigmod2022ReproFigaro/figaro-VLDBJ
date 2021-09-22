@@ -1,4 +1,4 @@
-from evaluation.system_test import *
+from evaluation.system_test.system_test import *
 
 class SystemTestDBMS(SystemTest):
     def __init__(self, name, log_conf: LogConf, dump_conf: DumpConf,

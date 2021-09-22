@@ -50,36 +50,16 @@ cd $FIGARO_SCRIPTS_PATH:
 ```bash
 python -m data_management.data_formating -r $FIGARO_CODE_PATH -d $FIGARO_DATA_PATH -s $FIGARO_SYSTEMS_TESTS_PATH --backup
 ```
-## Datasets:
 
-[Datasets](https://drive.google.com/file/d/1vPtXFzMfENMa5W46U0lVQgaDtJm6Hgxv/view?usp=sharing)
+## Datasets generation:
 **Do not share any of the datasets**
 
-## Reduced real dataset generation
-
-1. Generation of datasets where non of join attributes is one hot encoded.
 ```bash
-python -m data_management.real_data_set_reduced -d $FIGARO_DATA_PATH -s $FIGARO_SYSTEMS_TESTS_PATH -p $FIGARO_PSQL_PASSWORD -u $FIGARO_PSQL_USER
-```
-2. Generation of datasets where one of join attributes is one hot encoded.
-```bash
-python -m data_management.real_dataset_reduced_ohe --data_path $FIGARO_DATA_PATH
-```
-
-
-## Synthetic data generation
-
-1. Performance:
-```bash
-python -m data_generators.cartesian_product_generator -s $FIGARO_SYSTEMS_TESTS_PATH -p $FIGARO_PSQL_PASSWORD -u $FIGARO_PSQL_USER -d $FIGARO_DATA_PATH
-```
-2. Accuracy:
-```bash
-python -m data_generators.accuracy_cart_prod_generator -d $FIGARO_DATA_PATH -s $FIGARO_SYSTEMS_TESTS_PATH
+python -m evaluation.data_generation -u $FIGARO_PSQL_USERNAME -p $FIGARO_PSQL_PASSWOD  -s $FIGARO_SYSTEMS_TESTS_PATH -d $FIGARO_DATA_PATH --data_type download_real_data
+python -m evaluation.data_generation -u $FIGARO_PSQL_USERNAME -p $FIGARO_PSQL_PASSWOD  -s $FIGARO_SYSTEMS_TESTS_PATH -d $FIGARO_DATA_PATH --data_type all
 ```
 
 ## Running experiments
-
 Run experiments:
 ```bash
 python -m evaluation.experiment -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD -r $FIGARO_ROOT_PATH -s $FIGARO_SYSTEMS_TESTS_PATH -e exp

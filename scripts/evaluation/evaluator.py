@@ -4,12 +4,12 @@ import logging
 import sys
 import os
 from os import listdir
-from evaluation.system_test import SystemTest
-from evaluation.system_test_dbms_pandas import SystemTestPandas
-from evaluation.system_test_postprocessing import SystemTestPostprocess
-from evaluation.system_test_figaro import SystemTestFigaro
-from evaluation.system_test_psql import SystemTestPsql
-from evaluation.system_test_python import SystemTestPython
+from evaluation.system_test.system_test import SystemTest
+from evaluation.system_test.system_test_dbms_pandas import SystemTestPandas
+from evaluation.system_test.system_test_postprocessing import SystemTestPostprocess
+from evaluation.system_test.system_test_figaro import SystemTestFigaro
+from evaluation.system_test.system_test_psql import SystemTestPsql
+from evaluation.system_test.system_test_python import SystemTestPython
 from data_management.database import Database
 from data_management.query import Query
 from evaluation.custom_logging import init_logging
@@ -183,7 +183,7 @@ def main(args):
                         dest="test", required=False)
     parser.add_argument("--subtest", action="store",
                         dest="subtest", required=False)
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     root_path = args.root_path
     system_tests_path = args.system_tests_path
 

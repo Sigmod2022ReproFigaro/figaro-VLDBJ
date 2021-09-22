@@ -7,11 +7,11 @@ import json
 import logging
 from data_management.database import Database
 from data_management.query import Query
-from evaluation.system_test import DecompConf, DumpConf, ExcecutableConf, LogConf, SystemTest
-from evaluation.system_test import SystemTest
-from evaluation.system_test import AccuracyConf
-from evaluation.system_test import PerformanceConf
-from evaluation.system_test_competitor import SystemTestCompetitor
+from evaluation.system_test.system_test import DecompConf, DumpConf, ExcecutableConf, LogConf, SystemTest
+from evaluation.system_test.system_test import SystemTest
+from evaluation.system_test.system_test import AccuracyConf
+from evaluation.system_test.system_test import PerformanceConf
+from evaluation.system_test.system_test_competitor import SystemTestCompetitor
 
 class SystemTestPostprocess(SystemTestCompetitor):
     def __init__(self, name: str, log_conf: LogConf, dump_conf: DumpConf,

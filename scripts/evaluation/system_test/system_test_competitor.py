@@ -1,6 +1,6 @@
 
 from shutil import ExecError
-from evaluation.system_test import *
+from evaluation.system_test.system_test import *
 from evaluation.accuracy.accuracy import compare_accuracy_r
 
 class SystemTestCompetitor(SystemTest):
