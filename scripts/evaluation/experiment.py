@@ -1,23 +1,19 @@
 import evaluation.evaluator as eval
-import csv
-import math
 import numpy as np
 import pandas as pd
 import argparse
 import os
-from openpyxl import load_workbook, Workbook
 from openpyxl.utils.cell import get_column_letter
+import plots_and_results.real_data.performance_percent as perf_percent
+import plots_and_results.real_data.performance_threads_join_orders as perf_join_ord
+import plots_and_results.synthetic_data.synthetic_accuracy as syn_accur
+import plots_and_results.synthetic_data.synthetic_performance as syn_perf
 import logging
-from data_management.database import Database
-from data_management.database_psql import DatabasePsql
 from data_management.query import Query
 import argparse
 import sys
 import numpy as np
 from evaluation.custom_logging import init_logging, set_logging_level
-import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import json
 
@@ -80,6 +76,17 @@ def run_exp1(username: str, password: str, root_path: str,
     #eval.main(args_real_data_ohe)
     #eval.main(args_perf_syn)
 
+    args_coll = ["--root_path", root_path,
+        "--exp_names", "figaro_thin", "post_proc_mkl",
+        "post_proc_thin", "--dump_results"]
+    args_coll_ohe = args_coll + ["--ohe"]
+    args_coll_syn = ["--root_path", root_path, "--dump_results"]
+
+    perf_percent.main(args_coll)
+    #perf_percent.main(args_coll_ohe)
+    #syn_perf.main(args_coll_syn)
+
+
 
 def set_exp2_thread(system_tests_path: str):
     test_real_data_path = os.path.join(system_tests_path, "test_real_data", "tests_specs.conf")
@@ -115,10 +122,14 @@ def run_exp3(username: str, password: str, root_path: str,
     args = ["-p", password, "-u", username, "-r", root_path,
                "-s", system_tests_path]
     args_real_data = args + ["--test", "_real_data"]
-    args_real_data_ohe = args + ["--test", "_real_data_ohe"]
+    #args_real_data_ohe = args + ["--test", "_real_data_ohe"]
 
     #eval.main(args_real_data)
     #eval.main(args_real_data_ohe)
+
+    args_coll = ["--root_path", root_path,
+        "--exp_name", "figaro_thin", "--dump_results"]
+    perf_join_ord.main(args_coll)
 
 
 def set_exp4_synt(system_tests_path: str):
@@ -138,6 +149,10 @@ def run_exp4(username: str, password: str, root_path: str,
     args_synt_accur = args + ["--test", "_accuracy_cart_prod"]
 
     #eval.main(args_synt_accur)
+
+    args_coll = ["--root_path", root_path,
+        "--dump_results"]
+    syn_accur.main(args_coll)
 
 
 def main(args):
