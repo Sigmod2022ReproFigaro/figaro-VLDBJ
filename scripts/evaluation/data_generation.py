@@ -24,6 +24,8 @@ def generate_data(username: str, password: str, system_tests_path: str,
     data_path: str, data_type: str):
     args = ["-s", system_tests_path, "-u", username, "-p", password,
             "--data_path", data_path]
+    args_ohe = ["--data_path", data_path]
+    args_syn_accur = ["-s", system_tests_path, "--data_path", data_path]
     if data_type == "download_real_data":
         download_zip_path = os.path.join(data_path, "test.zip")
         gdown.download(WEB_DATA_SET_PATH, download_zip_path)
@@ -32,11 +34,11 @@ def generate_data(username: str, password: str, system_tests_path: str,
     if data_type == "real_data":
         real_dataset_reduced.main(args)
     elif data_type == "real_data_ohe":
-        real_dataset_reduced_ohe.main(args)
+        real_dataset_reduced_ohe.main(args_ohe)
     elif data_type == "syn_perf":
         syn_perf_generator.main(args)
     elif data_type == "syn_accur":
-        syn_accur_generator.main(args)
+        syn_accur_generator.main(args_syn_accur)
 
 
 
