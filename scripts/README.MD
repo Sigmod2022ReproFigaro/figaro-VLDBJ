@@ -72,7 +72,7 @@ where exp is an experiment number (from 1 to 4). They should be run in the order
 Python scripts are divided in the following packages:
 
 - data_generators: contains files related to synthetic dataset generation.
-    More in the [data_generatrs](data_generators/README.MD)
+    More in the [data_generators](data_generators/README.MD)
 - data_management: contains files regarding :
     - database engine wrappers:
         - pandas: [database_pandas](data_management/database_pandas.py);
