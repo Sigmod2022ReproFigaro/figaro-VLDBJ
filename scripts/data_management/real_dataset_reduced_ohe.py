@@ -69,7 +69,7 @@ def ohe_column_copy_real_dataset(real_dataset_path: str,
                             t[join_attr_ohe] = t[join_attr]
 
                         random.seed(1)
-                        reduce_column_size(t, percent_column, rel_ohe_cur["column_size_red"])
+                        reduce_column_size(t, percent_column, rel_ohe_cur["column_size_red"] + "C")
                         full_path_column = os.path.join(db_path, str(round(percent_column, 2)) + file_name)
                         logging.debug(full_path_column)
                         t.to_csv(full_path_column, index=False, header=None)
