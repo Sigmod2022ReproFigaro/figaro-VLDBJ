@@ -11,8 +11,9 @@ function init_global_paths()
     FIGARO_PRECISION=14
     FIGARO_NUM_REPS=1
     FIGARO_NUM_THREADS=1
-    FIGARO_POSTPROCESS="THICK_DIAG"
+    FIGARO_POSTPROCESS="THIN1_DIAG"
     FIGARO_IMPLEMENTATION="FIGARO"
+    FIGARO_HELP_SHOW=false
 }
 
 function get_str_args()
@@ -69,6 +70,31 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_POSTPROCESS=$EXTENSION
         ;;
+        -h|--help)
+        echo "HOH"
+        FIGARO_HELP_SHOW=true
+        echo $"
+Usage: setup.sh [-h --help]
+[-r|--root=<PATH>] [-i|--implementation=<NAME>][--postprocess=<NAME>]
+[-t|--test_mode=<NAME>]
+[--data_path=<PATH>][-l|--log_file_path=<PATH>][--dump_file_path=<PATH>]
+[--db_config_path=<PATH>][--query_config_path=<PATH>]
+[--precision=<NUMBER>][--num_threads=<NUMBER>][--num_repetitions=<NUMBER>]
+Run evaluation of Figaro on the specified database for the specified query.
+    -r, --root=<PATH>            set the root path to Figaro system;
+    -i, --implementation=<NAME>  it specifies which system should be used. It can be either postprocess or figaro. postprocess expects join result as an input, while figaro expects database with various relations.
+    --postprocess=<NAME> specifies which postprocessing methods should be used: lapack or thin_diag. The lapack corresponds to Intel MKL lapack api. thin_diag corresponds to thin version of our algorithm.
+    -t, --test_mode=<NAME> specifies whether it should build dump, performance, debug or info version of the system. performance is used in performance evaluation by omittin all log outputs. dump dumps the R;
+    --data_path=<PATH> specifies path to data. It is used only in unit tests;
+    --log_file_path=<PATH> specifies where the log will be stored;
+    --dump_file_path=<PATH> specifies where the R will be dumped;
+    --db_config_path=<PATH> specifies the location of database configuration used by the system.
+    --query_config_path=<PATH> specifies the location of query configuration used by the system.
+    --precision=<NUMBER> specifies double precision in which data is dumped.
+    --num_threads=<NUMBER> specifies the number of threads used by the system.
+    --num_repetitions=<NUMBER> specifies the number of times figaro is called for specified configuration. It is not used in performance experiments because cache can interefer with the correcntes of results.
+    -h, --help                   show help.
+"       ;;
         *)    # unknown option
         echo "Wrong  argument" $option
         ;;
@@ -83,6 +109,8 @@ function main()
 
     init_global_paths
     get_str_args "$@"
+
+    [[ $FIGARO_HELP_SHOW == true ]] && return
 
     echo "$@"
     cd "${FIGARO_BUILD_PATH}"
