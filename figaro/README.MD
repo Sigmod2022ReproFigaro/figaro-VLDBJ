@@ -34,11 +34,11 @@ It is divided in the following directories:
             - sorting (sortData)
             - dropping attributes: dropAttributes 
             - modifying schema and the corresponding data: updateSchema
-    - count queries used in Figaro:
-        - computeDownCounts. This implementation first builds indices over the data using getDistinctValsAndBuildIndices. Then it parallelizes computation of for loops in Algorithm using computed indices. 
-        - computeUpAndCircleCounts. It reuses computed in the computeDownCounts and parallelizes computation of up and circle queries with needed synchronizations.
-    - parts of Figaro algorithm that are implementation of Database.cpp functions: computeHeadsAndTails, aggregateAwayChildrenRelations, computeAndScaleGeneralizedHeadAndTail, computeQROfGeneralizedHead, computeQROfTail, computeQROfGeneralizedTail, computeQROfConcatenatedGeneralizedHeadAndTails
-    - postprocessing on the join result: computeQR 
+        - count queries used in Figaro:
+            - computeDownCounts. This implementation first builds indices over the data using getDistinctValsAndBuildIndices. Then it parallelizes computation of for loops in Algorithm using computed indices. 
+            - computeUpAndCircleCounts. It reuses computed in the computeDownCounts and parallelizes computation of up and circle queries with needed synchronizations.
+        - parts of Figaro algorithm that are implementation of Database.cpp functions: computeHeadsAndTails, aggregateAwayChildrenRelations, computeAndScaleGeneralizedHeadAndTail, computeQROfGeneralizedHead, computeQROfTail, computeQROfGeneralizedTail, computeQROfConcatenatedGeneralizedHeadAndTails
+        - postprocessing on the join result: computeQR 
     - database/query: join order specification where we specify: join tree data structure alongside join tree node types, join tree visitors and query evaluators.
         - visitors:
             - [ASTJoinAttributesComputeVisitor.cpp](src/database/query/ASTJoinAttributesComputeVisitor.cpp). Given a join tree, for relation node it computes join attributes and parent join attributes of a relation  and it sorts a relation based on its join attributes. It further changes schema of relations based on the query configuration, one hot encode categorical attributes in relations and drops certain attributes.
