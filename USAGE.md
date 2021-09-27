@@ -21,7 +21,7 @@ The following C++ libraries must be installed to run experiments:
 
 Please update the Intel MKL paths in the file figaro/CMakeLists.txt.
 
-### Reference: Global variables 
+### Reference: Global variables
 The following explanations use global variables to improve readability. They could for example have the following values:
 ```bash
 FIGARO_CODE_PATH = /local/scratch/Figaro/figaro-code
@@ -33,7 +33,8 @@ FIGARO_PSQL_PASSWORD = 123456789
 ```
 
 ### Installation
-The experiments use numpy with the openblas as well as with mkl implementation of the LAPACK API. We employ virtual environments to allow using these systems side by side.
+The experiments use numpy with the openblas as well as with mkl implementation of the LAPACK API. We employ virtual environments to allow using these systems side by side. It should be noted when one of the virtual environments is active, it will suppress the usage of the other. Thus if run-env-mkl is active, all the times with regards to numpy would be: numpy + mkl.
+If we want to get the results of  numpy + openblas in separate path in experiment 1, python mkl system configuration should be disabled (tests/percent/performance->system_test_python_mkl), and python openblas (tests/percent/performance->system_test_python_openblas) should be enabled. Otherwise, by default numpy+mkl is used.
 
 1. Change the directory
 ```bash
