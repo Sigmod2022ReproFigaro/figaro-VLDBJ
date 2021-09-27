@@ -24,11 +24,21 @@ It is divided in the following directories:
             After that it concatenates upper triangularized Rs and applies again upper triangularization method: computeQROfConcatenatedGeneralizedHeadAndTails
         - Apply postprocessing method to the join result (evalPostprocessing)
     - [Relation.cpp](src/database/Relation.cpp) It implements the main logic of Figaro operations on relations. Its functions can be divided in several groups: 
-        - basic modifying and accessing operations on schema:getAttributeIdx, getNumberOfPKAttributes,getNumberOfNonPKAttributes 
-        - basic modifiers on data: 
+        - basic modifying and accessing operations on schema: getAttributeIdx, getAttributesIdxs,getAttributesIdxsComplement, getCategoricalAttributeIdxs, schemaJoins, schemaRemoveNonParJoinAttrs, schemaDropAttrs, schemaOneHotEncode
+        - mutliple index building for parallel and faster evaluation of Figaro algorithm: getDistinctValsAndBuildIndices. In cases when composite join attribute is a primary key we skip certain checks. This lead to significant speed up in index building.
+        - sequential hash table that accepts variable number of arguments. These functions support it:  initHashTableRowIdxs, getChildRowIdx, destroyHashTableRowIdxs. This implementation is used for faster evaluation of a join of two tables when we aggregate away certain join attributes  that do not appear in parent nodes.
+        - concurrent hash table that accepts variable number of key elements as tuple (for now up to two supported). These functions support it: 
+        initHashTable, insertParDownCntFromHashTable, getParCntFromHashTable. This is used when we compute up and down counts and we need to add values in the table concurrently.
+        - basic modifiers on data + schema: 
+            - loading data (loadData) 
             - sorting (sortData)
-            -  
-
+            - dropping attributes: dropAttributes 
+            - modifying schema and the corresponding data: updateSchema
+        - count queries used in Figaro:
+            - computeDownCounts. This implementation first builds indices over the data using getDistinctValsAndBuildIndices. Then it parallelizes computation of for loops in Algorithm using computed indices. 
+            - computeUpAndCircleCounts. It reuses computed in the computeDownCounts and parallelizes computation of up and circle queries with needed synchronizations.
+        - parts of Figaro algorithm that are implementation of Database.cpp functions: computeHeadsAndTails, aggregateAwayChildrenRelations, computeAndScaleGeneralizedHeadAndTail, computeQROfGeneralizedHead, computeQROfTail, computeQROfGeneralizedTail, computeQROfConcatenatedGeneralizedHeadAndTails
+        - postprocessing on the join result: computeQR 
     - database/query: join order specification where we specify: join tree data structure alongside join tree node types, join tree visitors and query evaluators.
         - visitors:
             - [ASTJoinAttributesComputeVisitor.cpp](src/database/query/ASTJoinAttributesComputeVisitor.cpp). Given a join tree, for relation node it computes join attributes and parent join attributes of a relation  and it sorts a relation based on its join attributes. It further changes schema of relations based on the query configuration, one hot encode categorical attributes in relations and drops certain attributes.
@@ -57,9 +67,4 @@ It is divided in the following directories:
         - computeQRGivensParallelBlockDiag: parallelized version of computeQRGivensSequentialBlockDiag
         - computeQRGivensParallelizedThinMatrix: apply thin approach of computing R: splitting matrix in submatrices, upper-triangularazing each of the submatrices sequentially and then concatenating Rs and again applying computeQRGivensSequentialBlockDiag.
         - computeQRGivensParallelizedLaPack: compute R using MKL lapack API dgeqrf. We don't need to copy anything since the matrix is already stored in c-array like.
-        - makeDiagonalElementsPositiveInR: multiplies R with ortogonal matrix so it sets entries on the diagonal to positive. 
-        
-
-## Code example running
-5. Position to Figaro algorithm implementation.
-6. Run experiments: ./setup.sh --test_mode=UNIT_TEST --root_path=/home/user/zivanovic/Figaro/figaro-code/figaro
+        - makeDiagonalElementsPositiveInR: multiplies R with ortogonal matrix so it sets entries on the diagonal to positive.
