@@ -38,7 +38,7 @@ def collect_times(ohe: bool, root_path: str, exp_name: str, db_names: list,
                 if ohe:
                     db_name_pref =  "{}PK1C100".format(db_name)
                 else:
-                    db_name_pref = db_name
+                    db_name_pref = "{}100".format(db_name)
                 db_name_full = "{} {} {}".format(db_name_pref, join_order, thread_num)
                 path_xlsx = os.path.join(perf_path, db_name_pref, join_order+str(thread_num), XLSX_NAME)
                 print(path_xlsx)
