@@ -7,7 +7,7 @@ The material and the data is made available for the review process only. Please 
 
 ## Using the code
 
-Detailed instructions on how to set up the system and running the experiments can be found in this file: [Setup and running experiments](./USAGE.MD)
+Detailed instructions on how to set up the system and running the experiments can be found in this file: [Setup and running experiments](./USAGE.md)
 
 
 ## Code organization

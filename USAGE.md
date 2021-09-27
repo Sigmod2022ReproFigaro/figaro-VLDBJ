@@ -33,11 +33,13 @@ FIGARO_PSQL_PASSWORD = 123456789
 ```
 
 ### Installation
+The experiments use numpy with the openblas as well as with mkl implementation of the LAPACK API. We employ virtual environments to allow using these systems side by side.
+
 1. Change the directory
 ```bash
 cd $FIGARO_SCRIPTS_PATH
 ```
-2. Create a virtual environment using virtualenv
+2. Create virtual environments using virtualenv
 ```bash
     1. python3 -m venv run-env-openblas
     2. python3 -m venv run-env-mkl
