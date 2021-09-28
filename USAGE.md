@@ -33,8 +33,9 @@ FIGARO_PSQL_PASSWORD = 123456789
 ```
 
 ### Installation
-The experiments use numpy with the openblas as well as with mkl implementation of the LAPACK API. We employ virtual environments to allow using these systems side by side. It should be noted when one of the virtual environments is active, it will suppress the usage of the other. Thus if run-env-mkl is active, all the times with regards to numpy would be: numpy + mkl.
-If we want to get the results of  numpy + openblas in separate path in experiment 1, python mkl system configuration should be disabled (tests/percent/performance->system_test_python_mkl), and python openblas (tests/percent/performance->system_test_python_openblas) should be enabled. Otherwise, by default numpy+mkl is used.
+The experiments use numpy with the openblas as well as with the mkl implementation of the LAPACK API. We employ virtual environments to allow using these systems side by side. 
+Whenever one of the virtual environments is active, it will suppress the usage of the other one. Thus if run-env-mkl is active, all the measured runtimes with respect to numpy would be numpy + mkl.
+If we want to get the results of numpy + openblas in experiment 1, the python mkl system configuration should be disabled (tests/percent/performance->system_test_python_mkl), and python openblas (tests/percent/performance->system_test_python_openblas) should be enabled. Otherwise, by default numpy+mkl is used.
 
 1. Change the directory
 ```bash
@@ -77,8 +78,7 @@ python -m data_management.data_formating -r $FIGARO_CODE_PATH -d $FIGARO_DATA_PA
 ```
 
 ### Datasets generation:
-The following script will download and generate the required datasets.
-**Please do not share any of these datasets**
+The following script will download the three real-world datasets and generate the synthetic ones. From the three real-world datasets, two are public (Yelp and Favorita), while the third has been provided to us under a confidentiality agreement and is not to be shared.
 
 ```bash
 python -m evaluation.data_generation -u $FIGARO_PSQL_USERNAME -p $FIGARO_PSQL_PASSWOD  -s $FIGARO_SYSTEMS_TESTS_PATH -d $FIGARO_DATA_PATH --data_type download_real_data
