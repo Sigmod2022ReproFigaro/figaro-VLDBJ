@@ -314,10 +314,10 @@ if __name__ == "__main__":
                         dest="password", required=True)
     parser.add_argument("-d", "--dump_path", action="store", dest="dump_path")
     args = parser.parse_args()
-    db_specs_path = "/home/popina/Figaro/figaro-code/system_tests/test1/database_specs.conf"
+    db_specs_path = "/home/username/Figaro/figaro-code/system_tests/test1/database_specs.conf"
     database = Database(db_specs_path)
     database_name = "DB1"
-    database_psql = DatabasePsql(host_name="",user_name="popina", password=args.
+    database_psql = DatabasePsql(host_name="",user_name="username", password=args.
                                 password, database_name=database_name)
     database_psql.drop_database()
     database_psql.create_database(database)

@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/popina/Figaro/figaro-code/scripts/run-env-mkl/bin/python",
+    "python.pythonPath": "/home/username/Figaro/figaro-code/scripts/run-env-mkl/bin/python",
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
@@ -9,6 +9,6 @@
         "**/__pycache__": true
     },
     "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": ["/home/popina/Figaro/figaro-code/scripts"
+    "python.analysis.extraPaths": ["/home/username/Figaro/figaro-code/scripts"
     ]
 }
