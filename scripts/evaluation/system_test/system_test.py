@@ -118,6 +118,8 @@ class SystemTest(ABC):
         ACCURACY = 5
         PERFORMANCE_ANALYSIS = 6
         CLEAN = 7
+        PROFILER_MEMORY = 8
+        PROFILER_THREADS = 9
 
     map_mode_to_str = {TestMode.DEBUG : "DEBUG",
                     TestMode.INFO : "INFO",
@@ -125,7 +127,9 @@ class SystemTest(ABC):
                     TestMode.PERFORMANCE: "PERFORMANCE",
                     TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",
                     TestMode.ACCURACY: "ACCURACY",
-                    TestMode.CLEAN: "CLEAN"}
+                    TestMode.CLEAN: "CLEAN",
+                    TestMode.PROFILER_MEMORY: "PROFILER_MEMORY",
+                    TestMode.PROFILER_THREADS: "PROFILER_THREADS"}
 
 
     @staticmethod
@@ -249,6 +253,9 @@ class SystemTest(ABC):
         elif self.test_mode == SystemTest.TestMode.CLEAN:
             logging.info(info_str.format(mode="cleaning"))
             self.clean_data(SystemTest.TestMode.DUMP)
+        elif self.test_mode == SystemTest.TestMode.PROFILER_MEMORY:
+            logging.info(info_str.format(mode="profiler memory"))
+            self.run_profiler()
         else:
             logging.error('This type of system test does not exist')
         logging.info("End of test {}".format(self.name))
@@ -338,3 +345,7 @@ class SystemTest(ABC):
     def clean_all_data(self):
         for test_mode in SystemTest.TestMode:
             self.clean_data(test_mode)
+
+    @abstractmethod
+    def run_profiler(self):
+        pass

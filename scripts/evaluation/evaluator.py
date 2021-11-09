@@ -26,7 +26,9 @@ class SystemTestsEvaluator:
         'accuracy': SystemTest.TestMode.ACCURACY,
         'performance': SystemTest.TestMode.PERFORMANCE,
         'performance_analysis': SystemTest.TestMode.PERFORMANCE_ANALYSIS,
-        'clean': SystemTest.TestMode.CLEAN
+        'clean': SystemTest.TestMode.CLEAN,
+        'profiler_memory': SystemTest.TestMode.PROFILER_MEMORY,
+        'profiler_threads': SystemTest.TestMode.PROFILER_THREADS
         }
 
 

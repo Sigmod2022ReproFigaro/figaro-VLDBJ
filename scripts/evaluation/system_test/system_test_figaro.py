@@ -1,8 +1,9 @@
 
-from enum import Enum, auto
+from enum import Enum, Flag, auto
 from os import path
 import subprocess
 import os
+import shutil
 import json
 import logging
 from data_management.database import Database
@@ -25,7 +26,7 @@ class SystemTestFigaro(SystemTest):
         pass
 
 
-    def eval(self, dump = False):
+    def eval(self, dump = False, profiler = False):
         postprocess_str = DecompConf.postprocess_mode_to_str(self.conf_decomp.postprocessing)
 
         args = ["/bin/bash", "setup.sh",
@@ -42,6 +43,12 @@ class SystemTestFigaro(SystemTest):
 
         if dump:
             args.append("--dump_file_path={}".format(self.conf_dump.file_path))
+
+        if profiler:
+            profiler_path = os.path.join(self.conf_dump.path, SystemTest.test_mode_to_str(self.test_mode))
+            if os.path.exists(profiler_path):
+                shutil.rmtree(profiler_path)
+            args.append("--profiler_dump_path={}".format(profiler_path))
 
         result = subprocess.run(
             args=args, cwd=self.figaro_path,
@@ -84,3 +91,7 @@ class SystemTestFigaro(SystemTest):
 
     def requires_dbms_result(self):
         return False
+
+
+    def run_profiler(self):
+        self.eval(dump=False, profiler=True)

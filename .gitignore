@@ -16,6 +16,8 @@ system_tests_backup/*
 scripts/run-env/*
 scripts/run-env-mkl/*
 scripts/run-env-openblas/*
+dumps/*
+figaro/build/*
 build/build.ninja
 build/cmake_install.cmake
 build/CMakeCache.txt
