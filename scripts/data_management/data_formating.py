@@ -33,9 +33,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     root_path = args.root_path if args.root_path is not None \
-        else "/home/popina/Figaro/figaro-code"
+        else "/home/username/Figaro/figaro-code"
     data_path = args.data_path if args.data_path is not None \
-            else "/home/popina/Figaro/data"
+            else "/home/username/Figaro/data"
     system_tests_path = args.system_tests_path
 
     if args.backup:

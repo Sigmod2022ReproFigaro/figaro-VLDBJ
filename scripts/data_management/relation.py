@@ -73,5 +73,5 @@ if __name__ == "__main__":
                 {"name": "A1","type": "int"}
                 ],
                 "primary_key": ["R", "S"],
-                "data_path": "/home/popina/Figaro/data/test1/T1.csv"
+                "data_path": "/home/username/Figaro/data/test1/T1.csv"
             })

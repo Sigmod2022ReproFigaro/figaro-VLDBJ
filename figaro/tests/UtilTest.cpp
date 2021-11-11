@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-std::string GL_DATA_PATH = "/home/popina/Figaro/data";
+std::string GL_DATA_PATH = "/home/username/Figaro/data";
 
 std::string getConfigPath(uint32_t idx)
 {

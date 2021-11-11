@@ -1,12 +1,12 @@
 function init_global_paths()
 {
-    FIGARO_ROOT_PATH="${1:-/home/popina/Figaro/figaro-code/figaro}"
-    FIGARO_DATA_PATH="/home/popina/Figaro/data"
+    FIGARO_ROOT_PATH="${1:-/home/---/Figaro/figaro-code/figaro}"
+    FIGARO_DATA_PATH="/home/---/Figaro/data"
     FIGARO_LOG_FILE_PATH="$FIGARO_ROOT_PATH/log/log.txt"
     FIGARO_BUILD_PATH="$FIGARO_ROOT_PATH/build"
     FIGARO_DUMP_FILE_PATH="$FIGARO_ROOT_PATH/dump/R.csv"
-    FIGARO_DB_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
-    FIGARO_QUERY_CONFIG_PATH="/home/popina/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
+    FIGARO_DB_CONFIG_PATH="/home/---/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
+    FIGARO_QUERY_CONFIG_PATH="/home/---/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
     FIGARO_NUM_REPS=1
