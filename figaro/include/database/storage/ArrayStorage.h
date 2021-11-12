@@ -1,6 +1,8 @@
 #ifndef _FIGARO_ARRAY_STORAGE_H_
 #define _FIGARO_ARRAY_STORAGE_H_
 
+#include <boost/align/aligned_alloc.hpp>
+
 namespace Figaro
 {
     template <typename T>
@@ -12,17 +14,18 @@ namespace Figaro
         {
             if (nullptr != m_data)
             {
-                delete [] m_data;
-                m_data = nullptr;
+                boost::alignment::aligned_free(m_data);
             }
         }
     public:
 
+        static constexpr uint64_t CACHE_LINE_SIZE = 64;
         ArrayStorage(uint64_t size): m_size(size)
         {
             if (size > 0)
             {
-                m_data = new T[size];
+                m_data = (T*)boost::alignment::aligned_alloc(
+                    CACHE_LINE_SIZE, size * sizeof(T));
             }
         }
 
@@ -58,7 +61,8 @@ namespace Figaro
             T* newData = nullptr;
             if (newSize > 0)
             {
-                newData = new T[newSize];
+                newData = (T*)boost::alignment::aligned_alloc(
+                    CACHE_LINE_SIZE, newSize * sizeof(T));
             }
 
             if ((m_size > 0) && (newSize > 0))

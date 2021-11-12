@@ -5,6 +5,7 @@
 #include "ArrayStorage.h"
 #include "utils/Performance.h"
 #include <boost/math/special_functions/sign.hpp>
+#include <boost/align/align_up.hpp>
 #include <cmath>
 #include <mkl.h>
 
@@ -16,12 +17,15 @@ namespace Figaro
     {
         static constexpr uint32_t MIN_COLS_PAR = UINT32_MAX;
         //static constexpr uint32_t MIN_COLS_PAR = 0;
-        uint32_t m_numRows = 0, m_numCols = 0;
+        uint32_t m_numRows = 0;
+        uint32_t m_numCols = 0;
+        uint32_t m_numColsAligned = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
         void destroyData(void)
         {
             m_numRows = 0;
             m_numCols = 0;
+            m_numColsAligned = 0;
             //FIGARO_LOG_DBG("Tried destroying data");
             if (nullptr != m_pStorage)
             {
@@ -32,9 +36,11 @@ namespace Figaro
             //FIGARO_LOG_DBG("Destroyed data");
         }
 
-        uint64_t getNumEntries(void) const
+        uint64_t getNumEntriesAndUpdateAlign(void)
         {
-            return (uint64_t) m_numRows * (uint64_t)m_numCols;
+            //uint32_t colsAligned = boost::alignment::align_up(m_numCols, ArrayStorage<T>::CACHE_LINE_SIZE / sizeof(T));
+            m_numColsAligned = m_numCols;
+            return (uint64_t) m_numRows * (uint64_t)m_numColsAligned;
         }
     public:
         enum class QRGivensHintType
@@ -49,7 +55,7 @@ namespace Figaro
         {
             m_numRows = numRows;
             m_numCols = numCols;
-            m_pStorage = new ArrayStorage<T>(getNumEntries());
+            m_pStorage = new ArrayStorage<T>(getNumEntriesAndUpdateAlign());
         }
 
         Matrix(const Matrix&) = delete;
@@ -60,6 +66,7 @@ namespace Figaro
             m_pStorage = other.m_pStorage;
             m_numRows = other.m_numRows;
             m_numCols = other.m_numCols;
+            m_numColsAligned = other.m_numColsAligned;
 
             other.m_pStorage = nullptr;
             other.m_numCols = 0;
@@ -75,6 +82,7 @@ namespace Figaro
                 m_pStorage = other.m_pStorage;
                 m_numRows = other.m_numRows;
                 m_numCols = other.m_numCols;
+                m_numColsAligned = other.m_numColsAligned;
 
                 other.m_pStorage = nullptr;
                 other.m_numCols = 0;
@@ -93,20 +101,20 @@ namespace Figaro
         T* operator[](uint32_t rowIdx)
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols)]);
+            return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numColsAligned)]);
         }
 
         const T* operator[](uint32_t rowIdx) const
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
-            return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols)]);
+            return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numColsAligned)]);
         }
 
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
             m_numRows = newNumRows;
-            uint64_t newNumEntries = getNumEntries();
+            uint64_t newNumEntries = getNumEntriesAndUpdateAlign();
             if (nullptr == m_pStorage)
             {
                 m_pStorage = new ArrayStorage<T>(newNumEntries);
@@ -358,9 +366,12 @@ namespace Figaro
                 double tmpUpperVal = matA[rowIdxUpper][colIdx];
                 double tmpLowerVal = matA[rowIdxLower][colIdx];
                 matA[rowIdxUpper][colIdx] = cos * tmpUpperVal - sin * tmpLowerVal;
-                matA[rowIdxLower][colIdx] = sin * tmpUpperVal + cos * tmpLowerVal;
+
             }
-             matA[rowIdxLower][startColIdx] = 0;
+            for (uint32_t colIdx = startColIdx; colIdx < matA.m_numCols; colIdx++)
+            {
+                matA[rowIdxLower][startColIdx] = 0;
+            }
         }
 
 
