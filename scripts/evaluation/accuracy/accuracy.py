@@ -47,9 +47,9 @@ def compare_accuracy_r(figaro_path: str , competitor_path: str,
 
 
 if __name__ == "__main__":
-    figaro_path = "/home/popina/Figaro/figaro-code/dumps/figaro/DB3/R.csv"
-    python_path = "/home/popina/Figaro/figaro-code/dumps/python/numpy/DB3/r.csv"
-    prec_comp_path = "/home/popina/Figaro/figaro-code/comparisons/precision/python/numpy/DB3"
+    figaro_path = "/home/username/Figaro/figaro-code/dumps/figaro/DB3/R.csv"
+    python_path = "/home/username/Figaro/figaro-code/dumps/python/numpy/DB3/r.csv"
+    prec_comp_path = "/home/username/Figaro/figaro-code/comparisons/precision/python/numpy/DB3"
     compare_accuracy_r(figaro_path=figaro_path, competitor_path=python_path,
                         accuracy_path=prec_comp_path,
                         precision=1e-5, operation='qr')
