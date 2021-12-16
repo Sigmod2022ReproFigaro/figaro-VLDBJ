@@ -77,6 +77,10 @@ class DecompConf:
         DENSE = 2
 
 
+    class MemoryLayout(IntEnum):
+        ROW_MAJOR = 1
+        COL_MAJOR = 2
+
     map_postp_mode_to_str = {
         PostprocessingMode.THIN_BOTTOM : "THIN_BOTTOM",
         PostprocessingMode.THIN_DIAG : "THIN_DIAG",
@@ -84,6 +88,13 @@ class DecompConf:
         PostprocessingMode.THICK_DIAG: "THICK_DIAG",
         PostprocessingMode.LAPACK: "LAPACK",
     }
+
+
+    map_memory_layout_to_str = {
+        MemoryLayout.ROW_MAJOR : "ROW_MAJOR",
+        MemoryLayout.COL_MAJOR : "COL_MAJOR"
+    }
+
 
     map_postprocessing_to_enum = {
         'thick_bottom': PostprocessingMode.THICK_BOTTOM,
@@ -98,15 +109,26 @@ class DecompConf:
     'dense': SparsityMode.DENSE
     }
 
+    map_memory_layout_to_enum = {
+    'row_major': MemoryLayout.ROW_MAJOR,
+    'col_major': MemoryLayout.COL_MAJOR
+    }
 
     @staticmethod
     def postprocess_mode_to_str(test_mode: PostprocessingMode)->str:
         return DecompConf.map_postp_mode_to_str[test_mode]
 
 
-    def __init__(self, postprocessing: str = None, sparsity: str = None):
+    @staticmethod
+    def memory_layout_to_str(memory_layout: MemoryLayout)->str:
+        return DecompConf.map_memory_layout_to_str[memory_layout]
+
+
+    def __init__(self, postprocessing: str, sparsity: str,
+        memory_layout: str):
         self.postprocessing = DecompConf.map_postprocessing_to_enum[postprocessing]
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
+        self.memory_layout = DecompConf.map_memory_layout_to_enum[memory_layout]
 
 
 
@@ -214,6 +236,7 @@ class SystemTest(ABC):
 
         decomp_json = system_json["system"]["decomposition"]
         postprocessing = decomp_json.get("postprocessing", "thin_diag")
+        memory_layout = decomp_json.get("memory_layout", "row_major")
         sparsity = decomp_json.get("sparsity", "dense")
 
         executable_json = system_json["system"].get("executable", {})
@@ -227,7 +250,7 @@ class SystemTest(ABC):
             DumpConf(path_dump, dump_file_path, order_by),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
-            DecompConf(postprocessing, sparsity),
+            DecompConf(postprocessing, sparsity, memory_layout),
             ExcecutableConf(interpreter),
             database, query, test_mode,
             *args, **kwargs)

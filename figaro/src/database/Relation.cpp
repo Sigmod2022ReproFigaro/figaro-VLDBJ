@@ -164,7 +164,8 @@ namespace Figaro
     }
 
     Relation::Relation(json jsonRelationSchema):
-        m_data(0, 0), m_dataTails1(0, 0), m_dataTails2(0, 0), m_dataHead(0, 0),
+        m_data(0, 0), m_dataColumnMajor(0, 0),
+        m_dataTails1(0, 0), m_dataTails2(0, 0), m_dataHead(0, 0),
         m_dataTails(0, 0), m_dataScales(0, 0), m_scales(0, 0), m_dataTailsGen(0, 0),
         m_countsJoinAttrs(0, 0)
     {
@@ -1131,20 +1132,20 @@ namespace Figaro
         m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
         m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
 
-        //MICRO_BENCH_INIT(flagsCmp)
+        MICRO_BENCH_INIT(flagsCmp)
         ////MICRO_BENCH_INIT(hashTable)
-        //MICRO_BENCH_INIT(pureDownCnt)
-        //MICRO_BENCH_START(flagsCmp)
+        MICRO_BENCH_INIT(pureDownCnt)
+        MICRO_BENCH_START(flagsCmp)
         getDistinctValsAndBuildIndices(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin,
             vParBlockStartIdxs, vParBlockStartIdxsAfterFirstPass, isRootNode);
-        //MICRO_BENCH_STOP(flagsCmp)
-        //FIGARO_LOG_BENCH("Figaro", "flag computation " + m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
+        MICRO_BENCH_STOP(flagsCmp)
+        FIGARO_LOG_BENCH("Figaro", "flag computation " + m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
         numDistParVals = vParBlockStartIdxs.size() - 1;
         ////MICRO_BENCH_START(hashTable)
         initHashTable(vParJoinAttrIdxs, numDistParVals);
         ////MICRO_BENCH_STOP(hashTable)
         ////FIGARO_LOG_BENCH("Figaro hashTable computation", m_name, MICRO_BENCH_GET_TIMER_LAP(hashTable))
-        //MICRO_BENCH_START(pureDownCnt)
+        MICRO_BENCH_START(pureDownCnt)
         // TODO: Replace this with template function.
         if (isRootNode)
         {
@@ -1208,8 +1209,8 @@ namespace Figaro
                     cntsJoin[parCurBlockStartIdx], sum);
             }
         }
-        //MICRO_BENCH_STOP(pureDownCnt)
-        //FIGARO_LOG_BENCH("Figaro pure down count", MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
+        MICRO_BENCH_STOP(pureDownCnt)
+        FIGARO_LOG_BENCH("Figaro pure down count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
         m_countsJoinAttrs = std::move(cntsJoin);
         m_vParBlockStartIdxs = std::move(vParBlockStartIdxs);
         m_vParBlockStartIdxsAfterFirstPass = std::move(vParBlockStartIdxsAfterFirstPass);
@@ -1225,7 +1226,8 @@ namespace Figaro
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
         uint32_t numDistParVals;
-
+        MICRO_BENCH_INIT(pureUpCnt)
+        MICRO_BENCH_START(pureUpCnt)
         vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
@@ -1299,6 +1301,8 @@ namespace Figaro
                 }
             }
         }
+        MICRO_BENCH_STOP(pureUpCnt)
+        FIGARO_LOG_BENCH("Figaro pure up count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureUpCnt))
     }
 
    // We assume join attributes are before nonJoinAttributes.
@@ -1470,8 +1474,8 @@ namespace Figaro
 
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
-        //MICRO_BENCH_INIT(aggregateAway)
-        //MICRO_BENCH_START(aggregateAway)
+        MICRO_BENCH_INIT(aggregateAway)
+        MICRO_BENCH_START(aggregateAway)
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
@@ -1569,8 +1573,8 @@ namespace Figaro
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
 
-        //MICRO_BENCH_STOP(aggregateAway)
-        //FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+        MICRO_BENCH_STOP(aggregateAway)
+        FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
 
     }
 
@@ -1589,8 +1593,8 @@ namespace Figaro
         uint32_t numOmittedAttrs;
         uint32_t numNonJoinAttrs;
 
-        //MICRO_BENCH_INIT(genHT)
-        //MICRO_BENCH_START(genHT)
+        MICRO_BENCH_INIT(genHT)
+        MICRO_BENCH_START(genHT)
         getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
         // TODO: Replace this
@@ -1612,7 +1616,7 @@ namespace Figaro
         // temporary adds an element to denote the end limit.
         m_vSubTreeDataOffsets.push_back(m_attributes.size());
         //MICRO_BENCH_INIT(genHTMainLoop)
-        ////MICRO_BENCH_START(genHTMainLoop)
+        //MICRO_BENCH_START(genHTMainLoop)
         #pragma omp parallel for schedule(static)
         for (uint32_t distParCnt = 0; distParCnt < numParDistVals; distParCnt++)
         {
@@ -1734,33 +1738,33 @@ namespace Figaro
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
         FIGARO_LOG_DBG("Attributes_name", m_attributes)
-        //MICRO_BENCH_STOP(genHT)
-        ////MICRO_BENCH_STOP(genHTMainLoop)
-        //FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
+        MICRO_BENCH_STOP(genHT)
+        //MICRO_BENCH_STOP(genHTMainLoop)
+        FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
 
     }
 
 
     void Relation::computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
-        MatrixD::QRGivensHintType qrTypeHint)
+        Figaro::QRGivensHintType qrTypeHint)
     {
         FIGARO_LOG_ASSERT(numNonJoinAttrs <= m_dataHead.getNumCols())
         MatrixDT tmp = m_dataHead.getRightCols(numNonJoinAttrs);
         m_dataHead = std::move(tmp);
         FIGARO_LOG_INFO("QR generalized head", m_name, m_dataHead.getNumRows(), m_dataHead.getNumCols())
         FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        //MICRO_BENCH_INIT(qrHead)
-        //MICRO_BENCH_START(qrHead)
+        MICRO_BENCH_INIT(qrHead)
+        MICRO_BENCH_START(qrHead)
         m_dataHead.computeQRGivens(getNumberOfThreads(), true, qrTypeHint);
-        //MICRO_BENCH_STOP(qrHead)
-        //FIGARO_LOG_BENCH("Figaro", "QR Gen Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
+        MICRO_BENCH_STOP(qrHead)
+        FIGARO_LOG_BENCH("Figaro", "QR Gen Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
     }
 
 
     void Relation::computeQROfGeneralizedHead(
         const std::vector<Relation*>& vpRels,
-        MatrixD::QRGivensHintType qrHintType)
+        Figaro::QRGivensHintType qrHintType)
     {
         uint32_t totalNumCols;
         uint32_t numRels;
@@ -1775,32 +1779,32 @@ namespace Figaro
         computeQROfGeneralizedHead(totalNumCols, qrHintType);
     }
 
-    void Relation::computeQROfTail(MatrixD::QRGivensHintType qrHintType)
+    void Relation::computeQROfTail(Figaro::QRGivensHintType qrHintType)
     {
         FIGARO_LOG_INFO("QR Tail", m_name, m_dataTails.getNumRows(), m_dataTails.getNumCols())
         FIGARO_LOG_DBG("m_dataTails", m_dataTails)
-        //MICRO_BENCH_INIT(qrTail)
-        //MICRO_BENCH_START(qrTail)
+        MICRO_BENCH_INIT(qrTail)
+        MICRO_BENCH_START(qrTail)
         m_dataTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        //MICRO_BENCH_STOP(qrTail)
-        //FIGARO_LOG_BENCH("Figaro", "Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
+        MICRO_BENCH_STOP(qrTail)
+        FIGARO_LOG_BENCH("Figaro", "Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
         FIGARO_LOG_INFO("R of tail", m_name, m_dataTails)
     }
 
-    void Relation::computeQROfGeneralizedTail(MatrixD::QRGivensHintType qrHintType)
+    void Relation::computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType)
     {
         FIGARO_LOG_INFO("QR generalized Tail", m_name, m_dataTailsGen.getNumRows(), m_dataTailsGen.getNumCols())
         FIGARO_LOG_INFO("Generalized tail", m_name)
-        //MICRO_BENCH_INIT(qrGenTail)
-        //MICRO_BENCH_START(qrGenTail)
+        MICRO_BENCH_INIT(qrGenTail)
+        MICRO_BENCH_START(qrGenTail)
         m_dataTailsGen.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        //MICRO_BENCH_STOP(qrGenTail)
-        //FIGARO_LOG_BENCH("Figaro", "Generalized Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
+        MICRO_BENCH_STOP(qrGenTail)
+        FIGARO_LOG_BENCH("Figaro", "Generalized Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }
 
     void Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
-        MatrixD::QRGivensHintType qrHintType,
+        Figaro::QRGivensHintType qrHintType,
         MatrixEigenT* pR)
     {
         MatrixEigenT matEigen;
@@ -1834,8 +1838,8 @@ namespace Figaro
             FIGARO_LOG_DBG("vpRels[idx-1]->m_dataTailsGen.getNumRows()", vpRels[idx-1]->m_dataTailsGen.getNumRows())
         }
         totalNumRows = vCumNumRowsUp[numRels];
-        //MICRO_BENCH_INIT(copyMatrices)
-        //MICRO_BENCH_START(copyMatrices)
+        MICRO_BENCH_INIT(copyMatrices)
+        MICRO_BENCH_START(copyMatrices)
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
         // Copying dataHead.
         for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
@@ -1920,28 +1924,29 @@ namespace Figaro
                 }
             }
         }
-        //MICRO_BENCH_STOP(copyMatrices)
+        MICRO_BENCH_STOP(copyMatrices)
+        FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
         FIGARO_LOG_DBG("catGenHeadAndTails", catGenHeadAndTails)
 
         FIGARO_LOG_INFO("Computing final R")
 
-        //MICRO_BENCH_INIT(finalQR)
-        //MICRO_BENCH_START(finalQR)
+        MICRO_BENCH_INIT(finalQR)
+        MICRO_BENCH_START(finalQR)
         catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        //MICRO_BENCH_STOP(finalQR)
-        //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
-        //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
+        MICRO_BENCH_STOP(finalQR)
+        FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 
-        //MICRO_BENCH_INIT(addingZeros)
-        //MICRO_BENCH_START(addingZeros)
+
+        MICRO_BENCH_INIT(addingZeros)
+        MICRO_BENCH_START(addingZeros)
         minNumRows = std::min(totalNumRows, totalNumCols);
         if (totalNumCols > minNumRows)
         {
             FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
             catGenHeadAndTails = catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
         }
-        //MICRO_BENCH_STOP(addingZeros)
-        //FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
+        MICRO_BENCH_STOP(addingZeros)
+        FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
 
         if (nullptr != pR)
         {
@@ -1950,16 +1955,32 @@ namespace Figaro
         }
     }
 
-    void Relation::computeQR(MatrixD::QRGivensHintType qrHintType, MatrixEigenT* pR)
+    void Relation::computeQR(
+        Figaro::QRGivensHintType qrHintType,
+        Figaro::MemoryLayout memoryLayout,
+        MatrixEigenT* pR)
     {
-        FIGARO_LOG_INFO("Compute QR", m_name, m_data.getNumRows(), m_data.getNumCols())
-        m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        if (nullptr != pR)
+        if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
-            FIGARO_LOG_INFO("R before positive diagonal", m_data)
-            m_data.makeDiagonalElementsPositiveInR();
-            FIGARO_LOG_INFO("R after positive diagonal", m_data)
-            copyMatrixDTToMatrixEigen(m_data, *pR);
+            m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType);
+            FIGARO_LOG_BENCH("HOHOH", "ROW_MAJOR")
+            if (nullptr != pR)
+            {
+                FIGARO_LOG_INFO("R before positive diagonal", m_data)
+                m_data.makeDiagonalElementsPositiveInR();
+                FIGARO_LOG_INFO("R after positive diagonal", m_data)
+                copyMatrixDTToMatrixEigen(m_data, *pR);
+            }
+        }
+        else
+        {
+             m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true, qrHintType);
+             FIGARO_LOG_BENCH("HOHOH", "COL_MAJOR")
+            if (nullptr != pR)
+            {
+                m_dataColumnMajor.makeDiagonalElementsPositiveInR();
+                copyMatrixDTToMatrixEigen(m_dataColumnMajor, *pR);
+            }
         }
     }
 
@@ -2361,6 +2382,26 @@ namespace Figaro
         m_dataTails2 = std::move(tailOutput2);
     }
 
+    void Relation::changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout)
+    {
+        MatrixDColT tmpOut{m_data.getNumRows(), m_data.getNumCols()};
+        if (memoryLayout == MemoryLayout::COL_MAJOR)
+        {
+            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_data.getNumCols(); colIdx++)
+                {
+                    tmpOut(rowIdx, colIdx) = m_data(rowIdx, colIdx);
+                }
+            }
+            m_dataColumnMajor = std::move(tmpOut);
+        }
+        else if (memoryLayout == MemoryLayout::COL_MAJOR)
+        {
+            // TODO: if needed.
+        }
+    }
+
     void Relation::appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows)
     {
         uint32_t oldNumRows = matR.rows();
@@ -2380,19 +2421,6 @@ namespace Figaro
         for (uint32_t rowIdx = 0; rowIdx < matR.cols(); rowIdx ++)
         {
             matR.row(rowIdx) *= aDiag(rowIdx);
-        }
-    }
-
-    void Relation::copyMatrixDTToMatrixEigen(
-        const MatrixDT& matDT, MatrixEigenT& matEig)
-    {
-        matEig.resize(matDT.getNumRows(), matDT.getNumCols());
-        for (uint32_t rowIdx = 0; rowIdx < matDT.getNumRows(); rowIdx++)
-        {
-            for (uint32_t colIdx = 0; colIdx < matDT.getNumCols(); colIdx++)
-            {
-                matEig(rowIdx, colIdx) = matDT[rowIdx][colIdx];
-            }
         }
     }
 

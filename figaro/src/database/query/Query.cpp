@@ -33,6 +33,7 @@ namespace Figaro
             std::vector<std::string> vRelationOrder;
             std::vector<std::string> vDropAttrNames;
             uint32_t numThreads;
+            bool computeQ = false;
 
             for (const auto& relName: jsonQueryConfig["relation_order"])
             {
@@ -56,17 +57,23 @@ namespace Figaro
                 numThreads = getNumberOfThreads();
             }
 
+            if (jsonQueryConfig.contains("compute_all"))
+            {
+                computeQ = jsonQueryConfig["compute_all"];
+            }
+
+
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
             if (operatorName == "GIV_QR")
             {
                 pCreatedNode = new ASTNodeQRGivens(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE GIV_QR NODE")
             }
             else
             {
                 pCreatedNode = new ASTNodePostProcQR(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
             }
         }
@@ -147,19 +154,21 @@ namespace Figaro
     }
 
     void Query::evaluateQueryFigaro(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
+        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::QRGivensHintType qrHintType,
+        Figaro::MemoryLayout memoryLayout, bool saveResult)
     {
          // Create visitor
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true,
+            memoryLayout);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess,qrHintType, &m_matResult, saveResult);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
         //MICRO_BENCH_INIT(attrComp)
-        //MICRO_BENCH_INIT(downCnt)
-        //MICRO_BENCH_INIT(upCnt)
-        //MICRO_BENCH_INIT(firstPass)
-        //MICRO_BENCH_INIT(secondPass)
+        MICRO_BENCH_INIT(downCnt)
+        MICRO_BENCH_INIT(upCnt)
+        MICRO_BENCH_INIT(firstPass)
+        MICRO_BENCH_INIT(secondPass)
 
         //MICRO_BENCH_START(attrComp)
         m_pASTRoot->accept(&joinAttrVisitor);
@@ -174,42 +183,44 @@ namespace Figaro
             MICRO_BENCH_START(main)
             if (evalCounts)
             {
-                //MICRO_BENCH_START(downCnt)
+                MICRO_BENCH_START(downCnt)
                 m_pASTRoot->accept(&computeDownVisitor);
-                //MICRO_BENCH_STOP(downCnt)
-                //MICRO_BENCH_START(upCnt)
+                MICRO_BENCH_STOP(downCnt)
+                MICRO_BENCH_START(upCnt)
                 m_pASTRoot->accept(&computeUpAndCircleVisitor);
-                //MICRO_BENCH_STOP(upCnt)
+                MICRO_BENCH_STOP(upCnt)
             }
-            //FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(downCnt));
-            //FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(upCnt));
+            FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(downCnt));
+            FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(upCnt));
 
-            //MICRO_BENCH_START(firstPass)
+            MICRO_BENCH_START(firstPass)
             if (evalFirstFigaroPass)
             {
                 m_pASTRoot->accept(&figaroFirstPassVisitor);
             }
-            //MICRO_BENCH_STOP(firstPass)
-            //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(firstPass));
+            MICRO_BENCH_STOP(firstPass)
+            FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(firstPass));
 
-            //MICRO_BENCH_START(secondPass)
+            MICRO_BENCH_START(secondPass)
             if (evalSecondFigaroPass)
             {
                 m_pASTRoot->accept(&figaroSecondPassVisitor);
             }
-            //MICRO_BENCH_STOP(secondPass)
-            //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
+            MICRO_BENCH_STOP(secondPass)
+            FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
             MICRO_BENCH_STOP(main)
             FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
         }
     }
 
     void Query::evaluateQueryPostprocess(uint32_t numReps,
-            Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
+            Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout, bool saveResult)
     {
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false);
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, memoryLayout);
         ASTPostProcQRVisitor postpProcQRVisitor(m_pDatabase, qrHintType,
-                                                &m_matResult, saveResult);
+                                                memoryLayout, &m_matResult,
+                                                saveResult);
 
         m_pASTRoot->accept(&joinAttrVisitor);
         FIGARO_LOG_INFO("Finished joinAttrVisitor")
@@ -224,15 +235,18 @@ namespace Figaro
     }
 
      void Query::evaluateQuery(bool isPureFigaro, bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult)
+        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::QRGivensHintType qrHintType,
+        Figaro::MemoryLayout memoryLayout, bool saveResult)
      {
          if (isPureFigaro)
          {
-             evaluateQueryFigaro(evalCounts, evalFirstFigaroPass, evalSecondFigaroPass, evalPostProcess, numReps, qrHintType, saveResult);
+             evaluateQueryFigaro(evalCounts, evalFirstFigaroPass, evalSecondFigaroPass, evalPostProcess, numReps, qrHintType,
+             memoryLayout, saveResult);
          }
          else
          {
-             evaluateQueryPostprocess(numReps, qrHintType, saveResult);
+             evaluateQueryPostprocess(numReps, qrHintType, memoryLayout,
+                saveResult);
          }
      }
 }

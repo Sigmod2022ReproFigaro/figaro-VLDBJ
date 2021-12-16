@@ -63,6 +63,10 @@ namespace Figaro
             pElement->getDropAttributes());
         m_pDatabase->oneHotEncodeRelations();
         pElement->getOperand()->accept(this);
+        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        {
+            m_pDatabase->changeMemoryLayout();
+        }
     }
 
 }

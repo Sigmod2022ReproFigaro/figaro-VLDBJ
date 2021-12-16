@@ -9,9 +9,11 @@ namespace Figaro
     {
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
         bool m_sortValues;
+        Figaro::MemoryLayout m_memoryLayout;
     public:
         ASTJoinAttributesComputeVisitor(
-            Database* pDatabase, bool sortValues): ASTQRVisitor(pDatabase), m_sortValues(sortValues) {}
+            Database* pDatabase, bool sortValues,
+            Figaro::MemoryLayout memoryLayout): ASTQRVisitor(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
         void visitNodeRelation(ASTNodeRelation* pElement) override;
         void visitNodeJoin(ASTNodeJoin* pElement) override;
         void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;

@@ -23,9 +23,11 @@ int main(int argc, char *argv[])
     std::string dumpFilePath;
     std::string dbConfigPath;
     std::string postprocessMode;
+    std::string strMemoryLayout;
     std::string queryConfigPath;
 
-    Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG;
+    Figaro::QRGivensHintType qrHintType = Figaro::QRGivensHintType::THIN_DIAG;
+    Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
     bool pureFigaro = false;
     uint32_t precision;
@@ -39,6 +41,7 @@ int main(int argc, char *argv[])
     }
     FIGARO_LOG_INFO("Command line args", strArgs)
 
+
     po::options_description desc("figaro - allowed options");
     desc.add_options()
     ("help", "produce help message")
@@ -50,6 +53,7 @@ int main(int argc, char *argv[])
     ("num_repetitions", po::value<uint32_t>(&numRepetitions))
     ("num_threads", po::value<uint32_t>(&numThreads))
     ("postprocess", po::value<std::string>(&postprocessMode))
+    ("memory_layout", po::value<std::string>(&strMemoryLayout))
     ;
 
     po::variables_map vm;
@@ -78,25 +82,38 @@ int main(int argc, char *argv[])
         postprocessMode = vm["postprocess"].as<std::string>();
         if (postprocessMode == "THIN_BOTTOM")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_BOTTOM;
+            qrHintType = Figaro::QRGivensHintType::THIN_BOTTOM;
         }
         else if (postprocessMode == "THIN_DIAG")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG;
+            qrHintType = Figaro::QRGivensHintType::THIN_DIAG;
         }
         else if (postprocessMode == "THICK_BOTTOM")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::THICK_BOTTOM;
+            qrHintType = Figaro::QRGivensHintType::THICK_BOTTOM;
         }
         else if (postprocessMode == "THICK_DIAG")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::THICK_DIAG;
+            qrHintType = Figaro::QRGivensHintType::THICK_DIAG;
         }
         else if (postprocessMode == "LAPACK")
         {
-            qrHintType = Figaro::MatrixD::QRGivensHintType::LAPACK;
+            qrHintType = Figaro::QRGivensHintType::LAPACK;
         }
         FIGARO_LOG_INFO("postprocessMode", postprocessMode)
+    }
+
+    if (vm.count("memory_layout"))
+    {
+        strMemoryLayout = vm["memory_layout"].as<std::string>();
+        if (strMemoryLayout == "ROW_MAJOR")
+        {
+            memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
+        }
+        else if (strMemoryLayout == "COL_MAJOR")
+        {
+            memoryLayout = Figaro::MemoryLayout::COL_MAJOR;
+        }
     }
 
     if (vm.count("implementation"))
@@ -124,7 +141,7 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
-    query.evaluateQuery(pureFigaro, true, true, true, true, numRepetitions, qrHintType, dump);
+    query.evaluateQuery(pureFigaro, true, true, true, true, numRepetitions, qrHintType, memoryLayout, dump);
 
     if (dump)
     {

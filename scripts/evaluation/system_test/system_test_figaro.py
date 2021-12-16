@@ -28,7 +28,7 @@ class SystemTestFigaro(SystemTest):
 
     def eval(self, dump = False, profiler = False):
         postprocess_str = DecompConf.postprocess_mode_to_str(self.conf_decomp.postprocessing)
-
+        memory_layout = DecompConf.memory_layout_to_str(self.conf_decomp.memory_layout)
         args = ["/bin/bash", "setup.sh",
                 "--root_path={}".format(self.figaro_path),
                 "--log_file_path={}".format(self.conf_log.file_path),
@@ -36,6 +36,7 @@ class SystemTestFigaro(SystemTest):
                 "--query_config_path={}".format(self.query.get_conf_path()),
                 "--num_threads={}".format(self.conf_perf.num_threads),
                 "--postprocess={}".format(postprocess_str),
+                "--memory_layout={}".format(memory_layout),
                 "--implementation={}".format("figaro"),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format

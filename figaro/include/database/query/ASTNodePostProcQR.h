@@ -15,12 +15,13 @@ namespace Figaro
         std::vector<std::string> m_vRelationOrder;
         std::vector<std::string> m_vDropAttributes;
         uint32_t m_numThreads;
+        bool m_computeQ;
     public:
         ASTNodePostProcQR(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes,
-        uint32_t numThreads
+        uint32_t numThreads, bool computeQ
         ): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
         m_vDropAttributes(vDropAttributes),
-        m_numThreads(numThreads) {};
+        m_numThreads(numThreads), m_computeQ(computeQ) {};
         virtual ~ASTNodePostProcQR() override { delete m_pOperand; }
         ASTNode* getOperand(void)
         {

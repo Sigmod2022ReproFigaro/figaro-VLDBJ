@@ -46,6 +46,7 @@ namespace Figaro
         // key: PK values -> value: corresponding aggregate
         typedef std::map<std::vector<double>, double> GroupByT;
         typedef Figaro::Matrix<double> MatrixDT;
+        typedef Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> MatrixDColT;
         typedef Figaro::Matrix<uint32_t> MatrixUI32T;
         typedef std::tuple<uint32_t, tbb::atomic<uint32_t> > DownUpCntT;
 
@@ -53,7 +54,18 @@ namespace Figaro
          * 1) Allocates matrix of type MatrixEigen @p matEig in memory.
          * 2) Copies the content of @p matDT to @p matEig.
          */
-        static void copyMatrixDTToMatrixEigen(const MatrixDT& matDT, MatrixEigenT& matEig);
+        template <typename T, MemoryLayout L>
+        static void copyMatrixDTToMatrixEigen(const Figaro::Matrix<T, L>& matDT, MatrixEigenT& matEig)
+        {
+            matEig.resize(matDT.getNumRows(), matDT.getNumCols());
+            for (uint32_t rowIdx = 0; rowIdx < matDT.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < matDT.getNumCols(); colIdx++)
+                {
+                    matEig(rowIdx, colIdx) = matDT(rowIdx, colIdx);
+                }
+            }
+        }
 
         /**
          * @struct Attribute
@@ -115,6 +127,7 @@ namespace Figaro
         std::vector<Attribute> m_oldAttributes;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
+        MatrixDColT m_dataColumnMajor;
         MatrixDT m_data;
 
         MatrixDT m_dataHead;
@@ -297,6 +310,7 @@ namespace Figaro
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
 
+
         /***************** OLD IMPLEMENTATTION ***********/
         uint32_t getDistinctValuesCount(const std::string& attributeName) const;
 
@@ -363,6 +377,8 @@ namespace Figaro
 
         void oneHotEncode(void);
 
+        void changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout);
+
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
@@ -418,24 +434,25 @@ namespace Figaro
             bool isRootNode);
 
         void computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
-            MatrixD::QRGivensHintType qrTypeHint);
+            Figaro::QRGivensHintType qrTypeHint);
 
         void computeQROfGeneralizedHead(
             const std::vector<Relation*>& vpRels,
-            MatrixD::QRGivensHintType qrHintType);
+            Figaro::QRGivensHintType qrHintType);
 
-        void computeQROfTail(MatrixD::QRGivensHintType qrHintType);
+        void computeQROfTail(Figaro::QRGivensHintType qrHintType);
 
-        void computeQROfGeneralizedTail(MatrixD::QRGivensHintType qrHintType);
+        void computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType);
 
 
         // Should be called for a root relation.
         void computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
-            MatrixD::QRGivensHintType qrHintType,
+            Figaro::QRGivensHintType qrHintType,
             MatrixEigenT* pR);
 
-        void computeQR(MatrixD::QRGivensHintType qrHintType,
+        void computeQR(Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout,
             MatrixEigenT* pR);
 
         /**

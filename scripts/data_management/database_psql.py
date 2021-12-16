@@ -152,7 +152,7 @@ class DatabasePsql:
             sql_order_by = sql_order_by[:-1]
         else:
             sql_order_by = "RANDOM()"
-            sql_join = "SELECT setseed(.1);" + sql_join
+            sql_join = "SELECT setseed(.42);" + sql_join
 
 
         for attribute_name in ord_attr_names:

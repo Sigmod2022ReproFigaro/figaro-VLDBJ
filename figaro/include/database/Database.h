@@ -97,14 +97,19 @@ namespace Figaro
 
         void computePostprocessing(
             const std::vector<std::string>& vRelationOrder,
-            MatrixD::QRGivensHintType qrHintType,
+            Figaro::QRGivensHintType qrHintType,
             MatrixEigenT* pR);
 
+
+        void changeMemoryLayout(void);
 
         void evalPostprocessing(
             const std::string& relName,
-            MatrixD::QRGivensHintType qrHintType,
+            Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout,
             MatrixEigenT* pR);
+
+
 
 
         const Relation::MatrixDT& getHead(const std::string& relationName) const;

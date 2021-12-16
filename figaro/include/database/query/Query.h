@@ -22,10 +22,12 @@ namespace Figaro
 
         void evaluateQueryFigaro(bool evalCounts, bool evalFirstFigaroPass,
         bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps,
-            Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult);
+            Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout, bool saveResult);
 
         void evaluateQueryPostprocess(uint32_t numReps,
-            Figaro::MatrixD::QRGivensHintType qrHintType, bool saveResult);
+            Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout, bool saveResult);
 
     public:
         Query(Database* pDatabase): m_pDatabase(pDatabase){}
@@ -40,7 +42,9 @@ namespace Figaro
          */
         void evaluateQuery(bool isPureFigaro = true, bool evalCounts = true, bool evalFirstFigaroPass = true,
             bool evalSecondFigaroPass = true, bool evalPostProcess = true, uint32_t numResp = 1,
-            Figaro::MatrixD::QRGivensHintType qrHintType = Figaro::MatrixD::QRGivensHintType::THIN_DIAG, bool saveResult = false);
+            Figaro::QRGivensHintType qrHintType = Figaro::QRGivensHintType::THIN_DIAG,
+            Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
+            bool saveResult = false);
 
         void setDatabase(Database* pDatabase)
         {

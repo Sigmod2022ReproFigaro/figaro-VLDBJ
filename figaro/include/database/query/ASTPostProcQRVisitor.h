@@ -8,13 +8,15 @@ namespace Figaro
     class ASTPostProcQRVisitor: public ASTVisitor
     {
         MatrixEigenT* m_pResult = nullptr;
-        MatrixD::QRGivensHintType m_qrHintType;
+        Figaro::QRGivensHintType m_qrHintType;
+        Figaro::MemoryLayout m_memoryLayout;
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
     public:
         ASTPostProcQRVisitor(
-            Database* pDatabase, MatrixD::QRGivensHintType qrHintType, MatrixEigenT* pResult,
-                bool saveResult): ASTVisitor(pDatabase), m_pResult(pResult),
-                 m_qrHintType(qrHintType) {
+            Database* pDatabase, Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout,
+            MatrixEigenT* pResult, bool saveResult): ASTVisitor(pDatabase), m_pResult(pResult),
+                 m_qrHintType(qrHintType), m_memoryLayout(memoryLayout) {
                      if (!saveResult)
                      {
                          m_pResult = nullptr;

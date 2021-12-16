@@ -228,7 +228,7 @@ namespace Figaro
 
     void Database::computePostprocessing(
         const std::vector<std::string>& vRelationOrder,
-        MatrixD::QRGivensHintType qrHintType,
+        Figaro::QRGivensHintType qrHintType,
         MatrixEigenT* pR
     )
     {
@@ -247,13 +247,23 @@ namespace Figaro
         pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, pR);
     }
 
+    void Database::changeMemoryLayout(void)
+    {
+        for (auto& [relName, relation]: m_relations)
+        {
+            FIGARO_LOG_INFO("One hot encoding relation", relName)
+            relation.changeMemoryLayout(MemoryLayout::COL_MAJOR);
+        }
+    }
+
     void Database::evalPostprocessing(
             const std::string& relName,
-            MatrixD::QRGivensHintType qrHintType,
+            Figaro::QRGivensHintType qrHintType,
+            Figaro::MemoryLayout memoryLayout,
             MatrixEigenT* pR)
     {
         Relation* pRel = &m_relations.at(relName);
-        pRel->computeQR(qrHintType, pR);
+        pRel->computeQR(qrHintType, memoryLayout, pR);
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

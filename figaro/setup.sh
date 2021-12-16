@@ -12,6 +12,7 @@ function init_global_paths()
     FIGARO_NUM_REPS=1
     FIGARO_NUM_THREADS=1
     FIGARO_POSTPROCESS="THIN1_DIAG"
+    FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
     FIGARO_IMPLEMENTATION="FIGARO"
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
@@ -70,6 +71,10 @@ function get_str_args()
         --postprocess=*)
             EXTENSION="${option#*=}"
             FIGARO_POSTPROCESS=$EXTENSION
+        ;;
+        --memory_layout=*)
+            EXTENSION="${option#*=}"
+            FIGARO_MEMORY_LAYOUT=$EXTENSION
         ;;
         --profiler_dump_path=*)
             EXTENSION="${option#*=}"
@@ -132,44 +137,42 @@ function main()
     # Used for generation of tests and libs.
     #cmake ../. -D FIGARO_RUN=ON -D FIGARO_TEST=ON -D FIGARO_LIB=ON
     make -j40 || exit 1
+
+    ARGS=""
+    ARGS+="--db_config_path ${FIGARO_DB_CONFIG_PATH} "
+    ARGS+="--query_config_path ${FIGARO_QUERY_CONFIG_PATH} "
+    ARGS+="--precision ${FIGARO_PRECISION} "
+    ARGS+="--num_threads ${FIGARO_NUM_THREADS} "
+    ARGS+="--postprocess ${FIGARO_POSTPROCESS} "
+    ARGS+="--memory_layout ${FIGARO_MEMORY_LAYOUT} "
+    ARGS+="--implementation ${FIGARO_IMPLEMENTATION} "
+
     case "${FIGARO_TEST_MODE}" in
     "DEBUG"|"INFO")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" \
-        --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" \
-        --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
-        --postprocess "${FIGARO_POSTPROCESS}" \
+        ./figaro $(echo $ARGS) \
         > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
-            --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" --precision "${FIGARO_PRECISION}" \
-            --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
-            --postprocess "${FIGARO_POSTPROCESS}" \
-            > "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        ./figaro $(echo $ARGS) \
+        --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
+        > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PERFORMANCE")
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}" \
-        --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
-        --postprocess "${FIGARO_POSTPROCESS}" >> \
-         "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        ./figaro $(echo $ARGS) \
+        --num_repetitions "${FIGARO_NUM_REPS}" \
+        >> "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PROFILER_THREADS")
         vtune -collect threading -result-dir "${FIGARO_PROFILER_DUMP_PATH}"  \
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}" \
-        --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
-        --postprocess "${FIGARO_POSTPROCESS}" > \
-         "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        ./figaro $(echo $ARGS) \
+        --num_repetitions "${FIGARO_NUM_REPS}" \
+        > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PROFILER_MEMORY")
         vtune -collect memory-access -result-dir "${FIGARO_PROFILER_DUMP_PATH}" \
-        ./figaro --db_config_path "${FIGARO_DB_CONFIG_PATH}" --query_config_path "${FIGARO_QUERY_CONFIG_PATH}" \
-        --precision "${FIGARO_PRECISION}" --num_repetitions "${FIGARO_NUM_REPS}" \
-        --num_threads "${FIGARO_NUM_THREADS}" --implementation "${FIGARO_IMPLEMENTATION}" \
-        --postprocess "${FIGARO_POSTPROCESS}" > \
-         "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        ./figaro $(echo $ARGS) \
+        --num_repetitions "${FIGARO_NUM_REPS}" \
+         >"${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"

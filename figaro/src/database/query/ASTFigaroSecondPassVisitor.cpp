@@ -49,14 +49,18 @@ namespace Figaro
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
+        MICRO_BENCH_INIT(mainAlgorithm)
+        MICRO_BENCH_START(mainAlgorithm)
         pElement->getOperand()->accept(this);
+        MICRO_BENCH_STOP(mainAlgorithm)
+        FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
         if (m_postProcess)
         {
-            //MICRO_BENCH_INIT(postprocess)
-            //MICRO_BENCH_START(postprocess)
+            MICRO_BENCH_INIT(postprocess)
+            MICRO_BENCH_START(postprocess)
             m_pDatabase->computePostprocessing(pElement->getRelationOrder(), m_qrHintType, m_pResult);
-            //MICRO_BENCH_STOP(postprocess)
-            //FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
+            MICRO_BENCH_STOP(postprocess)
+            FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
         }
         FIGARO_LOG_DBG("FInished")
 

@@ -10,8 +10,23 @@
 
 namespace Figaro
 {
+    enum class  MemoryLayout: uint32_t
+    {
+        ROW_MAJOR = 0,
+        COL_MAJOR = 1
+    };
+
+    enum class QRGivensHintType
+    {
+        THIN_BOTTOM = 0,
+        THIN_DIAG = 1,
+        THICK_BOTTOM = 2,
+        THICK_DIAG = 3,
+        LAPACK = 4
+    };
+
     // Row-major order of storing elements of matrix is assumed.
-    template <typename T>
+    template <typename T, MemoryLayout L = MemoryLayout::ROW_MAJOR>
     class Matrix
     {
         static constexpr uint32_t MIN_COLS_PAR = UINT32_MAX;
@@ -37,14 +52,7 @@ namespace Figaro
             return (uint64_t) m_numRows * (uint64_t)m_numCols;
         }
     public:
-        enum class QRGivensHintType
-        {
-            THIN_BOTTOM = 0,
-            THIN_DIAG = 1,
-            THICK_BOTTOM = 2,
-            THICK_DIAG = 3,
-            LAPACK = 4
-        };
+
         Matrix(uint32_t numRows, uint32_t numCols)
         {
             m_numRows = numRows;
@@ -102,6 +110,34 @@ namespace Figaro
             return &((*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols)]);
         }
 
+        T& operator()(uint32_t rowIdx, uint32_t colIdx)
+        {
+            FIGARO_LOG_ASSERT(rowIdx < m_numRows);
+            FIGARO_LOG_ASSERT(colIdx < m_numCols);
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return (*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols) + colIdx];
+            }
+            else
+            {
+                return (*m_pStorage)[(uint64_t)(colIdx) * (uint64_t)(m_numRows) + colIdx];
+            }
+        }
+
+        T operator()(uint32_t rowIdx, uint32_t colIdx) const
+        {
+            FIGARO_LOG_ASSERT(rowIdx < m_numRows);
+            FIGARO_LOG_ASSERT(colIdx < m_numCols);
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return (*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols) + (uint64_t)colIdx];
+            }
+            else
+            {
+                return (*m_pStorage)[(uint64_t)(colIdx) * (uint64_t)(m_numRows) + colIdx];
+            }
+        }
+
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
@@ -128,10 +164,10 @@ namespace Figaro
         }
 
 
-        Matrix<T> getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd,
+        Matrix<T, L> getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd,
                         uint32_t colIdxBegin, uint32_t colIdxEnd) const
         {
-            Matrix<T> tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
+            Matrix<T, L> tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
             for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
             {
                 for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
@@ -142,27 +178,27 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T> getRightCols(uint32_t numCols) const
+        Matrix<T, L> getRightCols(uint32_t numCols) const
         {
             return getBlock(0, m_numRows - 1, m_numCols - numCols, m_numCols - 1);
         }
 
-        Matrix<T> getLeftCols(uint32_t numCols) const
+        Matrix<T, L> getLeftCols(uint32_t numCols) const
         {
             return getBlock(0, m_numRows - 1, 0, numCols - 1);
         }
 
-        Matrix<T> getTopRows(uint32_t numRows) const
+        Matrix<T, L> getTopRows(uint32_t numRows) const
         {
             return getBlock(0, numRows - 1, 0, m_numCols - 1);
         }
 
-        Matrix<T> getBottomRows(uint32_t numRows) const
+        Matrix<T, L> getBottomRows(uint32_t numRows) const
         {
             return getBlock(m_numRows - numRows, m_numRows - 1, 0, m_numCols - 1);
         }
 
-        friend std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
+        friend std::ostream& operator<<(std::ostream& out, const Matrix<T, L>& m)
         {
             out << "Figaro matrix" << std::endl;
 
@@ -191,9 +227,9 @@ namespace Figaro
             return out;
         }
 
-        static Matrix<T> zeros(uint32_t numRows, uint32_t numCols)
+        static Matrix<T, L> zeros(uint32_t numRows, uint32_t numCols)
         {
-            Matrix<T> m(numRows, numCols);
+            Matrix<T, L> m(numRows, numCols);
             FIGARO_LOG_DBG("Entered zeros")
             m.m_pStorage->setToZeros();
             FIGARO_LOG_DBG("Exited zeros")
@@ -203,10 +239,10 @@ namespace Figaro
         // TODO: parallelization
 
 
-        Matrix<T> concatenateHorizontally(const Matrix<T>& m) const
+        Matrix<T, L> concatenateHorizontally(const Matrix<T, L>& m) const
         {
             FIGARO_LOG_ASSERT(getNumRows() == m.getNumRows());
-            Matrix<T> tmp(m_numRows, m_numCols + m.m_numCols);
+            Matrix<T, L> tmp(m_numRows, m_numCols + m.m_numCols);
             auto& thisRef = *this;
 
             FIGARO_LOG_DBG("Entered concatenateHorizontally")
@@ -225,10 +261,10 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T> concatenateVertically(const Matrix<T>& m) const
+        Matrix<T, L> concatenateVertically(const Matrix<T, L>& m) const
         {
             FIGARO_LOG_ASSERT(m_numCols == m.m_numCols);
-            Matrix<T> tmp(m_numRows + m.m_numRows, m_numCols);
+            Matrix<T, L> tmp(m_numRows + m.m_numRows, m_numCols);
             auto& thisRef = *this;
 
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
@@ -249,9 +285,9 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T> concatenateHorizontallyScalar(T scalar, uint32_t numCols) const
+        Matrix<T, L> concatenateHorizontallyScalar(T scalar, uint32_t numCols) const
         {
-            Matrix<T> tmp(m_numRows, m_numCols + numCols);
+            Matrix<T, L> tmp(m_numRows, m_numCols + numCols);
             auto& thisRef = *this;
 
             FIGARO_LOG_DBG("Entered concatenateHorizontallyScalar")
@@ -270,9 +306,9 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T> concatenateVerticallyScalar(T scalar, uint32_t numRows) const
+        Matrix<T, L> concatenateVerticallyScalar(T scalar, uint32_t numRows) const
         {
-            Matrix<T> tmp(m_numRows + numRows, m_numCols);
+            Matrix<T, L> tmp(m_numRows + numRows, m_numCols);
             auto& thisRef = *this;
 
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
@@ -294,7 +330,7 @@ namespace Figaro
         }
 
 
-        void copyBlockToThisMatrix(const Matrix<T>& matSource,
+        void copyBlockToThisMatrix(const Matrix<T, L>& matSource,
             uint32_t rowSrcBeginIdx, uint32_t rowSrcEndIdx,
             uint32_t colSrcBeginIdx, uint32_t colSrcEndIdx,
             uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
@@ -312,10 +348,8 @@ namespace Figaro
         }
 
 
-        void computeGivensRotation(double a, double b,
-            double& cos, double& sin, double& r)
+        void computeGivensRotation(T a, T b, T& cos, T& sin, T& r)
         {
-            // TODO: Possibly replace checks with epsilon checks?
             if (b == 0.0)
             {
                 cos = boost::math::sign(a);
@@ -330,8 +364,8 @@ namespace Figaro
             }
             else if (std::abs(a) > std::abs(b))
             {
-                double t = b / a;
-                double u = boost::math::sign(a) *
+                T t = b / a;
+                T u = boost::math::sign(a) *
                     std::abs(std::sqrt(1 + t * t));
                 cos = 1 / u;
                 sin = -cos * t;
@@ -339,8 +373,8 @@ namespace Figaro
             }
             else
             {
-                double t = a / b;
-                double u = boost::math::sign(b) * std::abs(std::sqrt(1 + t * t));
+                T t = a / b;
+                T u = boost::math::sign(b) * std::abs(std::sqrt(1 + t * t));
                 sin = - 1 / u;
                 cos = -sin * t;
                 r = b * u;
@@ -349,18 +383,25 @@ namespace Figaro
 
 
         void applyGivens(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx,
-                         double sin, double cos)
+                         T sin, T cos)
         {
             auto& matA = *this;
 
-            for (uint32_t colIdx = startColIdx; colIdx < matA.m_numCols; colIdx++)
+            T tmpUpperVal;
+            T tmpLowerVal;
+
+            tmpUpperVal = matA[rowIdxUpper][startColIdx];
+            tmpLowerVal = matA[rowIdxLower][startColIdx];
+            matA[rowIdxUpper][startColIdx] = cos * tmpUpperVal - sin * tmpLowerVal;
+            matA[rowIdxLower][startColIdx] = 0;
+
+            for (uint32_t colIdx = startColIdx + 1; colIdx < matA.m_numCols; colIdx++)
             {
-                double tmpUpperVal = matA[rowIdxUpper][colIdx];
-                double tmpLowerVal = matA[rowIdxLower][colIdx];
+                tmpUpperVal = matA[rowIdxUpper][colIdx];
+                tmpLowerVal = matA[rowIdxLower][colIdx];
                 matA[rowIdxUpper][colIdx] = cos * tmpUpperVal - sin * tmpLowerVal;
                 matA[rowIdxLower][colIdx] = sin * tmpUpperVal + cos * tmpLowerVal;
             }
-             matA[rowIdxLower][startColIdx] = 0;
         }
 
 
@@ -376,11 +417,9 @@ namespace Figaro
                 for (uint32_t rowIdx = rowEndIdx;
                     rowIdx > colIdx + rowBeginIdx; rowIdx--)
                 {
-                    double upperVal = matA[rowIdx - 1][colIdx];
-                    double lowerVal = matA[rowIdx][colIdx];
-                    double cos;
-                    double sin;
-                    double r;
+                    T upperVal = matA[rowIdx - 1][colIdx];
+                    T lowerVal = matA[rowIdx][colIdx];
+                    T cos, sin, r;
                     if (lowerVal == 0.0)
                     {
                         continue;
@@ -404,14 +443,14 @@ namespace Figaro
             auto& matA = *this;
             for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
             {
-                for (uint32_t rowIdx = rowEndIdx;
-                    rowIdx > colIdx + rowBeginIdx; rowIdx--)
+                /*for (uint32_t rowIdx = rowEndIdx;
+                    rowIdx > colIdx + rowBeginIdx; rowIdx--)*/
+                for (uint32_t rowIdx = colIdx + rowBeginIdx + 1;
+                    rowIdx <= rowEndIdx; rowIdx++)
                 {
-                    double upperVal = matA[colIdx + rowBeginIdx][colIdx];
-                    double lowerVal = matA[rowIdx][colIdx];
-                    double cos;
-                    double sin;
-                    double r;
+                    T upperVal = matA[colIdx + rowBeginIdx][colIdx];
+                    T lowerVal = matA[rowIdx][colIdx];
+                    T cos, sin, r;
                     if (lowerVal == 0.0)
                     {
                         continue;
@@ -434,7 +473,6 @@ namespace Figaro
             uint32_t numThreads)
         {
             auto& matA = *this;
-            constexpr double epsilon = 0.0;
             uint32_t rowStartIdx;
             uint32_t numBatches;
             uint32_t batchSize;
@@ -472,11 +510,9 @@ namespace Figaro
                     {
                         if ((rowIdx <= rowEndIdx) && (colIdx <= colEndIdx) && (colIdx < rowEndIdx - 1))
                         {
-                            double upperVal = matA[rowIdx - 1][colIdx];
-                            double lowerVal = matA[rowIdx][colIdx];
-                            double cos;
-                            double sin;
-                            double r;
+                            T upperVal = matA[rowIdx - 1][colIdx];
+                            T lowerVal = matA[rowIdx][colIdx];
+                            T cos, sin, r;
                             if (lowerVal != 0.0)
                             {
                                 computeGivensRotation(upperVal, lowerVal, cos, sin, r);
@@ -506,7 +542,6 @@ namespace Figaro
             uint32_t numThreads)
         {
             auto& matA = *this;
-            constexpr double epsilon = 0.0;
             uint32_t rowStartIdx;
             uint32_t numBatches;
             uint32_t batchSize;
@@ -547,11 +582,9 @@ namespace Figaro
                         if ((colIdx <= colEndIdx) && (rowIdx <= (int32_t)rowEndIdx) &&
                         (rowIdx > (int32_t)colIdx) )
                         {
-                            double upperVal = matA[colIdx + rowBeginIdx][colIdx];
-                            double lowerVal = matA[rowIdx][colIdx];
-                            double cos;
-                            double sin;
-                            double r;
+                            T upperVal = matA[colIdx + rowBeginIdx][colIdx];
+                            T lowerVal = matA[rowIdx][colIdx];
+                            T cos, sin, r;
                             if (lowerVal != 0.0)
                             {
                                 computeGivensRotation(upperVal, lowerVal, cos, sin, r);
@@ -573,13 +606,6 @@ namespace Figaro
             }
         }
 
-
-        void computeQRGivensSequential(void)
-        {
-            computeQRGivensSequentialBlock(0, m_numRows - 1, 0, m_numCols - 1, QRGivensHintType::THIN_DIAG);
-        }
-
-
         /**
          * @brief
          *
@@ -587,7 +613,7 @@ namespace Figaro
          *
          */
         void computeQRGivensParallelizedThinMatrix(uint32_t numThreads,
-            QRGivensHintType qrType)
+            Figaro::QRGivensHintType qrType)
         {
             uint32_t blockSize;
             uint32_t numBlocks;
@@ -693,7 +719,7 @@ namespace Figaro
         }
 
 
-        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, QRGivensHintType qrType)
+        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, Figaro::QRGivensHintType qrType)
         {
             if (qrType == QRGivensHintType::THICK_DIAG)
             {
@@ -716,7 +742,9 @@ namespace Figaro
             uint32_t rowNumR = std::min(getNumRows(), getNumCols());
             double* tau = new double [getNumCols()];
 
-            LAPACKE_dgeqrf(
+            if (L == MemoryLayout::ROW_MAJOR)
+            {
+                LAPACKE_dgeqrf(
                 LAPACK_ROW_MAJOR,
                 m_numRows,
                 m_numCols,
@@ -724,6 +752,18 @@ namespace Figaro
                 m_numCols,/*lda*/
                 tau/* tau */
                 );
+            }
+            else
+            {
+                LAPACKE_dgeqrf(
+                LAPACK_COL_MAJOR,
+                m_numRows,
+                m_numCols,
+                &((*m_pStorage)[0]) /* *a */,
+                m_numRows,/*lda*/
+                tau/* tau */
+                );
+            }
 
             matA.resize(rowNumR);
             for (uint32_t rowIdx = 0; rowIdx < rowNumR; rowIdx++)
@@ -733,6 +773,7 @@ namespace Figaro
                     matA[rowIdx][colIdx] = 0;
                 }
             }
+
             delete [] tau;
         }
 
@@ -741,9 +782,9 @@ namespace Figaro
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
-        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG)
+        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, Figaro::QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG)
         {
-            QRGivensHintType qrType;
+            Figaro::QRGivensHintType qrType;
             if ((0 == m_numRows) || (0 == m_numCols))
             {
                 return;
@@ -789,11 +830,11 @@ namespace Figaro
             uint32_t rowEnd = std::min(m_numRows, m_numCols);
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
-                double signDiag;
-                signDiag = boost::math::sign(matA[rowIdx][rowIdx]);
+                T signDiag;
+                signDiag = boost::math::sign(matA(rowIdx, rowIdx));
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    matA[rowIdx][colIdx] *= signDiag;
+                    matA(rowIdx, colIdx) *= signDiag;
                 }
             }
         }
