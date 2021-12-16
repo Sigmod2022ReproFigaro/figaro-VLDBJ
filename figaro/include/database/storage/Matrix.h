@@ -120,7 +120,7 @@ namespace Figaro
             }
             else
             {
-                return (*m_pStorage)[(uint64_t)(colIdx) * (uint64_t)(m_numRows) + colIdx];
+                return (*m_pStorage)[(uint64_t)(colIdx) * (uint64_t)(m_numRows) + rowIdx];
             }
         }
 
@@ -134,13 +134,14 @@ namespace Figaro
             }
             else
             {
-                return (*m_pStorage)[(uint64_t)(colIdx) * (uint64_t)(m_numRows) + colIdx];
+                return (*m_pStorage)[(uint64_t)(colIdx) * (uint64_t)(m_numRows) + rowIdx];
             }
         }
 
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
+            uint32_t oldNumRows = m_numRows;
             m_numRows = newNumRows;
             uint64_t newNumEntries = getNumEntries();
             if (nullptr == m_pStorage)
@@ -149,7 +150,28 @@ namespace Figaro
             }
             else
             {
-                m_pStorage->resize(newNumEntries);
+                if constexpr (L == MemoryLayout::ROW_MAJOR)
+                {
+                    m_pStorage->resize(newNumEntries);
+                }
+                else
+                {
+                    ArrayStorage<T>* pNewStorage = new ArrayStorage<T>(newNumEntries);
+                    for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx ++)
+                    {
+                        for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                        {
+                            uint64_t oldStorageIdx = (uint64_t)colIdx * (uint64_t)oldNumRows
+                                + (uint64_t)rowIdx;
+                            uint64_t newStorageIdx = (uint64_t)colIdx * (uint64_t)m_numRows
+                                + (uint64_t)rowIdx;
+
+                            (*pNewStorage)[newStorageIdx] = (*m_pStorage)[oldStorageIdx];
+                        }
+                    }
+                    delete m_pStorage;
+                    m_pStorage = pNewStorage;
+                }
             }
         }
 
@@ -161,6 +183,35 @@ namespace Figaro
         uint32_t getNumCols(void) const
         {
             return m_numCols;
+        }
+
+        friend std::ostream& operator<<(std::ostream& out, const Matrix<T, L>& m)
+        {
+            out << "Figaro matrix" << std::endl;
+
+            uint32_t rowNum;
+            uint32_t colNum;
+
+            colNum = m.getNumCols();
+            rowNum = m.getNumRows();
+
+            out << "Matrix" << std::endl;
+            out <<  "Matrix dimensions: " << rowNum << " " << colNum << std::endl;
+
+            for (uint32_t row = 0; row < rowNum; row ++)
+            {
+                for (uint32_t col = 0; col < colNum; col++)
+                {
+
+                    out << m[row][col];
+                    if (col != (colNum - 1))
+                    {
+                        out << " ";
+                    }
+                }
+                out << std::endl;
+            }
+            return out;
         }
 
 
@@ -196,35 +247,6 @@ namespace Figaro
         Matrix<T, L> getBottomRows(uint32_t numRows) const
         {
             return getBlock(m_numRows - numRows, m_numRows - 1, 0, m_numCols - 1);
-        }
-
-        friend std::ostream& operator<<(std::ostream& out, const Matrix<T, L>& m)
-        {
-            out << "Figaro matrix" << std::endl;
-
-            uint32_t rowNum;
-            uint32_t colNum;
-
-            colNum = m.getNumCols();
-            rowNum = m.getNumRows();
-
-            out << "Matrix" << std::endl;
-            out <<  "Matrix dimensions: " << rowNum << " " << colNum << std::endl;
-
-            for (uint32_t row = 0; row < rowNum; row ++)
-            {
-                for (uint32_t col = 0; col < colNum; col++)
-                {
-
-                    out << m[row][col];
-                    if (col != (colNum - 1))
-                    {
-                        out << " ";
-                    }
-                }
-                out << std::endl;
-            }
-            return out;
         }
 
         static Matrix<T, L> zeros(uint32_t numRows, uint32_t numCols)
@@ -742,7 +764,7 @@ namespace Figaro
             uint32_t rowNumR = std::min(getNumRows(), getNumCols());
             double* tau = new double [getNumCols()];
 
-            if (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
                 LAPACKE_dgeqrf(
                 LAPACK_ROW_MAJOR,
@@ -770,10 +792,9 @@ namespace Figaro
             {
                 for (uint32_t colIdx = 0; colIdx < std::min(rowIdx, m_numCols); colIdx++)
                 {
-                    matA[rowIdx][colIdx] = 0;
+                    matA(rowIdx, colIdx) = 0;
                 }
             }
-
             delete [] tau;
         }
 

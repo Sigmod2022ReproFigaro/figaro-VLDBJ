@@ -1974,7 +1974,7 @@ namespace Figaro
         }
         else
         {
-             m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true, qrHintType);
+            m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true, qrHintType);
              FIGARO_LOG_BENCH("HOHOH", "COL_MAJOR")
             if (nullptr != pR)
             {
