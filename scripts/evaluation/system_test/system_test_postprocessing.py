@@ -133,6 +133,7 @@ class SystemTestPostprocess(SystemTestCompetitor):
 
     def run_performance(self):
         for rep in range(self.conf_perf.num_reps):
+            logging.info("Run {} / {}".format(rep + 1, self.conf_perf.num_reps))
             self.eval()
 
 

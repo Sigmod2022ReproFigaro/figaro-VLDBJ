@@ -53,7 +53,8 @@ class SystemTestPython(SystemTestCompetitor):
 
 
         num_reps = self.conf_perf.num_reps if performance else 1
-        for reps in range(num_reps):
+        for rep in range(num_reps):
+            logging.info("Run {} / {}".format(rep + 1, num_reps))
             result = subprocess.run(args=args,  capture_output=True, text=True)
             path_log_file = self.conf_log.file_path
             with open(path_log_file, "a") as log_file:

@@ -47,9 +47,21 @@ class LogConf:
 
 
 class DumpConf:
-    def __init__(self, path: str, file_path: str):
+    class OrderRelation(IntEnum):
+        RANDOM = 1
+        JOIN_ATTRIBUTE = 2
+
+
+    def __init__(self, path: str, file_path: str, order_by: str):
         self.path = path
         self.file_path  = file_path
+        self.order_by = self.map_order_by_to_enum[order_by]
+
+
+    map_order_by_to_enum = {
+        'random': OrderRelation.RANDOM,
+        'join_attribute': OrderRelation.JOIN_ATTRIBUTE,
+    }
 
 
 class DecompConf:
@@ -79,8 +91,7 @@ class DecompConf:
         'thin_bottom': PostprocessingMode.THIN_BOTTOM,
         'thin_diag': PostprocessingMode.THIN_DIAG,
         'lapack': PostprocessingMode.LAPACK,
-
-        }
+    }
 
     map_sparsity_to_enum = {
     'sparse': SparsityMode.SPARSE,
@@ -182,6 +193,7 @@ class SystemTest(ABC):
         path_dump = SystemTest.create_dir_with_name(
             dump_json["path"], database.get_name(), query.get_name())
         dump_file_path = os.path.join(path_dump, dump_json["file"])
+        order_by = dump_json.get("order_by", "join_attribute")
 
         perf_json = system_json["system"]["performance"]
         path_glob = perf_json["path"]
@@ -212,7 +224,7 @@ class SystemTest(ABC):
         system_test = cls(
             name,
             LogConf(log_path, log_file_path),
-            DumpConf(path_dump, dump_file_path),
+            DumpConf(path_dump, dump_file_path, order_by),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
             DecompConf(postprocessing, sparsity),
@@ -346,6 +358,5 @@ class SystemTest(ABC):
         for test_mode in SystemTest.TestMode:
             self.clean_data(test_mode)
 
-    @abstractmethod
     def run_profiler(self):
         pass

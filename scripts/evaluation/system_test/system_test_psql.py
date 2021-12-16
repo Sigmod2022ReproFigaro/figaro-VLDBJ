@@ -34,7 +34,8 @@ class SystemTestPsql(SystemTestDBMS):
         database_psql.create_database(self.database)
 
         num_repetitions = self.conf_perf.num_reps if performance else 1
-        database_psql.evaluate_join(self.query, num_repetitions=num_repetitions)
+        database_psql.evaluate_join(self.query, num_repetitions=num_repetitions,
+            order_by=self.conf_dump.order_by)
         join_size = database_psql.get_join_size(self.query)
         logging.info("Number of rows is {}".format(join_size))
         database_psql.log_relation_sizes(self.query)

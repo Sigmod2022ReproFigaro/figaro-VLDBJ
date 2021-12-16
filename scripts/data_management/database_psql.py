@@ -10,6 +10,8 @@ from data_management.query import Query
 from data_management.relation import Relation
 from timeit import default_timer as timer
 
+from evaluation.system_test.system_test import DumpConf
+
 
 class DatabasePsql:
     JOIN_TABLE_NAME = "join_table"
@@ -131,21 +133,27 @@ class DatabasePsql:
         join_table_name = DatabasePsql.JOIN_TABLE_NAME + query.get_name()
         return join_table_name
 
-    def evaluate_join(self, query: Query, num_repetitions: int):
+    def evaluate_join(self, query: Query, num_repetitions: int, order_by: DumpConf.OrderRelation):
         join_table_name = DatabasePsql.get_join_table_name(query)
         sql_join = "DROP TABLE IF EXISTS " + join_table_name + ";CREATE TABLE " + join_table_name + " AS (SELECT {} FROM {} ORDER BY {});"
+
         sql_from_natural_join = ""
 
         sql_select = ""
         ord_attr_names = query.get_attr_names_ordered()
 
-        join_attr_names = query.get_join_attr_names_ordered()
-        sql_order_by = ""
-        for attribute_name in join_attr_names:
-            if attribute_name not in query.get_skip_attrs():
-                sql_order_by += attribute_name + ","
+        if order_by == DumpConf.OrderRelation.JOIN_ATTRIBUTE:
+            join_attr_names = query.get_join_attr_names_ordered()
+            sql_order_by = ""
+            for attribute_name in join_attr_names:
+                if attribute_name not in query.get_skip_attrs():
+                    sql_order_by += attribute_name + ","
 
-        sql_order_by = sql_order_by[:-1]
+            sql_order_by = sql_order_by[:-1]
+        else:
+            sql_order_by = "RANDOM()"
+            sql_join = "SELECT setseed(.1);" + sql_join
+
 
         for attribute_name in ord_attr_names:
             if attribute_name not in query.get_skip_attrs():
