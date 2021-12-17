@@ -1958,12 +1958,13 @@ namespace Figaro
     void Relation::computeQR(
         Figaro::QRGivensHintType qrHintType,
         Figaro::MemoryLayout memoryLayout,
+        bool computeQ,
         MatrixEigenT* pR)
     {
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
-            m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-            FIGARO_LOG_BENCH("HOHOH", "ROW_MAJOR")
+            m_data.computeQRGivens(getNumberOfThreads(), true,
+                qrHintType, computeQ);
             if (nullptr != pR)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", m_data)
@@ -1974,8 +1975,8 @@ namespace Figaro
         }
         else
         {
-            m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-             FIGARO_LOG_BENCH("HOHOH", "COL_MAJOR")
+            m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true,
+                 qrHintType, computeQ);
             if (nullptr != pR)
             {
                 m_dataColumnMajor.makeDiagonalElementsPositiveInR();

@@ -125,10 +125,11 @@ class DecompConf:
 
 
     def __init__(self, postprocessing: str, sparsity: str,
-        memory_layout: str):
+        memory_layout: str, compute_all: bool):
         self.postprocessing = DecompConf.map_postprocessing_to_enum[postprocessing]
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
         self.memory_layout = DecompConf.map_memory_layout_to_enum[memory_layout]
+        self.compute_all = compute_all
 
 
 
@@ -238,6 +239,7 @@ class SystemTest(ABC):
         postprocessing = decomp_json.get("postprocessing", "thin_diag")
         memory_layout = decomp_json.get("memory_layout", "row_major")
         sparsity = decomp_json.get("sparsity", "dense")
+        compute_all = bool(decomp_json.get("compute_all", False))
 
         executable_json = system_json["system"].get("executable", {})
         interpreter = executable_json.get("interpreter", "")
@@ -250,7 +252,8 @@ class SystemTest(ABC):
             DumpConf(path_dump, dump_file_path, order_by),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
-            DecompConf(postprocessing, sparsity, memory_layout),
+            DecompConf(postprocessing, sparsity,
+                memory_layout, compute_all),
             ExcecutableConf(interpreter),
             database, query, test_mode,
             *args, **kwargs)

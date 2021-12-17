@@ -453,6 +453,7 @@ namespace Figaro
 
         void computeQR(Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
+            bool computeQ,
             MatrixEigenT* pR);
 
         /**

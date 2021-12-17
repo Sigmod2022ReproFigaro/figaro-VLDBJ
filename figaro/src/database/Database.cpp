@@ -260,10 +260,11 @@ namespace Figaro
             const std::string& relName,
             Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
+            bool computeQ,
             MatrixEigenT* pR)
     {
         Relation* pRel = &m_relations.at(relName);
-        pRel->computeQR(qrHintType, memoryLayout, pR);
+        pRel->computeQR(qrHintType, memoryLayout, computeQ, pR);
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

@@ -107,6 +107,7 @@ namespace Figaro
             const std::string& relName,
             Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
+            bool computeQ,
             MatrixEigenT* pR);
 
 

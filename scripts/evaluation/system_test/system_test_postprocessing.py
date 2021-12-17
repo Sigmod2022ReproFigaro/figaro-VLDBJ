@@ -76,6 +76,8 @@ class SystemTestPostprocess(SystemTestCompetitor):
         }
         """
         query_json = json.loads(query_json_s)
+        query_json["query"]["evaluation_hint"]["compute_all"] = \
+            self.conf_decomp.compute_all
         return query_json
 
 

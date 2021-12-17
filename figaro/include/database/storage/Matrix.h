@@ -755,13 +755,10 @@ namespace Figaro
             this->resize(std::min(m_numCols, m_numRows));
         }
 
-        void computeQRGivensParallelizedLaPack(void)
+        void computeQRGivensParallelizedLaPack(bool computeQ)
         {
-            Eigen::HouseholderQR<MatrixEigenT> qr{};
-            MatrixEigenT matEigen;
-            MatrixEigenT R;
             auto& matA = *this;
-            uint32_t rowNumR = std::min(getNumRows(), getNumCols());
+            uint32_t rank = std::min(getNumRows(), getNumCols());
             double* tau = new double [getNumCols()];
 
             if constexpr (L == MemoryLayout::ROW_MAJOR)
@@ -774,6 +771,11 @@ namespace Figaro
                 m_numCols,/*lda*/
                 tau/* tau */
                 );
+                if (computeQ)
+                {
+                    LAPACKE_dorgqr(LAPACK_ROW_MAJOR, m_numRows, rank, rank,
+                        &((*m_pStorage)[0]), m_numCols, tau);
+                }
             }
             else
             {
@@ -785,10 +787,15 @@ namespace Figaro
                 m_numRows,/*lda*/
                 tau/* tau */
                 );
+                if (computeQ)
+                {
+                    LAPACKE_dorgqr(LAPACK_COL_MAJOR, m_numRows, rank, rank,
+                        &((*m_pStorage)[0]), m_numRows, tau);
+                }
             }
 
-            matA.resize(rowNumR);
-            for (uint32_t rowIdx = 0; rowIdx < rowNumR; rowIdx++)
+            matA.resize(rank);
+            for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < std::min(rowIdx, m_numCols); colIdx++)
                 {
@@ -803,7 +810,8 @@ namespace Figaro
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
-        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, Figaro::QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG)
+        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, Figaro::QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG,
+        bool computeQ = false)
         {
             Figaro::QRGivensHintType qrType;
             if ((0 == m_numRows) || (0 == m_numCols))
@@ -841,7 +849,7 @@ namespace Figaro
             else if (qrType == QRGivensHintType::LAPACK)
             {
                 FIGARO_LOG_INFO("Lapack")
-                computeQRGivensParallelizedLaPack();
+                computeQRGivensParallelizedLaPack(computeQ);
             }
         }
 

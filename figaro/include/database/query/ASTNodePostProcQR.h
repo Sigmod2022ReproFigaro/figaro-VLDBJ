@@ -30,6 +30,8 @@ namespace Figaro
 
         uint32_t getNumThreads(void){ return m_numThreads; }
 
+        bool isComputeQ(void) const { return m_computeQ; }
+
         const std::vector<std::string>& getRelationOrder(void)
         {
             return m_vRelationOrder;
