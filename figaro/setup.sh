@@ -81,7 +81,6 @@ function get_str_args()
             FIGARO_PROFILER_DUMP_PATH=$EXTENSION
         ;;
         -h|--help)
-        echo "HOH"
         FIGARO_HELP_SHOW=true
         echo $"
 Usage: setup.sh [-h --help]

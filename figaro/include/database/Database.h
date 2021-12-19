@@ -110,9 +110,6 @@ namespace Figaro
             bool computeQ,
             MatrixEigenT* pR);
 
-
-
-
         const Relation::MatrixDT& getHead(const std::string& relationName) const;
 
         const Relation::MatrixDT& getTail(const std::string& relationName) const;
@@ -122,17 +119,6 @@ namespace Figaro
         const Relation::MatrixDT& getScales(const std::string& relationName) const;
 
         const Relation::MatrixDT& getDataScales(const std::string& relationName) const;
-
-        void joinRelations(std::vector<std::string> vRelationNames,
-        const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames, bool swapAttributes = false);
-
-        void computeScaledCartesianProduct(std::array<std::string, 2> relationNames,
-            std::array<Eigen::VectorXd, 2> vectors);
-
-        void computeScaledCartesianProduct(std::array<std::string, 2> aRelationNames,
-                        const std::string& attrIterName);
-
-        void computeQRDecompositionHouseholder(const std::string& relationName, MatrixEigenT* pR = nullptr);
     };
 }
 #endif

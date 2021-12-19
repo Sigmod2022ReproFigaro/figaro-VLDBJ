@@ -345,75 +345,6 @@ TEST(DatabaseConfig, PathQuery3) {
     database.sortData();
 }
 
-TEST(DatabaseConfig, ComputeSimpleHeadByOneAttrName)
-{
-    static const std::string DB_CONFIG_PATH = getConfigPath(3) + DB_CONFIG_PATH_IN;
-     static const std::string FILE_INPUT_EXP_R = getDataPath(3) + R_COMP_FILE_NAME;
-    Figaro::Database database(DB_CONFIG_PATH);
-    Figaro::ErrorCode initError;
-    Figaro::ErrorCode loadError;
-    Figaro::MatrixEigenT R, expectedR;
-
-    initError = database.getInitializationErrorCode();
-    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
-    loadError = database.loadData();
-    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
-
-    database.sortRelation("R", {"A"});
-    //database.computeHead("R", "A");
-
-    database.sortRelation("S", {"B", "A"});
-    //database.computeHead("S", "A");
-
-    database.sortRelation("T", {"B", "C"});
-    //database.computeHead("T", "C");
-
-    database.sortRelation("U", {"C"});
-    //database.computeHead("U", "C");
-
-    database.joinRelations({"S", "R"}, {{"A", "A"}} , true);
-    database.joinRelations({"T", "U"}, {{"C", "C"}} );
-
-    database.computeScaledCartesianProduct({"S", "T"}, "B");
-    database.computeQRDecompositionHouseholder("S", &R);
-
-    readMatrixDense(FILE_INPUT_EXP_R, expectedR);
-    compareMatrices(R, expectedR, false, false);
-}
-
-
-TEST(DISABLED_DatabaseConfig, ComputeSimpleHeadByOneMultipleAttributes)
-{
-    static const std::string DB_CONFIG_PATH = getConfigPath(4) + DB_CONFIG_PATH_IN;
-    static const std::string FILE_INPUT_EXP_R = getDataPath(4) + R_COMP_FILE_NAME;
-    Figaro::Database database(DB_CONFIG_PATH);
-    Figaro::ErrorCode initError;
-    Figaro::ErrorCode loadError;
-    Figaro::MatrixEigenT R, expectedR;
-
-    initError = database.getInitializationErrorCode();
-    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
-    loadError = database.loadData();
-    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
-
-    database.sortRelation("R", {"A"});
-
-    database.sortRelation("S", {"A", "B"});
-
-    database.sortRelation("T", {"C", "B"});
-
-    database.sortRelation("U", {"C"});
-
-    database.joinRelations({"S", "R"}, {{"A", "A"}}, true);
-    database.joinRelations({"T", "U"}, {{"C", "C"}} );
-
-    database.computeScaledCartesianProduct({"S", "T"}, "B");
-    database.computeQRDecompositionHouseholder("S", &R);
-
-    readMatrixDense(FILE_INPUT_EXP_R, expectedR);
-    compareMatrices(R, expectedR, false, true);
-    FIGARO_LOG_DBG(R)
-}
 
 
 TEST(DatabaseConfig, BasicQueryParsing)
@@ -736,7 +667,7 @@ TEST(Matrix, QRLAPACK)
     matrix[4][2] = 0.706046088019609;
     matrix[4][3] = 0.823457828327293;
 
-    matrix.computeQRGivens(1, true, Figaro::MatrixD::QRGivensHintType::LAPACK);
+    matrix.computeQRGivens(1, true, Figaro::QRGivensHintType::LAPACK);
     FIGARO_LOG_DBG(matrix)
 
 }

@@ -178,9 +178,6 @@ namespace Figaro
         uint32_t m_cntsJoinIdxC;
         uint32_t m_cntsJoinIdxE;
 
-        MatrixDT m_dataTails1;
-        MatrixDT m_dataTails2;
-
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
         /**
@@ -310,23 +307,6 @@ namespace Figaro
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
 
-
-        /***************** OLD IMPLEMENTATTION ***********/
-        uint32_t getDistinctValuesCount(const std::string& attributeName) const;
-
-        void getAttributeDistinctValues(const std::string& attributeName,
-                std::vector<double>& vDistinctValues) const;
-
-        void getAttributeDistinctValues(const std::vector<uint32_t>& vAttrIdxs,
-                std::vector<double>& vDistinctValues) const;
-
-        void getRowPtrs(
-            const std::string& attrName,
-            std::unordered_map<double, const double*>& htRowPts) const;
-
-        void getDistinctValuesRowPositions(const std::string& attributeName,
-            std::vector<uint32_t>& vDistinctValuesRowPositions,
-            bool preallocated = true) const;
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
@@ -469,22 +449,6 @@ namespace Figaro
         const MatrixDT& getScales(void) const;
 
         const MatrixDT& getDataScales(void) const;
-
-        /****************** OLD IMPLEMENTATION **************************/
-        void getAttributeValuesCounts(const std::string& attributeName,
-            std::unordered_map<double, uint32_t>& htCnts) const;
-
-        void joinRelation(const Relation& relation,
-             const std::vector<std::tuple<std::string, std::string> >& vJoinAttributeNames,
-             bool bSwapAttributes);
-
-        void computeAndScaleGeneralizedHeadAndTail(
-            const std::string& attributeName,
-            const std::unordered_map<double, uint32_t>& hashTabAttributeCounts);
-
-        void extend(const Relation& rel, const std::string& attrIterName);
-
-        void applyEigenQR(MatrixEigenT* pR = nullptr);
 
         friend std::ostream& operator<<(
             std::ostream& out,
