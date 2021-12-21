@@ -5,7 +5,9 @@
 #include "ASTNodeJoin.h"
 #include "ASTNodeQRGivens.h"
 #include "ASTNodePostProcQR.h"
+#include "ASTNodeAssign.h"
 #include "ASTNodeRelation.h"
+#include "ASTVisitorAbsResult.h"
 #include "database/Database.h"
 
 namespace Figaro
@@ -18,10 +20,11 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttributeNames);
     public:
         ASTVisitor(Database* pDatabase): m_pDatabase(pDatabase) {}
-        virtual void visitNodeRelation(ASTNodeRelation* pElement) = 0;
-        virtual void visitNodeJoin(ASTNodeJoin* pElement) = 0;
-        virtual void visitNodeQRGivens(ASTNodeQRGivens* pElement) = 0;
-        virtual void visitNodePostProcQR(ASTNodePostProcQR* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) = 0;
 
         virtual ~ASTVisitor() {}
     };

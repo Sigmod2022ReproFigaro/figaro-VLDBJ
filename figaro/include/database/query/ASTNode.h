@@ -2,6 +2,7 @@
 #define _FIGARO_AST_NODE_H_
 
 #include "utils/Utils.h"
+#include "ASTVisitorAbsResult.h"
 
 namespace Figaro
 {
@@ -10,7 +11,7 @@ namespace Figaro
     {
         friend class ASTVisitor;
     public:
-        virtual void accept(ASTVisitor* pVisitor) = 0;
+        virtual ASTVisitorAbsResult* accept(ASTVisitor* pVisitor) = 0;
         virtual ~ASTNode() = 0;
     };
 

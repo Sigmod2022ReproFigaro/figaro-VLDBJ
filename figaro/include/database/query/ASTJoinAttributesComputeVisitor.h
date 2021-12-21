@@ -14,10 +14,10 @@ namespace Figaro
         ASTJoinAttributesComputeVisitor(
             Database* pDatabase, bool sortValues,
             Figaro::MemoryLayout memoryLayout): ASTQRVisitor(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
-        void visitNodeRelation(ASTNodeRelation* pElement) override;
-        void visitNodeJoin(ASTNodeJoin* pElement) override;
-        void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
-        void visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
+        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
 
         virtual ~ASTJoinAttributesComputeVisitor() override {}
 

@@ -5,8 +5,8 @@
 namespace Figaro
 {
 
-    void ASTNodePostProcQR::accept(ASTVisitor *pVisitor)
+    ASTVisitorAbsResult* ASTNodePostProcQR::accept(ASTVisitor *pVisitor)
     {
-        pVisitor->visitNodePostProcQR(this);
+        return pVisitor->visitNodePostProcQR(this);
     }
 }

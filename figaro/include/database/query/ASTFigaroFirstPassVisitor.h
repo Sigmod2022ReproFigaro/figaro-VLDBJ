@@ -10,9 +10,9 @@ namespace Figaro
     public:
         ASTFigaroFirstPassVisitor(
             Database* pDatabase): ASTQRVisitor(pDatabase) {}
-        void visitNodeRelation(ASTNodeRelation* pElement) override;
-        void visitNodeJoin(ASTNodeJoin* pElement) override;
-        void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
 
         virtual ~ASTFigaroFirstPassVisitor() override {}
     };

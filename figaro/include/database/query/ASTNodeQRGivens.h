@@ -41,7 +41,7 @@ namespace Figaro
             return m_vDropAttributes;
         }
 
-        void accept(ASTVisitor *pVisitor) override;
+        ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
     };
 
 

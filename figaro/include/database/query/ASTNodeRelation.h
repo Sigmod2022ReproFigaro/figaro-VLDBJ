@@ -70,7 +70,7 @@ namespace Figaro
 
         const std::vector<std::string>& getJoinAttributeNames(void) override;
 
-        void accept(ASTVisitor *pVisitor) override;
+        ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
     };
 } // namespace Figaro
 

@@ -20,15 +20,6 @@ namespace Figaro
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
         ErrorCode createAST(const json& jsonQueryConfig);
 
-        void evaluateQueryFigaro(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps,
-            Figaro::QRGivensHintType qrHintType,
-            Figaro::MemoryLayout memoryLayout, bool saveResult);
-
-        void evaluateQueryPostprocess(uint32_t numReps,
-            Figaro::QRGivensHintType qrHintType,
-            Figaro::MemoryLayout memoryLayout, bool saveResult);
-
     public:
         Query(Database* pDatabase): m_pDatabase(pDatabase){}
         ~Query() { destroyAST(m_pASTRoot); }
@@ -40,8 +31,8 @@ namespace Figaro
 
         /** Evaluates expressions from abstract syntax tree.
          */
-        void evaluateQuery(bool isPureFigaro = true, bool evalCounts = true, bool evalFirstFigaroPass = true,
-            bool evalSecondFigaroPass = true, bool evalPostProcess = true, uint32_t numResp = 1,
+        void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
+            bool evalSecondFigaroPass = true, bool evalPostProcess = true,
             Figaro::QRGivensHintType qrHintType = Figaro::QRGivensHintType::THIN_DIAG,
             Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
             bool saveResult = false);

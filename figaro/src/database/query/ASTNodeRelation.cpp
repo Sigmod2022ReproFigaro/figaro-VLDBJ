@@ -67,8 +67,8 @@ namespace Figaro
         return m_vJoinAttributeNames;
     }
 
-    void ASTNodeRelation::accept(ASTVisitor *pVisitor)
+    ASTVisitorAbsResult* ASTNodeRelation::accept(ASTVisitor *pVisitor)
     {
-        pVisitor->visitNodeRelation(this);
+        return pVisitor->visitNodeRelation(this);
     }
 }

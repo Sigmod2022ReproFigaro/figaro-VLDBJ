@@ -75,7 +75,7 @@ namespace Figaro
         void checkAndUpdateChildrenParJoinAttributes(void);
 
 
-        void accept(ASTVisitor* pVisitor) override;
+        ASTVisitorAbsResult* accept(ASTVisitor* pVisitor) override;
     };
 }
 

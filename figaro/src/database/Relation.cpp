@@ -334,6 +334,7 @@ namespace Figaro
         sortData(vAttrNamesPKs);
     }
 
+
     void Relation::schemaDropAttrs(std::vector<uint32_t> vDropAttrIdxs)
     {
         std::set<uint32_t> sDropIdxs{vDropAttrIdxs.begin(), vDropAttrIdxs.end()};
@@ -353,6 +354,7 @@ namespace Figaro
         }
         m_attributes.resize(curAttrIdx);
     }
+
 
     void Relation::schemaOneHotEncode(
         const std::map<uint32_t, std::set<uint32_t> >& mCatAttrsDist)
@@ -545,6 +547,17 @@ namespace Figaro
     }
 
 
+    void Relation::renameRelation(const std::string& newName)
+    {
+        m_name = newName;
+    }
+
+    void Relation::persist(void)
+    {
+        m_isTmp = false;
+    }
+
+
     void Relation::getDistinctValsAndBuildIndices(
         const std::vector<uint32_t>& vJoinAttrIdxs,
         const std::vector<uint32_t>& vParAttrIdxs,
@@ -733,122 +746,6 @@ namespace Figaro
                 vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
             }
         }
-    }
-
-
-    std::map<std::vector<uint32_t>, uint32_t> Relation::getDownCounts(void)
-    {
-        std::map<std::vector<uint32_t>, uint32_t> downCounts;
-        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
-        {
-            std::vector<uint32_t> curJoinAttr;
-            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 4;
-                attrIdx ++)
-            {
-                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
-            }
-            downCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
-        }
-        return downCounts;
-    }
-
-
-    std::map<std::vector<uint32_t>, uint32_t> Relation::getCircCounts(void)
-    {
-        std::map<std::vector<uint32_t>, uint32_t> circCounts;
-        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
-        {
-            std::vector<uint32_t> curJoinAttr;
-            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 4;
-                attrIdx ++)
-            {
-                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
-            }
-            circCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxC];
-        }
-        return circCounts;
-    }
-
-
-       std::map<std::vector<uint32_t>, uint32_t> Relation::getParDownCntsFromHashTable(
-        const std::vector<std::string>& vParJoinAttrNames)
-    {
-        std::vector<uint32_t> vParJoinAttrIdxs;
-        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
-        std::map<std::vector<uint32_t>, uint32_t> parDownCounts;
-        if (vParJoinAttrIdxs.size() == 1)
-        {
-
-            // TODO: Extract join for relation specific from join attribute value.
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts.get());
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(val.first);
-                uint32_t downCount = std::get<0>(val.second);
-                parDownCounts[curAttrs] = downCount;
-            }
-        }
-        else if (vParJoinAttrIdxs.size() == 2)
-        {
-            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts.get());
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(std::get<0>(val.first));
-                curAttrs.push_back(std::get<1>(val.first));
-                uint32_t downCount = std::get<0>(val.second);
-                parDownCounts[curAttrs] = downCount;
-            }
-            return parDownCounts;
-        }
-        else
-        {
-            // TODO: Consider how to handle this case.
-            //const std::vector<double> t =
-        }
-        return parDownCounts;
-    }
-
-
-    std::map<std::vector<uint32_t>, uint32_t> Relation::getParUpCntsFromHashTable(
-        const std::vector<std::string>& vParJoinAttrNames)
-    {
-        std::vector<uint32_t> vParJoinAttrIdxs;
-        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
-        std::map<std::vector<uint32_t>, uint32_t> parUpCounts;
-        if (vParJoinAttrIdxs.size() == 1)
-        {
-
-            // TODO: Extract join for relation specific from join attribute value.
-            tbb::concurrent_unordered_map<uint32_t, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts.get());
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(val.first);
-                uint32_t upCount = std::get<1>(val.second);
-                parUpCounts[curAttrs] = upCount;
-            }
-        }
-        else if (vParJoinAttrIdxs.size() == 2)
-        {
-            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts.get());
-            for (const auto& val: htChildRowIdxOne)
-            {
-                std::vector<uint32_t> curAttrs;
-                curAttrs.push_back(std::get<0>(val.first));
-                curAttrs.push_back(std::get<1>(val.first));
-                uint32_t upCount = std::get<1>(val.second);
-                parUpCounts[curAttrs] = upCount;
-            }
-            return parUpCounts;
-        }
-        else
-        {
-            // TODO: Consider how to handle this case.
-            //const std::vector<double> t =
-        }
-        return parUpCounts;
     }
 
 
@@ -1628,8 +1525,6 @@ namespace Figaro
             double sqrtUpCnt;
             std::vector<double> vCurScaleSum(numNonJoinAttrs);
 
-            // TODO: Initialize up count from hash table.
-
             startIdx = m_vParBlockStartIdxsAfterFirstPass[distParCnt];
             //FIGARO_LOG_DBG("Getting counts")
             if (isRootNode)
@@ -2052,6 +1947,123 @@ namespace Figaro
             matR.row(rowIdx) *= aDiag(rowIdx);
         }
     }
+
+
+    std::map<std::vector<uint32_t>, uint32_t> Relation::getDownCounts(void)
+    {
+        std::map<std::vector<uint32_t>, uint32_t> downCounts;
+        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
+        {
+            std::vector<uint32_t> curJoinAttr;
+            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 4;
+                attrIdx ++)
+            {
+                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
+            }
+            downCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxD];
+        }
+        return downCounts;
+    }
+
+
+    std::map<std::vector<uint32_t>, uint32_t> Relation::getParDownCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames)
+    {
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+        std::map<std::vector<uint32_t>, uint32_t> parDownCounts;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+
+            // TODO: Extract join for relation specific from join attribute value.
+            tbb::concurrent_unordered_map<uint32_t, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(val.first);
+                uint32_t downCount = std::get<0>(val.second);
+                parDownCounts[curAttrs] = downCount;
+            }
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(std::get<0>(val.first));
+                curAttrs.push_back(std::get<1>(val.first));
+                uint32_t downCount = std::get<0>(val.second);
+                parDownCounts[curAttrs] = downCount;
+            }
+            return parDownCounts;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+        return parDownCounts;
+    }
+
+
+    std::map<std::vector<uint32_t>, uint32_t> Relation::getParUpCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames)
+    {
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+        std::map<std::vector<uint32_t>, uint32_t> parUpCounts;
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+
+            // TODO: Extract join for relation specific from join attribute value.
+            tbb::concurrent_unordered_map<uint32_t, DownUpCntT > htChildRowIdxOne = *(tbb::concurrent_unordered_map<uint32_t, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(val.first);
+                uint32_t upCount = std::get<1>(val.second);
+                parUpCounts[curAttrs] = upCount;
+            }
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT> htChildRowIdxOne = *(tbb::concurrent_unordered_map<std::tuple<uint32_t, uint32_t>, DownUpCntT>*)(m_pHTParCounts.get());
+            for (const auto& val: htChildRowIdxOne)
+            {
+                std::vector<uint32_t> curAttrs;
+                curAttrs.push_back(std::get<0>(val.first));
+                curAttrs.push_back(std::get<1>(val.first));
+                uint32_t upCount = std::get<1>(val.second);
+                parUpCounts[curAttrs] = upCount;
+            }
+            return parUpCounts;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+        }
+        return parUpCounts;
+    }
+
+
+    std::map<std::vector<uint32_t>, uint32_t> Relation::getCircCounts(void)
+    {
+        std::map<std::vector<uint32_t>, uint32_t> circCounts;
+        for (uint32_t idxRow = 0; idxRow < m_countsJoinAttrs.getNumRows(); idxRow++)
+        {
+            std::vector<uint32_t> curJoinAttr;
+            for (uint32_t attrIdx = 0; attrIdx < m_countsJoinAttrs.getNumCols() - 4;
+                attrIdx ++)
+            {
+                curJoinAttr.push_back(m_countsJoinAttrs[idxRow][attrIdx]);
+            }
+            circCounts[curJoinAttr] = m_countsJoinAttrs[idxRow][m_cntsJoinIdxC];
+        }
+        return circCounts;
+    }
+
 
     std::ostream& operator<<(std::ostream& out, const Relation::Attribute& attribute)
     {

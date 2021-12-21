@@ -123,6 +123,7 @@ namespace Figaro
         };
     private:
         std::string m_name;
+        bool m_isTmp = false;
         ErrorCode initializationErrorCode = ErrorCode::NO_ERROR;
         std::vector<Attribute> m_oldAttributes;
         std::vector<Attribute> m_attributes;
@@ -145,7 +146,7 @@ namespace Figaro
         std::vector<std::string> m_vSubTreeRelNames;
         /**
          * Contains the data ofsets of all relations in the subtree rooted
-         * at this relation including this relation. The order of relations
+         * at the node with this relation including this relation. The order of relations
          * is preorder.
          */
         std::vector<uint32_t> m_vSubTreeDataOffsets;
@@ -177,6 +178,8 @@ namespace Figaro
          */
         uint32_t m_cntsJoinIdxC;
         uint32_t m_cntsJoinIdxE;
+
+        bool isTmp(void) const { return m_isTmp; }
 
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
@@ -230,7 +233,6 @@ namespace Figaro
 
         void getCategoricalAttributeIdxs(std::vector<uint32_t>& vCatAttrIdxs) const;
 
-
         void schemaJoin(const Relation& relation, bool swapAttributes = false);
 
         /**
@@ -243,7 +245,6 @@ namespace Figaro
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
-
 
         void schemaRemoveNonParJoinAttrs(
             const std::vector<uint32_t>& vJoinAttrIdxs,
@@ -313,10 +314,9 @@ namespace Figaro
         Relation(json jsonRelationSchema);
         void resetComputations(void);
 
-        const std::vector<Attribute>& getAttributes(void) const
-        {
-            return m_attributes;
-        }
+        void renameRelation(const std::string& newName);
+
+        void persist(void);
 
         std::vector<std::string> getAttributeNames(void) const;
 
@@ -366,23 +366,11 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRoot = false);
-
-        /*********************** Testing getters for counts ***************/
-        std::map<std::vector<uint32_t>, uint32_t> getDownCounts(void);
-
-        std::map<std::vector<uint32_t>, uint32_t> getParDownCntsFromHashTable(
-        const std::vector<std::string>& vParJoinAttrNames);
-
-        std::map<std::vector<uint32_t>, uint32_t> getParUpCntsFromHashTable(
-        const std::vector<std::string>& vParJoinAttrNames);
-
-        std::map<std::vector<uint32_t>, uint32_t> getCircCounts(void);
 
         /**
          * It will copy the underlying data and apply head transformation onto it.
@@ -424,7 +412,6 @@ namespace Figaro
 
         void computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType);
 
-
         // Should be called for a root relation.
         void computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
@@ -435,6 +422,18 @@ namespace Figaro
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
             MatrixEigenT* pR);
+
+
+        /*********************** Testing getters for counts ***************/
+        std::map<std::vector<uint32_t>, uint32_t> getDownCounts(void);
+
+        std::map<std::vector<uint32_t>, uint32_t> getParDownCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames);
+
+        std::map<std::vector<uint32_t>, uint32_t> getParUpCntsFromHashTable(
+        const std::vector<std::string>& vParJoinAttrNames);
+
+        std::map<std::vector<uint32_t>, uint32_t> getCircCounts(void);
 
         /**
          *  Returns computed head for the corresponding relation, without

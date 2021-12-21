@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
-    query.evaluateQuery(pureFigaro, true, true, true, true, numRepetitions, qrHintType, memoryLayout, dump);
+    query.evaluateQuery(true, true, true, true, qrHintType, memoryLayout, dump);
 
     if (dump)
     {

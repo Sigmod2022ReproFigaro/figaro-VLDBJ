@@ -22,13 +22,20 @@ namespace Figaro
                          m_pResult = nullptr;
                      }
                  }
-        void visitNodeRelation(ASTNodeRelation* pElement) override
+        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override
         {}
-        void visitNodeJoin(ASTNodeJoin* pElement) override
+        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override
         {}
-        void visitNodeQRGivens(ASTNodeQRGivens* pElement) override
+        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override
         {}
-        void visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
+        ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
+
+        virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement)  override
+        {
+            // This line should not happen.
+            FIGARO_LOG_ASSERT(false);
+            return nullptr;
+        }
 
         virtual ~ASTPostProcQRVisitor() override {}
 

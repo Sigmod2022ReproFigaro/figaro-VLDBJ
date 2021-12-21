@@ -2,11 +2,11 @@
 #include "database/query/ASTVisitor.h"
 #include "database/Database.h"
 
-namespace Figaro 
+namespace Figaro
 {
 
-    void ASTNodeQRGivens::accept(ASTVisitor *pVisitor) 
+    ASTVisitorAbsResult* ASTNodeQRGivens::accept(ASTVisitor *pVisitor)
     {
-        pVisitor->visitNodeQRGivens(this);
+        return pVisitor->visitNodeQRGivens(this);
     }
 }

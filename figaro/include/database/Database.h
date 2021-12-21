@@ -9,12 +9,12 @@ namespace Figaro
     class Database
     {
         std::map<std::string, Relation> m_relations;
+
         ErrorCode initializationErrorCode = ErrorCode::NO_ERROR;
 
         ErrorCode loadDatabaseRelationsSchema(const json& jsonRelInfos);
 
         ErrorCode loadDatabaseSchema(const std::string& schemaConfigPath);
-
 
     public:
         Database(const std::string& schemaConfigPath);
@@ -42,13 +42,31 @@ namespace Figaro
         void dropAttributesFromRelations(
             const std::vector<std::string>& vDropAttrNames);
 
-
         void updateSchemaOfRelation(
             const std::string& relationName,
             const std::vector<std::string>& vAttrNames);
 
-
         void oneHotEncodeRelations(void);
+
+        void renameRelation(
+            const std::string& oldRelationName,
+            const std::string& newRelationName);
+
+        void persistRelation(const std::string& relationName);
+
+        /**
+         * @brief Join relation @p relationName with the children relations
+         * specified in @p vChildRelNames on join attributes specified in @p vJoinAttrnames and @p vvJoinAttributeNames .
+         * @p vParJoinAttrNames specifies which join attributes should remain after the join has finished.
+         *
+         * @return std::string a name of a tmp rotation that contains the join result.
+         */
+        std::string joinRelations(const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool trackProvenance);
 
         void computeDownCounts(
             const std::string& relationName,
@@ -64,18 +82,6 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
-
-        std::map<std::vector<uint32_t>, uint32_t> getDownCounts(const std::string& relationName);
-
-        std::map<std::vector<uint32_t>, uint32_t> getParDownCnts(
-            const std::string& relationName,
-            const std::vector<std::string>& vParJoinAttrNames);
-
-        std::map<std::vector<uint32_t>, uint32_t> getParUpCnts(
-            const std::string& relationName,
-            const std::vector<std::string>& vParJoinAttrNames);
-
-        std::map<std::vector<uint32_t>, uint32_t> getCircCounts(const std::string& relationName);
 
         void computeHeadsAndTails(
             const std::string& relationName,
@@ -94,12 +100,10 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttributeNames,
             bool isRootNode);
 
-
         void computePostprocessing(
             const std::vector<std::string>& vRelationOrder,
             Figaro::QRGivensHintType qrHintType,
             MatrixEigenT* pR);
-
 
         void changeMemoryLayout(void);
 
@@ -109,6 +113,21 @@ namespace Figaro
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
             MatrixEigenT* pR);
+
+
+        /********** Getters  used for testing **********/
+
+        std::map<std::vector<uint32_t>, uint32_t> getDownCounts(const std::string& relationName);
+
+        std::map<std::vector<uint32_t>, uint32_t> getParDownCnts(
+            const std::string& relationName,
+            const std::vector<std::string>& vParJoinAttrNames);
+
+        std::map<std::vector<uint32_t>, uint32_t> getParUpCnts(
+            const std::string& relationName,
+            const std::vector<std::string>& vParJoinAttrNames);
+
+        std::map<std::vector<uint32_t>, uint32_t> getCircCounts(const std::string& relationName);
 
         const Relation::MatrixDT& getHead(const std::string& relationName) const;
 

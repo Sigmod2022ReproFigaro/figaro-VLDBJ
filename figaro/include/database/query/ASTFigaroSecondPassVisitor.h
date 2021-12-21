@@ -8,25 +8,18 @@ namespace Figaro
     class ASTFigaroSecondPassVisitor: public ASTQRVisitor
     {
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
-        bool m_postProcess = false;
         MatrixEigenT* m_pResult = nullptr;
         Figaro::QRGivensHintType m_qrHintType;
     public:
         ASTFigaroSecondPassVisitor(
-            Database* pDatabase,
-            bool postProcess, Figaro::QRGivensHintType qrHintType, MatrixEigenT* pResult,
-                bool saveResult):
+            Database* pDatabase, Figaro::QRGivensHintType qrHintType, MatrixEigenT* pResult):
                 ASTQRVisitor(pDatabase),
-                m_postProcess(postProcess), m_pResult(pResult),
+                m_pResult(pResult),
                  m_qrHintType(qrHintType) {
-                     if (!saveResult)
-                     {
-                         m_pResult = nullptr;
-                     }
                  }
-        void visitNodeRelation(ASTNodeRelation* pElement) override;
-        void visitNodeJoin(ASTNodeJoin* pElement) override;
-        void visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
         virtual ~ASTFigaroSecondPassVisitor() override {}
 
 

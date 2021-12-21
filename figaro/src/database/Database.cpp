@@ -106,6 +106,32 @@ namespace Figaro
         }
     }
 
+    void Database::renameRelation(const std::string& oldRelationName,
+            const std::string& newRelationName)
+    {
+        Relation& rel = m_relations.at(oldRelationName);
+        rel.renameRelation(newRelationName);
+        auto nodeHandler = m_relations.extract(oldRelationName);
+        nodeHandler.key() = newRelationName;
+        m_relations.insert(std::move(nodeHandler));
+    }
+
+    void Database::persistRelation(const std::string& relationName)
+    {
+        Relation& rel = m_relations.at(relationName);
+        rel.persist();
+    }
+
+    std::string Database::joinRelations(const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool trackProvenance)
+    {
+        return "";
+    }
+
 
     void Database::computeDownCounts(
         const std::string& relationName,

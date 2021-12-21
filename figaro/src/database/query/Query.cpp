@@ -5,6 +5,7 @@
 #include "database/query/ASTFigaroFirstPassVisitor.h"
 #include "database/query/ASTFigaroSecondPassVisitor.h"
 #include "database/query/ASTPostProcQRVisitor.h"
+#include "database/query/ASTVisitorQRGivens.h"
 #include "utils/Performance.h"
 #include "database/storage/Matrix.h"
 #include <fstream>
@@ -153,100 +154,11 @@ namespace Figaro
         return errorCode;
     }
 
-    void Query::evaluateQueryFigaro(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::QRGivensHintType qrHintType,
+     void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
+        bool evalSecondFigaroPass, bool evalPostProcess, Figaro::QRGivensHintType qrHintType,
         Figaro::MemoryLayout memoryLayout, bool saveResult)
     {
-         // Create visitor
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true,
-            memoryLayout);
-        ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, evalPostProcess,qrHintType, &m_matResult, saveResult);
-        ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
-        ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
-        //MICRO_BENCH_INIT(attrComp)
-        MICRO_BENCH_INIT(downCnt)
-        MICRO_BENCH_INIT(upCnt)
-        MICRO_BENCH_INIT(firstPass)
-        MICRO_BENCH_INIT(secondPass)
-
-        //MICRO_BENCH_START(attrComp)
-        m_pASTRoot->accept(&joinAttrVisitor);
-        //MICRO_BENCH_STOP(attrComp)
-        //FIGARO_LOG_BENCH("Figaro", "attribute comp",  MICRO_BENCH_GET_TIMER_LAP(attrComp));
-
-        // If postprocess, apply computeQRGivens to the corresponding database
-        for (uint32_t rep = 0; rep < numReps; rep++)
-        {
-            m_pDatabase->resetComputations();
-            MICRO_BENCH_INIT(main)
-            MICRO_BENCH_START(main)
-            if (evalCounts)
-            {
-                MICRO_BENCH_START(downCnt)
-                m_pASTRoot->accept(&computeDownVisitor);
-                MICRO_BENCH_STOP(downCnt)
-                MICRO_BENCH_START(upCnt)
-                m_pASTRoot->accept(&computeUpAndCircleVisitor);
-                MICRO_BENCH_STOP(upCnt)
-            }
-            FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(downCnt));
-            FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(upCnt));
-
-            MICRO_BENCH_START(firstPass)
-            if (evalFirstFigaroPass)
-            {
-                m_pASTRoot->accept(&figaroFirstPassVisitor);
-            }
-            MICRO_BENCH_STOP(firstPass)
-            FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(firstPass));
-
-            MICRO_BENCH_START(secondPass)
-            if (evalSecondFigaroPass)
-            {
-                m_pASTRoot->accept(&figaroSecondPassVisitor);
-            }
-            MICRO_BENCH_STOP(secondPass)
-            FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
-            MICRO_BENCH_STOP(main)
-            FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
-        }
-    }
-
-    void Query::evaluateQueryPostprocess(uint32_t numReps,
-            Figaro::QRGivensHintType qrHintType,
-            Figaro::MemoryLayout memoryLayout, bool saveResult)
-    {
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, memoryLayout);
-        ASTPostProcQRVisitor postpProcQRVisitor(m_pDatabase, qrHintType,
-                                                memoryLayout, &m_matResult,
-                                                saveResult);
-
-        m_pASTRoot->accept(&joinAttrVisitor);
-        FIGARO_LOG_INFO("Finished joinAttrVisitor")
-        for (uint32_t rep = 0; rep < numReps; rep++)
-        {
-            MICRO_BENCH_INIT(main)
-            MICRO_BENCH_START(main)
-            m_pASTRoot->accept(&postpProcQRVisitor);
-            MICRO_BENCH_STOP(main)
-            FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
-        }
-    }
-
-     void Query::evaluateQuery(bool isPureFigaro, bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, uint32_t numReps, Figaro::QRGivensHintType qrHintType,
-        Figaro::MemoryLayout memoryLayout, bool saveResult)
-     {
-         if (isPureFigaro)
-         {
-             evaluateQueryFigaro(evalCounts, evalFirstFigaroPass, evalSecondFigaroPass, evalPostProcess, numReps, qrHintType,
-             memoryLayout, saveResult);
-         }
-         else
-         {
-             evaluateQueryPostprocess(numReps, qrHintType, memoryLayout,
-                saveResult);
-         }
+        ASTQRGivensVisitor qrGivensVisitor(m_pDatabase, memoryLayout, qrHintType, &m_matResult, saveResult);
+        m_pASTRoot->accept(&qrGivensVisitor);
      }
 }

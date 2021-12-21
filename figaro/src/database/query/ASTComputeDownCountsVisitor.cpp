@@ -2,7 +2,7 @@
 
 namespace Figaro
 {
-    void ASTComputeDownCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorAbsResult* ASTComputeDownCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         bool isRootNode;
         std::vector<std::string> childrenNames;
@@ -18,9 +18,10 @@ namespace Figaro
             vvChildrenParentJoinAttributeNames, isRootNode);
 
         // TODO: Add compute up counts
+        return nullptr;
     }
 
-    void ASTComputeDownCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorAbsResult* ASTComputeDownCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         bool isRootNode;
         FIGARO_LOG_DBG("Join");
@@ -40,14 +41,16 @@ namespace Figaro
             pElement->getChildrenParentJoinAttributeNames(), isRootNode);
 
         // TODO: Add compute up counts
+        return nullptr;
     }
 
-    void ASTComputeDownCountsVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorAbsResult* ASTComputeDownCountsVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
         pElement->getOperand()->accept(this);
+        return nullptr;
     }
 
 }

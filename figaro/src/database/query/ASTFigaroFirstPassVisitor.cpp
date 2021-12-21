@@ -2,7 +2,7 @@
 
 namespace Figaro
 {
-    void ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorAbsResult* ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         std::vector<std::string> childrenNames;
         std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
@@ -12,9 +12,10 @@ namespace Figaro
 
         m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
         true);
+        return nullptr;
     }
 
-    void ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorAbsResult* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
@@ -28,13 +29,15 @@ namespace Figaro
         FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
         m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
              false);
+        return nullptr;
     }
 
-    void ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorAbsResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
         FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
         pElement->getOperand()->accept(this);
+        return nullptr;
     }
 }
