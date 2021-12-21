@@ -1,4 +1,4 @@
-#include "database/query/ASTJoinAttributesComputeVisitor.h"
+#include "database/query/visitor/ASTJoinAttributesComputeVisitor.h"
 #include "omp.h"
 
 namespace Figaro

@@ -1,5 +1,5 @@
-#include "database/query/ASTNodeRelation.h"
-#include "database/query/ASTVisitor.h"
+#include "database/query/node/ASTNodeRelation.h"
+#include "database/query/visitor/ASTVisitor.h"
 #include "database/Database.h"
 #include <set>
 namespace Figaro

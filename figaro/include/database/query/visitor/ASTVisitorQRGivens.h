@@ -1,16 +1,11 @@
 #ifndef _FIGARO_AST_VISITOR_QR_GIVENS_H_
 #define _FIGARO_AST_VISITOR_QR_GIVENS_H_
 
-#include "ASTQRVisitor.h"
-#include "ASTJoinAttributesComputeVisitor.h"
-#include "ASTComputeDownCountsVisitor.h"
-#include "ASTComputeUpAndCircleCountsVisitor.h"
-#include "ASTFigaroFirstPassVisitor.h"
-#include "ASTFigaroSecondPassVisitor.h"
+#include "ASTVisitorQRGivensAbs.h"
 
 namespace Figaro
 {
-    class ASTQRGivensVisitor: public ASTQRVisitor
+    class ASTQRGivensVisitor: public ASTVisitorQRGivensAbs
     {
         MemoryLayout m_memoryLayout;
         QRGivensHintType m_qrHintType;
@@ -24,7 +19,7 @@ namespace Figaro
             Figaro::QRGivensHintType qrHintType,
             MatrixEigenT* pMatR,
             bool saveResult
-            ): ASTQRVisitor(pDatabase), m_memoryLayout(memoryLayout),
+            ): ASTVisitorQRGivensAbs(pDatabase), m_memoryLayout(memoryLayout),
                 m_pDatabase(pDatabase), m_qrHintType(qrHintType), m_pMatR(pMatR)
             {
                 if (!saveResult)

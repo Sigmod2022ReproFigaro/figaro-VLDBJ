@@ -2,8 +2,8 @@
 #define _FIGARO_QUERY_H_
 
 #include "utils/Utils.h"
-#include "ASTNode.h"
-#include "ASTNodeRelation.h"
+#include "database/query/node/ASTNode.h"
+#include "database/query/node/ASTNodeRelation.h"
 #include "database/Database.h"
 #include "database/storage/Matrix.h"
 

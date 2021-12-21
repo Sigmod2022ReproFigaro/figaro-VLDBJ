@@ -1,4 +1,4 @@
-#include "database/query/ASTFigaroSecondPassVisitor.h"
+#include "database/query/visitor/ASTFigaroSecondPassVisitor.h"
 #include "utils/Performance.h"
 
 namespace Figaro

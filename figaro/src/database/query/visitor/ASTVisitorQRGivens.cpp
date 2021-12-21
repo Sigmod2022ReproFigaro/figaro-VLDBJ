@@ -1,4 +1,10 @@
-#include "database/query/ASTVisitorQRGivens.h"
+#include "database/query/visitor/ASTVisitorQRGivens.h"
+
+#include "database/query/visitor/ASTJoinAttributesComputeVisitor.h"
+#include "database/query/visitor/ASTComputeDownCountsVisitor.h"
+#include "database/query/visitor/ASTComputeUpAndCircleCountsVisitor.h"
+#include "database/query/visitor/ASTFigaroFirstPassVisitor.h"
+#include "database/query/visitor/ASTFigaroSecondPassVisitor.h"
 
 namespace Figaro
 {

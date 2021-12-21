@@ -1,4 +1,4 @@
-#include "database/query/ASTComputeUpAndCircleCountsVisitor.h"
+#include "database/query/visitor/ASTComputeUpAndCircleCountsVisitor.h"
 
 namespace Figaro
 {

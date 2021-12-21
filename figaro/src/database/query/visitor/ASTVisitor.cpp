@@ -1,4 +1,4 @@
-#include "database/query/ASTVisitor.h"
+#include "database/query/visitor/ASTVisitor.h"
 namespace Figaro
 {
     std::string ASTVisitor::getFormateJoinAttributeNames(

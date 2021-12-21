@@ -1,11 +1,11 @@
 #ifndef _FIGARO_AST_JOIN_ATTRIBUTES_COMPUTE_VISITOR_H_
 #define _FIGARO_AST_JOIN_ATTRIBUTES_COMPUTE_VISITOR_H_
 
-#include "ASTQRVisitor.h"
+#include "ASTVisitorQRGivensAbs.h"
 
 namespace Figaro
 {
-    class ASTJoinAttributesComputeVisitor: public ASTQRVisitor
+    class ASTJoinAttributesComputeVisitor: public ASTVisitorQRGivensAbs
     {
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
         bool m_sortValues;
@@ -13,7 +13,7 @@ namespace Figaro
     public:
         ASTJoinAttributesComputeVisitor(
             Database* pDatabase, bool sortValues,
-            Figaro::MemoryLayout memoryLayout): ASTQRVisitor(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
+            Figaro::MemoryLayout memoryLayout): ASTVisitorQRGivensAbs(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
         ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;

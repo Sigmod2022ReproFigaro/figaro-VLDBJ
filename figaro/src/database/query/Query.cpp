@@ -1,11 +1,5 @@
 #include "database/query/Query.h"
-#include "database/query/ASTJoinAttributesComputeVisitor.h"
-#include "database/query/ASTComputeUpAndCircleCountsVisitor.h"
-#include "database/query/ASTComputeDownCountsVisitor.h"
-#include "database/query/ASTFigaroFirstPassVisitor.h"
-#include "database/query/ASTFigaroSecondPassVisitor.h"
-#include "database/query/ASTPostProcQRVisitor.h"
-#include "database/query/ASTVisitorQRGivens.h"
+#include "database/query/visitor/ASTVisitorQRGivens.h"
 #include "utils/Performance.h"
 #include "database/storage/Matrix.h"
 #include <fstream>

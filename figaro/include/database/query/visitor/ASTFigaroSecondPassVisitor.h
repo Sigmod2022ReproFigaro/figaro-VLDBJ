@@ -1,11 +1,11 @@
 #ifndef _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
 #define _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
 
-#include "ASTQRVisitor.h"
+#include "ASTVisitorQRGivensAbs.h"
 
 namespace Figaro
 {
-    class ASTFigaroSecondPassVisitor: public ASTQRVisitor
+    class ASTFigaroSecondPassVisitor: public ASTVisitorQRGivensAbs
     {
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
         MatrixEigenT* m_pResult = nullptr;
@@ -13,7 +13,7 @@ namespace Figaro
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase, Figaro::QRGivensHintType qrHintType, MatrixEigenT* pResult):
-                ASTQRVisitor(pDatabase),
+                ASTVisitorQRGivensAbs(pDatabase),
                 m_pResult(pResult),
                  m_qrHintType(qrHintType) {
                  }

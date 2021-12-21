@@ -1,7 +1,7 @@
 #ifndef _FIGARO_VISITOR_JOIN_RESULT_H_
 #define _FIGARO_VISITOR_JOIN_RESULT_H_
 
-#include "database/query/ASTVisitorAbsResult.h"
+#include "ASTVisitorAbsResult.h"
 #include "database/Relation.h"
 
 namespace Figaro

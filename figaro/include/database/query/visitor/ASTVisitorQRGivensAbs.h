@@ -6,10 +6,10 @@
 
 namespace Figaro
 {
-    class ASTQRVisitor: public ASTVisitor
+    class ASTVisitorQRGivensAbs: public ASTVisitor
     {
     public:
-        ASTQRVisitor(Database* pDatabase):
+        ASTVisitorQRGivensAbs(Database* pDatabase):
             ASTVisitor(pDatabase)
          {}
         virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override {}
@@ -21,7 +21,7 @@ namespace Figaro
             return nullptr;
         }
 
-        virtual ~ASTQRVisitor() override {}
+        virtual ~ASTVisitorQRGivensAbs() override {}
 
 
     };

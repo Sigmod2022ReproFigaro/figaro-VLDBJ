@@ -1,12 +1,12 @@
 #ifndef _FIGARO_AST_VISITOR_H_
 #define _FIGARO_AST_VISITOR_H_
 
-#include "ASTNode.h"
-#include "ASTNodeJoin.h"
-#include "ASTNodeQRGivens.h"
-#include "ASTNodePostProcQR.h"
-#include "ASTNodeAssign.h"
-#include "ASTNodeRelation.h"
+#include "database/query/node/ASTNode.h"
+#include "database/query/node/ASTNodeJoin.h"
+#include "database/query/node/ASTNodeQRGivens.h"
+#include "database/query/node/ASTNodePostProcQR.h"
+#include "database/query/node/ASTNodeAssign.h"
+#include "database/query/node/ASTNodeRelation.h"
 #include "ASTVisitorAbsResult.h"
 #include "database/Database.h"
 

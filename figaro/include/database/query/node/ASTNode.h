@@ -2,7 +2,7 @@
 #define _FIGARO_AST_NODE_H_
 
 #include "utils/Utils.h"
-#include "ASTVisitorAbsResult.h"
+#include "database/query/visitor/ASTVisitorAbsResult.h"
 
 namespace Figaro
 {

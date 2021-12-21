@@ -1,5 +1,5 @@
-#include "database/query/ASTNodePostProcQR.h"
-#include "database/query/ASTVisitor.h"
+#include "database/query/node/ASTNodePostProcQR.h"
+#include "database/query/visitor/ASTVisitor.h"
 #include "database/Database.h"
 
 namespace Figaro
