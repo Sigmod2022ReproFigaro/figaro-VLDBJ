@@ -304,14 +304,38 @@ namespace Figaro
             void*  htChildRowIdx,
             const double* pRow);
 
+        void initHashTableMNJoin(
+            const std::vector<uint32_t>& vParAttrIdx,
+            void*& pHashTablePt,
+            MatrixDT& dataRef);
+
+        void insertHashTableMNJoin(
+            const std::vector<uint32_t>& vParAttrIdx,
+            const uint32_t* pRow,
+            uint32_t downCnt);
+
+        const std::vector<uint32_t>& getHashTableMNJoin(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*  htChildRowIdx,
+            const uint32_t* pRow);
+
+        void destroyHashTableMNJoin(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*& pHashTablePt);
+
+        Figaro::Relation::DownUpCntT& getParCntFromHashTable(
+            const std::vector<uint32_t>& vParJoinAttrIdxs,
+            void*  htChildRowIdx,
+            const double* pRow);
+
         static void appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows);
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
-
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;
         Relation(json jsonRelationSchema);
+
         void resetComputations(void);
 
         void renameRelation(const std::string& newName);
@@ -358,6 +382,12 @@ namespace Figaro
         void oneHotEncode(void);
 
         void changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout);
+
+        Relation joinRelations( const std::vector<Relation*>& vpChildRels,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool trackProvenance);
 
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,

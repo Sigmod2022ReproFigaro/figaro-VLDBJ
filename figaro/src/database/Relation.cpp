@@ -558,6 +558,296 @@ namespace Figaro
     }
 
 
+    void Relation::initHashTableMNJoin(
+        const std::vector<uint32_t>& vParAttrIdx,
+        void*&  pHashTablePt, Figaro::Relation::MatrixDT& dataRef)
+    {
+        if (vParAttrIdx.size() == 0)
+        {
+            // Do not do anything. This is a root node.
+        }
+        if (vParAttrIdx.size() == 1)
+        {
+            std::unordered_map<uint32_t, std::vector<uint32_t> >* tpHashTablePt = new std::unordered_map<uint32_t, std::vector<uint32_t> >();
+            tpHashTablePt->reserve(dataRef.getNumRows());
+            for (uint32_t rowIdx = 0; rowIdx < dataRef.getNumRows(); rowIdx++)
+            {
+                double curAttrVal = dataRef[rowIdx][vParAttrIdx[0]];
+                const auto& insRes =  tpHashTablePt->try_emplace(
+                (uint32_t)dataRef[rowIdx][vParAttrIdx[0]], std::vector<uint32_t>());
+                auto& inserted = *(insRes.first);
+                inserted.second.push_back(rowIdx);
+            }
+            pHashTablePt = tpHashTablePt;
+        }
+        else if (vParAttrIdx.size() == 2)
+        {
+            std::unordered_map<std::tuple<uint32_t, uint32_t>, std::vector<uint32_t> >* tpHashTablePt = new std::unordered_map<std::tuple<uint32_t, uint32_t>,
+                std::vector<uint32_t> > ();
+            for (uint32_t rowIdx = 0; rowIdx < dataRef.getNumRows(); rowIdx++)
+            {
+                const auto& insRes =  tpHashTablePt->try_emplace(
+                        std::make_tuple((uint32_t)dataRef[rowIdx][vParAttrIdx[0]],
+                        (uint32_t)dataRef[rowIdx][vParAttrIdx[1]]), std::vector<uint32_t>());
+                auto& inserted = *(insRes.first);
+                inserted.second.push_back(rowIdx);
+            }
+        }
+        else
+        {
+
+        }
+    }
+
+
+    void Relation::insertHashTableMNJoin(
+        const std::vector<uint32_t>& vParAttrIdx,
+        const uint32_t* pRow,
+        uint32_t offset)
+    {
+        if (vParAttrIdx.size() == 0)
+        {
+            // Do not do anything. This is a root node.
+        }
+        if (vParAttrIdx.size() == 1)
+        {
+            std::unordered_map<uint32_t, std::vector<uint32_t> >* tpHashTablePt =  (std::unordered_map<uint32_t, std::vector<uint32_t> >*)(m_pHTParCounts.get());
+
+            const auto& insRes =  tpHashTablePt->try_emplace(
+                (uint32_t)pRow[vParAttrIdx[0]], std::vector<uint32_t>());
+            auto& inserted = *(insRes.first);
+            inserted.second.push_back(offset);
+            //FIGARO_LOG_DBG("Inserted in", pRow[vParAttrIdx[0]], "value", downCnt)
+        }
+        else if (vParAttrIdx.size() == 2)
+        {
+            std::unordered_map<std::tuple<uint32_t, uint32_t>,
+                std::vector<uint32_t> >* tpHashTablePt =
+             (std::unordered_map<std::tuple<uint32_t, uint32_t>,
+             std::vector<uint32_t> >*) (m_pHTParCounts.get());
+
+            const auto& insRes =  tpHashTablePt->try_emplace(
+                std::make_tuple(
+                    (uint32_t)pRow[vParAttrIdx[0]], (uint32_t)pRow[vParAttrIdx[1]]), std::vector<uint32_t>());
+            auto& inserted = *(insRes.first);
+            inserted.second.push_back(offset);
+        }
+        else
+        {
+            FIGARO_LOG_DBG("Damn")
+
+        }
+    }
+
+
+    const std::vector<uint32_t>& Relation::getHashTableMNJoin(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  htChildParAttrs,
+        const uint32_t* pRow)
+    {
+        //static uint32_t t = std::make_tuple<uint32_t, uint32_t>(1 ,2);
+        //try {
+
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
+            std::unordered_map<uint32_t, std::vector<uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::vector<uint32_t> >*)(htChildParAttrs);
+            return phtChildOneParAttrs->at(joinAttrVal);
+            //return (*phtChildOneParAttrs)[joinAttrVal];
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            const std::tuple<uint32_t, uint32_t> joinAttrVal =
+            std::make_tuple(pRow[vParJoinAttrIdxs[0]],
+                            pRow[vParJoinAttrIdxs[1]]);
+            std::unordered_map<std::tuple<uint32_t, uint32_t>,
+            std::vector<uint32_t> > *phtChildTwoParAttrs = (std::unordered_map< std::tuple<uint32_t, uint32_t>, std::vector<uint32_t> >*)(htChildParAttrs);
+            return phtChildTwoParAttrs->at(joinAttrVal);
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+            FIGARO_LOG_DBG("Damn")
+        }
+        /*
+        }
+        catch (...)
+        {
+            if (vParJoinAttrIdxs.size() == 1)
+            {
+                const uint32_t joinAttrVal = pRow[vParJoinAttrIdxs[0]];
+                FIGARO_LOG_DBG("DAMN ", m_name, vParJoinAttrIdxs[0], joinAttrVal)
+                //return t;
+            }
+            else if (vParJoinAttrIdxs.size() == 2)
+            {
+                const uint32_t joinAttrVal1 = pRow[vParJoinAttrIdxs[0]];
+                const uint32_t joinAttrVal2 = pRow[vParJoinAttrIdxs[1]];
+                FIGARO_LOG_DBG("DAMN ", m_name, joinAttrVal1, joinAttrVal2)
+            }
+
+        }
+        */
+    }
+
+    void Relation::destroyHashTableMNJoin(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*& pHashTablePt
+        )
+    {
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            std::unordered_map<uint32_t, std::vector<uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::vector<uint32_t> >*)(pHashTablePt);
+            delete phtChildOneParAttrs;
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            std::unordered_map<std::tuple<uint32_t, uint32_t>,
+            std::vector<uint32_t> > *phtChildTwoParAttrs = (std::unordered_map< std::tuple<uint32_t, uint32_t>, std::vector<uint32_t> >*)(pHashTablePt);
+            delete phtChildTwoParAttrs;
+        }
+        else
+        {
+            // TODO: Consider how to handle this case.
+            //const std::vector<double> t =
+            FIGARO_LOG_DBG("Damn")
+        }
+    }
+
+    Relation Relation::joinRelations(
+            const std::vector<Relation*>& vpChildRels,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool trackProvenance)
+    {
+         // TODO: Split work per relation
+        // 1) Build a hash table for each of the children where type of a key
+        // is the size of parent join attributes of the corresponding child and
+        // the value is a queue of pointers to the rows with the tuples that correspond
+        // 2) Scan tuples in a parent relation. In particular, for each tuple in a parent node
+        // find a corresponding tuples in the children relations and output this to the join result.
+        // 3)
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
+        std::vector<uint32_t> vNonJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvNonJoinAttrIdxs;
+        std::vector<uint32_t> vNumJoinAttrs;
+        std::vector<uint32_t> vCumNumNonJoinAttrs;
+        std::vector<void*> vpHashTabQueueOffsets;
+        uint32_t numParJoinAttrsCurRel;
+        uint32_t rowIdxOut = 0;
+
+        numParJoinAttrsCurRel = vParJoinAttrNames.size();
+        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        vNumJoinAttrs.resize(vvJoinAttributeNames.size());
+        vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vvNonJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vCumNumNonJoinAttrs.resize(vpChildRels.size());
+        vpHashTabQueueOffsets.resize(vpChildRels.size());
+
+        for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
+        {
+            FIGARO_LOG_DBG("Building hash indices for child", idxRel)
+            vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
+                vvJoinAttrIdxs[idxRel]);
+            vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
+            getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
+            vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
+            vpChildRels[idxRel]->initHashTableMNJoin(
+                vvJoinAttrIdxs[idxRel],
+                vpHashTabQueueOffsets[idxRel],
+                vpChildRels[idxRel]->m_data);
+             if (idxRel == 0)
+            {
+                vCumNumNonJoinAttrs[idxRel] = vNonJoinAttrIdxs.size();
+            }
+            else
+            {
+                vCumNumNonJoinAttrs[idxRel] = vCumNumNonJoinAttrs[idxRel-1] +
+                                            vvNonJoinAttrIdxs[idxRel - 1].size();
+            }
+        }
+
+        //schemaJoins(vpChildRels, vvJoinAttrIdxs, vvNonJoinAttrIdxs);
+        // TODO: create new joined schema
+        //Relation* p = new Relation();
+        MatrixDT dataOutput {130'000'000, (uint32_t)m_attributes.size()};
+
+        uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
+        //#pragma omp parallel for schedule(static)
+        for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+        {
+           // TODO: Optimization change the way how the values are extracted to tree.
+            for (const auto& joinAttrIdx: vParJoinAttrIdxs)
+            {
+                dataOutput[rowIdxOut][joinAttrIdx] = m_data[rowIdx][joinAttrIdx];
+            }
+            // TODO: change offset;
+            for (const auto& nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                dataOutput[rowIdxOut][nonJoinAttrIdx - offPar] =
+                m_data[rowIdx][nonJoinAttrIdx];
+            }
+
+            std::vector<uint32_t> naryCartesianProduct(vpChildRels.size());
+            std::vector<uint32_t> nCartProdSize(vpChildRels.size());
+            std::vector<std::vector<uint32_t> > vChildrenRowIdxs;
+            uint32_t cnt = 1;
+            for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
+            {
+                // TODO: optimization so I return only pointer to the queue.
+                const std::vector<uint32_t>& vChildRowIdxs = getHashTableMNJoin(
+                                        vvCurJoinAttrIdxs[idxRel],
+                                        vpHashTabQueueOffsets[idxRel],
+                                        m_countsJoinAttrs[rowIdx]);
+                vChildrenRowIdxs.push_back(vChildRowIdxs);
+                naryCartesianProduct[idxRel] = 0;
+                nCartProdSize[idxRel] = vChildRowIdxs.size();
+                cnt *= naryCartesianProduct[idxRel];
+            }
+
+            for (uint32_t cntIdx = 0; cntIdx < cnt; cntIdx ++)
+            {
+                for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
+                {
+                    uint32_t childRowIdx =
+                        vChildrenRowIdxs[idxRel][naryCartesianProduct[idxRel]];
+                    const double* childRowPt = vpChildRels[idxRel]->m_data[childRowIdx];
+                    // Copying data from children relations.
+                    for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
+                    {
+                        uint32_t colIdxOut = numParJoinAttrsCurRel + vCumNumNonJoinAttrs[idxRel] +
+                                        nonJoinAttrIdx - vNumJoinAttrs[idxRel];
+                        dataOutput[rowIdxOut][colIdxOut] = childRowPt[nonJoinAttrIdx];
+                    }
+
+                }
+                 // Moving to next combination of tuples in a join result.
+                uint32_t carry = 0;
+                for (int32_t idxRel = naryCartesianProduct.size() - 1; idxRel >= 0;
+                    idxRel --)
+                {
+                    naryCartesianProduct[idxRel] =
+                    (naryCartesianProduct[idxRel] + carry) % nCartProdSize[idxRel];
+                    uint32_t carry =
+                    (naryCartesianProduct[idxRel] + carry) / nCartProdSize[idxRel];
+                }
+            }
+            rowIdxOut++;
+        }
+        for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel++)
+        {
+            destroyHashTableMNJoin(vvCurJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
+        }
+    }
+
+
     void Relation::getDistinctValsAndBuildIndices(
         const std::vector<uint32_t>& vJoinAttrIdxs,
         const std::vector<uint32_t>& vParAttrIdxs,
