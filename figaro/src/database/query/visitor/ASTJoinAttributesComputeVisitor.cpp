@@ -14,7 +14,6 @@ namespace Figaro
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
-        FIGARO_LOG_DBG("HOHO")
         return nullptr;
     }
 
@@ -39,7 +38,6 @@ namespace Figaro
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("relation", relationName, "joinAttributeNames", formJoinAttrNames);
-        FIGARO_LOG_DBG("HOHO")
         return nullptr;
     }
 
@@ -67,12 +65,9 @@ namespace Figaro
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
         m_pDatabase->oneHotEncodeRelations();
-        FIGARO_LOG_DBG("Here")
         pElement->getOperand()->accept(this);
-        FIGARO_LOG_DBG("HOHOH")
         if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
         {
-            FIGARO_LOG_DBG("HOHOH")
             m_pDatabase->changeMemoryLayout();
         }
         return nullptr;

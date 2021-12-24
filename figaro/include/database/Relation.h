@@ -317,20 +317,17 @@ namespace Figaro
         const std::vector<uint32_t>& getHashTableMNJoin(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  htChildRowIdx,
-            const uint32_t* pRow);
+            const double* pRow);
 
         void destroyHashTableMNJoin(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
-        Figaro::Relation::DownUpCntT& getParCntFromHashTable(
-            const std::vector<uint32_t>& vParJoinAttrIdxs,
-            void*  htChildRowIdx,
-            const double* pRow);
-
         static void appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows);
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
+        Relation(const std::string& name,
+            MatrixDT& data, const std::vector<Attribute>& attributes);
     public:
         Relation(const Relation&) = delete;
         Relation(Relation&& ) = default;

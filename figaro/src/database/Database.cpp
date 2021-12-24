@@ -141,6 +141,7 @@ namespace Figaro
             vpChildRels, vJoinAttrNames,
             vParJoinAttrNames,  vvJoinAttributeNames, trackProvenance);
         m_relations.emplace(relJoin.getName(), std::move(rel));;
+        return relJoin.getName();
     }
 
 

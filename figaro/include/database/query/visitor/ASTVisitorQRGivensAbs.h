@@ -1,5 +1,5 @@
-#ifndef _FIGARO_AST_QR_VISITOR_H_
-#define _FIGARO_AST_QR_VISITOR_H_
+#ifndef _FIGARO_AST_VISITOR_QR_GIVENS_ABS_H_
+#define _FIGARO_AST_VISITOR_QR_GIVENS_ABS_H_
 
 #include "ASTVisitor.h"
 #include "ASTVisitorAbsResult.h"
@@ -12,7 +12,9 @@ namespace Figaro
         ASTVisitorQRGivensAbs(Database* pDatabase):
             ASTVisitor(pDatabase)
          {}
-        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override {}
+        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override {
+            return nullptr;
+        }
 
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement)  override
         {

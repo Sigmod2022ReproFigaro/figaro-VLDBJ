@@ -1,5 +1,6 @@
 #include "database/query/Query.h"
 #include "database/query/visitor/ASTVisitorQRGivens.h"
+#include "database/query/visitor/ASTJoinVisitor.h"
 #include "utils/Performance.h"
 #include "database/storage/Matrix.h"
 #include <fstream>
@@ -71,6 +72,19 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
             }
+        }
+        else if (operatorName == "assign")
+        {
+            const json& operand = jsonQueryConfig["operands"][0];
+            std::string relationName = "";
+            if (jsonQueryConfig.contains("name"))
+            {
+                relationName = jsonQueryConfig["name"];
+            }
+            ASTNode* pCreatedOperandNode = createASTFromJson(operand);
+            pCreatedNode = new ASTNodeAssign(pCreatedOperandNode, relationName);
+            FIGARO_LOG_INFO("CREATE ASSIGN NODE")
+            return pCreatedNode;
         }
         else if (operatorName == "natural_join")
         {
@@ -152,7 +166,9 @@ namespace Figaro
         bool evalSecondFigaroPass, bool evalPostProcess, Figaro::QRGivensHintType qrHintType,
         Figaro::MemoryLayout memoryLayout, bool saveResult)
     {
-        ASTQRGivensVisitor qrGivensVisitor(m_pDatabase, memoryLayout, qrHintType, &m_matResult, saveResult);
-        m_pASTRoot->accept(&qrGivensVisitor);
+        //ASTQRGivensVisitor qrGivensVisitor(m_pDatabase, memoryLayout, qrHintType, &m_matResult, saveResult);
+        //m_pASTRoot->accept(&qrGivensVisitor);
+        ASTJoinVisitor astJoinVisitor(m_pDatabase);
+        m_pASTRoot->accept(&astJoinVisitor);
      }
 }
