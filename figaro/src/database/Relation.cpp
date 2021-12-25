@@ -131,40 +131,9 @@ namespace Figaro
         }
     }
 
-    void Relation::schemaJoin(const Relation& relation, bool swapAttributes)
-    {
-        std::vector<uint32_t> vNonPKAttributeIdxs;
-        relation.getNonPKAttributeIdxs(vNonPKAttributeIdxs);
-        std::vector<Attribute> tmpV;
-
-        if (swapAttributes)
-        {
-            for (const auto& attribute: m_attributes)
-            {
-                if (!attribute.m_isPrimaryKey)
-                {
-                    tmpV.push_back(attribute);
-                }
-            }
-            while (!m_attributes.back().m_isPrimaryKey)
-            {
-                m_attributes.pop_back();
-            }
-        }
-
-        for (const auto nonPKAttributeIdx: vNonPKAttributeIdxs)
-        {
-            FIGARO_LOG_DBG("Schema extended, Added attribute", nonPKAttributeIdx);
-            m_attributes.push_back(relation.m_attributes[nonPKAttributeIdx]);
-        }
-        if (swapAttributes)
-        {
-            m_attributes.insert(std::end(m_attributes), std::begin(tmpV), std::end(tmpV));
-        }
-    }
 
     Relation::Relation(const std::string& name,
-        MatrixDT& data, const std::vector<Attribute>& attributes):
+        MatrixDT&& data, const std::vector<Attribute>& attributes):
         m_name(name), m_data(std::move(data)),
         m_attributes(attributes), m_dataColumnMajor(0, 0),
         m_dataHead(0, 0), m_dataTails(0, 0), m_dataScales(0, 0),
@@ -197,6 +166,13 @@ namespace Figaro
             FIGARO_LOG_INFO("Primary key", jsonRelationPK);
         }
         m_dataPath = jsonRelationSchema["data_path"];
+    }
+
+    Relation* Relation::createFactorRelation(
+            const std::string& extension,
+            MatrixDT&& data)
+    {
+        return new Relation(m_name + "_" + extension, std::move(data), m_attributes);
     }
 
     void Relation::resetComputations(void)
@@ -900,7 +876,7 @@ namespace Figaro
         }
 
         FIGARO_LOG_INFO(newRelName, dataOutput.getNumRows(), dataOutput.getNumCols())
-        Relation joinRel = Relation(newRelName, dataOutput, attributes);
+        Relation joinRel = Relation(newRelName, std::move(dataOutput), attributes);
         return joinRel;
     }
 
@@ -2044,7 +2020,7 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "Generalized Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }
 
-    std::tuple<std::string, std::string>
+    std::tuple<Relation*, Relation*>
     Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
         Figaro::QRGivensHintType qrHintType,
@@ -2059,6 +2035,8 @@ namespace Figaro
         uint32_t totalNumCols;
         uint32_t numRels;
         uint32_t minNumRows;
+        Relation* pR = nullptr;
+        Relation* pQ = nullptr;
 
         numRels = vpRels.size();
         vCumNumRowsUp.resize(numRels + 1);
@@ -2207,17 +2185,19 @@ namespace Figaro
         if (saveResult)
         {
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
-            //copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
+            pR = createFactorRelation("R", std::move(catGenHeadAndTails));
         }
-        return std::make_tuple("", "");
+        return std::make_tuple(pR, pQ);
     }
 
-    std::tuple<std::string, std::string> Relation::computeQR(
+    std::tuple<Relation*, Relation*> Relation::computeQR(
         Figaro::QRGivensHintType qrHintType,
         Figaro::MemoryLayout memoryLayout,
         bool computeQ,
         bool saveResult)
     {
+        Relation* pR = nullptr;
+        Relation* pQ = nullptr;
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
             m_data.computeQRGivens(getNumberOfThreads(), true,
@@ -2227,10 +2207,7 @@ namespace Figaro
                 FIGARO_LOG_INFO("R before positive diagonal", m_data)
                 m_data.makeDiagonalElementsPositiveInR();
                 FIGARO_LOG_INFO("R after positive diagonal", m_data)
-                // TODO: funcion create relation: Rel, ext, these attributes, pass data
-                /* TODO: add R
-                copyMatrixDTToMatrixEigen(m_data, *pR);
-                */
+                pR = createFactorRelation("R", std::move(m_data));
             }
         }
         else
@@ -2240,10 +2217,10 @@ namespace Figaro
             if (saveResult)
             {
                 m_dataColumnMajor.makeDiagonalElementsPositiveInR();
-                //copyMatrixDTToMatrixEigen(m_dataColumnMajor, *pR);
+                //Relation r = createFactorRelation("R", std::move(m_dataColumnMajor));
             }
         }
-        return std::make_tuple("", "");
+        return std::make_tuple(pR, pQ);
     }
 
     const Relation::MatrixDT& Relation::getHead(void) const

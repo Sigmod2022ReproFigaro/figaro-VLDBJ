@@ -233,7 +233,15 @@ namespace Figaro
 
         void getCategoricalAttributeIdxs(std::vector<uint32_t>& vCatAttrIdxs) const;
 
-        void schemaJoin(const Relation& relation, bool swapAttributes = false);
+        /**
+         * @brief Create a Factor Relation object
+         *
+         * @param extension
+         * @param data
+         */
+        Relation* createFactorRelation(
+            const std::string& extension,
+            MatrixDT&& data);
 
         /**
          *  Updates schema of the current relation such that
@@ -326,11 +334,22 @@ namespace Figaro
         static void appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows);
 
         static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
+        /**
+         * @brief Construct a new Relation object. WARNING: data ownerships is passed
+         * to a new relation.
+         *
+         * @param name
+         * @param data
+         * @param attributes
+         */
         Relation(const std::string& name,
-            MatrixDT& data, const std::vector<Attribute>& attributes);
+            MatrixDT&& data, const std::vector<Attribute>& attributes);
     public:
         Relation(const Relation&) = delete;
+        Relation& operator=(const Relation& relation) = delete;
+
         Relation(Relation&& ) = default;
+        Relation& operator= (Relation&& relation) = default;
         Relation(json jsonRelationSchema);
 
         void resetComputations(void);
@@ -440,12 +459,12 @@ namespace Figaro
         void computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType);
 
         // Should be called for a root relation.
-        std::tuple<std::string, std::string> computeQROfConcatenatedGeneralizedHeadAndTails(
+        std::tuple<Relation*, Relation*> computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
             Figaro::QRGivensHintType qrHintType,
             bool saveResult);
 
-        std::tuple<std::string, std::string>
+        std::tuple<Relation*, Relation*>
         computeQR(Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,

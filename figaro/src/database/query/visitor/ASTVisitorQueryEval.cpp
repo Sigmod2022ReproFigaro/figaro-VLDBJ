@@ -69,10 +69,10 @@ namespace Figaro
         m_pDatabase->oneHotEncodeRelations();
 
 
-        std::tuple<std::string, std::string> qr =
+        auto [rName, qName] =
             m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult/*m_pMatR*/);
-        return new ASTVisitorQRResult(std::get<0>(qr), std::get<1>(qr));
+        return new ASTVisitorQRResult(rName, qName);
     }
 
     ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)

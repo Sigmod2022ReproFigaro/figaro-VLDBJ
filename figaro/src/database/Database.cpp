@@ -34,6 +34,29 @@ namespace Figaro
         return ErrorCode::NO_ERROR;
     }
 
+    std::tuple<std::string, std::string>
+    Database::saveQRResult(
+            std::tuple<Relation*, Relation*> qrResult)
+    {
+        auto [pR, pQ] = qrResult;
+        std::string rName = "";
+        std::string qName = "";
+        Relation& matR = *pR;
+        Relation& matQ = *pQ;
+        if (pR != nullptr)
+        {
+            rName = pR->getName();
+            m_relations.emplace(rName, std::move(matR));
+
+        }
+        if (pQ != nullptr)
+        {
+            qName = pQ->getName();
+            m_relations.emplace(qName, std::move(matQ));
+        }
+        return std::make_tuple(rName, qName);
+    }
+
     Database::Database(const std::string& schemaConfigPath)
     {
         initializationErrorCode = loadDatabaseSchema(schemaConfigPath);
@@ -276,9 +299,8 @@ namespace Figaro
         }
         pRootRel = vpRels[0];
         pRootRel->computeQROfGeneralizedHead(vpRels, qrHintType);
-        std::tuple<std::string, std::string> qr = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, saveResult);
-        return qr;
-
+        auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, saveResult);
+        return saveQRResult(qrResult);
     }
 
     void Database::changeMemoryLayout(void)
@@ -299,8 +321,8 @@ namespace Figaro
             bool saveResult)
     {
         Relation* pRel = &m_relations.at(relName);
-        std::tuple<std::string, std::string> qr = pRel->computeQR(qrHintType, memoryLayout, computeQ, saveResult);
-        return qr;
+        auto qrResult = pRel->computeQR(qrHintType, memoryLayout, computeQ, saveResult);
+        return saveQRResult(qrResult);
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

@@ -58,12 +58,12 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
         MICRO_BENCH_INIT(postprocess)
         MICRO_BENCH_START(postprocess)
-        std::tuple<std::string, std::string> qr =
+        auto [rName, qName] =
             m_pDatabase->computePostprocessing(pElement->getRelationOrder(), m_qrHintType, m_saveResult);
         MICRO_BENCH_STOP(postprocess)
         FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
         FIGARO_LOG_DBG("FInished")
-        return new ASTVisitorQRResult(std::get<0>(qr), std::get<1>(qr));
+        return new ASTVisitorQRResult(rName, qName);
 
     }
 

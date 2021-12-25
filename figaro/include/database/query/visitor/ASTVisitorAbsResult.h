@@ -5,6 +5,19 @@ namespace Figaro
 {
     class ASTVisitorAbsResult
     {
+        public:
+        enum class ResultType
+        {
+            JOIN_RESULT = 0,
+            QR_RESULT = 1
+        };
+    private:
+        ResultType m_resultType;
+    public:
+        ASTVisitorAbsResult(ResultType resultType): m_resultType(resultType) {}
+        ResultType getResultType() const {
+            return  m_resultType;
+        };
     };
 }
 

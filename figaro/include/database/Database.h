@@ -16,6 +16,9 @@ namespace Figaro
 
         ErrorCode loadDatabaseSchema(const std::string& schemaConfigPath);
 
+        std::tuple<std::string, std::string> saveQRResult(
+            std::tuple<Relation*, Relation*> qrResult);
+
     public:
         Database(const std::string& schemaConfigPath);
 

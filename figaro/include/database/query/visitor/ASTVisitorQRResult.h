@@ -20,6 +20,7 @@ namespace Figaro
         ASTVisitorQRResult(
             const std::string& rRelName,
             const std::string& qRelName) :
+            ASTVisitorAbsResult(ASTVisitorAbsResult::ResultType::QR_RESULT),
             m_rRelationName(rRelName),
             m_qRelationName(qRelName) { }
         std::string getRRelationName(void) const { return m_rRelationName; }

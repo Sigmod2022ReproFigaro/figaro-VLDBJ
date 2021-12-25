@@ -11,6 +11,7 @@ namespace Figaro
         std::string m_relationName;
     public:
         ASTVisitorJoinResult(const std::string& relationName) :
+            ASTVisitorAbsResult(ASTVisitorAbsResult::ResultType::JOIN_RESULT),
             m_relationName(relationName) { }
         std::string getJoinRelName(void) const { return m_relationName; }
         ~ASTVisitorJoinResult() {}

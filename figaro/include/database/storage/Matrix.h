@@ -62,6 +62,7 @@ namespace Figaro
 
         Matrix(const Matrix&) = delete;
         Matrix& operator=(const Matrix&) = delete;
+
         Matrix(Matrix&& other)
         {
             //FIGARO_LOG_DBG("Entered move constructor")
