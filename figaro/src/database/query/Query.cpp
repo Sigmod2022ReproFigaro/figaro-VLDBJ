@@ -1,5 +1,5 @@
 #include "database/query/Query.h"
-#include "database/query/visitor/ASTVisitorQRGivens.h"
+#include "database/query/visitor/ASTVisitorQueryEval.h"
 #include "database/query/visitor/ASTJoinVisitor.h"
 #include "utils/Performance.h"
 #include "database/storage/Matrix.h"
@@ -23,7 +23,8 @@ namespace Figaro
         ASTNode* pCreatedNode = nullptr;
         // TODO: Replace with factory pattern.
         // TODO: Rename GIV_QR with FIGARO_QR
-        if ((operatorName == "GIV_QR") || (operatorName == "POSTPROCESS_QR"))
+        if ((operatorName == "GIV_QR") || (operatorName == "POSTPROCESS_QR")
+        || (operatorName == "eval_join"))
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -66,11 +67,17 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE GIV_QR NODE")
             }
-            else
+            else if (operatorName == "POSTPROCESS_QR")
             {
                 pCreatedNode = new ASTNodePostProcQR(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
+            }
+            else
+            {
+                pCreatedNode = new ASTNodeEvalJoin(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                FIGARO_LOG_INFO("CREATE EVAL_JOIN NODE")
             }
         }
         else if (operatorName == "assign")
@@ -166,12 +173,10 @@ namespace Figaro
         bool evalSecondFigaroPass, bool evalPostProcess, Figaro::QRGivensHintType qrHintType,
         Figaro::MemoryLayout memoryLayout, bool saveResult)
     {
-        //ASTQRGivensVisitor qrGivensVisitor(m_pDatabase, memoryLayout, qrHintType, &m_matResult, saveResult);
-        //m_pASTRoot->accept(&qrGivensVisitor);
         MICRO_BENCH_INIT(joinEval)
         MICRO_BENCH_START(joinEval)
-        ASTJoinVisitor astJoinVisitor(m_pDatabase);
-        m_pASTRoot->accept(&astJoinVisitor);
+        ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, qrHintType, &m_matResult, saveResult);
+        m_pASTRoot->accept(&queryEvalVisitor);
         MICRO_BENCH_STOP(joinEval)
         FIGARO_LOG_BENCH("Join eval", MICRO_BENCH_GET_TIMER_LAP(joinEval))
      }

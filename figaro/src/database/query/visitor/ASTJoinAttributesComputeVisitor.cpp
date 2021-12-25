@@ -47,10 +47,6 @@ namespace Figaro
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
         FIGARO_LOG_INFO("Skipped attributes", pElement->getDropAttributes())
         FIGARO_LOG_INFO("Number of threads", pElement->getNumThreads())
-        omp_set_num_threads(pElement->getNumThreads());
-        m_pDatabase->dropAttributesFromRelations(
-            pElement->getDropAttributes());
-        m_pDatabase->oneHotEncodeRelations();
         pElement->getOperand()->accept(this);
         return nullptr;
     }
@@ -59,17 +55,16 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("QR Postprocess");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
-        FIGARO_LOG_INFO("Skipped attributes", pElement->getDropAttributes())
-        FIGARO_LOG_INFO("Number of threads", pElement->getNumThreads())
-        omp_set_num_threads(pElement->getNumThreads());
-        m_pDatabase->dropAttributesFromRelations(
-            pElement->getDropAttributes());
-        m_pDatabase->oneHotEncodeRelations();
+
         pElement->getOperand()->accept(this);
-        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
-        {
-            m_pDatabase->changeMemoryLayout();
-        }
+        return nullptr;
+    }
+
+    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
+    {
+        FIGARO_LOG_INFO("Eval join");
+        FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
+        pElement->getOperand()->accept(this);
         return nullptr;
     }
 

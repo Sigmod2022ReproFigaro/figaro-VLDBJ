@@ -50,4 +50,14 @@ namespace Figaro
         delete pJoinResult;
         return new ASTVisitorJoinResult(newRelName);
     }
+
+    ASTVisitorJoinResult* ASTJoinVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING EVAL NODE")
+        ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(this);
+        std::string newRelName = pJoinResult->getJoinRelName();
+        delete pJoinResult;
+        return new ASTVisitorJoinResult(newRelName);
+        ;
+    }
 }

@@ -1,14 +1,16 @@
-#include "database/query/visitor/ASTVisitorQRGivens.h"
+#include "database/query/visitor/ASTVisitorQueryEval.h"
 
 #include "database/query/visitor/ASTJoinAttributesComputeVisitor.h"
 #include "database/query/visitor/ASTComputeDownCountsVisitor.h"
 #include "database/query/visitor/ASTComputeUpAndCircleCountsVisitor.h"
 #include "database/query/visitor/ASTFigaroFirstPassVisitor.h"
 #include "database/query/visitor/ASTFigaroSecondPassVisitor.h"
+#include "database/query/visitor/ASTJoinVisitor.h"
+#include "omp.h"
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTQRGivensVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorAbsResult* ASTVisitorQueryEval::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true, m_memoryLayout);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
@@ -16,7 +18,11 @@ namespace Figaro
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
         ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_pMatR);
 
+        omp_set_num_threads(pElement->getNumThreads());
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
+        m_pDatabase->oneHotEncodeRelations();
 
         MICRO_BENCH_INIT(downCnt)
         MICRO_BENCH_INIT(upCnt)
@@ -48,12 +54,40 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTQRGivensVisitor::visitNodePostProcQR(ASTNodePostProcQR* pElement)
+    ASTVisitorAbsResult* ASTVisitorQueryEval::visitNodePostProcQR(ASTNodePostProcQR* pElement)
     {
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
+        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        {
+            m_pDatabase->changeMemoryLayout();
+        }
+        m_pDatabase->oneHotEncodeRelations();
+
         m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_pMatR);
         return nullptr;
+    }
+
+    ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
+    {
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTJoinVisitor astJoinVisitor(m_pDatabase);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
+        pElement->accept(&joinAttrVisitor);
+        //m_pDatabase->oneHotEncodeRelations();
+
+        ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->accept(&astJoinVisitor);
+        std::string newRelName = pJoinResult->getJoinRelName();
+        delete pJoinResult;
+
+        return new ASTVisitorJoinResult(newRelName);
     }
 }

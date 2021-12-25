@@ -19,7 +19,12 @@ namespace Figaro
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement)  override
         {
             // This line should not happen.
-            FIGARO_LOG_ASSERT(false);
+            return nullptr;
+        }
+
+        virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement)  override
+        {
+            // This line should not happen.
             return nullptr;
         }
 

@@ -23,6 +23,7 @@ namespace Figaro
         }
         virtual ~ASTJoinVisitor() override {}
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement)  override;
+        virtual ASTVisitorJoinResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement)  override;
 
 
     };
