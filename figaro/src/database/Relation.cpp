@@ -2026,8 +2026,6 @@ namespace Figaro
         Figaro::QRGivensHintType qrHintType,
         bool saveResult)
     {
-        MatrixEigenT matEigen;
-        Eigen::HouseholderQR<MatrixEigenT> qr{};
         std::vector<uint32_t> vLeftCumNumNonJoinAttrs;
         std::vector<uint32_t> vRightCumNumNonJoinAttrs;
         std::vector<uint32_t> vCumNumRowsUp;
@@ -2269,29 +2267,6 @@ namespace Figaro
         }
     }
 
-    void Relation::appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows)
-    {
-        uint32_t oldNumRows = matR.rows();
-        matR.conservativeResize(matR.rows() + numAppendedRows, Eigen::NoChange_t::NoChange);
-        for (uint32_t rowIdx = oldNumRows; rowIdx < matR.rows(); rowIdx++)
-        {
-            for (uint32_t colIdx = 0; colIdx < matR.cols(); colIdx++)
-            {
-                matR(rowIdx, colIdx) = 0;
-            }
-        }
-    }
-
-    void Relation::makeDiagonalElementsPositiveInR(MatrixEigenT& matR)
-    {
-        ArrayT&& aDiag = matR.diagonal().array().sign();
-        for (uint32_t rowIdx = 0; rowIdx < matR.cols(); rowIdx ++)
-        {
-            matR.row(rowIdx) *= aDiag(rowIdx);
-        }
-    }
-
-
     std::map<std::vector<uint32_t>, uint32_t> Relation::getDownCounts(void)
     {
         std::map<std::vector<uint32_t>, uint32_t> downCounts;
@@ -2429,6 +2404,24 @@ namespace Figaro
         out << "]" << std::endl;
         out << relation.m_data;
         return out;
+    }
+
+    void Relation::outputToFile(std::ostream& out, char sep,
+        uint32_t precision, bool header) const
+    {
+         for (uint32_t row = 0; row < m_data.getNumRows(); row ++)
+        {
+            for (uint32_t col = 0; col < m_data.getNumCols(); col++)
+            {
+
+                out << std::setprecision(precision) << std::scientific << m_data(row, col);
+                if (col != (m_data.getNumCols() - 1))
+                {
+                    out << sep;
+                }
+            }
+            out << std::endl;
+        }
     }
 }
 

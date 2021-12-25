@@ -331,9 +331,6 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
-        static void appendZeroRows(MatrixEigenT& matR, uint32_t numAppendedRows);
-
-        static void makeDiagonalElementsPositiveInR(MatrixEigenT& matR);
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
          * to a new relation.
@@ -499,6 +496,8 @@ namespace Figaro
         friend std::ostream& operator<<(
             std::ostream& out,
             const Relation& relation);
+
+        void outputToFile(std::ostream& out, char sep, uint32_t precision, bool header) const;
     };
 }
 #endif

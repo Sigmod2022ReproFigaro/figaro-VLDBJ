@@ -1,5 +1,6 @@
 #include "database/Database.h"
 #include "database/query/Query.h"
+#include "database/query/visitor/ASTVisitorQRResult.h"
 #include "utils/Performance.h"
 
 #include <boost/program_options.hpp>
@@ -142,17 +143,25 @@ int main(int argc, char *argv[])
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
     query.evaluateQuery(true, true, true, true, qrHintType, memoryLayout, dump);
-
+    FIGARO_LOG_INFO("WTF")
     if (dump)
     {
         Figaro::ASTVisitorAbsResult* pResult = query.getResult();
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
-        // TODO: replace this
-        /*
-        std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
-        Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
-        */
-        ////FIGARO_LOG_BENCH("precision", precision)
+        FIGARO_LOG_BENCH("dumping", "hohl")
+        if (pResult->getResultType() == Figaro::ASTVisitorAbsResult::ResultType::QR_RESULT)
+        {
+            FIGARO_LOG_BENCH("dumping", "QR")
+            Figaro::ASTVisitorQRResult* pQrResult = (Figaro::ASTVisitorQRResult*)pResult;
+            std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
+            database.outputRelationToFile(fileDumpR,
+                pQrResult->getRRelationName(), ',', precision);
+        }
+        else if (pResult->getResultType() == Figaro::ASTVisitorAbsResult::ResultType::JOIN_RESULT)
+        {
+            FIGARO_LOG_BENCH("dumping", "JOIN")
+
+        }
     }
 
     FIGARO_LOG_INFO("Figaro program has terminated")

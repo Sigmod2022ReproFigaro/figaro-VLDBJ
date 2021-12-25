@@ -325,6 +325,13 @@ namespace Figaro
         return saveQRResult(qrResult);
     }
 
+    void Database::outputRelationToFile(std::ostream& out, const std::string& relationName,
+        char sep, uint32_t precision, bool header)
+    {
+        const Relation& rel = m_relations.at(relationName);
+        rel.outputToFile(out, sep, precision, header);
+    }
+
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const
     {
         const Relation& rel = m_relations.at(relationName);

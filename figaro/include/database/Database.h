@@ -119,6 +119,9 @@ namespace Figaro
             bool saveResult);
 
 
+        void outputRelationToFile(std::ostream& out, const std::string& relationName,
+            char delimiter, uint32_t precision, bool header = false);
+
         /********** Getters  used for testing **********/
 
         std::map<std::vector<uint32_t>, uint32_t> getDownCounts(const std::string& relationName);

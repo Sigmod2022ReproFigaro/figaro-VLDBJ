@@ -16,7 +16,9 @@ namespace Figaro
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult /* m_pMatR*/);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult);
+
+        FIGARO_LOG_INFO("VISITING QR GIVENS NODE")
 
         omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
@@ -56,6 +58,7 @@ namespace Figaro
 
     ASTVisitorQRResult* ASTVisitorQueryEval::visitNodePostProcQR(ASTNodePostProcQR* pElement)
     {
+        FIGARO_LOG_INFO("VISITING POST PROC QR NODE")
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
         omp_set_num_threads(pElement->getNumThreads());
@@ -77,6 +80,7 @@ namespace Figaro
 
     ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
+        FIGARO_LOG_INFO("VISITING EVAL JOIN NODE")
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
         ASTJoinVisitor astJoinVisitor(m_pDatabase);
 
