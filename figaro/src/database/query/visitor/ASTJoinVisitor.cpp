@@ -1,5 +1,6 @@
 #include "database/query/visitor/ASTJoinVisitor.h"
 #include "database/query/visitor/ASTJoinAttributesComputeVisitor.h"
+#include <fstream>
 
 namespace Figaro
 {
@@ -26,7 +27,6 @@ namespace Figaro
             pElement->getChildrenParentJoinAttributeNames(),
             false
             );
-        FIGARO_LOG_INFO("Passed", newRelName)
         return new ASTVisitorJoinResult(newRelName);
     }
 
@@ -35,10 +35,19 @@ namespace Figaro
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, Figaro::MemoryLayout::ROW_MAJOR);
         pElement->getOperand()->accept(&joinAttrVisitor);
         ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(this);
+        std::string newRelName = pElement->getRelationName();
         m_pDatabase->renameRelation(
             pJoinResult->getJoinRelName(), pElement->getRelationName());
         m_pDatabase->persistRelation(pElement->getRelationName());
+        /*
+        std::ofstream fileDumpR("/local/scratch/Figaro/tests_path/figaro-code/dumps/postprocess/lapack/row_major/only_r/DBRetailer10/JoinLocationRoot48/join.csv", std::ofstream::out);
+        MatrixEigenT mOut;
+        Relation::copyMatrixDTToMatrixEigen(m_pDatabase->m_relations.at(newRelName).m_data, mOut);
+        Figaro::outputMatrixTToCSV(fileDumpR, mOut, ',', 2);
+        ASTNodeJoin* pJoin = (ASTNodeJoin*)pElement->getOperand();
+        */
+
         delete pJoinResult;
-        return nullptr;
+        return new ASTVisitorJoinResult(newRelName);
     }
 }

@@ -131,6 +131,7 @@ namespace Figaro
     {
         std::vector<Relation*> vpChildRels;
         Relation& rel = m_relations.at(relationName);
+        FIGARO_LOG_INFO("Relation names", vChildRelNames)
         for (const auto childRelName: vChildRelNames)
         {
             Relation* pRel = &m_relations.at(childRelName);
@@ -140,8 +141,10 @@ namespace Figaro
         Relation relJoin = rel.joinRelations(
             vpChildRels, vJoinAttrNames,
             vParJoinAttrNames,  vvJoinAttributeNames, trackProvenance);
-        m_relations.emplace(relJoin.getName(), std::move(rel));;
-        return relJoin.getName();
+        std::string relJoinName = relJoin.getName();
+        m_relations.emplace(relJoin.getName(), std::move(relJoin));;
+        FIGARO_LOG_INFO("New rel name", relJoin.getName())
+        return relJoinName;
     }
 
 

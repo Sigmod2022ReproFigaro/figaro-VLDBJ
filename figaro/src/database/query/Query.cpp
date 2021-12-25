@@ -168,7 +168,11 @@ namespace Figaro
     {
         //ASTQRGivensVisitor qrGivensVisitor(m_pDatabase, memoryLayout, qrHintType, &m_matResult, saveResult);
         //m_pASTRoot->accept(&qrGivensVisitor);
+        MICRO_BENCH_INIT(joinEval)
+        MICRO_BENCH_START(joinEval)
         ASTJoinVisitor astJoinVisitor(m_pDatabase);
         m_pASTRoot->accept(&astJoinVisitor);
+        MICRO_BENCH_STOP(joinEval)
+        FIGARO_LOG_BENCH("Join eval", MICRO_BENCH_GET_TIMER_LAP(joinEval))
      }
 }
