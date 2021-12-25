@@ -100,19 +100,20 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttributeNames,
             bool isRootNode);
 
-        void computePostprocessing(
+        std::tuple<std::string, std::string>
+        computePostprocessing(
             const std::vector<std::string>& vRelationOrder,
             Figaro::QRGivensHintType qrHintType,
-            MatrixEigenT* pR);
+            bool saveResult);
 
         void changeMemoryLayout(void);
 
-        void evalPostprocessing(
+        std::tuple<std::string, std::string> evalPostprocessing(
             const std::string& relName,
             Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
-            MatrixEigenT* pR);
+            bool saveResult);
 
 
         /********** Getters  used for testing **********/

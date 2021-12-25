@@ -3,6 +3,7 @@
 
 #include "ASTVisitorQRGivensAbs.h"
 #include "ASTVisitorJoinResult.h"
+#include "ASTVisitorQRResult.h"
 
 namespace Figaro
 {
@@ -11,28 +12,21 @@ namespace Figaro
         MemoryLayout m_memoryLayout;
         QRGivensHintType m_qrHintType;
         Database* m_pDatabase;
-        MatrixEigenT* m_pMatR;
         bool m_saveResult;
     public:
         ASTVisitorQueryEval(
             Database* pDatabase,
             Figaro::MemoryLayout memoryLayout,
             Figaro::QRGivensHintType qrHintType,
-            MatrixEigenT* pMatR,
             bool saveResult
             ): ASTVisitor(pDatabase), m_memoryLayout(memoryLayout),
-                m_pDatabase(pDatabase), m_qrHintType(qrHintType), m_pMatR(pMatR)
-            {
-                if (!saveResult)
-                {
-                    m_pMatR = nullptr;
-                }
-            }
+                m_pDatabase(pDatabase), m_qrHintType(qrHintType),
+                m_saveResult(saveResult){}
         ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override
         { return nullptr; }
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
-        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
-        ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
+        ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorQRResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
         ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) override { return nullptr; }
         ASTVisitorJoinResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
 

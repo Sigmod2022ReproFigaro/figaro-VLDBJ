@@ -2044,10 +2044,11 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "Generalized Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
     }
 
-    void Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
+    std::tuple<std::string, std::string>
+    Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
         Figaro::QRGivensHintType qrHintType,
-        MatrixEigenT* pR)
+        bool saveResult)
     {
         MatrixEigenT matEigen;
         Eigen::HouseholderQR<MatrixEigenT> qr{};
@@ -2189,42 +2190,60 @@ namespace Figaro
         }
         MICRO_BENCH_STOP(addingZeros)
         FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
+        /*
+        if (returnR)
+        {
+            create realtion from the attributes of the current
+            copy catGenHeadAndTails
+            return new relation
+        }
+        if (returnQ)
+        {
+            create relation fro the attirbutes of the current
+            copy Q
+        }
+        */
 
-        if (nullptr != pR)
+        if (saveResult)
         {
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
-            copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
+            //copyMatrixDTToMatrixEigen(catGenHeadAndTails, *pR);
         }
+        return std::make_tuple("", "");
     }
 
-    void Relation::computeQR(
+    std::tuple<std::string, std::string> Relation::computeQR(
         Figaro::QRGivensHintType qrHintType,
         Figaro::MemoryLayout memoryLayout,
         bool computeQ,
-        MatrixEigenT* pR)
+        bool saveResult)
     {
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
             m_data.computeQRGivens(getNumberOfThreads(), true,
                 qrHintType, computeQ);
-            if (nullptr != pR)
+            if (saveResult)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", m_data)
                 m_data.makeDiagonalElementsPositiveInR();
                 FIGARO_LOG_INFO("R after positive diagonal", m_data)
+                // TODO: funcion create relation: Rel, ext, these attributes, pass data
+                /* TODO: add R
                 copyMatrixDTToMatrixEigen(m_data, *pR);
+                */
             }
         }
         else
         {
             m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true,
                  qrHintType, computeQ);
-            if (nullptr != pR)
+            if (saveResult)
             {
                 m_dataColumnMajor.makeDiagonalElementsPositiveInR();
-                copyMatrixDTToMatrixEigen(m_dataColumnMajor, *pR);
+                //copyMatrixDTToMatrixEigen(m_dataColumnMajor, *pR);
             }
         }
+        return std::make_tuple("", "");
     }
 
     const Relation::MatrixDT& Relation::getHead(void) const

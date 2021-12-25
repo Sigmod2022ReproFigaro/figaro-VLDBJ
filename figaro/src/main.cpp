@@ -145,10 +145,13 @@ int main(int argc, char *argv[])
 
     if (dump)
     {
-        Figaro::MatrixEigenT& R = query.getResult();
+        Figaro::ASTVisitorAbsResult* pResult = query.getResult();
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
+        // TODO: replace this
+        /*
         std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
         Figaro::outputMatrixTToCSV(fileDumpR, R.topRightCorner(R.cols(), R.cols()), ',', precision);
+        */
         ////FIGARO_LOG_BENCH("precision", precision)
     }
 

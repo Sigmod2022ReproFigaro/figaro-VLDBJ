@@ -10,13 +10,13 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTVisitorQueryEval::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true, m_memoryLayout);
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_pMatR);
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult /* m_pMatR*/);
 
         omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
@@ -46,15 +46,15 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(firstPass));
 
         MICRO_BENCH_START(secondPass)
-        pElement->accept(&figaroSecondPassVisitor);
+        ASTVisitorQRResult* pQRResult = (ASTVisitorQRResult*)pElement->accept(&figaroSecondPassVisitor);
         MICRO_BENCH_STOP(secondPass)
         FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
         MICRO_BENCH_STOP(main)
         FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
-        return nullptr;
+        return pQRResult;
     }
 
-    ASTVisitorAbsResult* ASTVisitorQueryEval::visitNodePostProcQR(ASTNodePostProcQR* pElement)
+    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodePostProcQR(ASTNodePostProcQR* pElement)
     {
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
@@ -68,9 +68,11 @@ namespace Figaro
         }
         m_pDatabase->oneHotEncodeRelations();
 
-        m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
-            m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_pMatR);
-        return nullptr;
+
+        std::tuple<std::string, std::string> qr =
+            m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
+            m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult/*m_pMatR*/);
+        return new ASTVisitorQRResult(std::get<0>(qr), std::get<1>(qr));
     }
 
     ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)

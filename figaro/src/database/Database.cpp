@@ -257,10 +257,11 @@ namespace Figaro
             isRootNode);
     }
 
-    void Database::computePostprocessing(
+    std::tuple<std::string, std::string>
+    Database::computePostprocessing(
         const std::vector<std::string>& vRelationOrder,
         Figaro::QRGivensHintType qrHintType,
-        MatrixEigenT* pR
+        bool saveResult
     )
     {
         std::vector<Relation*> vpRels;
@@ -275,7 +276,9 @@ namespace Figaro
         }
         pRootRel = vpRels[0];
         pRootRel->computeQROfGeneralizedHead(vpRels, qrHintType);
-        pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, pR);
+        std::tuple<std::string, std::string> qr = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, saveResult);
+        return qr;
+
     }
 
     void Database::changeMemoryLayout(void)
@@ -287,15 +290,17 @@ namespace Figaro
         }
     }
 
-    void Database::evalPostprocessing(
+    std::tuple<std::string, std::string>
+    Database::evalPostprocessing(
             const std::string& relName,
             Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
-            MatrixEigenT* pR)
+            bool saveResult)
     {
         Relation* pRel = &m_relations.at(relName);
-        pRel->computeQR(qrHintType, memoryLayout, computeQ, pR);
+        std::tuple<std::string, std::string> qr = pRel->computeQR(qrHintType, memoryLayout, computeQ, saveResult);
+        return qr;
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

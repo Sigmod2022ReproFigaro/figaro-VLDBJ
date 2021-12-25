@@ -13,7 +13,7 @@ namespace Figaro
     {
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr;
-        MatrixEigenT m_matResult;
+        ASTVisitorAbsResult* m_pResult;
         bool m_saveResult;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
         static void destroyAST(ASTNode* pASTRoot);
@@ -47,9 +47,9 @@ namespace Figaro
              return pDatabase;
         }
 
-        MatrixEigenT& getResult(void)
+        ASTVisitorAbsResult* getResult(void)
         {
-            return m_matResult;
+            return m_pResult;
         }
     };
 }

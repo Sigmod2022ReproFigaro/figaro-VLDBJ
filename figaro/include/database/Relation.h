@@ -440,15 +440,16 @@ namespace Figaro
         void computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType);
 
         // Should be called for a root relation.
-        void computeQROfConcatenatedGeneralizedHeadAndTails(
+        std::tuple<std::string, std::string> computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
             Figaro::QRGivensHintType qrHintType,
-            MatrixEigenT* pR);
+            bool saveResult);
 
-        void computeQR(Figaro::QRGivensHintType qrHintType,
+        std::tuple<std::string, std::string>
+        computeQR(Figaro::QRGivensHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
-            MatrixEigenT* pR);
+            bool saveResult);
 
 
         /*********************** Testing getters for counts ***************/
