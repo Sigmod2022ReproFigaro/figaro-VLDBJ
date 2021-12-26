@@ -20,6 +20,7 @@ namespace Figaro
         }
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         FIGARO_LOG_DBG("vpChildRels", pElement->getChildrenNames())
+        // TODO: Pass temporary relations to functions
         m_pDatabase-> aggregateAwayChildrenRelations(
             relationName,
             pElement->getChildrenNames(),

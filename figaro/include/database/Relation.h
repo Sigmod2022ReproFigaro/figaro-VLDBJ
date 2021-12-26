@@ -274,31 +274,33 @@ namespace Figaro
          * returns it as a pointer @p pHashTablePt.
          * @note Destructor needs to be called after the usage.
          */
-        void initHashTableRowIdxs(
+        static void initHashTableRowIdxs(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
-            void*& pHashTablePt,
-            const MatrixDT& data);
+            const MatrixDT& data,
+            void*& pHashTablePt);
 
         /**
          * Looks up in the hash table @p hashTabRowPt for join attributes from parent
          * @p vParJoinAttrIdxs and the value specified in @p dataParent [ @p rowIdx ]
          */
-        uint32_t getChildRowIdx(uint32_t rowIdx,
+        static uint32_t getChildRowIdx(uint32_t rowIdx,
             const std::vector<uint32_t>& vParJoinAttrIdxs,
-            void*  hashTabRowPt,
-            const MatrixDT& dataParent);
+            const MatrixDT& dataParent,
+            void*  hashTabRowPt);
 
-        void destroyHashTableRowIdxs(
+        static void destroyHashTableRowIdxs(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
-        void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
-            uint32_t hashTableSize);
+        static void initHashTable(const std::vector<uint32_t>& vParAttrIdx,
+            uint32_t hashTableSize,
+            std::shared_ptr<void>& pHTParCounts);
 
-        void insertParDownCntFromHashTable(
+        static void insertParDownCntFromHashTable(
             const std::vector<uint32_t>& vParAttrIdx,
             const uint32_t* pRow,
-            uint32_t downCnt);
+            uint32_t downCnt,
+            std::shared_ptr<void>& pHTParCounts);
 
         Figaro::Relation::DownUpCntT& getParCntFromHashTable(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
@@ -310,22 +312,17 @@ namespace Figaro
             void*  htChildRowIdx,
             const double* pRow);
 
-        void initHashTableMNJoin(
+        static void initHashTableMNJoin(
             const std::vector<uint32_t>& vParAttrIdx,
             void*& pHashTablePt,
             MatrixDT& dataRef);
 
-        void insertHashTableMNJoin(
-            const std::vector<uint32_t>& vParAttrIdx,
-            const uint32_t* pRow,
-            uint32_t downCnt);
-
-        const std::vector<uint32_t>& getHashTableMNJoin(
+        static const std::vector<uint32_t>& getHashTableMNJoin(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*  htChildRowIdx,
             const double* pRow);
 
-        void destroyHashTableMNJoin(
+        static void destroyHashTableMNJoin(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
@@ -423,7 +420,7 @@ namespace Figaro
          *  TAIL(remaining attributes)
          * GROUP BY attrNames.
          */
-        void computeHeadsAndTails(
+        std::tuple<Relation, Relation> computeHeadsAndTails(
             const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
 
         /**

@@ -242,13 +242,18 @@ namespace Figaro
         return rel.getCircCounts();
     }
 
-    void Database::computeHeadsAndTails(
+    std::tuple<std::string, std::string> Database::computeHeadsAndTails(
         const std::string& relationName,
         const std::vector<std::string>& vJoinAttrNames,
         bool isLeafNode)
     {
         Relation& rel = m_relations.at(relationName);
-        rel.computeHeadsAndTails(vJoinAttrNames, isLeafNode);
+        auto [relHeads, relTails] = rel.computeHeadsAndTails(vJoinAttrNames, isLeafNode);
+        auto headsName = relHeads.getName();
+        auto tailName = relTails.getName();
+        m_relations.emplace(relHeads.getName(), std::move(relHeads));
+        m_relations.emplace(relTails.getName(), std::move(relTails));
+        return {headsName, tailName};
     }
 
     void Database::aggregateAwayChildrenRelations(

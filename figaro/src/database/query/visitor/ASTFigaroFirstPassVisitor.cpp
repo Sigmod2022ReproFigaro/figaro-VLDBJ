@@ -2,7 +2,7 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         std::vector<std::string> childrenNames;
         std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
@@ -10,34 +10,51 @@ namespace Figaro
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
 
-        m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
+
+        auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
         true);
-        return nullptr;
+
+        std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> namesTmpRels =
+        {{relationName,
+        ASTVisitorFirstPassResult::FirstPassRelNames(headsName, tailsName)}};
+        return new ASTVisitorFirstPassResult(namesTmpRels);
     }
 
-    ASTVisitorAbsResult* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
-        for (const auto& pChild: pElement->getChildren())
-        {
-            FIGARO_LOG_DBG("Child");
-            pChild->accept(this);
-        }
+
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
-        m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
+        auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
              false);
-        return nullptr;
+
+
+        std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> namesTmpRels =
+        {{relationName,
+        ASTVisitorFirstPassResult::FirstPassRelNames(headsName, tailsName)}};
+
+        for (const auto& pChild: pElement->getChildren())
+        {
+            FIGARO_LOG_DBG("Child");
+            ASTVisitorFirstPassResult* pResult = (ASTVisitorFirstPassResult*)pChild->accept(this);
+
+            namesTmpRels.insert(
+                pResult->getHtNamesTmpRels().begin(),
+                pResult->getHtNamesTmpRels().end());
+            delete pResult;
+        }
+        return new ASTVisitorFirstPassResult(namesTmpRels);
     }
 
-    ASTVisitorAbsResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
         FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");
         FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
-        pElement->getOperand()->accept(this);
-        return nullptr;
+        ASTVisitorFirstPassResult* pResult = (ASTVisitorFirstPassResult*)pElement->getOperand()->accept(this);
+        return pResult;
     }
 }

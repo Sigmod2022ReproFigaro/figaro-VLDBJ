@@ -2,6 +2,7 @@
 #define _FIGARO_AST_FIGARO_FIRST_PASS_VISITOR_H_
 
 #include "ASTVisitorQRGivensAbs.h"
+#include "ASTVisitorFirstPassResult.h"
 
 namespace Figaro
 {
@@ -10,9 +11,9 @@ namespace Figaro
     public:
         ASTFigaroFirstPassVisitor(
             Database* pDatabase): ASTVisitorQRGivensAbs(pDatabase) {}
-        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorFirstPassResult* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorFirstPassResult* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorFirstPassResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
 
         virtual ~ASTFigaroFirstPassVisitor() override {}
     };

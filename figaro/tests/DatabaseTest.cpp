@@ -671,3 +671,60 @@ TEST(Matrix, QRLAPACK)
     FIGARO_LOG_DBG(matrix)
 
 }
+
+TEST(Matrix, Multiplication)
+{
+    static constexpr uint32_t M = 3, N = 2, K = 3;
+    Figaro::Relation::MatrixDT A(M, K), B(K, N), expC(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), K);
+
+    EXPECT_EQ(B.getNumRows(), K);
+    EXPECT_EQ(B.getNumCols(), N);
+
+
+    A[0][0] = 0;
+    A[0][1] = 1;
+    A[0][2] = 2;
+
+    A[1][0] = 3;
+    A[1][1] = 4;
+    A[1][2] = 5;
+
+    A[2][0] = 6;
+    A[2][1] = 7;
+    A[2][2] = 8;
+
+    B[0][0] = 0;
+    B[0][1] = 1;
+
+    B[1][0] = 2;
+    B[1][1] = 3;
+
+    B[2][0] = 4;
+    B[2][1] = 5;
+
+    expC[0][0] = 10;
+    expC[0][1] = 13;
+
+    expC[1][0] = 28;
+    expC[1][1] = 40;
+
+    expC[2][0] = 46;
+    expC[2][1] = 67;
+
+    FIGARO_LOG_DBG("B", B)
+
+    Figaro::Relation::MatrixDT C = A * B;
+    EXPECT_EQ(C.getNumRows(), expC.getNumRows());
+    EXPECT_EQ(C.getNumCols(), expC.getNumCols());
+
+    for (uint32_t row = 0; row < expC.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expC.getNumCols(); col++)
+        {
+            EXPECT_NEAR(C(row, col), expC(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}

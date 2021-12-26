@@ -51,6 +51,8 @@ namespace Figaro
         {
             return (uint64_t) m_numRows * (uint64_t)m_numCols;
         }
+        const T* getArrPt (void) const { return &((*m_pStorage)[0]); }
+        T* getArrPt (void)  { return &((*m_pStorage)[0]); }
     public:
 
         Matrix(uint32_t numRows, uint32_t numCols)
@@ -141,8 +143,17 @@ namespace Figaro
 
         Matrix<T, L> operator*(const Matrix<T, L>& second) const
         {
-            //cblas_dgemm
-            return Matrix<T, L>{0, 0};
+            // TODO: Based on type generate different code
+            const double* pA = getArrPt();
+            const double* pB = second.getArrPt();
+            uint32_t m = getNumRows();
+            uint32_t n = second.getNumCols();
+            uint32_t k = getNumCols();
+            Matrix<T, L> matC{m, n};
+            double* pC = matC.getArrPt();
+            cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                m, n, k, 1.0, pA, k, pB, n, 0.0, pC, n);
+            return matC;
         }
 
         // Changes the size of matrix while keeping the data.
@@ -767,21 +778,21 @@ namespace Figaro
             auto& matA = *this;
             uint32_t rank = std::min(getNumRows(), getNumCols());
             double* tau = new double [getNumCols()];
-
+            double* pMat = getArrPt();
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
                 LAPACKE_dgeqrf(
                 LAPACK_ROW_MAJOR,
                 m_numRows,
                 m_numCols,
-                &((*m_pStorage)[0]) /* *a */,
+                pMat /* *a */,
                 m_numCols,/*lda*/
                 tau/* tau */
                 );
                 if (computeQ)
                 {
                     LAPACKE_dorgqr(LAPACK_ROW_MAJOR, m_numRows, rank, rank,
-                        &((*m_pStorage)[0]), m_numCols, tau);
+                        pMat, m_numCols, tau);
                 }
             }
             else
@@ -790,14 +801,14 @@ namespace Figaro
                 LAPACK_COL_MAJOR,
                 m_numRows,
                 m_numCols,
-                &((*m_pStorage)[0]) /* *a */,
+                pMat /* *a */,
                 m_numRows,/*lda*/
                 tau/* tau */
                 );
                 if (computeQ)
                 {
                     LAPACKE_dorgqr(LAPACK_COL_MAJOR, m_numRows, rank, rank,
-                        &((*m_pStorage)[0]), m_numRows, tau);
+                        pMat, m_numRows, tau);
                 }
             }
 

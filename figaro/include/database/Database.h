@@ -86,7 +86,7 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-        void computeHeadsAndTails(
+        std::tuple<std::string, std::string> computeHeadsAndTails(
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames,
             bool isLeafNode);

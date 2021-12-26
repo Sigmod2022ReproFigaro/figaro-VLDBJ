@@ -9,7 +9,8 @@ namespace Figaro
         enum class ResultType
         {
             JOIN_RESULT = 0,
-            QR_RESULT = 1
+            QR_RESULT = 1,
+            FIRST_PASS_RESULT = 2
         };
     private:
         ResultType m_resultType;

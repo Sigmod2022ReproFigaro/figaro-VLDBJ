@@ -21,7 +21,9 @@ namespace Figaro
 
         FIGARO_LOG_INFO("VISITING QR GIVENS NODE")
 
+        FIGARO_LOG_INFO("HELPER PREPROCESSING")
         omp_set_num_threads(pElement->getNumThreads());
+        // Project away operator.
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
@@ -31,6 +33,7 @@ namespace Figaro
         MICRO_BENCH_INIT(firstPass)
         MICRO_BENCH_INIT(secondPass)
 
+        FIGARO_LOG_INFO("JOIN EVALUATION")
         if (pElement->isComputeQ())
         {
             ASTJoinVisitor astJoinVisitor(m_pDatabase);
@@ -38,9 +41,9 @@ namespace Figaro
             joinRelName = pResult->getJoinRelName();
             delete pResult;
         }
+        FIGARO_LOG_INFO("ONE HOT ENCODING")
         m_pDatabase->oneHotEncodeRelations();
 
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName);
         MICRO_BENCH_INIT(main)
         MICRO_BENCH_START(main)
         MICRO_BENCH_START(downCnt)
@@ -53,11 +56,14 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(upCnt));
 
         MICRO_BENCH_START(firstPass)
-        pElement->accept(&figaroFirstPassVisitor);
+        ASTVisitorFirstPassResult* pResult =
+        (ASTVisitorFirstPassResult*)pElement->accept(&figaroFirstPassVisitor);
         MICRO_BENCH_STOP(firstPass)
         FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(firstPass));
 
         MICRO_BENCH_START(secondPass)
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels());
+        delete pResult;
         ASTVisitorQRResult* pQRResult = (ASTVisitorQRResult*)pElement->accept(&figaroSecondPassVisitor);
         MICRO_BENCH_STOP(secondPass)
         FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));

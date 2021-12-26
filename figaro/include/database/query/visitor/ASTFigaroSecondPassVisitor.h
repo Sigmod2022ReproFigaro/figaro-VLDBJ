@@ -2,6 +2,7 @@
 #define _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
 
 #include "ASTVisitorQRGivensAbs.h"
+#include "ASTVisitorFirstPassResult.h"
 #include "ASTVisitorQRResult.h"
 
 namespace Figaro
@@ -12,14 +13,19 @@ namespace Figaro
         bool m_saveResult;
         Figaro::QRGivensHintType m_qrHintType;
         std::string m_joinRelName;
+        std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> m_htTmpRelsNames;
+
     public:
         ASTFigaroSecondPassVisitor(
             Database* pDatabase, Figaro::QRGivensHintType qrHintType, bool saveResult,
-            const std::string& joinRelName):
+            const std::string& joinRelName,
+            const std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames>
+            htTmpRelsNames):
                 ASTVisitorQRGivensAbs(pDatabase),
                 m_saveResult(saveResult),
                  m_qrHintType(qrHintType),
-                 m_joinRelName(joinRelName) {
+                 m_joinRelName(joinRelName),
+                 m_htTmpRelsNames(htTmpRelsNames) {
                  }
         ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
