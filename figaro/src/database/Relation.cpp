@@ -2034,10 +2034,8 @@ namespace Figaro
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
             uint32_t nextStartIdx = vCumNumRowsUp[idxRel + 1];
-            FIGARO_LOG_INFO("WTF", startTailIdx, nextStartIdx)
             for (uint32_t rowIdx = startTailIdx; rowIdx < nextStartIdx; rowIdx ++)
             {
-                FIGARO_LOG_INFO("WTF", rowIdx, startTailIdx, nextStartIdx)
                 // Set Left zeros1
                 for (uint32_t colIdx = 0; colIdx < vLeftCumNumNonJoinAttrs[idxRel];
                     colIdx ++)
@@ -2069,7 +2067,6 @@ namespace Figaro
             //FIGARO_LOG_INFO("genTail", vpGenTailRels[idxRel]->m_data)
             uint32_t startGenTailIdx = vCumNumRowsUp[idxRel + vpTailRels.size()];
             uint32_t endGenTailIdx = vCumNumRowsUp[idxRel + 1 + vpTailRels.size()];
-            FIGARO_LOG_INFO("start", startGenTailIdx, "end", endGenTailIdx, "vLeftCumNumNonJoinAttrs[idxRel]", vLeftCumNumNonJoinAttrs[idxRel])
             for (uint32_t rowIdx = startGenTailIdx;
                 rowIdx < endGenTailIdx; rowIdx ++)
             {
@@ -2104,8 +2101,6 @@ namespace Figaro
 
         MICRO_BENCH_STOP(copyMatrices)
         FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
-        FIGARO_LOG_INFO("catGenHeadAndTails", catGenHeadAndTails)
-
         FIGARO_LOG_INFO("Computing final R")
 
         MICRO_BENCH_INIT(finalQR)
@@ -2128,7 +2123,9 @@ namespace Figaro
 
         if (computeQ)
         {
-            qData = std::move(pJoinRel->m_data * m_data);
+            FIGARO_LOG_INFO("Computing Q")
+            qData = std::move(
+                pJoinRel->m_data * catGenHeadAndTails.computeInverseTriangular());
         }
 
         if (saveResult)

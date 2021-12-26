@@ -728,3 +728,53 @@ TEST(Matrix, Multiplication)
         }
     }
 }
+
+
+
+TEST(Matrix, Inverse)
+{
+    static constexpr uint32_t M = 3, N = 3;
+    Figaro::Relation::MatrixDT A(M, N), expInv(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), N);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+
+    A[1][0] = 4;
+    A[1][1] = 5;
+    A[1][2] = 6;
+
+    A[2][0] = 10;
+    A[2][1] = 11;
+    A[2][2] = 13;
+
+    expInv[0][0] = 0.3333333333333333;
+    expInv[0][1] = -2.3333333333333333;
+    expInv[0][2] = 1;
+
+    expInv[1][0] = -2.6666666666666667;
+    expInv[1][1] = 5.66666666666666667;
+    expInv[1][2] = -2;
+
+    expInv[2][0] = 2;
+    expInv[2][1] = -3;
+    expInv[2][2] = 1;
+
+    FIGARO_LOG_DBG(A)
+    FIGARO_LOG_DBG(expInv)
+
+    Figaro::Relation::MatrixDT inv = A.computeInverseTriangular();
+    EXPECT_EQ(inv.getNumRows(), expInv.getNumRows());
+    EXPECT_EQ(inv.getNumCols(), expInv.getNumCols());
+
+    for (uint32_t row = 0; row < expInv.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expInv.getNumCols(); col++)
+        {
+            EXPECT_NEAR(inv(row, col), expInv(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}

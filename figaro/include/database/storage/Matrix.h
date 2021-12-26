@@ -387,6 +387,27 @@ namespace Figaro
             }
         }
 
+          /**
+         * @brief We assume matrix is triangular.
+         *
+         * @return Matrix<T, L>
+         */
+        Matrix<T, L> computeInverseTriangular(void)
+        {
+            Matrix<T, L> inverse {m_numRows, m_numCols};
+            inverse.copyBlockToThisMatrix(*this,
+                0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
+            long long int * pIpivot = new long long int[std::min(m_numCols, m_numRows)];
+            LAPACKE_dgetrf(
+                LAPACK_ROW_MAJOR, m_numRows, m_numCols,
+                inverse.getArrPt(), m_numCols, pIpivot);
+
+            LAPACKE_dgetri(LAPACK_ROW_MAJOR, m_numRows, inverse.getArrPt(),
+                    m_numCols, pIpivot);
+            delete [ ] pIpivot;
+            return inverse;
+        }
+
 
         void computeGivensRotation(T a, T b, T& cos, T& sin, T& r)
         {
