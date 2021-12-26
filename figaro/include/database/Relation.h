@@ -131,10 +131,6 @@ namespace Figaro
         MatrixDColT m_dataColumnMajor;
         MatrixDT m_data;
 
-        MatrixDT m_dataHead;
-        MatrixDT m_dataTails;
-        MatrixDT m_dataTailsGen;
-
         MatrixDT m_scales;
         MatrixDT m_dataScales;
         std::vector<double> m_allScales;
@@ -449,10 +445,6 @@ namespace Figaro
         void computeQROfGeneralizedHead(
             const std::vector<Relation*>& vpTailRels,
             Figaro::QRGivensHintType qrHintType);
-
-        void computeQROfTail(Figaro::QRGivensHintType qrHintType);
-
-        void computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType);
 
         void computeQRInPlace(Figaro::QRGivensHintType qrHintType);
 

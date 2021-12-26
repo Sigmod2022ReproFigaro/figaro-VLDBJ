@@ -751,9 +751,9 @@ namespace Figaro
             //computeQRGivensSequentialBlock(0, rowTotalEndIdx, 0, m_numCols - 1);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
-            FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
+            //FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
             this->resize(numRedEndRows);
-            FIGARO_LOG_INFO("After processing", matA)
+            //FIGARO_LOG_INFO("After processing", matA)
             //MICRO_BENCH_STOP(qrGivensPar2)
             //FIGARO_LOG_BENCH("Time sequential", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
         }

@@ -81,7 +81,8 @@ namespace Figaro
     {
         std::vector<std::string> vGenTailRelNames;
         std::vector<std::string> vTailRelNames;
-         FIGARO_LOG_INFO("********************");
+        std::vector<std::string> vRelOrder = pElement->getRelationOrder();
+        FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("QR Givens");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
         MICRO_BENCH_INIT(mainAlgorithm)
@@ -91,16 +92,15 @@ namespace Figaro
         MICRO_BENCH_STOP(mainAlgorithm)
         FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
 
-        for (const auto&[key, val]: m_htTmpRelsNames)
+        for (const auto& relName: vRelOrder)
         {
-            vTailRelNames.push_back(val.m_tailsName);
+            vTailRelNames.push_back(m_htTmpRelsNames.at(relName).m_tailsName);
         }
 
-        for (const auto&[key, val]: pResult->getHtNamesTmpRels())
+        for (const auto& relName: vRelOrder)
         {
-            vGenTailRelNames.push_back(val.m_genTailsName);
+            vGenTailRelNames.push_back(pResult->getHtNamesTmpRels().at(relName).m_genTailsName);
         }
-
 
         MICRO_BENCH_INIT(postprocess)
         MICRO_BENCH_START(postprocess)
