@@ -179,8 +179,6 @@ namespace Figaro
         uint32_t m_cntsJoinIdxC;
         uint32_t m_cntsJoinIdxE;
 
-        bool isTmp(void) const { return m_isTmp; }
-
         uint32_t getAttributeIdx(const std::string& attributeName) const;
 
         /**
@@ -355,6 +353,8 @@ namespace Figaro
 
         void persist(void);
 
+        bool isTmp(void) const { return m_isTmp; }
+
         std::vector<std::string> getAttributeNames(void) const;
 
         const std::string& getName(void) const { return m_name; }
@@ -459,7 +459,8 @@ namespace Figaro
         std::tuple<Relation*, Relation*> computeQROfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
             Figaro::QRGivensHintType qrHintType,
-            bool saveResult);
+            bool saveResult,
+            const Relation* pJoinRel);
 
         std::tuple<Relation*, Relation*>
         computeQR(Figaro::QRGivensHintType qrHintType,

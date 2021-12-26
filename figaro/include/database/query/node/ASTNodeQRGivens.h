@@ -41,6 +41,9 @@ namespace Figaro
             return m_vDropAttributes;
         }
 
+
+        bool isComputeQ(void) const { return m_computeQ; }
+
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
     };
 

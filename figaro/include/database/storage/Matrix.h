@@ -139,6 +139,12 @@ namespace Figaro
             }
         }
 
+        Matrix<T, L> operator*(const Matrix<T, L>& second) const
+        {
+            //cblas_dgemm
+            return Matrix<T, L>{0, 0};
+        }
+
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
@@ -957,8 +963,6 @@ namespace Figaro
             return RowIterator(m_pStorage->getData() + m_pStorage->getSize(), m_numCols);
         }
     };
-    typedef Matrix<double> MatrixD;
-
 }
 
 #endif

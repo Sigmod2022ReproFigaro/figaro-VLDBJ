@@ -107,7 +107,8 @@ namespace Figaro
         computePostprocessing(
             const std::vector<std::string>& vRelationOrder,
             Figaro::QRGivensHintType qrHintType,
-            bool saveResult);
+            bool saveResult,
+            const std::string& joinRelName);
 
         void changeMemoryLayout(void);
 
@@ -118,6 +119,14 @@ namespace Figaro
             bool computeQ,
             bool saveResult);
 
+        /**
+         * @brief Destroys temporary relation @p relName with its data.
+         *
+         * @param relName
+         * @return true In a case when relation alongside data is removed from a database.
+         * @return false In a case when relation is not temporary and thus, not removed.
+         */
+        bool destroyTemporaryRelation(const std::string& relationName);
 
         void outputRelationToFile(std::ostream& out, const std::string& relationName,
             char delimiter, uint32_t precision, bool header = false);

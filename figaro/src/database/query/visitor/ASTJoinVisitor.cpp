@@ -12,21 +12,25 @@ namespace Figaro
 
     ASTVisitorJoinResult* ASTJoinVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
-        std::vector<std::string> vJoinResults;
+        std::vector<std::string> vRelNames;
         for (const auto& pChild: pElement->getChildren())
         {
             ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)(pChild->accept(this));
-            vJoinResults.push_back(pJoinResult->getJoinRelName());
+            vRelNames.push_back(pJoinResult->getJoinRelName());
             delete pJoinResult;
         }
         std::string newRelName = m_pDatabase->joinRelations(
             pElement->getCentralRelation()->getRelationName(),
-            vJoinResults,
+            vRelNames,
             pElement->getJoinAttributeNames(),
             pElement->getParJoinAttributeNames(),
             pElement->getChildrenParentJoinAttributeNames(),
             false
             );
+        for (const auto& relName: vRelNames)
+        {
+            m_pDatabase->destroyTemporaryRelation(relName);
+        }
         return new ASTVisitorJoinResult(newRelName);
     }
 

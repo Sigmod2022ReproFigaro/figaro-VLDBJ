@@ -11,12 +11,15 @@ namespace Figaro
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
         bool m_saveResult;
         Figaro::QRGivensHintType m_qrHintType;
+        std::string m_joinRelName;
     public:
         ASTFigaroSecondPassVisitor(
-            Database* pDatabase, Figaro::QRGivensHintType qrHintType, bool saveResult):
+            Database* pDatabase, Figaro::QRGivensHintType qrHintType, bool saveResult,
+            const std::string& joinRelName):
                 ASTVisitorQRGivensAbs(pDatabase),
                 m_saveResult(saveResult),
-                 m_qrHintType(qrHintType) {
+                 m_qrHintType(qrHintType),
+                 m_joinRelName(joinRelName) {
                  }
         ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;

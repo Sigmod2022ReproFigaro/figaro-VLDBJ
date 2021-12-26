@@ -59,7 +59,7 @@ namespace Figaro
         MICRO_BENCH_INIT(postprocess)
         MICRO_BENCH_START(postprocess)
         auto [rName, qName] =
-            m_pDatabase->computePostprocessing(pElement->getRelationOrder(), m_qrHintType, m_saveResult);
+            m_pDatabase->computePostprocessing(pElement->getRelationOrder(), m_qrHintType, m_saveResult, m_joinRelName);
         MICRO_BENCH_STOP(postprocess)
         FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
         FIGARO_LOG_DBG("FInished")

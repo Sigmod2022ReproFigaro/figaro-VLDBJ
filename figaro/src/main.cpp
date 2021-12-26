@@ -148,10 +148,8 @@ int main(int argc, char *argv[])
     {
         Figaro::ASTVisitorAbsResult* pResult = query.getResult();
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
-        FIGARO_LOG_BENCH("dumping", "hohl")
         if (pResult->getResultType() == Figaro::ASTVisitorAbsResult::ResultType::QR_RESULT)
         {
-            FIGARO_LOG_BENCH("dumping", "QR")
             Figaro::ASTVisitorQRResult* pQrResult = (Figaro::ASTVisitorQRResult*)pResult;
             std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
             database.outputRelationToFile(fileDumpR,

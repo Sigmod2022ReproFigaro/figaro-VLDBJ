@@ -2024,7 +2024,8 @@ namespace Figaro
     Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
         Figaro::QRGivensHintType qrHintType,
-        bool saveResult)
+        bool saveResult,
+        const Relation* pJoinRel)
     {
         std::vector<uint32_t> vLeftCumNumNonJoinAttrs;
         std::vector<uint32_t> vRightCumNumNonJoinAttrs;
@@ -2035,6 +2036,8 @@ namespace Figaro
         uint32_t minNumRows;
         Relation* pR = nullptr;
         Relation* pQ = nullptr;
+        bool computeQ = pJoinRel != nullptr;
+        MatrixDT qData{0, 0};
 
         numRels = vpRels.size();
         vCumNumRowsUp.resize(numRels + 1);
@@ -2166,24 +2169,20 @@ namespace Figaro
         }
         MICRO_BENCH_STOP(addingZeros)
         FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
-        /*
-        if (returnR)
+
+        if (computeQ)
         {
-            create realtion from the attributes of the current
-            copy catGenHeadAndTails
-            return new relation
+            qData = std::move(pJoinRel->m_data * m_data);
         }
-        if (returnQ)
-        {
-            create relation fro the attirbutes of the current
-            copy Q
-        }
-        */
 
         if (saveResult)
         {
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
             pR = createFactorRelation("R", std::move(catGenHeadAndTails));
+            if (computeQ)
+            {
+                pQ = createFactorRelation("Q", std::move(qData));
+            }
         }
         return std::make_tuple(pR, pQ);
     }
@@ -2215,6 +2214,7 @@ namespace Figaro
             if (saveResult)
             {
                 m_dataColumnMajor.makeDiagonalElementsPositiveInR();
+                // TODO: Add copying from columnar to row major
                 //Relation r = createFactorRelation("R", std::move(m_dataColumnMajor));
             }
         }

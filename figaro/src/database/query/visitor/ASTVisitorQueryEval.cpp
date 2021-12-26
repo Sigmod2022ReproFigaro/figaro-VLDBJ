@@ -16,7 +16,8 @@ namespace Figaro
         ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
         ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
         ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult);
+
+        std::string joinRelName = "";
 
         FIGARO_LOG_INFO("VISITING QR GIVENS NODE")
 
@@ -24,13 +25,22 @@ namespace Figaro
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
-        m_pDatabase->oneHotEncodeRelations();
 
         MICRO_BENCH_INIT(downCnt)
         MICRO_BENCH_INIT(upCnt)
         MICRO_BENCH_INIT(firstPass)
         MICRO_BENCH_INIT(secondPass)
-        m_pDatabase->resetComputations();
+
+        if (pElement->isComputeQ())
+        {
+            ASTJoinVisitor astJoinVisitor(m_pDatabase);
+            ASTVisitorJoinResult* pResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(&astJoinVisitor);
+            joinRelName = pResult->getJoinRelName();
+            delete pResult;
+        }
+        m_pDatabase->oneHotEncodeRelations();
+
+        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName);
         MICRO_BENCH_INIT(main)
         MICRO_BENCH_START(main)
         MICRO_BENCH_START(downCnt)
@@ -53,6 +63,7 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
         MICRO_BENCH_STOP(main)
         FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
+
         return pQRResult;
     }
 
@@ -71,10 +82,9 @@ namespace Figaro
         }
         m_pDatabase->oneHotEncodeRelations();
 
-
         auto [rName, qName] =
             m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
-            m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult/*m_pMatR*/);
+            m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
         return new ASTVisitorQRResult(rName, qName);
     }
 

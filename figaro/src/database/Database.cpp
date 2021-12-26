@@ -284,11 +284,13 @@ namespace Figaro
     Database::computePostprocessing(
         const std::vector<std::string>& vRelationOrder,
         Figaro::QRGivensHintType qrHintType,
-        bool saveResult
+        bool saveResult,
+        const std::string& joinRelName
     )
     {
         std::vector<Relation*> vpRels;
         Relation* pRootRel;
+        Relation* pJoinRel = nullptr;
         for (const auto relName: vRelationOrder)
         {
             Relation* pRel = &m_relations.at(relName);
@@ -299,7 +301,11 @@ namespace Figaro
         }
         pRootRel = vpRels[0];
         pRootRel->computeQROfGeneralizedHead(vpRels, qrHintType);
-        auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, saveResult);
+        if (joinRelName != "")
+        {
+            pJoinRel = &m_relations.at(joinRelName);
+        }
+        auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, saveResult, pJoinRel);
         return saveQRResult(qrResult);
     }
 
@@ -320,9 +326,20 @@ namespace Figaro
             bool computeQ,
             bool saveResult)
     {
-        Relation* pRel = &m_relations.at(relName);
-        auto qrResult = pRel->computeQR(qrHintType, memoryLayout, computeQ, saveResult);
+        Relation& rel = m_relations.at(relName);
+        auto qrResult = rel.computeQR(qrHintType, memoryLayout, computeQ, saveResult);
         return saveQRResult(qrResult);
+    }
+
+    bool Database::destroyTemporaryRelation(const std::string& relationName)
+    {
+        Relation& rel = m_relations.at(relationName);
+        if (rel.isTmp())
+        {
+            m_relations.erase(relationName);
+            return true;
+        }
+        return false;
     }
 
     void Database::outputRelationToFile(std::ostream& out, const std::string& relationName,

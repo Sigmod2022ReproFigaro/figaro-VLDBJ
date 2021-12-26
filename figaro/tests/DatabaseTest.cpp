@@ -638,7 +638,7 @@ TEST(DatabaseConfig, FigaroQR)
 TEST(Matrix, QRLAPACK)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 4;
-    Figaro::MatrixD matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Relation::MatrixDT matrix(NUM_ROWS, NUM_COLS);
 
     EXPECT_EQ(matrix.getNumRows(), NUM_ROWS);
     EXPECT_EQ(matrix.getNumCols(), NUM_COLS);
