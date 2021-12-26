@@ -143,7 +143,6 @@ int main(int argc, char *argv[])
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
     query.evaluateQuery(true, true, true, true, qrHintType, memoryLayout, dump);
-    FIGARO_LOG_INFO("WTF")
     if (dump)
     {
         Figaro::ASTVisitorAbsResult* pResult = query.getResult();

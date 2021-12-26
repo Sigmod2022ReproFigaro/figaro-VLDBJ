@@ -2167,8 +2167,11 @@ namespace Figaro
             if (saveResult)
             {
                 m_dataColumnMajor.makeDiagonalElementsPositiveInR();
-                // TODO: Add copying from columnar to row major
-                //Relation r = createFactorRelation("R", std::move(m_dataColumnMajor));
+                MatrixDT curMat{m_dataColumnMajor.getNumRows(), m_dataColumnMajor.getNumCols()};
+                curMat.copyBlockToThisMatrixFromCol(
+                    m_dataColumnMajor, 0, curMat.getNumRows() - 1,
+                    0, curMat.getNumCols() - 1, 0, 0);
+                pR = createFactorRelation("R", std::move(curMat));
             }
         }
         return std::make_tuple(pR, pQ);

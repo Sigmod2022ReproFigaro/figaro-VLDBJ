@@ -387,6 +387,23 @@ namespace Figaro
             }
         }
 
+        void copyBlockToThisMatrixFromCol( Matrix<T, MemoryLayout::COL_MAJOR>& matSource,
+            uint32_t rowSrcBeginIdx, uint32_t rowSrcEndIdx,
+            uint32_t colSrcBeginIdx, uint32_t colSrcEndIdx,
+            uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
+        {
+            auto& matA = *this;
+            for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
+            {
+                for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
+                {
+                    uint32_t colIdxDst = colIdxSrc - colSrcBeginIdx + colDstBeginIdx;
+                    uint32_t rowIdxDst = rowIdxSrc - rowSrcBeginIdx + rowDstBeginIdx;
+                    matA(rowIdxDst, colIdxDst) = matSource(rowIdxSrc, colIdxSrc) ;
+                }
+            }
+        }
+
           /**
          * @brief We assume matrix is triangular.
          *

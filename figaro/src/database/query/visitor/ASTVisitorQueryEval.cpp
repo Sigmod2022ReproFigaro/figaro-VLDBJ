@@ -82,11 +82,12 @@ namespace Figaro
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
+        m_pDatabase->oneHotEncodeRelations();
         if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
         {
             m_pDatabase->changeMemoryLayout();
         }
-        m_pDatabase->oneHotEncodeRelations();
+
 
         auto [rName, qName] =
             m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),

@@ -179,6 +179,6 @@ namespace Figaro
         ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, qrHintType, saveResult);
         m_pResult = m_pASTRoot->accept(&queryEvalVisitor);
         MICRO_BENCH_STOP(joinEval)
-        FIGARO_LOG_BENCH("Join eval", MICRO_BENCH_GET_TIMER_LAP(joinEval))
+        FIGARO_LOG_BENCH("Query eval", MICRO_BENCH_GET_TIMER_LAP(joinEval))
      }
 }
