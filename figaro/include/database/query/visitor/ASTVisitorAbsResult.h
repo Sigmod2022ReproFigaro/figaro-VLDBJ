@@ -10,7 +10,8 @@ namespace Figaro
         {
             JOIN_RESULT = 0,
             QR_RESULT = 1,
-            FIRST_PASS_RESULT = 2
+            FIRST_PASS_RESULT = 2,
+            SECOND_PASS_RESULT = 2,
         };
     private:
         ResultType m_resultType;

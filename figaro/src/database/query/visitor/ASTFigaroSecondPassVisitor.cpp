@@ -3,27 +3,54 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTFigaroSecondPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorSecondPassResult* ASTFigaroSecondPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
-        FIGARO_LOG_DBG("Finished visiting relation", pElement->getRelationName())
-        return nullptr;
+        FIGARO_LOG_INFO("Finished visiting relation", pElement->getRelationName())
+        std::string relHeadsName =
+        m_htTmpRelsNames.at(pElement->getRelationName()).m_headsName;
+        return new ASTVisitorSecondPassResult(relHeadsName, {});
     }
 
-    ASTVisitorAbsResult* ASTFigaroSecondPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    std::vector<std::string>
+    ASTFigaroSecondPassVisitor::getChildrenHeadNames(
+        const std::vector<std::string>& vChildrenNames) const
     {
-        FIGARO_LOG_DBG("Join");
-        FIGARO_LOG_DBG("Central");
+        std::vector<std::string> vChildrenHeadNames;
+        for (const auto& childName: vChildrenNames)
+        {
+            auto& firstPassRelNames = m_htTmpRelsNames.at(childName);
+            vChildrenHeadNames.push_back(firstPassRelNames.m_headsName);
+        }
+        return vChildrenHeadNames;
+    }
+
+    ASTVisitorSecondPassResult* ASTFigaroSecondPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    {
+        std::vector<std::string> vChildrenNames;
+        const auto& relationName = pElement->getCentralRelation()->getRelationName();
+        FIGARO_LOG_INFO("vpChildRels", pElement->getChildrenNames())
+        vChildrenNames = pElement->getChildrenNames();
+
+        std::unordered_map<std::string, ASTVisitorSecondPassResult::SecondPassRelNames> namesTmpRels;
+        std::vector<std::string> vChildGenHeadNames;
+
         for (const auto& pChild: pElement->getChildren())
         {
-            FIGARO_LOG_DBG("Child");
-            pChild->accept(this);
+            FIGARO_LOG_INFO("Child");
+            ASTVisitorSecondPassResult* pResult =
+            (ASTVisitorSecondPassResult*)pChild->accept(this);
+            namesTmpRels.insert(pResult->getHtNamesTmpRels().begin(),
+                pResult->getHtNamesTmpRels().end());
+            vChildGenHeadNames.push_back(pResult->getGenHeadsName());
+            delete pResult;
         }
-        const auto& relationName = pElement->getCentralRelation()->getRelationName();
-        FIGARO_LOG_DBG("vpChildRels", pElement->getChildrenNames())
-        // TODO: Pass temporary relations to functions
-        m_pDatabase-> aggregateAwayChildrenRelations(
+        // TODO: return new relation
+        std::string aggrAwayRelName =
+            m_pDatabase-> aggregateAwayChildrenRelations(
             relationName,
-            pElement->getChildrenNames(),
+            m_htTmpRelsNames.at(relationName).m_headsName,
+            vChildrenNames,
+            vChildGenHeadNames,
             pElement->getJoinAttributeNames(),
             pElement->getChildrenParentJoinAttributeNames());
 
@@ -37,35 +64,55 @@ namespace Figaro
         {
             parJoinAttributeNames = pElement->getParJoinAttributeNames();
         }
-
-        m_pDatabase->computeAndScaleGeneralizedHeadAndTail(
+        // TODO: pass new relation
+        auto [genHeadRelName, genTailRelName] = m_pDatabase->computeAndScaleGeneralizedHeadAndTail(
             relationName,
+            aggrAwayRelName,
             pElement->getJoinAttributeNames(),
             parJoinAttributeNames,
             isRootNode);
-        return nullptr;
-
+        namesTmpRels.insert({{relationName, ASTVisitorSecondPassResult::SecondPassRelNames(genTailRelName)}});
+        return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels);
     }
 
     ASTVisitorQRResult* ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
-         FIGARO_LOG_DBG("********************");
-        FIGARO_LOG_DBG("QR Givens");
-        FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
+        std::vector<std::string> vGenTailRelNames;
+        std::vector<std::string> vTailRelNames;
+         FIGARO_LOG_INFO("********************");
+        FIGARO_LOG_INFO("QR Givens");
+        FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
         MICRO_BENCH_INIT(mainAlgorithm)
         MICRO_BENCH_START(mainAlgorithm)
-        pElement->getOperand()->accept(this);
+         ASTVisitorSecondPassResult* pResult =
+            (ASTVisitorSecondPassResult*)pElement->getOperand()->accept(this);
         MICRO_BENCH_STOP(mainAlgorithm)
         FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
+
+        for (const auto&[key, val]: m_htTmpRelsNames)
+        {
+            vTailRelNames.push_back(val.m_tailsName);
+        }
+
+        for (const auto&[key, val]: pResult->getHtNamesTmpRels())
+        {
+            vGenTailRelNames.push_back(val.m_genTailsName);
+        }
+
         MICRO_BENCH_INIT(postprocess)
         MICRO_BENCH_START(postprocess)
         auto [rName, qName] =
-            m_pDatabase->computePostprocessing(pElement->getRelationOrder(), m_qrHintType, m_saveResult, m_joinRelName);
+            m_pDatabase->computePostprocessing
+            (pElement->getRelationOrder(),
+            pResult->getGenHeadsName(),
+            vTailRelNames,
+            vGenTailRelNames,
+            m_qrHintType, m_saveResult, m_joinRelName);
         MICRO_BENCH_STOP(postprocess)
         FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
-        FIGARO_LOG_DBG("FInished")
+        FIGARO_LOG_INFO("FInished")
+        delete pResult;
         return new ASTVisitorQRResult(rName, qName);
-
     }
 
 }

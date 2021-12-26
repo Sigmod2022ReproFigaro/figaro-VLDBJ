@@ -256,61 +256,107 @@ namespace Figaro
         return {headsName, tailName};
     }
 
-    void Database::aggregateAwayChildrenRelations(
+    std::string Database::aggregateAwayChildrenRelations(
             const std::string& relationName,
+            const std::string& relHeadName,
             const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vChildHeadRelNames,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
     {
         Relation& rel = m_relations.at(relationName);
+        Relation& relHead = m_relations.at(relHeadName);
         std::vector<Relation*> vpChildRels;
+        std::vector<Relation*> vpChildHeadRels;
 
         for (const auto childRelName: vChildRelNames)
         {
             Relation* pRel = &m_relations.at(childRelName);
             vpChildRels.push_back(pRel);
         }
-        rel.aggregateAwayChildrenRelations(vpChildRels,
-             vJoinAttributeNames, vvJoinAttributeNames);
+        FIGARO_LOG_INFO(vChildHeadRelNames);
+        for (const auto childHeadRelName: vChildHeadRelNames)
+        {
+            Relation* pRel = &m_relations.at(childHeadRelName);
+            vpChildHeadRels.push_back(pRel);
+        }
+        FIGARO_LOG_INFO(vChildRelNames);
+
+        Relation relAggAway = rel.aggregateAwayChildrenRelations(&relHead, vpChildRels,
+            vpChildHeadRels, vJoinAttributeNames, vvJoinAttributeNames);
+        std::string aggregatedAwayName = relAggAway.getName();
+        m_relations.emplace(aggregatedAwayName, std::move(relAggAway));
+        return aggregatedAwayName;
     }
 
-    void Database::computeAndScaleGeneralizedHeadAndTail(
+    std::tuple<std::string, std::string>
+    Database::computeAndScaleGeneralizedHeadAndTail(
         const std::string& relationName,
+        const std::string& aggrAwayRelName,
         const std::vector<std::string>& vJoinAttributeNames,
         const std::vector<std::string>& vParJoinAttributeNames,
         bool isRootNode)
     {
         Relation& rel = m_relations.at(relationName);
-        rel.computeAndScaleGeneralizedHeadAndTail(vJoinAttributeNames, vParJoinAttributeNames,
+        Relation& aggAwayRel = m_relations.at(aggrAwayRelName);
+        auto [genHeadRel, genTailRel] =
+        rel.computeAndScaleGeneralizedHeadAndTail(
+            &aggAwayRel,
+            vJoinAttributeNames, vParJoinAttributeNames,
             isRootNode);
+        std::string genHeadRelname = genHeadRel.getName();
+        std::string genTailRelname = genTailRel.getName();
+
+        m_relations.emplace(genHeadRelname, std::move(genHeadRel));
+        m_relations.emplace(genTailRelname, std::move(genTailRel));
+
+        return {genHeadRelname, genTailRelname};
     }
 
     std::tuple<std::string, std::string>
     Database::computePostprocessing(
-        const std::vector<std::string>& vRelationOrder,
-        Figaro::QRGivensHintType qrHintType,
-        bool saveResult,
-        const std::string& joinRelName
-    )
+            const std::vector<std::string>& vRelationOrder,
+            const std::string& genHeadRoot,
+            const std::vector<std::string>& vTailRels,
+            const std::vector<std::string>& vGenTailRels,
+            Figaro::QRGivensHintType qrHintType,
+            bool saveResult,
+            const std::string& joinRelName)
     {
         std::vector<Relation*> vpRels;
+        std::vector<Relation*> vpRelTails;
+        std::vector<Relation*> vpRelGenTails;
         Relation* pRootRel;
         Relation* pJoinRel = nullptr;
         for (const auto relName: vRelationOrder)
         {
             Relation* pRel = &m_relations.at(relName);
-            FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRels.push_back(pRel);
-            pRel->computeQROfTail(qrHintType);
-            pRel->computeQROfGeneralizedTail(qrHintType);
         }
-        pRootRel = vpRels[0];
-        pRootRel->computeQROfGeneralizedHead(vpRels, qrHintType);
+        for (const auto relName: vTailRels)
+        {
+            Relation* pRel = &m_relations.at(relName);
+            FIGARO_LOG_ASSERT(pRel != nullptr)
+            vpRelTails.push_back(pRel);
+        }
+
+        for (const auto relName: vGenTailRels)
+        {
+            Relation* pRel = &m_relations.at(relName);
+            FIGARO_LOG_ASSERT(pRel != nullptr)
+            vpRelGenTails.push_back(pRel);
+        }
+
+        pRootRel = &m_relations.at(genHeadRoot);;
         if (joinRelName != "")
         {
             pJoinRel = &m_relations.at(joinRelName);
         }
-        auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(vpRels, qrHintType, saveResult, pJoinRel);
+        auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(
+            vpRels,
+            pRootRel,
+            vpRelTails, vpRelGenTails,
+            qrHintType, saveResult, pJoinRel);
         return saveQRResult(qrResult);
     }
 

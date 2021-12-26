@@ -8,7 +8,7 @@ namespace Figaro
         std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
         const auto& relationName = pElement->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
+        FIGARO_LOG_INFO("formJoinAttrNames", formJoinAttrNames)
 
 
         auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
@@ -22,12 +22,12 @@ namespace Figaro
 
     ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
-        FIGARO_LOG_DBG("Join");
-        FIGARO_LOG_DBG("Central");
+        FIGARO_LOG_INFO("Join");
+        FIGARO_LOG_INFO("Central");
 
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
-        FIGARO_LOG_DBG("formJoinAttrNames", formJoinAttrNames)
+        FIGARO_LOG_INFO("formJoinAttrNames", formJoinAttrNames)
         auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
              false);
 
@@ -38,7 +38,7 @@ namespace Figaro
 
         for (const auto& pChild: pElement->getChildren())
         {
-            FIGARO_LOG_DBG("Child");
+            FIGARO_LOG_INFO("Child");
             ASTVisitorFirstPassResult* pResult = (ASTVisitorFirstPassResult*)pChild->accept(this);
 
             namesTmpRels.insert(
@@ -51,9 +51,9 @@ namespace Figaro
 
     ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
     {
-        FIGARO_LOG_DBG("********************");
-        FIGARO_LOG_DBG("QR Givens");
-        FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
+        FIGARO_LOG_INFO("********************");
+        FIGARO_LOG_INFO("QR Givens");
+        FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
         ASTVisitorFirstPassResult* pResult = (ASTVisitorFirstPassResult*)pElement->getOperand()->accept(this);
         return pResult;
     }

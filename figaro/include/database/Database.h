@@ -91,14 +91,18 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames,
             bool isLeafNode);
 
-        void aggregateAwayChildrenRelations(
+        std::string aggregateAwayChildrenRelations(
             const std::string& relationName,
+            const std::string& relHeadName,
             const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vChildHeadRelNames,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
 
-        void computeAndScaleGeneralizedHeadAndTail(
+        std::tuple<std::string, std::string>
+        computeAndScaleGeneralizedHeadAndTail(
             const std::string& relationName,
+            const std::string& aggrAwayRelName,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
             bool isRootNode);
@@ -106,6 +110,9 @@ namespace Figaro
         std::tuple<std::string, std::string>
         computePostprocessing(
             const std::vector<std::string>& vRelationOrder,
+            const std::string& genHeadRoot,
+            const std::vector<std::string>& vTailRels,
+            const std::vector<std::string>& vGenTailRels,
             Figaro::QRGivensHintType qrHintType,
             bool saveResult,
             const std::string& joinRelName);

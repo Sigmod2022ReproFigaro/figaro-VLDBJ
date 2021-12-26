@@ -3,6 +3,7 @@
 
 #include "ASTVisitorQRGivensAbs.h"
 #include "ASTVisitorFirstPassResult.h"
+#include "ASTVisitorSecondPassResult.h"
 #include "ASTVisitorQRResult.h"
 
 namespace Figaro
@@ -14,6 +15,8 @@ namespace Figaro
         Figaro::QRGivensHintType m_qrHintType;
         std::string m_joinRelName;
         std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> m_htTmpRelsNames;
+
+        std::vector<std::string> getChildrenHeadNames(const std::vector<std::string>& vChildrenNames) const;
 
     public:
         ASTFigaroSecondPassVisitor(
@@ -27,8 +30,8 @@ namespace Figaro
                  m_joinRelName(joinRelName),
                  m_htTmpRelsNames(htTmpRelsNames) {
                  }
-        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorSecondPassResult* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorSecondPassResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
         virtual ~ASTFigaroSecondPassVisitor() override {}
 

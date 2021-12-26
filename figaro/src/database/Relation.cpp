@@ -212,6 +212,8 @@ namespace Figaro
         cntLines = getNumberOfLines(m_dataPath);
         numAttributes = numberOfAttributes();
 
+        FIGARO_LOG_INFO("Number of loaded rows", cntLines, "number attributes", numAttributes)
+
         m_data = std::move(MatrixDT(cntLines, numAttributes));
 
 
@@ -1574,18 +1576,18 @@ namespace Figaro
             allScales[distCnt] = scale[distCnt][0];
         }
 
-        //m_dataHead = std::move(dataHeads);
-        //m_dataTails = std::move(dataTails);
+        //m_dataHead = std::move(dataHeads.getRightCols(dataHeads.getNumCols()));
+        //m_dataTails = std::move(dataTails.getRightCols(dataHeads.getNumCols()));
 
         m_scales = std::move(scale);
         m_dataScales = std::move(dataScale);
         m_allScales = std::move(allScales);
-
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
         m_vSubTreeRelNames.push_back(m_name);
-
-        Relation heads("HEAD_" + m_name, std::move(dataHeads), m_attributes);
-        Relation tails("TAIL_" + m_name, std::move(dataTails), m_attributes);
+        Relation relHeads("HEAD_" + m_name, std::move(dataHeads), m_attributes);
+        Relation relTails("TAIL_" + m_name, std::move(dataTails), m_attributes);
+        FIGARO_LOG_INFO("number of rows", relHeads.m_data.getNumRows(), "num cols", relTails.m_data.getNumCols());
+        return std::make_tuple(std::move(relHeads), std::move(relTails));
     }
 
     void Relation::schemaJoins(
@@ -1631,8 +1633,10 @@ namespace Figaro
             m_attributes.begin() + vJoinAttrIdxs.size());
     }
 
-    void Relation::aggregateAwayChildrenRelations(
+    Relation Relation::aggregateAwayChildrenRelations(
+        Relation* pHeadRel,
         const std::vector<Relation*>& vpChildRels,
+        const std::vector<Relation*>& vpChildHeadRels,
         const std::vector<std::string>& vJoinAttributeNames,
         const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
     {
@@ -1673,7 +1677,7 @@ namespace Figaro
             getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
             //vpChildRels[idxRel]->
             initHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
-                vpChildRels[idxRel]->m_dataHead, vpHashTabRowPt[idxRel]);
+                vpChildHeadRels[idxRel]->m_data, vpHashTabRowPt[idxRel]);
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
             if (idxRel == 0)
             {
@@ -1686,40 +1690,63 @@ namespace Figaro
                                             vvNonJoinAttrIdxs[idxRel - 1].size();
                 vCumNumRelSubTree[idxRel] = vCumNumRelSubTree[idxRel-1] + vpChildRels[idxRel-1]->m_vSubTreeRelNames.size();
             }
+            FIGARO_LOG_INFO("HOHO???", vpChildHeadRels[idxRel]->getName(), vpChildHeadRels[idxRel]->m_data.getNumRows(),
+            vpChildHeadRels[idxRel]->m_data.getNumCols())
         }
         FIGARO_LOG_DBG("vvJoinAttributeNames", vvJoinAttributeNames)
         schemaJoins(vpChildRels, vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
-        MatrixDT dataOutput {m_dataHead.getNumRows(), (uint32_t)m_attributes.size()};
-        MatrixDT scales{m_dataHead.getNumRows(), vpChildRels.size() + 1};
-        MatrixDT dataScales{m_dataHead.getNumRows(), m_vSubTreeRelNames.size()};
+        FIGARO_LOG_INFO("HOHO")
 
-       #pragma omp parallel for schedule(static)
-       for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
+        MatrixDT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)m_attributes.size()};
+        MatrixDT scales{pHeadRel->m_data.getNumRows(), vpChildRels.size() + 1};
+        MatrixDT dataScales{pHeadRel->m_data.getNumRows(), m_vSubTreeRelNames.size()};
+        FIGARO_LOG_INFO("HOHO???", pHeadRel->getName(), pHeadRel->m_data.getNumRows(),
+        pHeadRel->m_data.getNumCols())
+        FIGARO_LOG_INFO("Attributes", pHeadRel->m_attributes);
+       //#pragma omp parallel for schedule(static)
+       for (uint32_t rowIdx = 0; rowIdx < pHeadRel->m_data.getNumRows(); rowIdx++)
        {
             // TODO: Optimization change the way how the values are extracted to tree.
             for (const auto& joinAttrIdx: vJoinAttrIdxs)
             {
-                dataOutput[rowIdx][joinAttrIdx] = m_dataHead[rowIdx][joinAttrIdx];
+                dataOutput[rowIdx][joinAttrIdx] = pHeadRel->m_data[rowIdx][joinAttrIdx];
             }
             // TODO: Add reordering relations based on global order
             for (const auto& nonJoinAttrIdx: vNonJoinAttrIdxs)
             {
-                dataOutput[rowIdx][nonJoinAttrIdx] = m_dataHead[rowIdx][nonJoinAttrIdx];
+                dataOutput[rowIdx][nonJoinAttrIdx] = pHeadRel->m_data[rowIdx][nonJoinAttrIdx];
+            }
+            if (rowIdx == 0)
+            {
+                FIGARO_LOG_INFO("HOHOH")
             }
             for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
             {
 
                 uint32_t childRowIdx = getChildRowIdx(rowIdx, vvCurJoinAttrIdxs[idxRel],
-                                                      m_dataHead, vpHashTabRowPt[idxRel]);
+                                                      pHeadRel->m_data, vpHashTabRowPt[idxRel]);
+                if (rowIdx == 0)
+                {
+                    FIGARO_LOG_INFO("WHAT", childRowIdx)
+                }
                 // Copying data from children relations.
-                const double* childRowPt = vpChildRels[idxRel]->m_dataHead[childRowIdx];
+                const double* childRowPt = vpChildHeadRels[idxRel]->m_data[childRowIdx];
+                 if (rowIdx == 0)
+                {
+                    FIGARO_LOG_INFO("HM", idxRel, childRowIdx)
+                }
                 for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
                 {
                     uint32_t idxOut = numJoinAttrsCurRel + vCumNumNonJoinAttrs[idxRel] +
                                     nonJoinAttrIdx - vNumJoinAttrs[idxRel];
                     dataOutput[rowIdx][idxOut] = childRowPt[nonJoinAttrIdx];
                 }
+                   if (rowIdx < 5)
+                {
+                    FIGARO_LOG_INFO(m_name, "WHaT@@@dsfdfsfd", rowIdx)
+                }
+
                 // Updating dataScales data from relations from subtrees.
                 for (uint32_t idxSubTreeRel = 0;
                         idxSubTreeRel < vpChildRels[idxRel]->m_vSubTreeRelNames.size();
@@ -1729,9 +1756,25 @@ namespace Figaro
                     dataScales[rowIdx][shiftIdxSTRel] =
                         vpChildRels[idxRel]->m_dataScales[childRowIdx][idxSubTreeRel];
                 }
+                if (rowIdx == 0)
+                {
+                    FIGARO_LOG_INFO("FUUCK", vpChildRels[idxRel]->getName())
+                }
                 // +1 because 0th is for the first relation
                 scales[rowIdx][idxRel + 1] = vpChildRels[idxRel]->m_scales[childRowIdx][0];
+                if (rowIdx == 0)
+                {
+                    FIGARO_LOG_INFO("SHIT")
+                }
                 m_allScales[rowIdx] *= scales[rowIdx][idxRel + 1];
+                if (rowIdx == 0)
+                {
+                    FIGARO_LOG_INFO("WHaT@@@")
+                }
+            }
+            if (rowIdx == 0)
+            {
+                FIGARO_LOG_INFO("HOHOH")
             }
             dataScales[rowIdx][0] = m_dataScales[rowIdx][0];
             scales[rowIdx][0] = m_scales[rowIdx][0];
@@ -1746,6 +1789,10 @@ namespace Figaro
                     dataScales[rowIdx][shiftIdxSTRel] /= scales[rowIdx][idxRel + 1];
                 }
             }
+            if (rowIdx == 0)
+            {
+                FIGARO_LOG_INFO("HOHOH")
+            }
             // Updated datascales for the central relation.
             dataScales[rowIdx][0] *= m_allScales[rowIdx];
             dataScales[rowIdx][0] /= scales[rowIdx][0];
@@ -1756,16 +1803,18 @@ namespace Figaro
             destroyHashTableRowIdxs(vvCurJoinAttrIdxs[idxChild], vpHashTabRowPt[idxChild]);
         }
 
-        m_dataHead = std::move(dataOutput);
+        //m_dataHead = std::move(dataOutput);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
 
         MICRO_BENCH_STOP(aggregateAway)
         FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
-
+        return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), m_attributes);
     }
 
-    void Relation::computeAndScaleGeneralizedHeadAndTail(
+    std::tuple<Relation, Relation>
+    Relation::computeAndScaleGeneralizedHeadAndTail(
+        Relation* pAggAwayRel,
         const std::vector<std::string>& vJoinAttributeNames,
         const std::vector<std::string>& vParJoinAttributeNames,
         bool isRootNode
@@ -1793,7 +1842,8 @@ namespace Figaro
         numOmittedAttrs = numJoinAttrs - numParJoinAttrs;
 
         MatrixDT dataHeadOut { numParDistVals, getNumberOfAttributes() - numOmittedAttrs};
-        MatrixDT dataTailsOut{ m_dataHead.getNumRows() - numParDistVals, numNonJoinAttrs};
+        MatrixDT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
+            numNonJoinAttrs};
         MatrixDT scales{numParDistVals, 1};
         MatrixDT dataScales{numParDistVals, m_dataScales.getNumCols()};
 
@@ -1825,7 +1875,7 @@ namespace Figaro
             else
             {
                 Figaro::Relation::DownUpCntT& cnts =
-                getParCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts.get(), m_dataHead[startIdx]);
+                getParCntFromHashTable(vParJoinAttrIdxs, m_pHTParCounts.get(), pAggAwayRel->m_data[startIdx]);
                 sqrtDownCnt = std::sqrt(std::get<0>(cnts));
                 sqrtUpCnt = std::sqrt((uint32_t)std::get<1>(cnts));
             }
@@ -1840,8 +1890,8 @@ namespace Figaro
                             attrIdx < m_vSubTreeDataOffsets[idxRel + 1];
                             attrIdx++)
                 {
-                    m_dataHead[startIdx][attrIdx] *= m_dataScales[startIdx][idxRel];
-                    vCurScaleSum[attrIdx - numJoinAttrs] = m_dataHead[startIdx][attrIdx] * m_scales[startIdx][0];
+                    pAggAwayRel->m_data[startIdx][attrIdx] *= m_dataScales[startIdx][idxRel];
+                    vCurScaleSum[attrIdx - numJoinAttrs] = pAggAwayRel->m_data[startIdx][attrIdx] * m_scales[startIdx][0];
                 }
             }
             //FIGARO_LOG_INFO("Generalized tail computation")
@@ -1865,14 +1915,14 @@ namespace Figaro
                     {
                         uint32_t shiftIdx = attrIdx - numJoinAttrs;
                         // A_i
-                        m_dataHead[rowIdx][attrIdx] *= m_dataScales[rowIdx][idxRel];
+                        pAggAwayRel->m_data[rowIdx][attrIdx] *= m_dataScales[rowIdx][idxRel];
                         dataTailsOut[tailRowIdx][shiftIdx] =
-                            (m_dataHead[rowIdx][attrIdx] * sumSqrScalesPrev
+                            (pAggAwayRel->m_data[rowIdx][attrIdx] * sumSqrScalesPrev
                             - vi * vCurScaleSum[shiftIdx])
                             / std::sqrt(sumSqrScalesCur * sumSqrScalesPrev);
                         // Multiplies generalized tails with up count.
                         dataTailsOut[tailRowIdx][shiftIdx] *= sqrtUpCnt;
-                        vCurScaleSum[shiftIdx] += m_dataHead[rowIdx][attrIdx] * vi;
+                        vCurScaleSum[shiftIdx] += pAggAwayRel->m_data[rowIdx][attrIdx] * vi;
                     }
                 }
             }
@@ -1882,7 +1932,7 @@ namespace Figaro
             // Copies join parent attributes to generalized head.
             for (const auto& parJoinAttrIdx: vParJoinAttrIdxs)
             {
-                dataHeadOut[distParCnt][parJoinAttrIdx] = m_dataHead[startIdx][parJoinAttrIdx];
+                dataHeadOut[distParCnt][parJoinAttrIdx] = pAggAwayRel->m_data[startIdx][parJoinAttrIdx];
             }
 
             //  Generalized Head computation.
@@ -1918,8 +1968,8 @@ namespace Figaro
 
         schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
 
-        m_dataHead = std::move(dataHeadOut);
-        m_dataTailsGen = std::move(dataTailsOut);
+        //m_dataHead = std::move(dataHeadOut);
+        //m_dataTailsGen = std::move(dataTailsOut);
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
         FIGARO_LOG_DBG("Attributes_name", m_attributes)
@@ -1927,7 +1977,9 @@ namespace Figaro
         //MICRO_BENCH_STOP(genHTMainLoop)
         FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
-
+        return std::make_tuple(
+            Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), m_attributes),
+            Relation("GEN_TAIL" + m_name, std::move(dataHeadOut), m_attributes));
     }
 
 
@@ -1990,6 +2042,9 @@ namespace Figaro
     std::tuple<Relation*, Relation*>
     Relation::computeQROfConcatenatedGeneralizedHeadAndTails(
         const std::vector<Relation*>& vpRels,
+        Relation* pGenHeadRoot,
+        const std::vector<Relation*>& vpTailRels,
+        const std::vector<Relation*>& vpGenTailRels,
         Figaro::QRGivensHintType qrHintType,
         bool saveResult,
         const Relation* pJoinRel)
@@ -2014,38 +2069,36 @@ namespace Figaro
         for (uint32_t idx = 1; idx < vLeftCumNumNonJoinAttrs.size(); idx++)
         {
             vLeftCumNumNonJoinAttrs[idx] = vLeftCumNumNonJoinAttrs[idx - 1] +
-                    vpRels[idx-1]->m_dataTails.getNumCols();
+                    vpTailRels[idx-1]->m_data.getNumCols();
         }
         totalNumCols = vLeftCumNumNonJoinAttrs[numRels];
-        vCumNumRowsUp[0] = m_dataHead.getNumRows();
+        vCumNumRowsUp[0] = pGenHeadRoot->m_data.getNumRows();
         for (uint32_t idx = 1; idx < vCumNumRowsUp.size(); idx++)
         {
             vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
-            vpRels[idx-1]->m_dataTails.getNumRows() +
-            vpRels[idx-1]->m_dataTailsGen.getNumRows();
-            FIGARO_LOG_DBG("vpRels[idx-1]->m_dataTails.getNumRows()", vpRels[idx-1]->m_dataTails.getNumRows())
-            FIGARO_LOG_DBG("vpRels[idx-1]->m_dataTailsGen.getNumRows()", vpRels[idx-1]->m_dataTailsGen.getNumRows())
+            vpTailRels[idx-1]->m_data.getNumRows() +
+            vpGenTailRels[idx-1]->m_data.getNumRows();
         }
         totalNumRows = vCumNumRowsUp[numRels];
         MICRO_BENCH_INIT(copyMatrices)
         MICRO_BENCH_START(copyMatrices)
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
         // Copying dataHead.
-        for (uint32_t rowIdx = 0; rowIdx < m_dataHead.getNumRows(); rowIdx++)
+        for (uint32_t rowIdx = 0; rowIdx < pGenHeadRoot->m_data.getNumRows(); rowIdx++)
         {
-            for (uint32_t colIdx = 0; colIdx < m_dataHead.getNumCols(); colIdx++)
+            for (uint32_t colIdx = 0; colIdx < pGenHeadRoot->m_data.getNumCols(); colIdx++)
             {
-                catGenHeadAndTails[rowIdx][colIdx] = m_dataHead[rowIdx][colIdx];
+                catGenHeadAndTails[rowIdx][colIdx] = pGenHeadRoot->m_data[rowIdx][colIdx];
             }
         }
 
-        FIGARO_LOG_INFO("Number of rows in generalized head", m_dataHead.getNumRows())
-        FIGARO_LOG_INFO("Number of cols in generalized head", m_dataHead.getNumCols())
+        FIGARO_LOG_INFO("Number of rows in generalized head", pGenHeadRoot->m_data.getNumRows())
+        FIGARO_LOG_INFO("Number of cols in generalized head", pGenHeadRoot->m_data.getNumCols())
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
-            uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpRels[idxRel]->m_dataTails.getNumRows();
+            uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpTailRels[idxRel]->m_data.getNumRows();
             FIGARO_LOG_INFO("Number of rows in tail", startGenTailIdx - startTailIdx)
             FIGARO_LOG_INFO("Number of cols in tail",
                 vLeftCumNumNonJoinAttrs[idxRel],
@@ -2067,7 +2120,7 @@ namespace Figaro
                 {
                     uint32_t tailsColIdx = colIdx - vLeftCumNumNonJoinAttrs[idxRel];
                     catGenHeadAndTails[rowIdx][colIdx] =
-                     vpRels[idxRel]->m_dataTails[tailsRowIdx][tailsColIdx];
+                     vpTailRels[idxRel]->m_data[tailsRowIdx][tailsColIdx];
                 }
                 // Set Right zeros
                 for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel+1];
@@ -2081,8 +2134,8 @@ namespace Figaro
                 vCumNumRowsUp[idxRel+1] - startGenTailIdx)
             FIGARO_LOG_INFO("Number of cols in generalized tail",
                 vLeftCumNumNonJoinAttrs[idxRel],
-                vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols() - vLeftCumNumNonJoinAttrs[idxRel],
-                totalNumCols - (vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols()))
+                vLeftCumNumNonJoinAttrs[idxRel] + vpGenTailRels[idxRel]->m_data.getNumCols() - vLeftCumNumNonJoinAttrs[idxRel],
+                totalNumCols - (vLeftCumNumNonJoinAttrs[idxRel] + vpGenTailRels[idxRel]->m_data.getNumCols()))
             for (uint32_t rowIdx = startGenTailIdx;
                 rowIdx < vCumNumRowsUp[idxRel+1]; rowIdx ++)
             {
@@ -2098,15 +2151,15 @@ namespace Figaro
                 // Since the the order of relations is preordered,
                 // generalized tails will be one after another.
                 for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel];
-                    colIdx < vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols();
+                    colIdx < vLeftCumNumNonJoinAttrs[idxRel] + vpGenTailRels[idxRel]->m_data.getNumCols();
                     colIdx++ )
                 {
                     uint32_t tailsColIdx = colIdx - vLeftCumNumNonJoinAttrs[idxRel];
                     catGenHeadAndTails[rowIdx][colIdx] =
-                     vpRels[idxRel]->m_dataTailsGen[tailsRowIdx][tailsColIdx];
+                     vpGenTailRels[idxRel]->m_data[tailsRowIdx][tailsColIdx];
                 }
                 // Set Right zeros
-                for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel] + vpRels[idxRel]->m_dataTailsGen.getNumCols();
+                for (uint32_t colIdx = vLeftCumNumNonJoinAttrs[idxRel] + vpGenTailRels[idxRel]->m_data.getNumCols();
                     colIdx < totalNumCols; colIdx ++)
                 {
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
