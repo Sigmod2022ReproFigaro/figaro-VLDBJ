@@ -352,6 +352,8 @@ namespace Figaro
 
         bool isTmp(void) const { return m_isTmp; }
 
+        Relation createDummyGenTailRelation(void) const;
+
         std::vector<std::string> getAttributeNames(void) const;
 
         const std::string& getName(void) const { return m_name; }
@@ -444,16 +446,15 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttributeNames,
             bool isRootNode);
 
-        void computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
-            Figaro::QRGivensHintType qrTypeHint);
-
         void computeQROfGeneralizedHead(
-            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpTailRels,
             Figaro::QRGivensHintType qrHintType);
 
         void computeQROfTail(Figaro::QRGivensHintType qrHintType);
 
         void computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType);
+
+        void computeQRInPlace(Figaro::QRGivensHintType qrHintType);
 
         // Should be called for a root relation.
         std::tuple<Relation*, Relation*> computeQROfConcatenatedGeneralizedHeadAndTails(

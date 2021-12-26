@@ -5,10 +5,12 @@ namespace Figaro
 {
     ASTVisitorSecondPassResult* ASTFigaroSecondPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
-        FIGARO_LOG_INFO("Finished visiting relation", pElement->getRelationName())
+        const auto& relationName = pElement->getRelationName();
+        FIGARO_LOG_INFO("Finished visiting relation", relationName)
         std::string relHeadsName =
-        m_htTmpRelsNames.at(pElement->getRelationName()).m_headsName;
-        return new ASTVisitorSecondPassResult(relHeadsName, {});
+        m_htTmpRelsNames.at(relationName).m_headsName;
+        std::string relGenTailsName = m_pDatabase->createDummyGenTailRelation(relationName);return new ASTVisitorSecondPassResult(relHeadsName,
+            {{relationName, relGenTailsName}});
     }
 
     std::vector<std::string>
@@ -98,6 +100,7 @@ namespace Figaro
         {
             vGenTailRelNames.push_back(val.m_genTailsName);
         }
+
 
         MICRO_BENCH_INIT(postprocess)
         MICRO_BENCH_START(postprocess)

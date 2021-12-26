@@ -135,6 +135,8 @@ namespace Figaro
          */
         bool destroyTemporaryRelation(const std::string& relationName);
 
+        std::string createDummyGenTailRelation(const std::string& relName);
+
         void outputRelationToFile(std::ostream& out, const std::string& relationName,
             char delimiter, uint32_t precision, bool header = false);
 

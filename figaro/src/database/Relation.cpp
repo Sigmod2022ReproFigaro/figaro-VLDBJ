@@ -546,6 +546,12 @@ namespace Figaro
         m_isTmp = false;
     }
 
+    Relation Relation::createDummyGenTailRelation(void) const
+    {
+        MatrixDT data{0, m_attributes.size()};
+        return Relation("GEN_TAIL" + m_name, std::move(data), m_attributes);
+    }
+
 
     void Relation::initHashTableMNJoin(
         const std::vector<uint32_t>& vParAttrIdx,
@@ -1809,6 +1815,7 @@ namespace Figaro
 
         MICRO_BENCH_STOP(aggregateAway)
         FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+        FIGARO_LOG_INFO("Before moving out", dataOutput.getNumRows());
         return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), m_attributes);
     }
 
@@ -1977,66 +1984,30 @@ namespace Figaro
         //MICRO_BENCH_STOP(genHTMainLoop)
         FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
+        FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
         return std::make_tuple(
             Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), m_attributes),
-            Relation("GEN_TAIL" + m_name, std::move(dataHeadOut), m_attributes));
-    }
-
-
-    void Relation::computeQROfGeneralizedHead(uint32_t numNonJoinAttrs,
-        Figaro::QRGivensHintType qrTypeHint)
-    {
-        FIGARO_LOG_ASSERT(numNonJoinAttrs <= m_dataHead.getNumCols())
-        MatrixDT tmp = m_dataHead.getRightCols(numNonJoinAttrs);
-        m_dataHead = std::move(tmp);
-        FIGARO_LOG_INFO("QR generalized head", m_name, m_dataHead.getNumRows(), m_dataHead.getNumCols())
-        FIGARO_LOG_DBG("m_dataHead", m_dataHead)
-        MICRO_BENCH_INIT(qrHead)
-        MICRO_BENCH_START(qrHead)
-        m_dataHead.computeQRGivens(getNumberOfThreads(), true, qrTypeHint);
-        MICRO_BENCH_STOP(qrHead)
-        FIGARO_LOG_BENCH("Figaro", "QR Gen Head",  MICRO_BENCH_GET_TIMER_LAP(qrHead));
+            Relation("GEN_TAIL" + m_name, std::move(dataTailsOut), m_attributes));
     }
 
 
     void Relation::computeQROfGeneralizedHead(
-        const std::vector<Relation*>& vpRels,
-        Figaro::QRGivensHintType qrHintType)
+         const std::vector<Relation*>& vpTailRels,
+        Figaro::QRGivensHintType qrTypeHint)
     {
-        uint32_t totalNumCols;
-        uint32_t numRels;
-
-        totalNumCols = 0;
-        numRels = vpRels.size();
-
-        for (uint32_t idx = 0; idx < numRels; idx++)
+        uint32_t numNonJoinAttrs = 0;
+        for (const auto pRel: vpTailRels)
         {
-            totalNumCols += vpRels[idx]->m_dataTails.getNumCols();
+            numNonJoinAttrs += pRel->m_data.getNumCols();
         }
-        computeQROfGeneralizedHead(totalNumCols, qrHintType);
+        m_data = m_data.getRightCols(numNonJoinAttrs);
+        m_data.computeQRGivens(getNumberOfThreads(), true, qrTypeHint);
     }
 
-    void Relation::computeQROfTail(Figaro::QRGivensHintType qrHintType)
-    {
-        FIGARO_LOG_INFO("QR Tail", m_name, m_dataTails.getNumRows(), m_dataTails.getNumCols())
-        FIGARO_LOG_DBG("m_dataTails", m_dataTails)
-        MICRO_BENCH_INIT(qrTail)
-        MICRO_BENCH_START(qrTail)
-        m_dataTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        MICRO_BENCH_STOP(qrTail)
-        FIGARO_LOG_BENCH("Figaro", "Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrTail));
-        FIGARO_LOG_INFO("R of tail", m_name, m_dataTails)
-    }
 
-    void Relation::computeQROfGeneralizedTail(Figaro::QRGivensHintType qrHintType)
+    void Relation::computeQRInPlace(Figaro::QRGivensHintType qrHintType)
     {
-        FIGARO_LOG_INFO("QR generalized Tail", m_name, m_dataTailsGen.getNumRows(), m_dataTailsGen.getNumCols())
-        FIGARO_LOG_INFO("Generalized tail", m_name)
-        MICRO_BENCH_INIT(qrGenTail)
-        MICRO_BENCH_START(qrGenTail)
-        m_dataTailsGen.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        MICRO_BENCH_STOP(qrGenTail)
-        FIGARO_LOG_BENCH("Figaro", "Generalized Tail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(qrGenTail));
+        m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType);
     }
 
     std::tuple<Relation*, Relation*>
@@ -2062,27 +2033,37 @@ namespace Figaro
         MatrixDT qData{0, 0};
 
         numRels = vpRels.size();
-        vCumNumRowsUp.resize(numRels + 1);
-        vLeftCumNumNonJoinAttrs.resize(numRels + 1);
-
+        vCumNumRowsUp.resize(vpTailRels.size() + vpGenTailRels.size());
+        vLeftCumNumNonJoinAttrs.resize(numRels);
         vLeftCumNumNonJoinAttrs[0] = 0;
         for (uint32_t idx = 1; idx < vLeftCumNumNonJoinAttrs.size(); idx++)
         {
             vLeftCumNumNonJoinAttrs[idx] = vLeftCumNumNonJoinAttrs[idx - 1] +
                     vpTailRels[idx-1]->m_data.getNumCols();
         }
-        totalNumCols = vLeftCumNumNonJoinAttrs[numRels];
+        totalNumCols = vLeftCumNumNonJoinAttrs[numRels-1];
         vCumNumRowsUp[0] = pGenHeadRoot->m_data.getNumRows();
-        for (uint32_t idx = 1; idx < vCumNumRowsUp.size(); idx++)
+
+        for (uint32_t idx = 1; idx < vpTailRels.size(); idx++)
         {
             vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
-            vpTailRels[idx-1]->m_data.getNumRows() +
-            vpGenTailRels[idx-1]->m_data.getNumRows();
+            vpTailRels[idx-1]->m_data.getNumRows();
         }
-        totalNumRows = vCumNumRowsUp[numRels];
+        for (uint32_t idx = vpTailRels.size(); idx < vCumNumRowsUp.size(); idx++)
+        {
+            vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
+                + vpGenTailRels[idx - vpTailRels.size()]->m_data.getNumRows();;
+        }
+        FIGARO_LOG_INFO("JEBI SE 2")
+        totalNumRows = vCumNumRowsUp.back();
         MICRO_BENCH_INIT(copyMatrices)
         MICRO_BENCH_START(copyMatrices)
+
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
+        FIGARO_LOG_INFO("totalNumRows", totalNumRows)
+        FIGARO_LOG_INFO("totalNumCols", totalNumCols)
+        FIGARO_LOG_INFO("Number of rows in generalized head", pGenHeadRoot->m_data.getNumRows())
+        FIGARO_LOG_INFO("Number of cols in generalized head", pGenHeadRoot->m_data.getNumCols())
         // Copying dataHead.
         for (uint32_t rowIdx = 0; rowIdx < pGenHeadRoot->m_data.getNumRows(); rowIdx++)
         {
@@ -2092,19 +2073,16 @@ namespace Figaro
             }
         }
 
-        FIGARO_LOG_INFO("Number of rows in generalized head", pGenHeadRoot->m_data.getNumRows())
-        FIGARO_LOG_INFO("Number of cols in generalized head", pGenHeadRoot->m_data.getNumCols())
         // Vertically concatenating tails and generalized tail to the head.
-        for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel ++)
+        for (uint32_t idxRel = 0; idxRel < vpTailRels.size(); idxRel ++)
         {
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
-            uint32_t startGenTailIdx = vCumNumRowsUp[idxRel] + vpTailRels[idxRel]->m_data.getNumRows();
-            FIGARO_LOG_INFO("Number of rows in tail", startGenTailIdx - startTailIdx)
+            uint32_t nextStartIdx = vCumNumRowsUp[idxRel + 1];
             FIGARO_LOG_INFO("Number of cols in tail",
                 vLeftCumNumNonJoinAttrs[idxRel],
                 vLeftCumNumNonJoinAttrs[idxRel+1] - vLeftCumNumNonJoinAttrs[idxRel],
                 totalNumCols - vLeftCumNumNonJoinAttrs[idxRel+1])
-            for (uint32_t rowIdx = startTailIdx; rowIdx < startGenTailIdx; rowIdx ++)
+            for (uint32_t rowIdx = startTailIdx; rowIdx < nextStartIdx; rowIdx ++)
             {
                 // Set Left zeros
                 for (uint32_t colIdx = 0; colIdx < vLeftCumNumNonJoinAttrs[idxRel];
@@ -2129,13 +2107,11 @@ namespace Figaro
                     catGenHeadAndTails[rowIdx][colIdx] = 0;
                 }
             }
+        }
 
-            FIGARO_LOG_INFO("Number of rows in generalized tail",
-                vCumNumRowsUp[idxRel+1] - startGenTailIdx)
-            FIGARO_LOG_INFO("Number of cols in generalized tail",
-                vLeftCumNumNonJoinAttrs[idxRel],
-                vLeftCumNumNonJoinAttrs[idxRel] + vpGenTailRels[idxRel]->m_data.getNumCols() - vLeftCumNumNonJoinAttrs[idxRel],
-                totalNumCols - (vLeftCumNumNonJoinAttrs[idxRel] + vpGenTailRels[idxRel]->m_data.getNumCols()))
+        for (uint32_t idxRel = 0; idxRel < vpGenTailRels.size(); idxRel ++)
+        {
+            uint32_t startGenTailIdx = vCumNumRowsUp[idxRel + vpTailRels.size()];
             for (uint32_t rowIdx = startGenTailIdx;
                 rowIdx < vCumNumRowsUp[idxRel+1]; rowIdx ++)
             {

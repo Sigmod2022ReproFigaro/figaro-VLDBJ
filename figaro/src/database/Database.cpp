@@ -338,6 +338,7 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelTails.push_back(pRel);
+            pRel->computeQRInPlace(qrHintType);
         }
 
         for (const auto relName: vGenTailRels)
@@ -345,9 +346,12 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
+            pRel->computeQRInPlace(qrHintType);
         }
 
-        pRootRel = &m_relations.at(genHeadRoot);;
+        pRootRel = &m_relations.at(genHeadRoot);
+        pRootRel->computeQROfGeneralizedHead(vpRelTails, qrHintType);
+
         if (joinRelName != "")
         {
             pJoinRel = &m_relations.at(joinRelName);
@@ -391,6 +395,15 @@ namespace Figaro
             return true;
         }
         return false;
+    }
+
+    std::string Database::createDummyGenTailRelation(const std::string& relationName)
+    {
+        Relation& rel = m_relations.at(relationName);
+        Relation dummyGenTail = rel.createDummyGenTailRelation();
+        std::string dummRelName = dummyGenTail.getName();
+        m_relations.emplace(dummRelName, std::move(dummyGenTail));
+        return dummRelName;
     }
 
     void Database::outputRelationToFile(std::ostream& out, const std::string& relationName,
