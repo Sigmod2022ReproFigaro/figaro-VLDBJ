@@ -240,10 +240,12 @@ namespace Figaro
         void schemaJoins(
             std::vector<Attribute>& attributes,
             const std::vector<Relation*>& vpChildRels,
+            const std::vector<Relation*>& vpChildHeadRels,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
 
-        void schemaRemoveNonParJoinAttrs(
+        static void schemaRemoveNonParJoinAttrs(
+            std::vector<Attribute>& attributes,
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vParJoinAttrIdxs);
 

@@ -1592,16 +1592,17 @@ namespace Figaro
     void Relation::schemaJoins(
         std::vector<Attribute>& attributes,
         const std::vector<Relation*>& vpChildRels,
+        const std::vector<Relation*>& vpChildHeadRels,
         const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
         const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs)
     {
         for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel++)
         {
-            uint32_t prevSize = m_attributes.size();
+            uint32_t prevSize = attributes.size();
             uint32_t prevvSTDOffsSize = m_vSubTreeDataOffsets.size();
             for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
             {
-                m_attributes.push_back(vpChildRels[idxRel]->m_attributes[nonJoinAttrIdx]);
+                attributes.push_back(vpChildHeadRels[idxRel]->m_attributes[nonJoinAttrIdx]);
             }
 
             // Copy the offsest to the data.
@@ -1619,12 +1620,13 @@ namespace Figaro
     }
 
     void Relation::schemaRemoveNonParJoinAttrs(
+            std::vector<Attribute>& attributes,
             const std::vector<uint32_t>& vJoinAttrIdxs,
             const std::vector<uint32_t>& vParJoinAttrIdxs)
     {
         // We have assumption here that the parent join attribute will be always the first one.
-        m_attributes.erase(m_attributes.begin() + vParJoinAttrIdxs.size(),
-            m_attributes.begin() + vJoinAttrIdxs.size());
+        attributes.erase(attributes.begin() + vParJoinAttrIdxs.size(),
+            attributes.begin() + vJoinAttrIdxs.size());
     }
 
     Relation Relation::aggregateAwayChildrenRelations(
@@ -1660,19 +1662,19 @@ namespace Figaro
         vCumNumRelSubTree.resize(vpChildRels.size());
         vpHashTabRowPt.resize(vpChildRels.size());
 
-        getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
-        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        pHeadRel->getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        pHeadRel->getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        vAttrsAggAway = pHeadRel->m_attributes;
         MICRO_BENCH_INIT(aggregateAway)
         MICRO_BENCH_START(aggregateAway)
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
             FIGARO_LOG_DBG("Building hash indices for child", idxRel)
-            vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
+            vpChildHeadRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
                 vvJoinAttrIdxs[idxRel]);
-            vpChildRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
-            FIGARO_LOG_DBG("vvJoinAttrIdxs[idxRel]", vvJoinAttributeNames[idxRel], vvJoinAttrIdxs[idxRel], vpChildRels[idxRel]->m_attributes)
-            getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
+            vpChildHeadRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
+            pHeadRel->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
             initHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
                 vpChildHeadRels[idxRel]->m_data, vpHashTabRowPt[idxRel]);
             vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
@@ -1689,10 +1691,11 @@ namespace Figaro
             }
         }
         FIGARO_LOG_DBG("vvJoinAttributeNames", vvJoinAttributeNames)
-        schemaJoins(vAttrsAggAway, vpChildRels, vvJoinAttrIdxs, vvNonJoinAttrIdxs);
+        schemaJoins(vAttrsAggAway, vpChildRels, vpChildHeadRels,
+             vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
 
-        MatrixDT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)m_attributes.size()};
+        MatrixDT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)vAttrsAggAway.size()};
         MatrixDT scales{pHeadRel->m_data.getNumRows(), vpChildRels.size() + 1};
         MatrixDT dataScales{pHeadRel->m_data.getNumRows(), vSubTreeRelNames.size()};
 
@@ -1765,7 +1768,7 @@ namespace Figaro
         MICRO_BENCH_STOP(aggregateAway)
         FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
         FIGARO_LOG_INFO("Before moving out", dataOutput.getNumRows());
-        return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), m_attributes);
+        return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), vAttrsAggAway);
     }
 
     std::tuple<Relation, Relation>
@@ -1780,24 +1783,28 @@ namespace Figaro
         std::vector<uint32_t> vJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
         uint32_t numParDistVals;
-        //uint32_t numRelsSubTree;
         uint32_t numJoinAttrs;
         uint32_t numParJoinAttrs;
         uint32_t numOmittedAttrs;
         uint32_t numNonJoinAttrs;
 
+        std::vector<Attribute> attributes;
+
         MICRO_BENCH_INIT(genHT)
         MICRO_BENCH_START(genHT)
-        getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
-        getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
+        pAggAwayRel->getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        pAggAwayRel->getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
         // TODO: Replace this
         numParDistVals = m_vParBlockStartIdxsAfterFirstPass.size() - 1;
         numJoinAttrs = vJoinAttributeNames.size();
-        numNonJoinAttrs = getNumberOfAttributes() - numJoinAttrs;
+        numNonJoinAttrs = pAggAwayRel->getNumberOfAttributes() - numJoinAttrs;
         numParJoinAttrs = vParJoinAttrIdxs.size();
         numOmittedAttrs = numJoinAttrs - numParJoinAttrs;
 
-        MatrixDT dataHeadOut { numParDistVals, getNumberOfAttributes() - numOmittedAttrs};
+        attributes = pAggAwayRel->m_attributes;
+
+        MatrixDT dataHeadOut { numParDistVals,
+            pAggAwayRel->getNumberOfAttributes() - numOmittedAttrs};
         MatrixDT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
             numNonJoinAttrs};
         MatrixDT scales{numParDistVals, 1};
@@ -1807,7 +1814,7 @@ namespace Figaro
 
         FIGARO_LOG_DBG("vJoinAttributeNames", vJoinAttributeNames)
         // temporary adds an element to denote the end limit.
-        m_vSubTreeDataOffsets.push_back(m_attributes.size());
+        m_vSubTreeDataOffsets.push_back(pAggAwayRel->m_attributes.size());
         //MICRO_BENCH_INIT(genHTMainLoop)
         //MICRO_BENCH_START(genHTMainLoop)
         #pragma omp parallel for schedule(static)
@@ -1922,19 +1929,18 @@ namespace Figaro
             m_vSubTreeDataOffsets[idxRel] -= numOmittedAttrs;
         }
 
-        schemaRemoveNonParJoinAttrs(vJoinAttrIdxs, vParJoinAttrIdxs);
+        schemaRemoveNonParJoinAttrs(attributes, vJoinAttrIdxs, vParJoinAttrIdxs);
 
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        FIGARO_LOG_DBG("Attributes_name", m_attributes)
         MICRO_BENCH_STOP(genHT)
         //MICRO_BENCH_STOP(genHTMainLoop)
         FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
         FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
         return std::make_tuple(
-            Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), m_attributes),
-            Relation("GEN_TAIL" + m_name, std::move(dataTailsOut), m_attributes));
+            Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), attributes),
+            Relation("GEN_TAIL" + m_name, std::move(dataTailsOut), attributes));
     }
 
 

@@ -343,6 +343,7 @@ namespace Figaro
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelTails.push_back(pRel);
             pRel->computeQRInPlace(qrHintType);
+            FIGARO_LOG_INFO("Tail name", relName)
         }
 
         for (const auto relName: vGenTailRels)
@@ -351,9 +352,11 @@ namespace Figaro
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
             pRel->computeQRInPlace(qrHintType);
+            FIGARO_LOG_INFO("Gen Tail name", relName)
         }
 
         pRootRel = &m_relations.at(genHeadRoot);
+        FIGARO_LOG_INFO("Root Rel name", pRootRel->getName())
         pRootRel->computeQROfGeneralizedHead(vpRelTails, qrHintType);
 
         if (joinRelName != "")
