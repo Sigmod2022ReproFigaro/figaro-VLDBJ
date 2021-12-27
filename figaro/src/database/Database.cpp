@@ -262,7 +262,9 @@ namespace Figaro
             const std::vector<std::string>& vChildRelNames,
             const std::vector<std::string>& vChildHeadRelNames,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::vector<std::string> >& vvJoinAttributeNames)
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            const std::vector<std::string>& vSubTreeRelNames,
+            const std::vector<std::vector<std::string> >& vvSubTreeRelnames)
     {
         Relation& rel = m_relations.at(relationName);
         Relation& relHead = m_relations.at(relHeadName);
@@ -283,7 +285,8 @@ namespace Figaro
         FIGARO_LOG_INFO(vChildRelNames);
 
         Relation relAggAway = rel.aggregateAwayChildrenRelations(&relHead, vpChildRels,
-            vpChildHeadRels, vJoinAttributeNames, vvJoinAttributeNames);
+            vpChildHeadRels, vJoinAttributeNames, vvJoinAttributeNames,
+            vSubTreeRelNames, vvSubTreeRelnames);
         std::string aggregatedAwayName = relAggAway.getName();
         m_relations.emplace(aggregatedAwayName, std::move(relAggAway));
         return aggregatedAwayName;
@@ -295,7 +298,8 @@ namespace Figaro
         const std::string& aggrAwayRelName,
         const std::vector<std::string>& vJoinAttributeNames,
         const std::vector<std::string>& vParJoinAttributeNames,
-        bool isRootNode)
+        bool isRootNode,
+        uint32_t numRelsSubTree)
     {
         Relation& rel = m_relations.at(relationName);
         Relation& aggAwayRel = m_relations.at(aggrAwayRelName);
@@ -303,7 +307,7 @@ namespace Figaro
         rel.computeAndScaleGeneralizedHeadAndTail(
             &aggAwayRel,
             vJoinAttributeNames, vParJoinAttributeNames,
-            isRootNode);
+            isRootNode, numRelsSubTree);
         std::string genHeadRelname = genHeadRel.getName();
         std::string genTailRelname = genTailRel.getName();
 

@@ -15,6 +15,7 @@ namespace Figaro
         Figaro::QRGivensHintType m_qrHintType;
         std::string m_joinRelName;
         std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> m_htTmpRelsNames;
+        std::vector<std::string> m_vSubTreeRelNames;
 
         std::vector<std::string> getChildrenHeadNames(const std::vector<std::string>& vChildrenNames) const;
 

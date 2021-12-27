@@ -10,7 +10,8 @@ namespace Figaro
         std::string relHeadsName =
         m_htTmpRelsNames.at(relationName).m_headsName;
         std::string relGenTailsName = m_pDatabase->createDummyGenTailRelation(relationName);return new ASTVisitorSecondPassResult(relHeadsName,
-            {{relationName, relGenTailsName}});
+            {{relationName, relGenTailsName}},
+            {relationName});
     }
 
     std::vector<std::string>
@@ -35,6 +36,10 @@ namespace Figaro
 
         std::unordered_map<std::string, ASTVisitorSecondPassResult::SecondPassRelNames> namesTmpRels;
         std::vector<std::string> vChildGenHeadNames;
+        std::vector<std::string> vSubTreeRelNames;
+        std::vector<std::vector<std::string> > vvSubTreeRelNames;
+
+        vSubTreeRelNames.push_back(relationName);
 
         for (const auto& pChild: pElement->getChildren())
         {
@@ -44,6 +49,11 @@ namespace Figaro
             namesTmpRels.insert(pResult->getHtNamesTmpRels().begin(),
                 pResult->getHtNamesTmpRels().end());
             vChildGenHeadNames.push_back(pResult->getGenHeadsName());
+            vSubTreeRelNames.insert(
+                vSubTreeRelNames.end(),
+                pResult->getSubTreeRelNames().begin(),
+                pResult->getSubTreeRelNames().end());
+            vvSubTreeRelNames.push_back(pResult->getSubTreeRelNames());
             delete pResult;
         }
         // TODO: return new relation
@@ -54,7 +64,9 @@ namespace Figaro
             vChildrenNames,
             vChildGenHeadNames,
             pElement->getJoinAttributeNames(),
-            pElement->getChildrenParentJoinAttributeNames());
+            pElement->getChildrenParentJoinAttributeNames(),
+            vSubTreeRelNames,
+            vvSubTreeRelNames);
 
         bool isRootNode = pElement->getParent() == nullptr;
         std::vector<std::string> parJoinAttributeNames;
@@ -72,9 +84,9 @@ namespace Figaro
             aggrAwayRelName,
             pElement->getJoinAttributeNames(),
             parJoinAttributeNames,
-            isRootNode);
+            isRootNode, vSubTreeRelNames.size());
         namesTmpRels.insert({{relationName, ASTVisitorSecondPassResult::SecondPassRelNames(genTailRelName)}});
-        return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels);
+        return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels, vSubTreeRelNames);
     }
 
     ASTVisitorQRResult* ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)

@@ -97,7 +97,9 @@ namespace Figaro
             const std::vector<std::string>& vChildRelNames,
             const std::vector<std::string>& vChildHeadRelNames,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            const std::vector<std::string>& vSubTreeRelNames,
+            const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
 
         std::tuple<std::string, std::string>
         computeAndScaleGeneralizedHeadAndTail(
@@ -105,7 +107,8 @@ namespace Figaro
             const std::string& aggrAwayRelName,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
-            bool isRootNode);
+            bool isRootNode,
+            uint32_t numRelsSubTree);
 
         std::tuple<std::string, std::string>
         computePostprocessing(

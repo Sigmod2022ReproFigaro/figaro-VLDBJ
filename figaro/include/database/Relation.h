@@ -135,12 +135,6 @@ namespace Figaro
         MatrixDT m_dataScales;
         std::vector<double> m_allScales;
         /**
-         * Contains the names of all relations in the subtree rooted
-         * at this relation including this relation. The order of relations
-         * is preorder.
-         */
-        std::vector<std::string> m_vSubTreeRelNames;
-        /**
          * Contains the data ofsets of all relations in the subtree rooted
          * at the node with this relation including this relation. The order of relations
          * is preorder.
@@ -244,6 +238,7 @@ namespace Figaro
          * updated accordingly.
          */
         void schemaJoins(
+            std::vector<Attribute>& attributes,
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs);
@@ -434,13 +429,16 @@ namespace Figaro
             const std::vector<Relation*>& vpChildRels,
             const std::vector<Relation*>& vpChildHeadRels,
             const std::vector<std::string>& vJoinAttributeNames,
-            const std::vector<std::vector<std::string> >& vvJoinAttributeNames);
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            const std::vector<std::string>& vSubTreeRelNames,
+            const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
 
         std::tuple<Relation, Relation> computeAndScaleGeneralizedHeadAndTail(
             Relation* pAggAwayRel,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
-            bool isRootNode);
+            bool isRootNode,
+            uint32_t numRelsSubTree);
 
         void computeQROfGeneralizedHead(
             const std::vector<Relation*>& vpTailRels,

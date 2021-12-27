@@ -88,10 +88,13 @@ namespace Figaro
             m_pDatabase->changeMemoryLayout();
         }
 
-
+        MICRO_BENCH_INIT(qrPostprocEval)
+        MICRO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =
             m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
+        MICRO_BENCH_STOP(qrPostprocEval)
+        FIGARO_LOG_BENCH("Postproc eval", MICRO_BENCH_GET_TIMER_LAP(qrPostprocEval))
         return new ASTVisitorQRResult(rName, qName);
     }
 
