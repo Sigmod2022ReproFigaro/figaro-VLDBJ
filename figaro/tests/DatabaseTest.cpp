@@ -2,9 +2,12 @@
 #include "database/storage/ArrayStorage.h"
 #include "database/storage/Matrix.h"
 #include "database/Database.h"
+#include "database/Relation.h"
 #include "database/query/Query.h"
 #include <vector>
 #include <string>
+
+using namespace Figaro;
 
 TEST(Storage, SimpleArrayStorage)
 {
@@ -777,4 +780,65 @@ TEST(Matrix, Inverse)
             EXPECT_NEAR(inv(row, col), expInv(row, col), QR_TEST_PRECISION_ERROR);
         }
     }
+}
+
+
+
+
+TEST(Relation, Join)
+{
+    static constexpr uint32_t M = 3, N = 3, K= 2;
+    Relation::MatrixDT A(M, N), B(K, N), C(K, K);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+
+    A[1][0] = 1;
+    A[1][1] = 4;
+    A[1][2] = 6;
+
+    A[2][0] = 1;
+    A[2][1] = 6;
+    A[2][2] = 7;
+
+    B[0][0] = 1;
+    B[0][1] = 1;
+    B[0][2] = 4;
+
+
+    B[1][0] = 1;
+    B[1][1] = 2;
+    B[1][2] = 5;
+
+    C[0][0] = 1;
+    C[0][1] = 2;
+
+    C[1][0] = 1;
+    C[1][1] = 3;
+
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
+
+    Relation relB("B", std::move(B),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("B1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("B2", Relation::AttributeType::FLOAT)});
+
+    Relation relC("C", std::move(C),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("C1", Relation::AttributeType::FLOAT)});
+
+    FIGARO_LOG_DBG("relA", relA)
+    FIGARO_LOG_DBG("relB", relB)
+    FIGARO_LOG_DBG("relC", relC)
+    Relation joinRel1 = relA.joinRelations({&relB, &relC}, {"A"}, {"A"}, {{"A"},{"A"}}, false);
+    Relation joinRel2 = relA.joinRelations({&relB}, {"A"}, {"A"}, {{"A"}}, false);
+
+    FIGARO_LOG_DBG(joinRel1);
+    FIGARO_LOG_DBG(joinRel2);
+
 }

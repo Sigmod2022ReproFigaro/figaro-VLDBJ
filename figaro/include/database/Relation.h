@@ -89,6 +89,10 @@ namespace Figaro
 
             Attribute(){}
 
+            Attribute(const std::string& name,
+                AttributeType type, bool isPrimaryKey = false):
+            m_name(name), m_type(type), m_isPrimaryKey(isPrimaryKey) {}
+
             Attribute(const json& jsonAttributeInfo)
             {
                 std::string strType;
@@ -125,7 +129,6 @@ namespace Figaro
         std::string m_name;
         bool m_isTmp = false;
         ErrorCode initializationErrorCode = ErrorCode::NO_ERROR;
-        std::vector<Attribute> m_oldAttributes;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
         MatrixDColT m_dataColumnMajor;
@@ -327,8 +330,6 @@ namespace Figaro
          * @param data
          * @param attributes
          */
-        Relation(const std::string& name,
-            MatrixDT&& data, const std::vector<Attribute>& attributes);
     public:
         Relation(const Relation&) = delete;
         Relation& operator=(const Relation& relation) = delete;
@@ -336,6 +337,8 @@ namespace Figaro
         Relation(Relation&& ) = default;
         Relation& operator= (Relation&& relation) = default;
         Relation(json jsonRelationSchema);
+        Relation(const std::string& name,
+            MatrixDT&& data, const std::vector<Attribute>& attributes);
 
         void resetComputations(void);
 

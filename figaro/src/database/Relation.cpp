@@ -177,7 +177,6 @@ namespace Figaro
 
     void Relation::resetComputations(void)
     {
-        m_attributes = m_oldAttributes;
         m_scales = std::move(MatrixDT{0, 0});
         m_dataScales = std::move(MatrixDT{0, 0});
         m_allScales.clear();
@@ -527,7 +526,6 @@ namespace Figaro
         schemaOneHotEncode(mCatAttrsDist);
 
         m_data =  std::move(oneHotEncData);
-        m_oldAttributes = m_attributes;
         FIGARO_LOG_INFO("Finished schema reordering in relation ", m_name)
     }
 
@@ -746,14 +744,17 @@ namespace Figaro
             }
         }
 
-        MatrixDT dataOutput {130'000'000, (uint32_t)attributes.size()};
+        //MatrixDT dataOutput {130'000'000, (uint32_t)attributes.size()};
+        MatrixDT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
+        uint32_t glCnt = 0;
 
-        omp_set_num_threads(4);
-        #pragma omp parallel for schedule(static)
+        //omp_set_num_threads(4);
+        //#pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
+            FIGARO_LOG_DBG("rowIdx", rowIdx, m_data.getNumRows());
             std::vector<uint32_t> naryCartesianProduct(vpChildRels.size());
             std::vector<uint32_t> nCartProdSize(vpChildRels.size());
             std::vector<std::vector<uint32_t> > vChildrenRowIdxs;
@@ -773,6 +774,7 @@ namespace Figaro
                 nCartProdSize[idxRel] = vChildRowIdxs.size();
                 cnt *= nCartProdSize[idxRel];
             }
+            FIGARO_LOG_DBG("cnt", cnt)
             for (uint32_t cntIdx = 0; cntIdx < cnt; cntIdx ++)
             {
                 uint32_t rowIdxOut = rowIdxOutAt.fetch_and_increment() + 1;
@@ -813,34 +815,34 @@ namespace Figaro
                     }
                 }
                  // Moving to next combination of tuples in a join result.
-                uint32_t carry = 0;
+                uint32_t carry = 1;
+                uint32_t writeNum;
                 for (int32_t idxRel = naryCartesianProduct.size() - 1; idxRel >= 0;
                     idxRel --)
                 {
-                    naryCartesianProduct[idxRel] =
-                    (naryCartesianProduct[idxRel] + carry) % nCartProdSize[idxRel];
-                    uint32_t carry =
+                   writeNum = (naryCartesianProduct[idxRel] + carry) % nCartProdSize[idxRel];
+                   FIGARO_LOG_DBG("writeNum", writeNum, "carry", carry)
+                    carry =
                     (naryCartesianProduct[idxRel] + carry) / nCartProdSize[idxRel];
+                    naryCartesianProduct[idxRel] = writeNum;
                 }
+                FIGARO_LOG_DBG("naryCartesianProduct", naryCartesianProduct)
+                FIGARO_LOG_DBG("nCartProdSize", nCartProdSize)
+                glCnt ++;
+                FIGARO_LOG_DBG("glCnt", glCnt)
 
             }
+            FIGARO_LOG_DBG("rowIdx", rowIdx, dataOutput)
         }
         for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel++)
         {
             destroyHashTableMNJoin(vvCurJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
         }
-        dataOutput.resize(rowIdxOutAt);
+        dataOutput.resize(rowIdxOutAt + 1);
+        FIGARO_LOG_DBG("rowIdxOutAt", rowIdxOutAt)
         FIGARO_LOG_INFO("outputSize", dataOutput.getNumRows(), dataOutput.getNumCols())
-        for (uint32_t rowIdx = 0; rowIdx < 100; rowIdx++)
-        {
-            for (uint32_t colIdx = 0; colIdx < dataOutput.getNumCols(); colIdx++)
-            {
-                FIGARO_LOG_INFO("entry", rowIdx, colIdx, dataOutput[rowIdx][colIdx])
-            }
-        }
-
         FIGARO_LOG_INFO(newRelName, dataOutput.getNumRows(), dataOutput.getNumCols())
-        Relation joinRel = Relation(newRelName, std::move(dataOutput), attributes);
+        Relation joinRel = Relation("JOIN_" + newRelName, std::move(dataOutput), attributes);
         return joinRel;
     }
 
