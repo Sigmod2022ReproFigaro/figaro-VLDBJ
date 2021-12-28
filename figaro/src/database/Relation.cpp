@@ -744,14 +744,14 @@ namespace Figaro
             }
         }
 
-        //MatrixDT dataOutput {130'000'000, (uint32_t)attributes.size()};
-        MatrixDT dataOutput {15, (uint32_t)attributes.size()};
+        MatrixDT dataOutput {130'000'000, (uint32_t)attributes.size()};
+        //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
         uint32_t glCnt = 0;
 
-        //omp_set_num_threads(4);
-        //#pragma omp parallel for schedule(static)
+        omp_set_num_threads(4);
+        #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
             FIGARO_LOG_DBG("rowIdx", rowIdx, m_data.getNumRows());
@@ -2131,6 +2131,7 @@ namespace Figaro
             FIGARO_LOG_INFO("Computing Q")
             qData = std::move(
                 pJoinRel->m_data * catGenHeadAndTails.computeInverseTriangular());
+            FIGARO_LOG_BENCH("join Rel Size", pJoinRel->m_data.getNumRows())
         }
 
         if (saveResult)

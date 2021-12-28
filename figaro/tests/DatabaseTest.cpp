@@ -836,7 +836,7 @@ TEST(Relation, Join)
     FIGARO_LOG_DBG("relB", relB)
     FIGARO_LOG_DBG("relC", relC)
     Relation joinRel1 = relA.joinRelations({&relB, &relC}, {"A"}, {"A"}, {{"A"},{"A"}}, false);
-    Relation joinRel2 = relA.joinRelations({&relB}, {"A"}, {"A"}, {{"A"}}, false);
+    Relation joinRel2 = relA.joinRelations({&relB}, {"A"}, {}, {{"A"}}, false);
 
     FIGARO_LOG_DBG(joinRel1);
     FIGARO_LOG_DBG(joinRel2);
