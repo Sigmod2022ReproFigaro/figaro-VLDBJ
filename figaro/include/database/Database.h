@@ -71,6 +71,13 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool trackProvenance);
 
+
+        std::string multiply(const std::string& relationName1,
+            const std::string& relationName2,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2,
+            uint32_t startRowIdx2);
+
         void computeDownCounts(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,

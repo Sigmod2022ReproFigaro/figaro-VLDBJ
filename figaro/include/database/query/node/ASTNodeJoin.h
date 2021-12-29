@@ -76,6 +76,18 @@ namespace Figaro
 
 
         ASTVisitorAbsResult* accept(ASTVisitor* pVisitor) override;
+
+
+        virtual ASTNodeJoin* copy() override
+        {
+            std::vector<ASTNodeAbsRelation*> vChild;
+
+            for (auto& child: m_vPChild)
+            {
+                vChild.push_back(child->copy());
+            }
+            return new ASTNodeJoin(m_pCenRelation->copy(), vChild);
+        }
     };
 }
 

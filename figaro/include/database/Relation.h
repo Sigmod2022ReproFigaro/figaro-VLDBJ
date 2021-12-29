@@ -400,7 +400,8 @@ namespace Figaro
 
         Relation multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
-            const std::vector<std::string>& vJoinAttrNames2) const;
+            const std::vector<std::string>& vJoinAttrNames2,
+            uint32_t startRowIdx2 = 0) const;
 
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,

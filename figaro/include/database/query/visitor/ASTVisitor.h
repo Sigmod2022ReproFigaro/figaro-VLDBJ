@@ -8,6 +8,7 @@
 #include "database/query/node/ASTNodeAssign.h"
 #include "database/query/node/ASTNodeRelation.h"
 #include "database/query/node/ASTNodeEvalJoin.h"
+#include "database/query/node/ASTNodeRightMultiply.h"
 #include "ASTVisitorAbsResult.h"
 #include "database/Database.h"
 
@@ -27,6 +28,7 @@ namespace Figaro
         virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;
 
         virtual ~ASTVisitor() {}
     };

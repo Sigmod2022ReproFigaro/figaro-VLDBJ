@@ -66,9 +66,13 @@ namespace Figaro
         virtual void updateParJoinAttrs(void) = 0;
 
         virtual ~ASTNodeAbsRelation() override = 0;
+
+        virtual ASTNodeAbsRelation* copy() = 0;
     };
 
     inline ASTNodeAbsRelation::~ASTNodeAbsRelation() {}
+
+
 }
 
 #endif

@@ -6,6 +6,7 @@
 #include "database/query/visitor/ASTFigaroFirstPassVisitor.h"
 #include "database/query/visitor/ASTFigaroSecondPassVisitor.h"
 #include "database/query/visitor/ASTJoinVisitor.h"
+#include "database/query/visitor/ASTRightMultiplyVisitor.h"
 #include "omp.h"
 
 namespace Figaro
@@ -36,10 +37,12 @@ namespace Figaro
         FIGARO_LOG_INFO("JOIN EVALUATION")
         if (pElement->isComputeQ())
         {
+            /*
             ASTJoinVisitor astJoinVisitor(m_pDatabase);
             ASTVisitorJoinResult* pResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(&astJoinVisitor);
             joinRelName = pResult->getJoinRelName();
             delete pResult;
+            */
         }
         FIGARO_LOG_INFO("ONE HOT ENCODING")
         m_pDatabase->oneHotEncodeRelations();
@@ -67,6 +70,17 @@ namespace Figaro
         ASTVisitorQRResult* pQRResult = (ASTVisitorQRResult*)pElement->accept(&figaroSecondPassVisitor);
         MICRO_BENCH_STOP(secondPass)
         FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
+
+        ASTNodeRelation* astRNOde =
+            new ASTNodeRelation(pQRResult->getRRelationName(),
+            m_pDatabase->getRelationAttributeNames(pQRResult->getRRelationName()));
+        ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRNOde);
+        // Add relation.
+
+        ASTRightMultiplyVisitor astRMVisitor(m_pDatabase);
+        astRightMulNode.accept(&joinAttrVisitor);
+        astRightMulNode.accept(&astRMVisitor);
+
         MICRO_BENCH_STOP(main)
         FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
 
@@ -116,4 +130,19 @@ namespace Figaro
 
         return new ASTVisitorJoinResult(newRelName);
     }
+
+    ASTVisitorAbsResult* ASTVisitorQueryEval::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING EVAL RIGHT MULTIPLY NODE")
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTJoinVisitor astJoinVisitor(m_pDatabase);
+
+        ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->accept(&astJoinVisitor);
+        std::string newRelName = pJoinResult->getJoinRelName();
+        delete pJoinResult;
+
+        return new ASTVisitorJoinResult(newRelName);
+    }
+
+
 }

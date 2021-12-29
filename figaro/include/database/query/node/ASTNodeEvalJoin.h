@@ -39,6 +39,12 @@ namespace Figaro
         }
 
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+
+        virtual ASTNode* copy() override
+        {
+            return new ASTNodeEvalJoin(m_pOperand->copy(),
+                m_vRelationOrder, m_vDropAttributes, m_numThreads);
+        }
     };
 
 

@@ -884,5 +884,5 @@ TEST(Relation, Multiply)
     FIGARO_LOG_DBG("relA", relA)
     FIGARO_LOG_DBG("relB", relB)
     Relation rel = relA.multiply(relB, {"A", "AA"}, {"A"});
-
+    FIGARO_LOG_DBG("rel", rel)
 }

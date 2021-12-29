@@ -13,18 +13,25 @@ namespace Figaro
             ASTVisitor(pDatabase)
          {}
         virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement)  override
         {
-            // This line should not happen.
+            FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
         virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement)  override
         {
-            // This line should not happen.
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
+        virtual ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement)  override
+        {
+            FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 

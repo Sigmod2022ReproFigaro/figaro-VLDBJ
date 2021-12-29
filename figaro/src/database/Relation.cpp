@@ -849,7 +849,8 @@ namespace Figaro
 
     Relation Relation::multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
-            const std::vector<std::string>& vJoinAttrNames2) const
+            const std::vector<std::string>& vJoinAttrNames2,
+            uint32_t startRowIdx2) const
     {
         uint32_t joinAttrSize1;
         uint32_t joinAttrSize2;
@@ -857,7 +858,8 @@ namespace Figaro
         joinAttrSize1 = vJoinAttrNames1.size();
         joinAttrSize2 = vJoinAttrNames2.size();
 
-        auto result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2);
+        auto result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2,
+             startRowIdx2);
 
         return Relation("MUL_" + getName() + second.getName(), std::move(result), m_attributes);
     }
@@ -2153,11 +2155,11 @@ namespace Figaro
         if (saveResult)
         {
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
-            pR = createFactorRelation("R", std::move(catGenHeadAndTails));
-            if (computeQ)
-            {
-                pQ = createFactorRelation("Q", std::move(qData));
-            }
+        }
+        pR = createFactorRelation("R", std::move(catGenHeadAndTails));
+        if (computeQ)
+        {
+            pQ = createFactorRelation("Q", std::move(qData));
         }
         return std::make_tuple(pR, pQ);
     }

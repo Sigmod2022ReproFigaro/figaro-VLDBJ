@@ -71,6 +71,11 @@ namespace Figaro
         const std::vector<std::string>& getJoinAttributeNames(void) override;
 
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+
+        virtual ASTNodeRelation* copy() override
+        {
+            return new ASTNodeRelation(m_relationName, m_vAttributeNames);
+        }
     };
 } // namespace Figaro
 

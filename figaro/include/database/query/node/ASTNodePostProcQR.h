@@ -43,6 +43,13 @@ namespace Figaro
         }
 
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+
+        virtual ASTNodePostProcQR* copy() override
+        {
+            return new ASTNodePostProcQR(m_pOperand->copy(),
+                m_vRelationOrder, m_vDropAttributes, m_numThreads,
+                m_computeQ);
+        }
     };
 
 

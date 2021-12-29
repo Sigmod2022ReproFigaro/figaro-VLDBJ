@@ -45,6 +45,13 @@ namespace Figaro
         bool isComputeQ(void) const { return m_computeQ; }
 
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+
+        virtual ASTNode* copy() override
+        {
+            return new ASTNodeQRGivens(m_pOperand->copy(),
+                m_vDropAttributes, m_vRelationOrder, m_numThreads,
+                m_computeQ);
+        }
     };
 
 
