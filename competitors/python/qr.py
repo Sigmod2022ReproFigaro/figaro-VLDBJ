@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--num_threads", dest="num_threads", required=False)
     parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=False)
     parser.add_argument("-C", "--cat_columns", dest="cat_columns", nargs='*', required=False)
-    parser.add_argument("-r", "--num_repetitions", dest="num_repetitions", required=False, default=1)
+    parser.add_argument('--compute_all', default=False, action='store_true')
     print (sys.argv[1:])
     #TODO: Add sparse argument
 
@@ -76,8 +76,8 @@ if __name__ == "__main__":
     dump_file = args.dump_file
     columns = args.columns
     cat_columns = args.cat_columns
-    num_reps = int(args.num_repetitions)
     num_threads = int(args.num_threads)
+    compute_all = bool(args.compute_all)
 
     precision = 15 if args.precision is None else int(args.precision)
     print(precision)
@@ -98,29 +98,32 @@ if __name__ == "__main__":
     print("##Figaro####ohe##{}".format(end - start))
 
     #print(data)
-    for i in range(num_reps):
-        #mkl = CDLL('/local/scratch/local/intel/mkl/2021.2.0/lib/intel64/libmkl_rt.so')
-        #print(mkl.MKL_Get_Max_Threads())
-        #mkl.MKL_Set_Dynamic(1)
-        #mkl.MKL_Set_Num_Threads(48)
-        #print(mkl.MKL_Get_Max_Threads())
+    #mkl = CDLL('/local/scratch/local/intel/mkl/2021.2.0/lib/intel64/libmkl_rt.so')
+    #print(mkl.MKL_Get_Max_Threads())
+    #mkl.MKL_Set_Dynamic(1)
+    #mkl.MKL_Set_Num_Threads(48)
+    #print(mkl.MKL_Get_Max_Threads())
 
-        #start = timer()
-        #r = np.linalg.qr(data, mode='r')
-        #end = timer()
-        #print("##Figaro####computation##{}".format(end - start))
+    #start = timer()
+    #r = np.linalg.qr(data, mode='r')
+    #end = timer()
+    #print("##Figaro####computation##{}".format(end - start))
 
 
-        #print(mkl.MKL_Get_Max_Threads())
-        #mkl.MKL_Set_Dynamic(0)
-        #mkl.MKL_Set_Num_Threads(48)
-        #print(mkl.MKL_Get_Max_Threads())
+    #print(mkl.MKL_Get_Max_Threads())
+    #mkl.MKL_Set_Dynamic(0)
+    #mkl.MKL_Set_Num_Threads(48)
+    #print(mkl.MKL_Get_Max_Threads())
 
-        with threadpool_limits(limits=num_threads, user_api='blas'):
-            start = timer()
+
+    with threadpool_limits(limits=num_threads, user_api='blas'):
+        start = timer()
+        if compute_all:
+            q, r = np.linalg.qr(data, mode='reduced')
+        else:
             r = np.linalg.qr(data, mode='r')
-            end = timer()
-            print("##Figaro####computation##{}".format(end - start))
+        end = timer()
+        print("##Figaro####computation##{}".format(end - start))
 
     if dump_file is not None:
         r = make_diagonal_positive(r)

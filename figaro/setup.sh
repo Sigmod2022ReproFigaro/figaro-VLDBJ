@@ -9,7 +9,6 @@ function init_global_paths()
     FIGARO_QUERY_CONFIG_PATH="/home/---/Figaro/figaro-code/system_tests/test2/databases/database_specs5.conf"
     FIGARO_TEST_MODE="DEBUG"
     FIGARO_PRECISION=14
-    FIGARO_NUM_REPS=1
     FIGARO_NUM_THREADS=1
     FIGARO_POSTPROCESS="THIN1_DIAG"
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
@@ -64,10 +63,6 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_NUM_THREADS=$EXTENSION
         ;;
-        --num_repetitions=*)
-            EXTENSION="${option#*=}"
-            FIGARO_NUM_REPS=$EXTENSION
-        ;;
         --postprocess=*)
             EXTENSION="${option#*=}"
             FIGARO_POSTPROCESS=$EXTENSION
@@ -88,7 +83,7 @@ Usage: setup.sh [-h --help]
 [-t|--test_mode=<NAME>]
 [--data_path=<PATH>][-l|--log_file_path=<PATH>][--dump_file_path=<PATH>]
 [--db_config_path=<PATH>][--query_config_path=<PATH>]
-[--precision=<NUMBER>][--num_threads=<NUMBER>][--num_repetitions=<NUMBER>]
+[--precision=<NUMBER>][--num_threads=<NUMBER>]
 Run evaluation of Figaro on the specified database for the specified query.
     -r, --root=<PATH>            set the root path to Figaro system;
     -i, --implementation=<NAME>  it specifies which system should be used. It can be either postprocess or figaro. postprocess expects join result as an input, while figaro expects database with various relations.
@@ -101,7 +96,6 @@ Run evaluation of Figaro on the specified database for the specified query.
     --query_config_path=<PATH> specifies the location of query configuration used by the system.
     --precision=<NUMBER> specifies double precision in which data is dumped.
     --num_threads=<NUMBER> specifies the number of threads used by the system.
-    --num_repetitions=<NUMBER> specifies the number of times figaro is called for specified configuration. It is not used in performance experiments because cache can interefer with the correcntes of results.
     -h, --help                   show help.
 "       ;;
         *)    # unknown option
@@ -158,30 +152,27 @@ function main()
         ;;
     "PERFORMANCE")
         ./figaro $(echo $ARGS) \
-        --num_repetitions "${FIGARO_NUM_REPS}" \
         >> "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PROFILER_THREADS")
         vtune -collect threading -result-dir "${FIGARO_PROFILER_DUMP_PATH}"  \
         ./figaro $(echo $ARGS) \
-        --num_repetitions "${FIGARO_NUM_REPS}" \
         > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PROFILER_MEMORY")
         vtune -collect memory-access -result-dir "${FIGARO_PROFILER_DUMP_PATH}" \
         ./figaro $(echo $ARGS) \
-        --num_repetitions "${FIGARO_NUM_REPS}" \
          >"${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
-        echo "${FIGARO_LOG_FILE_PATH}"
-        vtune -collect performance-snapshot  ./figaro_test  ${FIGARO_DATA_PATH} >   "${FIGARO_LOG_FILE_PATH}" 2>&1
+        #vtune -collect performance-snapshot
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*Multiply > "${FIGARO_LOG_FILE_PATH}" 2>&1
         #valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         #>   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \
 
-       # ./figaro_test --gtest_filter=*ComputeSimpleHeadByOneMultipleAttributes \
+       # ./figaro_test --gtest_filter=*Multiplication \
         ;;
     esac
 }

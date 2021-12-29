@@ -32,7 +32,6 @@ int main(int argc, char *argv[])
     bool dump = false;
     bool pureFigaro = false;
     uint32_t precision;
-    uint32_t numRepetitions = 1;
     uint32_t numThreads = 1;
 
     std::string strArgs = "";
@@ -51,7 +50,6 @@ int main(int argc, char *argv[])
     ("db_config_path", po::value<std::string>(&dbConfigPath))
     ("query_config_path", po::value<std::string>(&queryConfigPath))
     ("precision", po::value<uint32_t>(&precision))
-    ("num_repetitions", po::value<uint32_t>(&numRepetitions))
     ("num_threads", po::value<uint32_t>(&numThreads))
     ("postprocess", po::value<std::string>(&postprocessMode))
     ("memory_layout", po::value<std::string>(&strMemoryLayout))
@@ -66,11 +64,6 @@ int main(int argc, char *argv[])
         dumpFilePath = vm["dump_file_path"].as<std::string>();
         dump = true;
         FIGARO_LOG_INFO(dumpFilePath)
-    }
-
-    if (vm.count("num_repetitions"))
-    {
-        numRepetitions = vm["num_repetitions"].as<std::uint32_t>();
     }
 
     if (vm.count("num_threads"))

@@ -50,6 +50,8 @@ class SystemTestPython(SystemTestCompetitor):
         if dump:
             args += [ "--dump_file", self.conf_dump.file_path,
                      "--precision", str(self.conf_accur.precision)]
+        if self.conf_decomp.compute_all:
+            args += ["--compute_all"]
 
 
         num_reps = self.conf_perf.num_reps if performance else 1
