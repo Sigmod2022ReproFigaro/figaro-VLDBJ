@@ -86,6 +86,10 @@ namespace Figaro
             parJoinAttributeNames,
             isRootNode, vSubTreeRelNames.size());
         namesTmpRels.insert({{relationName, ASTVisitorSecondPassResult::SecondPassRelNames(genTailRelName)}});
+
+        // multiply r^-1 with each of the relations using new API
+        // join relations.
+
         return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels, vSubTreeRelNames);
     }
 

@@ -63,6 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--precision", dest="precision", required=False)
     parser.add_argument("-t", "--num_threads", dest="num_threads", required=False)
     parser.add_argument("-c", "--columns", dest="columns", nargs='*', required=False)
+    parser.add_argument("--column_major", default=False, action='store_true')
     parser.add_argument("-C", "--cat_columns", dest="cat_columns", nargs='*', required=False)
     parser.add_argument('--compute_all', default=False, action='store_true')
     print (sys.argv[1:])
@@ -76,6 +77,7 @@ if __name__ == "__main__":
     dump_file = args.dump_file
     columns = args.columns
     cat_columns = args.cat_columns
+    column_major = bool(args.column_major)
     num_threads = int(args.num_threads)
     compute_all = bool(args.compute_all)
 
@@ -96,6 +98,10 @@ if __name__ == "__main__":
     data = transform_data(data, columns, cat_columns, False)
     end = timer()
     print("##Figaro####ohe##{}".format(end - start))
+
+    if column_major:
+        data = np.asfortranarray(data)
+
 
     #print(data)
     #mkl = CDLL('/local/scratch/local/intel/mkl/2021.2.0/lib/intel64/libmkl_rt.so')

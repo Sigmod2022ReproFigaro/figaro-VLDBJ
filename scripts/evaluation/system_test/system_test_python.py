@@ -53,6 +53,9 @@ class SystemTestPython(SystemTestCompetitor):
         if self.conf_decomp.compute_all:
             args += ["--compute_all"]
 
+        if self.conf_decomp.memory_layout == self.conf_decomp.MemoryLayout.COL_MAJOR:
+            args += ["--column_major"]
+
 
         num_reps = self.conf_perf.num_reps if performance else 1
         for rep in range(num_reps):
