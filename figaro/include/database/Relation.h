@@ -391,11 +391,16 @@ namespace Figaro
 
         void changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout);
 
-        Relation joinRelations( const std::vector<Relation*>& vpChildRels,
+        Relation joinRelations(const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool trackProvenance);
+
+
+        Relation multiply(const Relation& second,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2) const;
 
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,

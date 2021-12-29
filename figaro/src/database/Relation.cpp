@@ -847,6 +847,22 @@ namespace Figaro
     }
 
 
+    Relation Relation::multiply(const Relation& second,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2) const
+    {
+        uint32_t joinAttrSize1;
+        uint32_t joinAttrSize2;
+
+        joinAttrSize1 = vJoinAttrNames1.size();
+        joinAttrSize2 = vJoinAttrNames2.size();
+
+        auto result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2);
+
+        return Relation("MUL_" + m_name, std::move(result), m_attributes);
+    }
+
+
     void Relation::getDistinctValsAndBuildIndices(
         const std::vector<uint32_t>& vJoinAttrIdxs,
         const std::vector<uint32_t>& vParAttrIdxs,
