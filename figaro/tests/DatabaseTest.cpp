@@ -846,20 +846,23 @@ TEST(Relation, Join)
 
 TEST(Relation, Multiply)
 {
-    static constexpr uint32_t M = 3, N = 3, K= 2;
+    static constexpr uint32_t M = 3, N = 4, K= 2;
     Relation::MatrixDT A(M, N), B(K, K);
 
     A[0][0] = 1;
     A[0][1] = 2;
-    A[0][2] = 3;
+    A[0][2] = 2;
+    A[0][3] = 3;
 
     A[1][0] = 1;
-    A[1][1] = 4;
-    A[1][2] = 6;
+    A[1][1] = 2;
+    A[1][2] = 4;
+    A[1][3] = 6;
 
     A[2][0] = 1;
-    A[2][1] = 6;
-    A[2][2] = 7;
+    A[2][1] = 2;
+    A[2][2] = 6;
+    A[2][3] = 7;
 
     B[0][0] = 1;
     B[0][1] = 1;
@@ -870,6 +873,7 @@ TEST(Relation, Multiply)
 
     Relation relA("A", std::move(A),
         {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("AA", Relation::AttributeType::FLOAT),
          Relation::Attribute("A1", Relation::AttributeType::FLOAT),
          Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
 
@@ -879,8 +883,6 @@ TEST(Relation, Multiply)
 
     FIGARO_LOG_DBG("relA", relA)
     FIGARO_LOG_DBG("relB", relB)
-    Relation rel = relA.multiply(relB, {"A"}, {"A"});
-
-    FIGARO_LOG_DBG(rel);
+    Relation rel = relA.multiply(relB, {"A", "AA"}, {"A"});
 
 }

@@ -859,7 +859,7 @@ namespace Figaro
 
         auto result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2);
 
-        return Relation("MUL_" + m_name, std::move(result), m_attributes);
+        return Relation("MUL_" + getName() + second.getName(), std::move(result), m_attributes);
     }
 
 
