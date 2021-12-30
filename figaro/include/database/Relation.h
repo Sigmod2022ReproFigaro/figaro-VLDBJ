@@ -344,6 +344,8 @@ namespace Figaro
 
         void renameRelation(const std::string& newName);
 
+        Relation copyRelation(void) const;
+
         void persist(void);
 
         bool isTmp(void) const { return m_isTmp; }

@@ -89,6 +89,7 @@ namespace Figaro
             qName = pQResult->getJoinRelName();
             delete pQResult;
             MICRO_BENCH_STOP(qComp)
+            FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
         }
         MICRO_BENCH_STOP(main)
         FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));

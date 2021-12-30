@@ -535,6 +535,12 @@ namespace Figaro
         m_name = newName;
     }
 
+    Relation Relation::copyRelation(void) const
+    {
+        auto dataCopied = m_data.getBlock(0, m_data.getNumRows()-1, 0, m_data.getNumCols() - 1);
+        return Relation("COPY_" + m_name, std::move(dataCopied), m_attributes);
+    }
+
     void Relation::persist(void)
     {
         m_isTmp = false;
@@ -1032,14 +1038,22 @@ namespace Figaro
     {
         uint32_t joinAttrSize1;
         uint32_t joinAttrSize2;
+        std::vector<Attribute> newAttributes;
 
         joinAttrSize1 = vJoinAttrNames1.size();
         joinAttrSize2 = vJoinAttrNames2.size();
 
         auto result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2,
              startRowIdx2);
+        // TODO: Refactor
+        for (uint32_t attrIdx = 0; attrIdx < vJoinAttrNames1.size(); attrIdx++)
+        {
+            newAttributes.push_back(m_attributes.at(attrIdx));
+        }
+        newAttributes.insert(newAttributes.end(), second.m_attributes.begin(), second.m_attributes.end());
 
-        return Relation("MUL_" + getName() + second.getName(), std::move(result), m_attributes);
+        return Relation("MUL_" + getName() + second.getName(), std::move(result),
+            newAttributes);
     }
 
     Relation Relation::inverse(
@@ -1194,16 +1208,13 @@ namespace Figaro
             }
             else
             {
+                // TODO: build in parallel
                 for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
                 {
                     const double* pCurAttrVals = m_data[rowIdx];
                     bool parAttrsDiff = compareTuples(pCurAttrVals, pParPrevAttrVals, vParAttrIdxs);
-                    //bool joinAttrsDiff;// = areJoinAttrsPK;
                     bool joinAttrsDiff = compareTuples(pCurAttrVals, pPrevAttrVals, vJoinAttrIdxs);
 
-                    //if (!areJoinAttrsPK)
-                    //{
-                    //}
                     if (parAttrsDiff || joinAttrsDiff)
                     {
                         // We have a new block of join attributes. Stores the block size.
@@ -2342,6 +2353,7 @@ namespace Figaro
         {
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
         }
+
         pR = createFactorRelation("R", std::move(catGenHeadAndTails));
         if (computeQ)
         {

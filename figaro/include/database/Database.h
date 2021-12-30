@@ -22,6 +22,8 @@ namespace Figaro
     public:
         Database(const std::string& schemaConfigPath);
 
+        Database(std::vector<Relation>&& vRels);
+
         ErrorCode getInitializationErrorCode(void) const
          { return initializationErrorCode; }
 
@@ -54,6 +56,9 @@ namespace Figaro
         void renameRelation(
             const std::string& oldRelationName,
             const std::string& newRelationName);
+
+        std::string copyRelation(
+            const std::string& relName);
 
         void persistRelation(const std::string& relationName);
 
@@ -173,6 +178,8 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttrNames);
 
         std::map<std::vector<uint32_t>, uint32_t> getCircCounts(const std::string& relationName);
+
+        void outputRelation(const std::string& relName) const;
 
         const Relation::MatrixDT& getHead(const std::string& relationName) const;
 

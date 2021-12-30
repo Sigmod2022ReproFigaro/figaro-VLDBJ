@@ -62,6 +62,15 @@ namespace Figaro
         initializationErrorCode = loadDatabaseSchema(schemaConfigPath);
     }
 
+    Database::Database(std::vector<Relation>&& vRels)
+    {
+        for (auto& rel: vRels)
+        {
+            std::string name = rel.getName();
+            m_relations.emplace(name, std::move(rel));
+        }
+    }
+
     ErrorCode Database::loadData(void)
     {
         for (auto& [relName, relation]: m_relations)
@@ -138,6 +147,16 @@ namespace Figaro
         nodeHandler.key() = newRelationName;
         m_relations.insert(std::move(nodeHandler));
     }
+
+    std::string Database::copyRelation(const std::string& relName)
+    {
+        Relation& rel = m_relations.at(relName);
+        auto copiedRel = rel.copyRelation();
+        std::string newName = copiedRel.getName();
+        m_relations.emplace(newName, std::move(copiedRel));
+        return newName;
+    }
+
 
     void Database::persistRelation(const std::string& relationName)
     {
@@ -216,6 +235,8 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames)
     {
         Relation& rel = m_relations.at(relationName);
+
+        FIGARO_LOG_DBG(rel)
 
         Relation invRel = rel.inverse(vJoinAttrNames);
 
@@ -472,6 +493,11 @@ namespace Figaro
     {
         const Relation& rel = m_relations.at(relationName);
         rel.outputToFile(out, sep, precision, header);
+    }
+
+    void Database::outputRelation(const std::string& relName) const
+    {
+        FIGARO_LOG_DBG("relation", m_relations.at(relName))
     }
 
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const

@@ -886,3 +886,95 @@ TEST(Relation, Multiply)
     Relation rel = relA.multiply(relB, {"A", "AA"}, {"A"});
     FIGARO_LOG_DBG("rel", rel)
 }
+
+TEST(Database, Multiply2)
+{
+    static constexpr uint32_t M = 3, N = 4, K= 2;
+    Relation::MatrixDT A(M, N), B(K, K), R(N, N);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 2;
+    A[0][3] = 3;
+
+    A[1][0] = 1;
+    A[1][1] = 2;
+    A[1][2] = 4;
+    A[1][3] = 6;
+
+    A[2][0] = 1;
+    A[2][1] = 2;
+    A[2][2] = 6;
+    A[2][3] = 7;
+
+    B[0][0] = 1;
+    B[0][1] = 1;
+
+    B[1][0] = 1;
+    B[1][1] = 2;
+
+
+    R[0][0] = -4.899;
+    R[0][1] = -9.798;
+    R[0][2] = -13.0639;
+    R[0][3] = -3.6742;
+
+    R[1][0] = 0;
+    R[1][1] = 4;
+    R[1][2] = 4;
+    R[1][3] = 0;
+
+    R[2][0] = 0;
+    R[2][1] = 0;
+    R[2][2] = -1.1547;
+    R[2][3] = 0;
+
+    R[3][0] = 0;
+    R[3][1] = 0;
+    R[3][2] = 0;
+    R[3][3] = -1.2247;
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("AA", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
+
+    Relation relB("B", std::move(B),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("B1", Relation::AttributeType::FLOAT)});
+
+    Relation relR("R", std::move(R),
+        {Relation::Attribute("R1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("R2", Relation::AttributeType::FLOAT),
+         Relation::Attribute("R3", Relation::AttributeType::FLOAT),
+         Relation::Attribute("R4", Relation::AttributeType::FLOAT)});
+
+    std::vector<Relation> vRels;
+
+    vRels.emplace_back(std::move(relA.copyRelation()));
+    vRels.emplace_back(std::move(relB.copyRelation()));
+    vRels.emplace_back(std::move(relR.copyRelation()));
+
+    Database database(std::move(vRels));
+    FIGARO_LOG_DBG(relA, relB);
+    auto joinRelName = database.joinRelations("COPY_A", {"COPY_B"}, {"A"}, {}, {{"A"}}, false);
+    auto rInvName = database.inverse("COPY_R", {});
+
+    auto qName = database.multiply(joinRelName, rInvName, {}, {}, 0);
+    auto AInvRname = database.multiply("COPY_A", rInvName, {"A"}, {}, 0);
+    auto BInvRname = database.multiply("COPY_B", rInvName, {"A"}, {}, 3);
+    auto qWay2 = database.joinRelationsAndAddColumns(
+            AInvRname, {BInvRname}, {"A"}, {}, {{"A"}}, false );
+
+    database.outputRelation(rInvName);
+    database.outputRelation("COPY_A");
+    database.outputRelation("COPY_B");
+    //database.outputRelation(joinRelName);
+
+    database.outputRelation(AInvRname);
+    database.outputRelation(BInvRname);
+    database.outputRelation(qName);
+    database.outputRelation(qWay2);
+}
+
