@@ -35,6 +35,13 @@ namespace Figaro
             return nullptr;
         }
 
+        virtual ASTVisitorAbsResult* visitNodeInverse(ASTNodeInverse* pElement) override
+        {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
+
         virtual ~ASTVisitorQRGivensAbs() override {}
 
 

@@ -408,6 +408,10 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2 = 0) const;
 
+
+        Relation inverse(
+            const std::vector<std::string>& vJoinAttrNames) const;
+
         void computeDownCounts(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,

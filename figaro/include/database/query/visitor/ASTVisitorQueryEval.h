@@ -22,14 +22,14 @@ namespace Figaro
             ): ASTVisitor(pDatabase), m_memoryLayout(memoryLayout),
                 m_pDatabase(pDatabase), m_qrHintType(qrHintType),
                 m_saveResult(saveResult){}
-        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override
-        { return nullptr; }
+        ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
         ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
         ASTVisitorQRResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
         ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) override { return nullptr; }
         ASTVisitorJoinResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
-        ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
+        ASTVisitorJoinResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
+        ASTVisitorJoinResult* visitNodeInverse(ASTNodeInverse* pElement) override;
 
         virtual ~ASTVisitorQueryEval() override {}
     };

@@ -9,6 +9,7 @@
 #include "database/query/node/ASTNodeRelation.h"
 #include "database/query/node/ASTNodeEvalJoin.h"
 #include "database/query/node/ASTNodeRightMultiply.h"
+#include "database/query/node/ASTNodeInverse.h"
 #include "ASTVisitorAbsResult.h"
 #include "database/Database.h"
 
@@ -29,6 +30,7 @@ namespace Figaro
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeInverse(ASTNodeInverse* pElement) = 0;
 
         virtual ~ASTVisitor() {}
     };

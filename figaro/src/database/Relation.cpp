@@ -1042,6 +1042,14 @@ namespace Figaro
         return Relation("MUL_" + getName() + second.getName(), std::move(result), m_attributes);
     }
 
+    Relation Relation::inverse(
+        const std::vector<std::string>& vJoinAttrNames
+    ) const
+    {
+        auto result = m_data.computeInverse(vJoinAttrNames.size());
+        return Relation("INV_" + getName(), std::move(result), m_attributes);
+    }
+
 
     void Relation::getDistinctValsAndBuildIndices(
         const std::vector<uint32_t>& vJoinAttrIdxs,
@@ -2326,7 +2334,7 @@ namespace Figaro
         {
             FIGARO_LOG_INFO("Computing Q")
             qData = std::move(
-                pJoinRel->m_data * catGenHeadAndTails.computeInverseTriangular());
+                pJoinRel->m_data * catGenHeadAndTails.computeInverse());
             FIGARO_LOG_BENCH("join Rel Size", pJoinRel->m_data.getNumRows())
         }
 

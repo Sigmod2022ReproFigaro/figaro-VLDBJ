@@ -212,6 +212,18 @@ namespace Figaro
         return mulRelName;
     }
 
+    std::string Database::inverse(const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+
+        Relation invRel = rel.inverse(vJoinAttrNames);
+
+        std::string invRelName = invRel.getName();
+        m_relations.emplace(invRelName, std::move(invRel));
+        return invRelName;
+    }
+
 
     void Database::computeDownCounts(
         const std::string& relationName,

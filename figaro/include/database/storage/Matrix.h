@@ -437,22 +437,25 @@ namespace Figaro
         }
 
           /**
-         * @brief We assume matrix is triangular.
          *
          * @return Matrix<T, L>
          */
-        Matrix<T, L> computeInverseTriangular(void)
+        Matrix<T, L> computeInverse(uint32_t numJoinAttr = 0) const
         {
             Matrix<T, L> inverse {m_numRows, m_numCols};
             inverse.copyBlockToThisMatrix(*this,
                 0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
-            long long int * pIpivot = new long long int[std::min(m_numCols, m_numRows)];
+            uint32_t M = m_numRows;
+            uint32_t N = m_numCols - numJoinAttr;
+            long long int * pIpivot = new long long int[std::min(M, N)];
+            uint32_t ldA = N + numJoinAttr;
+            double* pA = inverse.getArrPt() + numJoinAttr;
             LAPACKE_dgetrf(
-                LAPACK_ROW_MAJOR, m_numRows, m_numCols,
-                inverse.getArrPt(), m_numCols, pIpivot);
+                LAPACK_ROW_MAJOR, M, N,
+                pA, ldA, pIpivot);
 
-            LAPACKE_dgetri(LAPACK_ROW_MAJOR, m_numRows, inverse.getArrPt(),
-                    m_numCols, pIpivot);
+            LAPACKE_dgetri(LAPACK_ROW_MAJOR, M, pA,
+                    ldA, pIpivot);
             delete [ ] pIpivot;
             return inverse;
         }

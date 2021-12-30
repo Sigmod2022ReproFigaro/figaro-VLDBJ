@@ -28,6 +28,12 @@ namespace Figaro
             return nullptr;
         }
 
+        virtual ASTVisitorAbsResult* visitNodeInverse(ASTNodeInverse* pElement) override
+        {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
         virtual ~ASTJoinVisitor() override {}
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement)  override;
         virtual ASTVisitorJoinResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement)  override;

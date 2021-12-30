@@ -40,8 +40,6 @@ namespace Figaro
         FIGARO_LOG_INFO("central rel name", pElement->getJoinAttributeNames())
         FIGARO_LOG_INFO("central rel name", pElement->getChildrenParentJoinAttributeNames())
 
-
-
         std::string joinRelName = m_pDatabase->joinRelationsAndAddColumns(
             centralRelName,
             vRelNames,
@@ -55,9 +53,6 @@ namespace Figaro
     ASTVisitorAbsResult* ASTRightMultiplyVisitor::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
     {
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
-        ASTNodeRelation* pRightRelationNode = (ASTNodeRelation*)pElement->getRightOperand();
-        FIGARO_LOG_INFO("VISITING RIGHT OPERAND")
-        m_relName = pRightRelationNode->getRelationName();
         FIGARO_LOG_INFO("VISITING LEFT")
         ASTVisitorAbsResult* pResult = pElement->getLeftOperand()->accept(this);
         return pResult;

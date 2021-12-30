@@ -85,6 +85,9 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2);
 
+        std::string inverse(const std::string& relationName1,
+            const std::vector<std::string>& vJoinAttrNames);
+
         void computeDownCounts(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,

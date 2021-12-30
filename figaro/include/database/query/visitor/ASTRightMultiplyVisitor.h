@@ -12,7 +12,8 @@ namespace Figaro
         uint32_t startRowIdx = 0;
     public:
         ASTRightMultiplyVisitor(
-            Database* pDatabase): ASTVisitor(pDatabase) {}
+            Database* pDatabase,
+            const std::string& relName): ASTVisitor(pDatabase), m_relName(relName) {}
         virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         virtual  ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
@@ -33,6 +34,12 @@ namespace Figaro
         }
 
         virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement)  override
+        {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
+        virtual ASTVisitorAbsResult* visitNodeInverse(ASTNodeInverse* pElement)  override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;

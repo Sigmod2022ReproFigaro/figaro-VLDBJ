@@ -769,7 +769,7 @@ TEST(Matrix, Inverse)
     FIGARO_LOG_DBG(A)
     FIGARO_LOG_DBG(expInv)
 
-    Figaro::Relation::MatrixDT inv = A.computeInverseTriangular();
+    Figaro::Relation::MatrixDT inv = A.computeInverse();
     EXPECT_EQ(inv.getNumRows(), expInv.getNumRows());
     EXPECT_EQ(inv.getNumCols(), expInv.getNumCols());
 
