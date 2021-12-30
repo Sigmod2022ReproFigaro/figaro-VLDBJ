@@ -86,7 +86,12 @@ namespace Figaro
             {
                 vChild.push_back(child->copy());
             }
-            return new ASTNodeJoin(m_pCenRelation->copy(), vChild);
+            ASTNodeJoin* pNewNode =  new ASTNodeJoin(m_pCenRelation->copy(), vChild);
+            for (auto& child: pNewNode->getChildren())
+            {
+                child->setParent(pNewNode);
+            }
+            return pNewNode;
         }
     };
 }

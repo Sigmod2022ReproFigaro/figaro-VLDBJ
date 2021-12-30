@@ -25,7 +25,7 @@ namespace Figaro
 
          ASTNode* getRightOperand(void)
         {
-            return m_pLeftOperand;
+            return m_pRightOperand;
         };
 
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;

@@ -3,40 +3,62 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTRightMultiplyVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorJoinResult* ASTRightMultiplyVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
-        //m_pDatabase multiply each of the relations with m_rel
+        FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
         numNonJoinAttrs = pElement->getAttributeNames().size() - pElement->getJoinAttributeNames().size();
 
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
-        pElement->getParJoinAttributeNames(), {}, startRowIdx);
+        pElement->getJoinAttributeNames(), {}, startRowIdx);
 
         startRowIdx += numNonJoinAttrs;
+        FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
+        FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
         return new ASTVisitorJoinResult(mulRelName);
     }
 
-    ASTVisitorAbsResult* ASTRightMultiplyVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorJoinResult* ASTRightMultiplyVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vRelNames;
-        ASTVisitorJoinResult* pJoinResult = pElement->getCentralRelation()->accept(this);
-        vRelNames.push_back(pJoinResult->getJoinRelName());
+        std::string centralRelName;
+        FIGARO_LOG_INFO("VISITING JOIN")
+        ASTVisitorJoinResult* pJoinResult =
+            (ASTVisitorJoinResult*)pElement->getCentralRelation()->accept(this);
+        centralRelName = pJoinResult->getJoinRelName();
+        FIGARO_LOG_INFO("central rel name", centralRelName)
         delete pJoinResult;
+
         for (const auto& pChild: pElement->getChildren())
         {
             ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)(pChild->accept(this));
             vRelNames.push_back(pJoinResult->getJoinRelName());
             delete pJoinResult;
         }
-        // TODO: Add join option that adds columns
-        return new ASTVisitorJoinResult("");
+
+        FIGARO_LOG_INFO("central rel name", centralRelName)
+        FIGARO_LOG_INFO("central rel name", pElement->getJoinAttributeNames())
+        FIGARO_LOG_INFO("central rel name", pElement->getChildrenParentJoinAttributeNames())
+
+
+
+        std::string joinRelName = m_pDatabase->joinRelationsAndAddColumns(
+            centralRelName,
+            vRelNames,
+            pElement->getJoinAttributeNames(),
+            pElement->getParJoinAttributeNames(),
+            pElement->getChildrenParentJoinAttributeNames(), false);
+
+        return new ASTVisitorJoinResult(joinRelName);
     }
 
     ASTVisitorAbsResult* ASTRightMultiplyVisitor::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
     {
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
         ASTNodeRelation* pRightRelationNode = (ASTNodeRelation*)pElement->getRightOperand();
+        FIGARO_LOG_INFO("VISITING RIGHT OPERAND")
         m_relName = pRightRelationNode->getRelationName();
+        FIGARO_LOG_INFO("VISITING LEFT")
         ASTVisitorAbsResult* pResult = pElement->getLeftOperand()->accept(this);
         return pResult;
     }

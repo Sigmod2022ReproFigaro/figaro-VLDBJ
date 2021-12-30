@@ -170,6 +170,31 @@ namespace Figaro
         return relJoinName;
     }
 
+    std::string Database::joinRelationsAndAddColumns(const std::string& relationName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            bool trackProvenance)
+    {
+        std::vector<Relation*> vpChildRels;
+        Relation& rel = m_relations.at(relationName);
+        FIGARO_LOG_INFO("Relation names", vChildRelNames)
+        for (const auto childRelName: vChildRelNames)
+        {
+            Relation* pRel = &m_relations.at(childRelName);
+            vpChildRels.push_back(pRel);
+        }
+
+        Relation relJoin = rel.joinRelationsAndAddColumns(
+            vpChildRels, vJoinAttrNames,
+            vParJoinAttrNames,  vvJoinAttributeNames, trackProvenance);
+        std::string relJoinName = relJoin.getName();
+        m_relations.emplace(relJoin.getName(), std::move(relJoin));;
+        FIGARO_LOG_INFO("New rel name", relJoin.getName())
+        return relJoinName;
+    }
+
     std::string Database::multiply(const std::string& relationName1,
             const std::string& relationName2,
             const std::vector<std::string>& vJoinAttrNames1,

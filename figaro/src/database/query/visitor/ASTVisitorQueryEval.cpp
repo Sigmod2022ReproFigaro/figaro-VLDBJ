@@ -78,7 +78,7 @@ namespace Figaro
         // Add relation.
 
         ASTRightMultiplyVisitor astRMVisitor(m_pDatabase);
-        astRightMulNode.accept(&joinAttrVisitor);
+        astRightMulNode.getLeftOperand()->accept(&joinAttrVisitor);
         astRightMulNode.accept(&astRMVisitor);
 
         MICRO_BENCH_STOP(main)
