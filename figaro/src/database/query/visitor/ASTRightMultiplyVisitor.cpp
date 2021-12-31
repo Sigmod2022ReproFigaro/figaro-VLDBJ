@@ -8,13 +8,16 @@ namespace Figaro
         FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
         numNonJoinAttrs = pElement->getAttributeNames().size() - pElement->getJoinAttributeNames().size();
-
+        MICRO_BENCH_INIT(rightMultiply)
+        MICRO_BENCH_START(rightMultiply)
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
         pElement->getJoinAttributeNames(), {}, startRowIdx);
 
         startRowIdx += numNonJoinAttrs;
         FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
         FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
+        MICRO_BENCH_STOP(rightMultiply)
+        FIGARO_LOG_BENCH("rightMultiplyRelation", MICRO_BENCH_GET_TIMER_LAP(rightMultiply))
         return new ASTVisitorJoinResult(mulRelName);
     }
 
@@ -40,13 +43,16 @@ namespace Figaro
         FIGARO_LOG_INFO("central rel name", pElement->getJoinAttributeNames())
         FIGARO_LOG_INFO("central rel name", pElement->getChildrenParentJoinAttributeNames())
 
+        MICRO_BENCH_INIT(joinRelationsAndAddColumns)
+        MICRO_BENCH_START(joinRelationsAndAddColumns)
         std::string joinRelName = m_pDatabase->joinRelationsAndAddColumns(
             centralRelName,
             vRelNames,
             pElement->getJoinAttributeNames(),
             pElement->getParJoinAttributeNames(),
             pElement->getChildrenParentJoinAttributeNames(), false);
-
+        MICRO_BENCH_STOP(joinRelationsAndAddColumns)
+        FIGARO_LOG_BENCH("Value" + centralRelName, MICRO_BENCH_GET_TIMER_LAP(joinRelationsAndAddColumns))
         return new ASTVisitorJoinResult(joinRelName);
     }
 

@@ -934,7 +934,7 @@ namespace Figaro
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
         uint32_t glCnt = 0;
 
-        omp_set_num_threads(4);
+        //omp_set_num_threads(4);
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
