@@ -853,6 +853,130 @@ namespace Figaro
     }
 
 
+    void Relation::iterateOverRootRel(
+        const std::vector<Relation*>& vpRels,
+        const std::vector<Relation*>& vpParRels,
+        uint32_t rowIdx,
+        uint32_t& outIdx,
+        const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
+        const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
+        const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
+        const std::vector<uint32_t>& vParRelIdxs,
+        const std::vector<void*>& vpHashTabQueueOffsets
+        )
+    {
+        // Iterate over
+        std::vector<Relation::IteratorJoin> vIts;
+
+        bool thereIsNext = false;
+
+        // initIterators
+         // fillOutIterators(int)
+        vIts[0].m_vRowIdxs = {rowIdx};
+        for (uint32_t idxRel = 1; idxRel < vIts.size(); idxRel++)
+        {
+            // getHashTable based on parent node
+            uint32_t rowIdx = vIts[vParRelIdxs[idxRel]].m_vRowIdxs[0];
+            vIts[idxRel].m_vRowIdxs = getHashTableMNJoin(vvParJoinAttrIdxs[idxRel],
+                vpHashTabQueueOffsets[idxRel], vpParRels[idxRel]->m_data[rowIdx]);
+        }
+        // outputTuple()
+
+        for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
+        {
+            vIts[idxRel].next();
+            if (!vIts[idxRel].isEnd())
+            {
+                for (uint32_t idx2 = (uint32_t)idxRel + 1; idx2 < vIts.size(); idx2++)
+                {
+                    uint32_t rowIdx = vIts[vParRelIdxs[idx2]].m_vRowIdxs[0];
+                    vIts[idx2].m_vRowIdxs = getHashTableMNJoin(vvParJoinAttrIdxs[idxRel],
+                        vpHashTabQueueOffsets[idx2], vpParRels[idxRel]->m_data[idx2]);
+                }
+                thereIsNext = true;
+                break;
+            }
+        }
+
+        while (thereIsNext)
+        {
+            // outputTuple();
+            for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
+            {
+                vIts[idxRel].next();
+                if (!vIts[idxRel].isEnd())
+                {
+                    for (uint32_t idx2 = (uint32_t)idxRel + 1; idx2 < vIts.size(); idx2++)
+                    {
+                        uint32_t rowIdx = vIts[vParRelIdxs[idx2]].m_vRowIdxs[0];
+                        vIts[idx2].m_vRowIdxs = Relation::getHashTableMNJoin(vvParJoinAttrIdxs[idxRel],
+                            vpHashTabQueueOffsets[idx2], vpParRels[idxRel]->m_data[idx2]);
+                    }
+                    thereIsNext = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    Relation Relation::joinRelations(
+            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+    {
+        // Iterate over
+        std::vector<IteratorJoin> vIts;
+        std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvParJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvNonJoinAttrIdxs;
+        std::unordered_map<std::string, uint32_t> mParRelNameIdx;
+
+        std::vector<void*> vpHashTabQueueOffsets;
+        std::vector<uint32_t> vParRelIdxs;
+
+        uint32_t outIdx;
+
+        vvJoinAttrIdxs.resize(vpRels.size());
+        vvParJoinAttrIdxs.resize(vpRels.size());
+        vvNonJoinAttrIdxs.resize(vpRels.size());
+        vpHashTabQueueOffsets.resize(vpRels.size());
+        vParRelIdxs.resize(vpRels.size());
+
+        mParRelNameIdx[vpRels[0]->m_name] = 0;
+        // build hash tables for all relations except root;
+        for (uint32_t idxRel = 1; idxRel < vpRels.size(); idxRel++)
+        {
+            initHashTableMNJoin(
+                vvParJoinAttrIdxs[idxRel],
+                vpHashTabQueueOffsets[idxRel],
+                vpRels[idxRel]->m_data);
+            mParRelNameIdx[vpRels[0]->m_name] = idxRel;
+            vpRels[idxRel]->getAttributesIdxs(vvJoinAttrNames[idxRel], vvJoinAttrIdxs[idxRel]);
+            vpRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
+            vpRels[idxRel]->getAttributesIdxs(vvParJoinAttrNames[idxRel], vvParJoinAttrIdxs[idxRel]);
+        }
+
+        for (uint32_t idxRel = 1; idxRel < vParRelIdxs.size(); idxRel++)
+        {
+            vParRelIdxs[idxRel] = mParRelNameIdx[vpParRels[idxRel]->m_name];
+        }
+
+        outIdx = 0;
+        for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
+        {
+            iterateOverRootRel(vpRels, vpParRels, rowIdx, outIdx,
+                vvJoinAttrIdxs, vvParJoinAttrIdxs, vvNonJoinAttrIdxs, vParRelIdxs, vpHashTabQueueOffsets);
+        }
+
+        for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
+        {
+            destroyHashTableMNJoin(vvParJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
+        }
+
+    }
+
+
       Relation Relation::joinRelationsAndAddColumns(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
@@ -934,7 +1058,7 @@ namespace Figaro
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
         uint32_t glCnt = 0;
 
-        //omp_set_num_threads(4);
+        omp_set_num_threads(4);
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
