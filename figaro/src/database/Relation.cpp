@@ -820,26 +820,30 @@ namespace Figaro
         std::vector<Relation::IteratorJoin> vIts;
 
         bool thereIsNext = false;
-
         // initIterators
+        vIts.resize(vpRels.size());
          // fillOutIterators(int)
         vIts[0].m_vRowIdxs = {rowIdx};
+        FIGARO_LOG_DBG("WTF")
         for (uint32_t idxRel = 1; idxRel < vIts.size(); idxRel++)
         {
             // getHashTable based on parent node
             uint32_t rowIdx = vIts[vParRelIdxs[idxRel]].m_vRowIdxs[0];
+            FIGARO_LOG_DBG("HOHO", vvParJoinAttrIdxs[idxRel])
             vIts[idxRel].m_vRowIdxs = getHashTableMNJoin(vvParJoinAttrIdxs[idxRel],
                 vpHashTabQueueOffsets[idxRel], vpParRels[idxRel]->m_data[rowIdx]);
         }
-        // outputTuple()
+        FIGARO_LOG_DBG("HOHO")
         outIdx++;
+        // outputTuple()
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
             uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
             uint32_t relRowIdx = vIts[idxRel].getRowIdx();
             for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
             {
-                dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs.size() + offset]
+                FIGARO_LOG_DBG("Out", idxRel, idxNonJoin, outIdx)
+                dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
                     = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
 
             }
@@ -855,44 +859,50 @@ namespace Figaro
                     uint32_t rowIdx = vIts[vParRelIdxs[idx2]].m_vRowIdxs[0];
                     vIts[idx2].m_vRowIdxs = getHashTableMNJoin(vvParJoinAttrIdxs[idxRel],
                         vpHashTabQueueOffsets[idx2], vpParRels[idxRel]->m_data[idx2]);
+                    vIts[idx2].m_idx = 0;
                 }
                 thereIsNext = true;
                 break;
             }
         }
-
+        FIGARO_LOG_DBG("Pass")
         while (thereIsNext)
         {
             // outputTuple();
             outIdx++;
+            FIGARO_LOG_DBG("OutIdx",rowIdx, outIdx)
             for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
             {
                 uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
                 uint32_t relRowIdx = vIts[idxRel].getRowIdx();
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
-                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs.size() + offset]
+                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
                         = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
 
                 }
             }
-
+            thereIsNext = false;
             for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
             {
                 vIts[idxRel].next();
+                FIGARO_LOG_DBG("idxRel", idxRel, vIts[idxRel].m_idx, vIts[idxRel].m_vRowIdxs)
                 if (!vIts[idxRel].isEnd())
                 {
+                    FIGARO_LOG_DBG("Tu")
                     for (uint32_t idx2 = (uint32_t)idxRel + 1; idx2 < vIts.size(); idx2++)
                     {
                         uint32_t rowIdx = vIts[vParRelIdxs[idx2]].m_vRowIdxs[0];
                         vIts[idx2].m_vRowIdxs = Relation::getHashTableMNJoin(vvParJoinAttrIdxs[idxRel],
                             vpHashTabQueueOffsets[idx2], vpParRels[idxRel]->m_data[idx2]);
+                        vIts[idx2].m_idx = 0;
                     }
                     thereIsNext = true;
                     break;
                 }
             }
         }
+        FIGARO_LOG_DBG("End")
     }
 
     Relation Relation::joinRelations(
@@ -911,8 +921,10 @@ namespace Figaro
 
         std::vector<void*> vpHashTabQueueOffsets;
         std::vector<uint32_t> vParRelIdxs;
+        std::string newName;
+        std::vector<Attribute> newAttributes;
 
-        uint32_t outIdx;
+        uint32_t outIdx = 0;
 
         vvJoinAttrIdxs.resize(vpRels.size());
         vvParJoinAttrIdxs.resize(vpRels.size());
@@ -923,41 +935,57 @@ namespace Figaro
 
         mParRelNameIdx[vpRels[0]->m_name] = 0;
         vCumNonJoinAttrIdxs[0] = 0;
+        newName = vpRels[0]->m_name;
+        
         // build hash tables for all relations except root;
-        for (uint32_t idxRel = 1; idxRel < vpRels.size(); idxRel++)
+        for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
-            initHashTableMNJoin(
-                vvParJoinAttrIdxs[idxRel],
-                vpHashTabQueueOffsets[idxRel],
-                vpRels[idxRel]->m_data);
-            mParRelNameIdx[vpRels[0]->m_name] = idxRel;
+            mParRelNameIdx[vpRels[idxRel]->m_name] = idxRel;
             vpRels[idxRel]->getAttributesIdxs(vvJoinAttrNames[idxRel], vvJoinAttrIdxs[idxRel]);
-            vCumNonJoinAttrIdxs[idxRel] = vCumNonJoinAttrIdxs[idxRel-1] + vvNonJoinAttrIdxs[idxRel-1].size();
             vpRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
             vpRels[idxRel]->getAttributesIdxs(vvParJoinAttrNames[idxRel], vvParJoinAttrIdxs[idxRel]);
+            newName += vpRels[idxRel]->m_name;
+            newAttributes.insert(newAttributes.end(), 
+                vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0], 
+                vpRels[idxRel]->m_attributes.end());
+            if (idxRel > 0)
+            {
+                initHashTableMNJoin(
+                    vvParJoinAttrIdxs[idxRel],
+                    vpHashTabQueueOffsets[idxRel],
+                    vpRels[idxRel]->m_data);
+                vCumNonJoinAttrIdxs[idxRel] = vCumNonJoinAttrIdxs[idxRel-1] + vvNonJoinAttrIdxs[idxRel-1].size();
+            }
+            
         }
+
+        FIGARO_LOG_DBG("newName", newName)
+        FIGARO_LOG_DBG("newAttributes", newAttributes)
 
         for (uint32_t idxRel = 1; idxRel < vParRelIdxs.size(); idxRel++)
         {
             vParRelIdxs[idxRel] = mParRelNameIdx[vpParRels[idxRel]->m_name];
         }
 
-        outIdx = 0;
-        MatrixDT dataOutput {130'000'000,
+        FIGARO_LOG_DBG("vParRelIdxs", vParRelIdxs)
+
+        outIdx = -1;
+        //MatrixDT dataOutput {130'000'000,
+        MatrixDT dataOutput {20,
             (uint32_t)(vCumNonJoinAttrIdxs.back() +  vvNonJoinAttrIdxs.back().size())};
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
             iterateOverRootRel(vpRels, vpParRels, rowIdx, outIdx,
                 dataOutput, vvJoinAttrIdxs, vvParJoinAttrIdxs,
                 vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs, vpHashTabQueueOffsets);
-            dataOutput.resize(outIdx);
         }
+        dataOutput.resize(outIdx + 1);
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
             destroyHashTableMNJoin(vvParJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
         }
-        return Relation("JOIN_" + vpRels[0]->m_name, std::move(m_data), {});
+        return Relation("JOIN_" + newName, std::move(dataOutput), newAttributes);
     }
 
 

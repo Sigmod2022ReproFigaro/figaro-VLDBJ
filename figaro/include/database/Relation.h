@@ -426,7 +426,7 @@ namespace Figaro
             bool trackProvenance);
 
 
-        Relation joinRelations(
+        static Relation joinRelations(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
@@ -552,7 +552,7 @@ namespace Figaro
     };
 
 
-     const std::vector<uint32_t>& Relation::getHashTableMNJoin(
+     inline const std::vector<uint32_t>& Relation::getHashTableMNJoin(
         const std::vector<uint32_t>& vParJoinAttrIdxs,
         void*  htChildParAttrs,
         const double* pRow)
