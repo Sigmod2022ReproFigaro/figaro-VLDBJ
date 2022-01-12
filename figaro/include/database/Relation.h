@@ -125,6 +125,19 @@ namespace Figaro
                 std::swap(attr1.m_isPrimaryKey, attr2.m_isPrimaryKey);
             }
         };
+
+        struct IteratorJoin
+        {
+            uint32_t m_idx = 0;
+            std::vector<uint32_t> m_vRowIdxs;
+            bool isEnd() const
+            {
+                return m_idx == m_vRowIdxs.size();
+            }
+
+            void next(void) { m_idx++; }
+            uint32_t getRowIdx(void) const { return m_vRowIdxs[m_idx]; }
+        };
     private:
         std::string m_name;
         bool m_isTmp = false;
@@ -322,6 +335,19 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
+        static void iterateOverRootRel(
+            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            uint32_t rowIdx,
+            uint32_t& outIdx,
+            MatrixDT& dataOut,
+            const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
+            const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
+            const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
+            const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
+            const std::vector<uint32_t>& vParRelIdxs,
+            const std::vector<void*>& vpHashTabQueueOffsets
+            );
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
          * to a new relation.
@@ -398,6 +424,14 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool trackProvenance);
+
+
+        Relation joinRelations(
+            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
+
 
         Relation joinRelationsAndAddColumns(const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
@@ -516,5 +550,32 @@ namespace Figaro
 
         void outputToFile(std::ostream& out, char sep, uint32_t precision, bool header) const;
     };
+
+
+     const std::vector<uint32_t>& Relation::getHashTableMNJoin(
+        const std::vector<uint32_t>& vParJoinAttrIdxs,
+        void*  htChildParAttrs,
+        const double* pRow)
+    {
+        if (vParJoinAttrIdxs.size() == 1)
+        {
+            const uint32_t joinAttrVal = (uint32_t)pRow[vParJoinAttrIdxs[0]];
+            std::unordered_map<uint32_t, std::vector<uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::vector<uint32_t> >*)(htChildParAttrs);
+            return phtChildOneParAttrs->at(joinAttrVal);
+        }
+        else if (vParJoinAttrIdxs.size() == 2)
+        {
+            const std::tuple<uint32_t, uint32_t> joinAttrVal =
+            std::make_tuple((uint32_t)pRow[vParJoinAttrIdxs[0]],
+                            (uint32_t)pRow[vParJoinAttrIdxs[1]]);
+            std::unordered_map<std::tuple<uint32_t, uint32_t>,
+            std::vector<uint32_t> > *phtChildTwoParAttrs = (std::unordered_map< std::tuple<uint32_t, uint32_t>, std::vector<uint32_t> >*)(htChildParAttrs);
+            return phtChildTwoParAttrs->at(joinAttrVal);
+        }
+        else
+        {
+            FIGARO_LOG_DBG("Damn")
+        }
+    }
 }
 #endif
