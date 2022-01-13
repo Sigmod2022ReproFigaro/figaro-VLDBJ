@@ -58,7 +58,7 @@ namespace Figaro
     ASTVisitorJoinResult* ASTJoinVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         std::string newRelName;
-        FIGARO_LOG_INFO("VISITING EVAL NODE")
+        FIGARO_LOG_INFO("VISITING EVAL JOIN NODE", m_isLeapFrog ? "LEAP_FROG" : "HASH_JOIN")
         if (m_isLeapFrog)
         {
             newRelName = m_pDatabase->joinRelations(m_vPreOrderRelNames, m_vPreOrderParRelNames,
@@ -66,6 +66,7 @@ namespace Figaro
         }
         else 
         {
+            return nullptr;
             ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(this);
             
             newRelName = pJoinResult->getJoinRelName();

@@ -149,13 +149,22 @@ namespace Figaro
         MICRO_BENCH_INIT(joinTime)
         MICRO_BENCH_START(joinTime)
         pElement->getLeftOperand()->accept(&joinAttrVisitor);
+        ASTNodeEvalJoin* pNodeEvalJoin = new ASTNodeEvalJoin(pElement->getLeftOperand()->copy(), {}, {}, 0);
+        
+        pNodeEvalJoin->accept(&joinAttrVisitor);
+        
+        FIGARO_LOG_INFO("preOrderRelNames", joinAttrVisitor.getPreOrderRelNames())
+        FIGARO_LOG_INFO("preOrderParRelNames", joinAttrVisitor.getPreOrderParRelNames())
+        FIGARO_LOG_INFO("vvJoinAttrNames", joinAttrVisitor.getPreOrderVVJoinAttrNames())
+        FIGARO_LOG_INFO("vvParJoinAttrNames", joinAttrVisitor.getPreOrderVVParJoinAttrNames())
         ASTJoinVisitor astJoinVisitor(m_pDatabase, true, 
             joinAttrVisitor.getPreOrderRelNames(),
             joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(),
             joinAttrVisitor.getPreOrderVVParJoinAttrNames());
+        FIGARO_LOG_INFO("Works up to here")
         ASTVisitorJoinResult* pJoinResult =
-            (ASTVisitorJoinResult*)pElement->getLeftOperand()->accept(&astJoinVisitor);
+            (ASTVisitorJoinResult*)pNodeEvalJoin->accept(&astJoinVisitor);
         delete pJoinResult;
         /*
         */

@@ -36,7 +36,12 @@ namespace Figaro
             std::vector<std::string> vPreOrderParRelNames;
             for (const auto& astNodeAbsRel: m_vPreOrderASTNodeAbsRels)
             {
-                vPreOrderParRelNames.push_back(astNodeAbsRel->getParent()->getRelation()->getRelationName());
+                std::string parRelName = "";
+                if (astNodeAbsRel->getParent() != nullptr)
+                {
+                    parRelName = astNodeAbsRel->getParent()->getRelation()->getRelationName();
+                }
+                vPreOrderParRelNames.push_back(parRelName);
             }
             return vPreOrderParRelNames;
         }
@@ -46,8 +51,7 @@ namespace Figaro
             std::vector<std::vector<std::string> > vvJoinAttrNames;
             for (const auto& astNodeAbsRel: m_vPreOrderASTNodeAbsRels)
             {
-                std::vector vJoinAttrNames = astNodeAbsRel->getRelation()->getJoinAttributeNames();
-                vvJoinAttrNames.push_back(vJoinAttrNames);
+                vvJoinAttrNames.push_back(astNodeAbsRel->getRelation()->getJoinAttributeNames());
             }
             return vvJoinAttrNames;
         }

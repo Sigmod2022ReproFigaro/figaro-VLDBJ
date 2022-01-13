@@ -896,6 +896,7 @@ TEST(Relation, JoinLeapFrog)
     std::vector<Relation*> vParRels = {nullptr, &relA, &relA};
     std::vector<std::vector<std::string> > vvJoinAttrs = {{"A"}, {"A"}, {"A"}}; 
     std::vector<std::vector<std::string> > vvParJoinAttrs = {{}, {"A"}, {"A"}};
+    FIGARO_LOG_DBG("MAJMUN")
     Relation joinRel = Relation::joinRelations(vRels, vParRels, vvJoinAttrs, vvParJoinAttrs);
     FIGARO_LOG_DBG(joinRel);
     /*

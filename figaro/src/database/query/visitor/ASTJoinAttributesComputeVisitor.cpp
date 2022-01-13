@@ -66,7 +66,7 @@ namespace Figaro
     ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         FIGARO_LOG_INFO("Eval join");
-        FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
+        m_vPreOrderASTNodeAbsRels.clear();
         pElement->getOperand()->accept(this);
         return nullptr;
     }

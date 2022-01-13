@@ -205,8 +205,15 @@ namespace Figaro
 
         for (const auto parRelName: vParRelNames)
         {
-            Relation* pRel = &m_relations.at(parRelName);
-            vpParRels.push_back(pRel);
+            if (parRelName == "")
+            {
+                vpParRels.push_back(nullptr);
+            }
+            else
+            {
+                Relation* pRel = &m_relations.at(parRelName);
+                vpParRels.push_back(pRel);
+            }
         }
 
         Relation relJoin = Relation::joinRelations(

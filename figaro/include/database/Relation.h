@@ -339,10 +339,12 @@ namespace Figaro
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             uint32_t rowIdx,
+
             uint32_t& outIdx,
             MatrixDT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
+            const std::vector<std::vector<std::vector<uint32_t> > >& vvvChildJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             const std::vector<uint32_t>& vParRelIdxs,
@@ -561,7 +563,14 @@ namespace Figaro
         {
             const uint32_t joinAttrVal = (uint32_t)pRow[vParJoinAttrIdxs[0]];
             std::unordered_map<uint32_t, std::vector<uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::vector<uint32_t> >*)(htChildParAttrs);
+            try {
+
             return phtChildOneParAttrs->at(joinAttrVal);
+            }
+            catch (...)
+            {
+                FIGARO_LOG_INFO("WTF", vParJoinAttrIdxs.size(), joinAttrVal, *phtChildOneParAttrs)
+            }
         }
         else if (vParJoinAttrIdxs.size() == 2)
         {
@@ -570,7 +579,13 @@ namespace Figaro
                             (uint32_t)pRow[vParJoinAttrIdxs[1]]);
             std::unordered_map<std::tuple<uint32_t, uint32_t>,
             std::vector<uint32_t> > *phtChildTwoParAttrs = (std::unordered_map< std::tuple<uint32_t, uint32_t>, std::vector<uint32_t> >*)(htChildParAttrs);
-            return phtChildTwoParAttrs->at(joinAttrVal);
+            try {
+                return phtChildTwoParAttrs->at(joinAttrVal);
+
+            }
+            catch (...) {
+                FIGARO_LOG_INFO("WTF")
+            }
         }
         else
         {
