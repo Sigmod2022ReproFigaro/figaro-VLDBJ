@@ -76,6 +76,13 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool trackProvenance);
 
+
+        std::string joinRelations(
+            const std::vector<std::string>& vRelNames,
+            const std::vector<std::string>& vParRelNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
+
         std::string joinRelationsAndAddColumns(const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
             const std::vector<std::string>& vJoinAttrNames,

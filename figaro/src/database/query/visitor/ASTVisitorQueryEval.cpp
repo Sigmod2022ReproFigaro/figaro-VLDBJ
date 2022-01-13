@@ -145,18 +145,22 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("VISITING EVAL RIGHT MULTIPLY NODE")
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
-        //ASTJoinVisitor astJoinVisitor(m_pDatabase);
 
-        MICRO_BENCH_INIT(test)
-        MICRO_BENCH_START(test)
+        MICRO_BENCH_INIT(joinTime)
+        MICRO_BENCH_START(joinTime)
         pElement->getLeftOperand()->accept(&joinAttrVisitor);
-        /*
+        ASTJoinVisitor astJoinVisitor(m_pDatabase, true, 
+            joinAttrVisitor.getPreOrderRelNames(),
+            joinAttrVisitor.getPreOrderParRelNames(),
+            joinAttrVisitor.getPreOrderVVJoinAttrNames(),
+            joinAttrVisitor.getPreOrderVVParJoinAttrNames());
         ASTVisitorJoinResult* pJoinResult =
             (ASTVisitorJoinResult*)pElement->getLeftOperand()->accept(&astJoinVisitor);
         delete pJoinResult;
+        /*
         */
-        MICRO_BENCH_STOP(test)
-        FIGARO_LOG_BENCH("Timer lap", MICRO_BENCH_GET_TIMER_LAP(test))
+        MICRO_BENCH_STOP(joinTime)
+        FIGARO_LOG_BENCH("Join time", MICRO_BENCH_GET_TIMER_LAP(joinTime))
         ASTVisitorJoinResult* pMatrix =
             (ASTVisitorJoinResult*)pElement->getRightOperand()->accept(this);
 

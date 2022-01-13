@@ -8,9 +8,23 @@ namespace Figaro
 {
     class ASTJoinVisitor: public ASTVisitor
     {
+        bool m_isLeapFrog = false;
+        std::vector<std::string> m_vPreOrderRelNames;
+        std::vector<std::string> m_vPreOrderParRelNames;
+        std::vector<std::vector<std::string> > m_vvJoinAttrNames;
+        std::vector<std::vector<std::string> > m_vvParJoinAttrNames;
     public:
-        ASTJoinVisitor(Database* pDatabase):
-            ASTVisitor(pDatabase)
+        ASTJoinVisitor(Database* pDatabase, bool isLeapFrog = false,
+            const std::vector<std::string>& vPreOrderRelNames = {},
+            const std::vector<std::string>& vPreOrderParRelNames = {},
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames = {},
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames = {}
+            ):
+            ASTVisitor(pDatabase), m_isLeapFrog(isLeapFrog),
+            m_vPreOrderRelNames(vPreOrderRelNames),
+            m_vPreOrderParRelNames(vPreOrderParRelNames),
+            m_vvJoinAttrNames(vvJoinAttrNames),
+            m_vvParJoinAttrNames(vvParJoinAttrNames)
          {}
         virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;

@@ -5,6 +5,8 @@ namespace Figaro
 {
     ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
+        std::string parName = "";
+        m_vPreOrderASTNodeAbsRels.push_back(pElement);
         pElement->checkAndUpdateJoinAttributes();
         if (m_sortValues)
         {
@@ -21,6 +23,7 @@ namespace Figaro
     {
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
+        m_vPreOrderASTNodeAbsRels.push_back(pElement);
         for (const auto& pChild: pElement->getChildren())
         {
             FIGARO_LOG_DBG("Child");

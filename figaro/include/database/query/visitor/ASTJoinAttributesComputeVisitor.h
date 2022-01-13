@@ -10,6 +10,7 @@ namespace Figaro
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
         bool m_sortValues;
         Figaro::MemoryLayout m_memoryLayout;
+        std::vector<ASTNodeAbsRelation*> m_vPreOrderASTNodeAbsRels;
     public:
         ASTJoinAttributesComputeVisitor(
             Database* pDatabase, bool sortValues,
@@ -19,6 +20,48 @@ namespace Figaro
         ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
         ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
         ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
+        
+        std::vector<std::string> getPreOrderRelNames(void) const
+        {
+            std::vector<std::string> vPreOrderRelNames;
+            for (const auto& astNodeAbsRel: m_vPreOrderASTNodeAbsRels)
+            {
+                vPreOrderRelNames.push_back(astNodeAbsRel->getRelation()->getRelationName());
+            }
+            return vPreOrderRelNames;
+        } 
+
+        std::vector<std::string> getPreOrderParRelNames(void) const
+        {
+            std::vector<std::string> vPreOrderParRelNames;
+            for (const auto& astNodeAbsRel: m_vPreOrderASTNodeAbsRels)
+            {
+                vPreOrderParRelNames.push_back(astNodeAbsRel->getParent()->getRelation()->getRelationName());
+            }
+            return vPreOrderParRelNames;
+        }
+
+        const std::vector<std::vector<std::string> > getPreOrderVVJoinAttrNames(void) const
+        {
+            std::vector<std::vector<std::string> > vvJoinAttrNames;
+            for (const auto& astNodeAbsRel: m_vPreOrderASTNodeAbsRels)
+            {
+                std::vector vJoinAttrNames = astNodeAbsRel->getRelation()->getJoinAttributeNames();
+                vvJoinAttrNames.push_back(vJoinAttrNames);
+            }
+            return vvJoinAttrNames;
+        }
+
+        const std::vector<std::vector<std::string> > getPreOrderVVParJoinAttrNames(void) const
+        {
+            std::vector<std::vector<std::string> > vvParJoinAttrNames;
+            for (const auto& astNodeAbsRel: m_vPreOrderASTNodeAbsRels)
+            {
+                std::vector vParJoinAttrNames = astNodeAbsRel->getRelation()->getParJoinAttributeNames();
+                vvParJoinAttrNames.push_back(vParJoinAttrNames);
+            }
+            return vvParJoinAttrNames;
+        }
 
         virtual ~ASTJoinAttributesComputeVisitor() override {}
 

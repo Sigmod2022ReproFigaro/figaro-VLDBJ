@@ -970,8 +970,8 @@ namespace Figaro
         FIGARO_LOG_DBG("vParRelIdxs", vParRelIdxs)
 
         outIdx = -1;
-        //MatrixDT dataOutput {130'000'000,
-        MatrixDT dataOutput {20,
+        //MatrixDT dataOutput {20,
+        MatrixDT dataOutput {130'000'000,
             (uint32_t)(vCumNonJoinAttrIdxs.back() +  vvNonJoinAttrIdxs.back().size())};
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
