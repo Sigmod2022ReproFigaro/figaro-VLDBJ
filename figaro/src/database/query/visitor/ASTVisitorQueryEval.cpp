@@ -173,7 +173,9 @@ namespace Figaro
         ASTVisitorJoinResult* pMatrix =
             (ASTVisitorJoinResult*)pElement->getRightOperand()->accept(this);
 
-        ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(), false);
+        ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
+            true, joinAttrVisitor.getPreOrderRelNames(), joinAttrVisitor.getPreOrderParRelNames(),
+            joinAttrVisitor.getPreOrderVVJoinAttrNames(), joinAttrVisitor.getPreOrderVVParJoinAttrNames());
         ASTVisitorJoinResult* pMatMulResult = (ASTVisitorJoinResult*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();
         delete pMatMulResult;

@@ -12,6 +12,10 @@ namespace Figaro
         MICRO_BENCH_START(rightMultiply)
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
         pElement->getJoinAttributeNames(), {}, startRowIdx);
+        if (m_useLFTJoin)
+        {
+            m_vRelNames.push_back(mulRelName);
+        }
 
         startRowIdx += numNonJoinAttrs;
         FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
@@ -25,13 +29,13 @@ namespace Figaro
     {
         std::vector<std::string> vRelNames;
         std::string centralRelName;
+        std::string joinRelName = "";
         FIGARO_LOG_INFO("VISITING JOIN")
         ASTVisitorJoinResult* pJoinResult =
             (ASTVisitorJoinResult*)pElement->getCentralRelation()->accept(this);
         centralRelName = pJoinResult->getJoinRelName();
         FIGARO_LOG_INFO("central rel name", centralRelName)
         delete pJoinResult;
-
         for (const auto& pChild: pElement->getChildren())
         {
             ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)(pChild->accept(this));
@@ -39,20 +43,24 @@ namespace Figaro
             delete pJoinResult;
         }
 
-        FIGARO_LOG_INFO("central rel name", centralRelName)
-        FIGARO_LOG_INFO("central rel name", pElement->getJoinAttributeNames())
-        FIGARO_LOG_INFO("central rel name", pElement->getChildrenParentJoinAttributeNames())
+        if (!m_useLFTJoin)
+        {
 
-        MICRO_BENCH_INIT(joinRelationsAndAddColumns)
-        MICRO_BENCH_START(joinRelationsAndAddColumns)
-        std::string joinRelName = m_pDatabase->joinRelationsAndAddColumns(
-            centralRelName,
-            vRelNames,
-            pElement->getJoinAttributeNames(),
-            pElement->getParJoinAttributeNames(),
-            pElement->getChildrenParentJoinAttributeNames(), false);
-        MICRO_BENCH_STOP(joinRelationsAndAddColumns)
-        FIGARO_LOG_BENCH("Value" + centralRelName, MICRO_BENCH_GET_TIMER_LAP(joinRelationsAndAddColumns))
+            FIGARO_LOG_INFO("central rel name", centralRelName)
+            FIGARO_LOG_INFO("central rel name", pElement->getJoinAttributeNames())
+            FIGARO_LOG_INFO("central rel name", pElement->getChildrenParentJoinAttributeNames())
+
+            MICRO_BENCH_INIT(joinRelationsAndAddColumns)
+            MICRO_BENCH_START(joinRelationsAndAddColumns)
+            joinRelName = m_pDatabase->joinRelationsAndAddColumns(
+                centralRelName,
+                vRelNames,
+                pElement->getJoinAttributeNames(),
+                pElement->getParJoinAttributeNames(),
+                pElement->getChildrenParentJoinAttributeNames(), false);
+            MICRO_BENCH_STOP(joinRelationsAndAddColumns)
+            FIGARO_LOG_BENCH("Value" + centralRelName, MICRO_BENCH_GET_TIMER_LAP(joinRelationsAndAddColumns))
+        }
         return new ASTVisitorJoinResult(joinRelName);
     }
 
@@ -61,9 +69,35 @@ namespace Figaro
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
         FIGARO_LOG_INFO("VISITING LEFT")
         ASTVisitorAbsResult* pResult;
-        if (!m_useLFTJoin)
+        if (m_useLFTJoin)
         {
             pResult = pElement->getLeftOperand()->accept(this);
+            std::unordered_map<std::string, uint32_t> htNameIdx; 
+            for (uint32_t idxRel = 0; idxRel < m_vPreOrderRelNames.size(); idxRel++)
+            {
+                htNameIdx[m_vPreOrderRelNames[idxRel]] = idxRel;
+            }
+            for (uint32_t idxRel = 0; idxRel < m_vPreOrderParRelNames.size(); idxRel++)
+            {
+                std::string parRelName = m_vPreOrderParRelNames[idxRel];
+                uint32_t parIdxRel;
+                std::string parRelNameAd;
+                if (parRelName == "")
+                {
+                    parIdxRel = 0;
+                    parRelNameAd = "";
+                }
+                else
+                {
+                    parIdxRel = htNameIdx[parRelName];
+                    parRelNameAd = m_vRelNames[parIdxRel];
+                }
+                m_vParRelNames.push_back(parRelNameAd);
+            }
+            std::string qRelName = m_pDatabase->joinRelationsAndAddColumns(
+                m_vRelNames, m_vParRelNames,
+                m_vvJoinAttrNames, m_vvParJoinAttrNames);
+            pResult = new ASTVisitorJoinResult(qRelName);
         }
         else
         {

@@ -11,12 +11,25 @@ namespace Figaro
         std::string m_relName;
         uint32_t startRowIdx = 0;
         bool m_useLFTJoin;
+        std::vector<std::string> m_vRelNames;
+        std::vector<std::string> m_vParRelNames;
+        std::vector<std::string> m_vPreOrderRelNames;
+        std::vector<std::string> m_vPreOrderParRelNames;
+        std::vector<std::vector<std::string> > m_vvJoinAttrNames;
+        std::vector<std::vector<std::string> > m_vvParJoinAttrNames;
     public:
         ASTRightMultiplyVisitor(
             Database* pDatabase,
             const std::string& relName,
-            bool useLFTJoin): ASTVisitor(pDatabase), m_relName(relName), 
-                m_useLFTJoin(useLFTJoin) {}
+            bool useLFTJoin = false,
+            const std::vector<std::string>& vPreOrderRelNames = {},
+            const std::vector<std::string>& vPreOrderParRelNames = {},
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames = {},
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames = {}): ASTVisitor(pDatabase), m_relName(relName), 
+                m_useLFTJoin(useLFTJoin), m_vPreOrderRelNames(vPreOrderRelNames),
+                m_vPreOrderParRelNames(vPreOrderParRelNames),
+                m_vvJoinAttrNames(vvJoinAttrNames),
+                m_vvParJoinAttrNames(vvParJoinAttrNames) {}
         virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         virtual  ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;

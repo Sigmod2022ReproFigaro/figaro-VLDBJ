@@ -836,9 +836,16 @@ namespace Figaro
                 uint32_t relRowIdx = vIts[idxRel].getRowIdx();
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
-                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
-                        += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-
+                    if (idxRel == 0)
+                    {
+                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                            = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                    }
+                    else
+                    {
+                         dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                            += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                    }
                 }
             }
         }
@@ -1022,11 +1029,7 @@ namespace Figaro
         //MatrixDT dataOutput {20,
         MatrixDT dataOutput {130'000'000, (uint32_t)(newAttributes.size())};
         
-        if (addColumns)
-        {
-            dataOutput.setToZeros();
-        }
-        omp_set_num_threads(1);
+        //omp_set_num_threads(16);
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
@@ -1170,20 +1173,11 @@ namespace Figaro
                 for (const auto& joinAttrIdx: vParJoinAttrIdxs)
                 {
                     dataOutput[rowIdxOut][joinAttrIdx] = m_data[rowIdx][joinAttrIdx];
-                    if (rowIdx == 0)
-                    {
-                        FIGARO_LOG_INFO("joinAttrIdx", joinAttrIdx, "val", m_data[rowIdx][joinAttrIdx])
-                    }
                 }
                 for (const auto& nonJoinAttrIdx: vNonJoinAttrIdxs)
                 {
                     dataOutput[rowIdxOut][nonJoinAttrIdx - offPar] =
                     m_data[rowIdx][nonJoinAttrIdx];
-                    if (rowIdx == 0)
-                    {
-                        FIGARO_LOG_INFO("colIdxOut", nonJoinAttrIdx - offPar, "nonJoinAttrIdx", nonJoinAttrIdx, "val", m_data[rowIdx][nonJoinAttrIdx])
-
-                    }
                 }
 
                 for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
