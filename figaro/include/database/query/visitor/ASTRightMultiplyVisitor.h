@@ -10,10 +10,13 @@ namespace Figaro
     {
         std::string m_relName;
         uint32_t startRowIdx = 0;
+        bool m_useLFTJoin;
     public:
         ASTRightMultiplyVisitor(
             Database* pDatabase,
-            const std::string& relName): ASTVisitor(pDatabase), m_relName(relName) {}
+            const std::string& relName,
+            bool useLFTJoin): ASTVisitor(pDatabase), m_relName(relName), 
+                m_useLFTJoin(useLFTJoin) {}
         virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         virtual  ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;

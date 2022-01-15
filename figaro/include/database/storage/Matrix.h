@@ -235,6 +235,11 @@ namespace Figaro
             return m_numCols;
         }
 
+        void setToZeros(void) 
+        {
+            m_pStorage->setToZeros();
+        }
+
         friend std::ostream& operator<<(std::ostream& out, const Matrix<T, L>& m)
         {
             out << "Figaro matrix" << std::endl;

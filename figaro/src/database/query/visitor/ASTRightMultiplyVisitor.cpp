@@ -60,7 +60,15 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
         FIGARO_LOG_INFO("VISITING LEFT")
-        ASTVisitorAbsResult* pResult = pElement->getLeftOperand()->accept(this);
+        ASTVisitorAbsResult* pResult;
+        if (!m_useLFTJoin)
+        {
+            pResult = pElement->getLeftOperand()->accept(this);
+        }
+        else
+        {
+            pResult = pElement->getLeftOperand()->accept(this);
+        }
         return pResult;
     }
 }

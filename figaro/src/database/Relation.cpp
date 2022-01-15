@@ -802,11 +802,53 @@ namespace Figaro
     }
 
 
+    void Relation::internalOutputTuple(
+        const std::vector<Relation*>& vpRels,
+        Relation::MatrixDT& dataOut,
+        const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
+        const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
+        const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
+        std::vector<Relation::IteratorJoin>& vIts,
+        tbb::atomic<uint32_t>& atOutIdx,
+        bool addColumns
+    )
+    {
+        uint32_t outIdx;
+        outIdx = atOutIdx.fetch_and_increment() + 1;
+        if (!addColumns)
+        {
+            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
+            {
+                uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
+                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
+                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
+                {
+                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
+                        = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+
+                }
+            }
+        }
+        else
+        {
+            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
+            {
+                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
+                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
+                {
+                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                        += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+
+                }
+            }
+        }
+    }
+
     void Relation::iterateOverRootRel(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             uint32_t rowIdx,
-            uint32_t& outIdx,
+            tbb::atomic<uint32_t>& atOutIdx,
             MatrixDT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
@@ -814,8 +856,9 @@ namespace Figaro
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             const std::vector<uint32_t>& vParRelIdxs,
-            const std::vector<void*>& vpHashTabQueueOffsets
-            )
+            const std::vector<void*>& vpHashTabQueueOffsets,
+            bool addColumns
+    )
     {
         // Iterate over
         std::vector<Relation::IteratorJoin> vIts;
@@ -834,19 +877,8 @@ namespace Figaro
             vIts[idxRel].m_vRowIdxs = getHashTableMNJoin(vvvChildJoinAttrIdxs[parIdxRel][idxRel],
                 vpHashTabQueueOffsets[idxRel], vpParRels[idxRel]->m_data[rowIdxPar]);
         }
-        outIdx++;
-        // outputTuple()
-        for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
-        {
-            uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
-            uint32_t relRowIdx = vIts[idxRel].getRowIdx();
-            for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
-            {
-                dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
-                    = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-
-            }
-        }
+        internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs, 
+            vCumNonJoinAttrIdxs, vIts, atOutIdx, addColumns);
 
         for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
         {
@@ -870,19 +902,8 @@ namespace Figaro
         }
         while (thereIsNext)
         {
-            // outputTuple();
-            outIdx++;
-            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
-            {
-                uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
-                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
-                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
-                {
-                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
-                        = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-
-                }
-            }
+            internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs, 
+                vCumNonJoinAttrIdxs, vIts, atOutIdx, addColumns);
             thereIsNext = false;
             for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
             {
@@ -907,11 +928,11 @@ namespace Figaro
         }
     }
 
-    Relation Relation::joinRelations(
-            const std::vector<Relation*>& vpRels,
+    Relation Relation::internalJoinRelations(const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            bool addColumns)
     {
         // Iterate over
         std::vector<IteratorJoin> vIts;
@@ -927,7 +948,7 @@ namespace Figaro
         std::string newName;
         std::vector<Attribute> newAttributes;
 
-        uint32_t outIdx = 0;
+        tbb::atomic<uint32_t> outIdx;
 
         vvJoinAttrIdxs.resize(vpRels.size());
         vvParJoinAttrIdxs.resize(vpRels.size());
@@ -949,9 +970,18 @@ namespace Figaro
             vpRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
             vpRels[idxRel]->getAttributesIdxs(vvParJoinAttrNames[idxRel], vvParJoinAttrIdxs[idxRel]);
             newName += vpRels[idxRel]->m_name;
-            newAttributes.insert(newAttributes.end(), 
-                vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0], 
-                vpRels[idxRel]->m_attributes.end());
+            if (!addColumns)
+            {
+                newAttributes.insert(newAttributes.end(), 
+                    vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0], 
+                    vpRels[idxRel]->m_attributes.end());
+            }
+            else if (idxRel == 0)
+            {
+                newAttributes.insert(newAttributes.end(), 
+                    vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0], 
+                    vpRels[idxRel]->m_attributes.end());
+            }
             if (idxRel > 0)
             {
                 initHashTableMNJoin(
@@ -990,16 +1020,24 @@ namespace Figaro
 
         outIdx = -1;
         //MatrixDT dataOutput {20,
-        MatrixDT dataOutput {130'000'000,
-            (uint32_t)(vCumNonJoinAttrIdxs.back() +  vvNonJoinAttrIdxs.back().size())};
+        MatrixDT dataOutput {130'000'000, (uint32_t)(newAttributes.size())};
+        
+        if (addColumns)
+        {
+            dataOutput.setToZeros();
+        }
+        omp_set_num_threads(1);
+        #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
             iterateOverRootRel(vpRels, vpParRels, rowIdx, outIdx,
                 dataOutput, vvJoinAttrIdxs, vvParJoinAttrIdxs,
                 vvvChildJoinAttrIdxs,
-                vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs, vpHashTabQueueOffsets);
+                vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs, 
+                vpHashTabQueueOffsets, addColumns);
         }
         dataOutput.resize(outIdx + 1);
+        FIGARO_LOG_BENCH("Join size", outIdx+1)
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
@@ -1009,7 +1047,18 @@ namespace Figaro
     }
 
 
-      Relation Relation::joinRelationsAndAddColumns(
+    Relation Relation::joinRelations(
+            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+    {
+        return internalJoinRelations(vpRels, vpParRels, 
+            vvJoinAttrNames, vvParJoinAttrNames, false);
+    }
+
+
+    Relation Relation::joinRelationsAndAddColumns(
             const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
             const std::vector<std::string>& vParJoinAttrNames,
@@ -1186,6 +1235,15 @@ namespace Figaro
         return joinRel;
     }
 
+    Relation Relation::joinRelationsAndAddColumns(
+            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+    {
+        return internalJoinRelations(vpRels, vpParRels, 
+            vvJoinAttrNames, vvParJoinAttrNames, true);
+    }
 
     Relation Relation::multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,

@@ -149,6 +149,7 @@ namespace Figaro
         MICRO_BENCH_INIT(joinTime)
         MICRO_BENCH_START(joinTime)
         pElement->getLeftOperand()->accept(&joinAttrVisitor);
+        /*
         ASTNodeEvalJoin* pNodeEvalJoin = new ASTNodeEvalJoin(pElement->getLeftOperand()->copy(), {}, {}, 0);
         
         pNodeEvalJoin->accept(&joinAttrVisitor);
@@ -166,14 +167,13 @@ namespace Figaro
         ASTVisitorJoinResult* pJoinResult =
             (ASTVisitorJoinResult*)pNodeEvalJoin->accept(&astJoinVisitor);
         delete pJoinResult;
-        /*
         */
         MICRO_BENCH_STOP(joinTime)
         FIGARO_LOG_BENCH("Join time", MICRO_BENCH_GET_TIMER_LAP(joinTime))
         ASTVisitorJoinResult* pMatrix =
             (ASTVisitorJoinResult*)pElement->getRightOperand()->accept(this);
 
-        ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName());
+        ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(), false);
         ASTVisitorJoinResult* pMatMulResult = (ASTVisitorJoinResult*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();
         delete pMatMulResult;

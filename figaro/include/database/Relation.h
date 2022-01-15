@@ -335,12 +335,22 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
+        
+        static void internalOutputTuple(
+            const std::vector<Relation*>& vpRels,
+            Relation::MatrixDT& dataOut,
+            const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
+            const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
+            const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
+            std::vector<Relation::IteratorJoin>& vIts,
+            tbb::atomic<uint32_t>& atOutIdx,
+            bool addColumns);
+
         static void iterateOverRootRel(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             uint32_t rowIdx,
-
-            uint32_t& outIdx,
+            tbb::atomic<uint32_t>& atOutIdx,
             MatrixDT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
@@ -348,8 +358,15 @@ namespace Figaro
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             const std::vector<uint32_t>& vParRelIdxs,
-            const std::vector<void*>& vpHashTabQueueOffsets
+            const std::vector<void*>& vpHashTabQueueOffsets,
+            bool addColumns = false
             );
+
+        static Relation internalJoinRelations(const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            bool addColumns = false);
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
          * to a new relation.
@@ -434,12 +451,17 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
 
-
         Relation joinRelationsAndAddColumns(const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool trackProvenance);
+
+        static Relation joinRelationsAndAddColumns(
+            const std::vector<Relation*>& vpRels,
+            const std::vector<Relation*>& vpParRels,
+            const std::vector<std::vector<std::string> >& vvJoinAttrNames,
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
 
         Relation multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,

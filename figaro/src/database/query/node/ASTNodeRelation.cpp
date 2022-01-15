@@ -32,6 +32,10 @@ namespace Figaro
 
     void ASTNodeRelation::updateParJoinAttrs(ASTNodeAbsRelation* pParent)
     {
+        if (m_vParJoinAttributeNames.size() != 0)
+        {
+            return;
+        }
         if (nullptr != pParent)
         {
             const std::vector<std::string> vParJoinAttrs = pParent->getJoinAttributeNames();
