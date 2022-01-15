@@ -1264,6 +1264,16 @@ namespace Figaro
             newAttributes);
     }
 
+
+    Relation Relation::selfMatrixMultiply(
+        const std::vector<std::string>& vJoinAttrNames) const
+    {
+        auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
+
+        return Relation("MUL_" + getName() + getName(), std::move(result),
+            m_attributes);
+    }
+
     Relation Relation::inverse(
         const std::vector<std::string>& vJoinAttrNames
     ) const

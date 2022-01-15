@@ -946,6 +946,38 @@ TEST(Relation, Multiply)
     FIGARO_LOG_DBG("rel", rel)
 }
 
+TEST(Relation, SelfMatrixMultiply)
+{
+    static constexpr uint32_t M = 3, N = 4;
+    Relation::MatrixDT A(M, N);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 2;
+    A[0][3] = 3;
+
+    A[1][0] = 1;
+    A[1][1] = 2;
+    A[1][2] = 4;
+    A[1][3] = 6;
+
+    A[2][0] = 1;
+    A[2][1] = 2;
+    A[2][2] = 6;
+    A[2][3] = 7;
+
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("AA", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
+
+    FIGARO_LOG_DBG("relA", relA)
+    Relation rel = relA.selfMatrixMultiply({"A", "AA"});
+    FIGARO_LOG_DBG("rel", rel)
+}
+
 TEST(Database, Multiply2)
 {
     static constexpr uint32_t M = 3, N = 4, K= 2;

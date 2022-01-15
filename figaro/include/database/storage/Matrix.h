@@ -188,6 +188,30 @@ namespace Figaro
             return matC;
         }
 
+        Matrix<T, L> selfMatrixMultiply(
+            uint32_t numJoinAttr) const
+        {
+            // TODO: Based on type generate different code
+            uint32_t m = getNumCols() - numJoinAttr;
+            uint32_t n = getNumCols() - numJoinAttr;
+            uint32_t k = getNumRows();
+            Matrix<T, L> matC{m, m};
+            double* pC = matC.getArrPt();
+            auto& matA = *this;
+            FIGARO_LOG_DBG(matA)
+            uint32_t ldA = m;// TODO: Here fix
+            uint32_t ldB = n;
+            uint32_t ldC = m;
+
+            const double* pA = getArrPt() + numJoinAttr;// * k;
+            const double* pB = getArrPt() + numJoinAttr;
+
+            cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CblasTrans, CblasNoTrans,
+                m, n, k, 1.0, pA, ldA, pB, ldB, 0.0,
+                    pC, ldC);
+            return matC;
+        }
+
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {

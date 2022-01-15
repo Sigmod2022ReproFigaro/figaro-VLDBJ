@@ -468,6 +468,8 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2 = 0) const;
 
+         Relation selfMatrixMultiply(
+            const std::vector<std::string>& vJoinAttrNames) const;
 
         Relation inverse(
             const std::vector<std::string>& vJoinAttrNames) const;
