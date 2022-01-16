@@ -463,6 +463,14 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
 
+        Relation addRelation(const Relation& second,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2) const;
+
+        Relation subtractRelation(const Relation& second,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2) const;
+
         Relation multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
             const std::vector<std::string>& vJoinAttrNames2,
@@ -470,6 +478,8 @@ namespace Figaro
 
          Relation selfMatrixMultiply(
             const std::vector<std::string>& vJoinAttrNames) const;
+
+        double checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const;
 
         Relation inverse(
             const std::vector<std::string>& vJoinAttrNames) const;

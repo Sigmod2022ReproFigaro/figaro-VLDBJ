@@ -156,6 +156,58 @@ namespace Figaro
             return matC;
         }
 
+        Matrix<T, L> add(const Matrix<T, L>& second, 
+            uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
+        {
+            auto& matA = *this;
+            uint32_t m = getNumRows();
+            uint32_t n = getNumCols() - numJoinAttr1;
+            Matrix<T, L> matC{m, numJoinAttr1 + n };
+            for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                {
+                    if (colIdx < numJoinAttr1)
+                    {
+                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx];
+                    }
+                    else
+                    {
+                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] + 
+                        second[rowIdx][colIdx - numJoinAttr1 + numJoinAttr2];
+                    }
+                }
+            }
+            return matC;
+        }
+
+
+        Matrix<T, L> subtract(const Matrix<T, L>& second, 
+            uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
+        {
+            auto& matA = *this;
+            uint32_t m = getNumRows();
+            uint32_t n = getNumCols() - numJoinAttr1;
+            Matrix<T, L> matC{m, numJoinAttr1 + n };
+            for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                {
+                    if (colIdx < numJoinAttr1)
+                    {
+                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx];
+                    }
+                    else
+                    {
+                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] - 
+                        second[rowIdx][colIdx - numJoinAttr1 + numJoinAttr2];
+                    }
+                }
+            }
+            return matC;
+        }
+
+
         Matrix<T, L> multiply(const Matrix<T, L>& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2,
             uint32_t startRowIdx1 = 0) const
@@ -199,7 +251,7 @@ namespace Figaro
             double* pC = matC.getArrPt();
             auto& matA = *this;
             FIGARO_LOG_DBG(matA)
-            uint32_t ldA = m;// TODO: Here fix
+            uint32_t ldA = getNumCols();// TODO: Here fix
             uint32_t ldB = n;
             uint32_t ldC = m;
 

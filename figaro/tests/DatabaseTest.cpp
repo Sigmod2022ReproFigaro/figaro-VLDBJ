@@ -978,6 +978,45 @@ TEST(Relation, SelfMatrixMultiply)
     FIGARO_LOG_DBG("rel", rel)
 }
 
+
+TEST(Relation, AdditionAndSubtraction)
+{
+    static constexpr uint32_t M = 2, N = 3;
+    Relation::MatrixDT A(M, N), B(M, N);
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+    
+    A[1][0] = 4;
+    A[1][1] = 5;
+    A[1][2] = 6;
+
+    B[0][0] = 7;
+    B[0][1] = 8;
+    B[0][2] = 9;
+    
+    B[1][0] = 10;
+    B[1][1] = 11;
+    B[1][2] = 12;
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
+
+    Relation relB("B", std::move(B),
+        {Relation::Attribute("B", Relation::AttributeType::FLOAT),
+         Relation::Attribute("B1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("B2", Relation::AttributeType::FLOAT)});
+
+    auto relC = relA.addRelation(relB, {"A"}, {"B"});
+    auto relD = relA.subtractRelation(relB, {"A"}, {"B"});
+    FIGARO_LOG_DBG("relA", relA)
+    FIGARO_LOG_DBG("relB", relB)
+    FIGARO_LOG_DBG("relC", relC)
+    FIGARO_LOG_DBG("relD", relD)
+}
+
 TEST(Database, Multiply2)
 {
     static constexpr uint32_t M = 3, N = 4, K= 2;

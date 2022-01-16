@@ -1239,6 +1239,53 @@ namespace Figaro
             vvJoinAttrNames, vvParJoinAttrNames, true);
     }
 
+
+    Relation Relation::addRelation(const Relation& second,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2) const
+    {
+        uint32_t joinAttrSize1;
+        uint32_t joinAttrSize2;
+        std::vector<Attribute> newAttributes;
+
+        joinAttrSize1 = vJoinAttrNames1.size();
+        joinAttrSize2 = vJoinAttrNames2.size();
+
+        auto result = m_data.add(second.m_data, joinAttrSize1, joinAttrSize2);
+        for (uint32_t attrIdx = 0; attrIdx < vJoinAttrNames1.size(); attrIdx++)
+        {
+            newAttributes.push_back(m_attributes.at(attrIdx));
+        }
+        newAttributes.insert(newAttributes.end(), 
+        second.m_attributes.begin() + joinAttrSize2, second.m_attributes.end());
+
+        return Relation("ADD_" + getName() + second.getName(), std::move(result),
+            newAttributes);
+    }
+
+    Relation Relation::subtractRelation(const Relation& second,
+            const std::vector<std::string>& vJoinAttrNames1,
+            const std::vector<std::string>& vJoinAttrNames2) const
+    {
+        uint32_t joinAttrSize1;
+        uint32_t joinAttrSize2;
+        std::vector<Attribute> newAttributes;
+
+        joinAttrSize1 = vJoinAttrNames1.size();
+        joinAttrSize2 = vJoinAttrNames2.size();
+
+        auto result = m_data.subtract(second.m_data, joinAttrSize1, joinAttrSize2);
+        for (uint32_t attrIdx = 0; attrIdx < vJoinAttrNames1.size(); attrIdx++)
+        {
+            newAttributes.push_back(m_attributes.at(attrIdx));
+        }
+        newAttributes.insert(newAttributes.end(), 
+        second.m_attributes.begin() + joinAttrSize2, second.m_attributes.end());
+
+        return Relation("SUB_" + getName() + second.getName(), std::move(result),
+            newAttributes);
+    }
+
     Relation Relation::multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
             const std::vector<std::string>& vJoinAttrNames2,
@@ -1272,6 +1319,12 @@ namespace Figaro
 
         return Relation("MUL_" + getName() + getName(), std::move(result),
             m_attributes);
+    }
+
+    double Relation::checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const
+    {
+        auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
+        
     }
 
     Relation Relation::inverse(
