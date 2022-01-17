@@ -170,9 +170,12 @@ namespace Figaro
 
     Relation* Relation::createFactorRelation(
             const std::string& extension,
-            MatrixDT&& data)
+            MatrixDT&& data,
+            uint32_t numRightAttrs)
     {
-        return new Relation(m_name + "_" + extension, std::move(data), m_attributes);
+        uint32_t offset = m_attributes.size() - numRightAttrs;
+        return new Relation(m_name + "_" + extension, std::move(data), 
+            {m_attributes.begin() + offset, m_attributes.end()});
     }
 
     void Relation::resetComputations(void)
@@ -897,7 +900,7 @@ namespace Figaro
                 {
                     uint32_t parIdxRel = vParRelIdxs[idxRelRight];
                     uint32_t rowIdxPar = vIts[parIdxRel].getRowIdx();
-                    FIGARO_LOG_INFO("idxRelRight", idxRelRight, vvvChildJoinAttrIdxs[parIdxRel][idxRelRight])
+                    //FIGARO_LOG_INFO("idxRelRight", idxRelRight, vvvChildJoinAttrIdxs[parIdxRel][idxRelRight])
                     // get child idx join attrnames and then pass them vvCurJoinAttrIdx
                     vIts[idxRelRight].m_vRowIdxs = getHashTableMNJoin(vvvChildJoinAttrIdxs[parIdxRel][idxRelRight],
                         vpHashTabQueueOffsets[idxRelRight], vpParRels[idxRelRight]->m_data[rowIdxPar]);
@@ -1235,8 +1238,9 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
     {
-        return internalJoinRelations(vpRels, vpParRels, 
+        auto r =  internalJoinRelations(vpRels, vpParRels, 
             vvJoinAttrNames, vvParJoinAttrNames, true);
+        return r;
     }
 
 
@@ -1330,6 +1334,7 @@ namespace Figaro
 
     double Relation::checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const
     {
+        FIGARO_LOG_INFO("m_attributes", m_attributes)
         auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
         auto eye = MatrixDT::identity(result.getNumRows());
         auto diff = eye.subtract(result, 0, vJoinAttrNames.size());
@@ -2638,10 +2643,11 @@ namespace Figaro
             catGenHeadAndTails.makeDiagonalElementsPositiveInR();
         }
 
-        pR = createFactorRelation("R", std::move(catGenHeadAndTails));
+        pR = createFactorRelation("R", std::move(catGenHeadAndTails), totalNumCols);
+        FIGARO_LOG_INFO("R", *pR)
         if (computeQ)
         {
-            pQ = createFactorRelation("Q", std::move(qData));
+            pQ = createFactorRelation("Q", std::move(qData), totalNumCols);
         }
         return std::make_tuple(pR, pQ);
     }
@@ -2663,7 +2669,7 @@ namespace Figaro
                 FIGARO_LOG_INFO("R before positive diagonal", m_data)
                 m_data.makeDiagonalElementsPositiveInR();
                 FIGARO_LOG_INFO("R after positive diagonal", m_data)
-                pR = createFactorRelation("R", std::move(m_data));
+                pR = createFactorRelation("R", std::move(m_data), m_attributes.size());
             }
         }
         else
@@ -2677,7 +2683,7 @@ namespace Figaro
                 curMat.copyBlockToThisMatrixFromCol(
                     m_dataColumnMajor, 0, curMat.getNumRows() - 1,
                     0, curMat.getNumCols() - 1, 0, 0);
-                pR = createFactorRelation("R", std::move(curMat));
+                pR = createFactorRelation("R", std::move(curMat), m_attributes.size());
             }
         }
         return std::make_tuple(pR, pQ);

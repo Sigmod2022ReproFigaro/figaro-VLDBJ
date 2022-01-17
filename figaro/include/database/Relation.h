@@ -245,7 +245,8 @@ namespace Figaro
          */
         Relation* createFactorRelation(
             const std::string& extension,
-            MatrixDT&& data);
+            MatrixDT&& data,
+            uint32_t numRightAttrs);
 
         /**
          *  Updates schema of the current relation such that

@@ -7,7 +7,9 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
-        numNonJoinAttrs = pElement->getAttributeNames().size() - pElement->getJoinAttributeNames().size();
+        numNonJoinAttrs = m_pDatabase->
+            getRelationAttributeNames(pElement->getRelationName()).size() 
+            - pElement->getJoinAttributeNames().size();
         MICRO_BENCH_INIT(rightMultiply)
         MICRO_BENCH_START(rightMultiply)
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
