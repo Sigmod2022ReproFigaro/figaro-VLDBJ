@@ -476,7 +476,10 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2 = 0) const;
 
-         Relation selfMatrixMultiply(
+        Relation selfMatrixMultiply(
+        const std::vector<std::string>& vJoinAttrNames) const;
+
+        double norm(
             const std::vector<std::string>& vJoinAttrNames) const;
 
         double checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const;

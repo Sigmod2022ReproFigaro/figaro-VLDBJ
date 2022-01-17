@@ -264,6 +264,16 @@ namespace Figaro
             return matC;
         }
 
+        double norm(uint32_t numJoinAttr) const
+        {
+            uint32_t m = getNumRows();
+            uint32_t n = getNumCols() - numJoinAttr;
+            uint32_t ldA = getNumCols();
+            const double* pA = getArrPt() + numJoinAttr;
+            double normVal = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'f', m, n, pA, ldA);
+            return normVal;
+        }
+
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {
@@ -383,11 +393,22 @@ namespace Figaro
         static Matrix<T, L> zeros(uint32_t numRows, uint32_t numCols)
         {
             Matrix<T, L> m(numRows, numCols);
-            FIGARO_LOG_DBG("Entered zeros")
             m.m_pStorage->setToZeros();
-            FIGARO_LOG_DBG("Exited zeros")
             return m;
         }
+
+        static Matrix<T, L> identity(uint32_t numRows)
+        {
+            Matrix<T, L> matEye(numRows, numRows);
+            matEye.m_pStorage->setToZeros();
+            for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
+            {
+                matEye[rowIdx][rowIdx] = 1;
+            }
+            return matEye;
+        }
+
+
 
         // TODO: parallelization
 

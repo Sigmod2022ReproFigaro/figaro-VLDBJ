@@ -1321,9 +1321,19 @@ namespace Figaro
             m_attributes);
     }
 
+    double Relation::norm(
+            const std::vector<std::string>& vJoinAttrNames) const
+    {
+        auto result = m_data.norm(vJoinAttrNames.size());
+        return result;
+    }
+
     double Relation::checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const
     {
         auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
+        auto eye = MatrixDT::identity(result.getNumRows());
+        auto diff = eye.subtract(result, 0, vJoinAttrNames.size());
+        return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
         
     }
 

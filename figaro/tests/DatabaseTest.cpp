@@ -979,6 +979,69 @@ TEST(Relation, SelfMatrixMultiply)
 }
 
 
+TEST(Relation, CheckOrthogonality)
+{
+    static constexpr uint32_t M = 3, N = 3;
+    Relation::MatrixDT A(M, N);
+
+    A[0][0] = 1 + GIVENS_TEST_PRECISION_ERROR;
+    A[0][1] = 0;
+    A[0][2] = 0;
+
+    A[1][0] = 0;
+    A[1][1] = 1 + GIVENS_TEST_PRECISION_ERROR;
+    A[1][2] = 0;
+
+    A[2][0] = 0;
+    A[2][1] = 0;
+    A[2][2] = 1 + GIVENS_TEST_PRECISION_ERROR;
+
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A3", Relation::AttributeType::FLOAT)});
+
+    FIGARO_LOG_DBG("relA", relA)
+    double orth = relA.checkOrthogonality({});
+    EXPECT_NEAR(orth, 0, QR_TEST_PRECISION_ERROR);
+    FIGARO_LOG_DBG("orth", orth)
+}
+
+
+TEST(Relation, Norm)
+{
+    static constexpr uint32_t M = 3, N = 4;
+    Relation::MatrixDT A(M, N);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 2;
+    A[0][3] = 3;
+
+    A[1][0] = 1;
+    A[1][1] = 2;
+    A[1][2] = 4;
+    A[1][3] = 6;
+
+    A[2][0] = 1;
+    A[2][1] = 2;
+    A[2][2] = 6;
+    A[2][3] = 7;
+
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("AA", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
+
+    FIGARO_LOG_DBG("relA", relA)
+    double norm = relA.norm({"A", "AA"});
+    EXPECT_NEAR(norm, 12.247448713916, QR_TEST_PRECISION_ERROR);
+    FIGARO_LOG_DBG("norm", norm)
+}
+
 TEST(Relation, AdditionAndSubtraction)
 {
     static constexpr uint32_t M = 2, N = 3;
