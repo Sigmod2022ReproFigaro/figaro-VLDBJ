@@ -1333,6 +1333,9 @@ namespace Figaro
         auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
         auto eye = MatrixDT::identity(result.getNumRows());
         auto diff = eye.subtract(result, 0, vJoinAttrNames.size());
+        FIGARO_LOG_INFO("diff norm", eye.norm(0))
+        FIGARO_LOG_INFO("diff norm", result)
+        FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
         return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
         
     }

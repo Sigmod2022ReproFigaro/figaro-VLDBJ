@@ -319,6 +319,15 @@ namespace Figaro
         return invRelName;
     }
 
+    double Database::checkOrthogonality(const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+
+        double ortMeasure = rel.checkOrthogonality(vJoinAttrNames);
+
+        return ortMeasure;
+    }
 
     void Database::computeDownCounts(
         const std::string& relationName,
