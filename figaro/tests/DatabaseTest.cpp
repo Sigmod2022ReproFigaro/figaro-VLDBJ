@@ -974,7 +974,7 @@ TEST(Relation, SelfMatrixMultiply)
          Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
 
     FIGARO_LOG_DBG("relA", relA)
-    Relation rel = relA.selfMatrixMultiply({"A", "AA"});
+    Relation rel = relA.selfMatrixMultiply({});
     FIGARO_LOG_DBG("rel", rel)
 }
 

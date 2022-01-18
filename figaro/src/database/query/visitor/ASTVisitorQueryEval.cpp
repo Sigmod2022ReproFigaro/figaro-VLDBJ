@@ -72,9 +72,15 @@ namespace Figaro
         delete pResult;
         ASTVisitorQRResult* pQRrResult = (ASTVisitorQRResult*)pElement->accept(&figaroSecondPassVisitor);
         std::string rName = pQRrResult->getRRelationName();
+        m_pDatabase->persistRelation(rName);
+        m_pDatabase->destroyAuxRelations();
+
+
+
         delete pQRrResult;
         MICRO_BENCH_STOP(secondPass)
         FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
+
 
         if (pElement->isComputeQ())
         {
@@ -89,8 +95,9 @@ namespace Figaro
             qName = pQResult->getJoinRelName();
             delete pQResult;
             MICRO_BENCH_STOP(qComp)
-            double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
+
             FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
+            double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
             FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
         }
         MICRO_BENCH_STOP(main)
@@ -153,14 +160,14 @@ namespace Figaro
         pElement->getLeftOperand()->accept(&joinAttrVisitor);
         /*
         ASTNodeEvalJoin* pNodeEvalJoin = new ASTNodeEvalJoin(pElement->getLeftOperand()->copy(), {}, {}, 0);
-        
+
         pNodeEvalJoin->accept(&joinAttrVisitor);
-        
+
         FIGARO_LOG_INFO("preOrderRelNames", joinAttrVisitor.getPreOrderRelNames())
         FIGARO_LOG_INFO("preOrderParRelNames", joinAttrVisitor.getPreOrderParRelNames())
         FIGARO_LOG_INFO("vvJoinAttrNames", joinAttrVisitor.getPreOrderVVJoinAttrNames())
         FIGARO_LOG_INFO("vvParJoinAttrNames", joinAttrVisitor.getPreOrderVVParJoinAttrNames())
-        ASTJoinVisitor astJoinVisitor(m_pDatabase, true, 
+        ASTJoinVisitor astJoinVisitor(m_pDatabase, true,
             joinAttrVisitor.getPreOrderRelNames(),
             joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(),
@@ -172,12 +179,14 @@ namespace Figaro
         */
         MICRO_BENCH_STOP(joinTime)
         FIGARO_LOG_BENCH("Join time", MICRO_BENCH_GET_TIMER_LAP(joinTime))
+
         ASTVisitorJoinResult* pMatrix =
             (ASTVisitorJoinResult*)pElement->getRightOperand()->accept(this);
 
         ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
             true, joinAttrVisitor.getPreOrderRelNames(), joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(), joinAttrVisitor.getPreOrderVVParJoinAttrNames());
+
         ASTVisitorJoinResult* pMatMulResult = (ASTVisitorJoinResult*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();
         delete pMatMulResult;

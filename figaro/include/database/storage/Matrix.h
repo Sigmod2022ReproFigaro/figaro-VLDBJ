@@ -79,7 +79,6 @@ namespace Figaro
         }
         Matrix& operator=(Matrix&& other)
         {
-            FIGARO_LOG_DBG("Entered move assignment")
             if (this != &other)
             {
                 destroyData();
@@ -156,7 +155,7 @@ namespace Figaro
             return matC;
         }
 
-        Matrix<T, L> add(const Matrix<T, L>& second, 
+        Matrix<T, L> add(const Matrix<T, L>& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
         {
             auto& matA = *this;
@@ -173,7 +172,7 @@ namespace Figaro
                     }
                     else
                     {
-                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] + 
+                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] +
                         second[rowIdx][colIdx - numJoinAttr1 + numJoinAttr2];
                     }
                 }
@@ -182,7 +181,7 @@ namespace Figaro
         }
 
 
-        Matrix<T, L> subtract(const Matrix<T, L>& second, 
+        Matrix<T, L> subtract(const Matrix<T, L>& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
         {
             auto& matA = *this;
@@ -199,7 +198,7 @@ namespace Figaro
                     }
                     else
                     {
-                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] - 
+                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] -
                         second[rowIdx][colIdx - numJoinAttr1 + numJoinAttr2];
                     }
                 }
@@ -321,7 +320,7 @@ namespace Figaro
             return m_numCols;
         }
 
-        void setToZeros(void) 
+        void setToZeros(void)
         {
             m_pStorage->setToZeros();
         }
@@ -966,6 +965,7 @@ namespace Figaro
                 );
                 if (computeQ)
                 {
+                    FIGARO_LOG_BENCH("Should not happen", "Hi hi")
                     LAPACKE_dorgqr(LAPACK_ROW_MAJOR, m_numRows, rank, rank,
                         pMat, m_numCols, tau);
                 }

@@ -164,6 +164,22 @@ namespace Figaro
         rel.persist();
     }
 
+    void Database::destroyAuxRelations(void)
+    {
+        std::vector<std::string> auxRelNames;
+        for (const auto& [relName, rel]: m_relations)
+        {
+            if (rel.isTmp())
+            {
+                auxRelNames.push_back(relName);
+            }
+        }
+        for (const auto& relName: auxRelNames)
+        {
+            m_relations.erase(relName);
+        }
+    }
+
     std::string Database::joinRelations(const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
             const std::vector<std::string>& vJoinAttrNames,
@@ -250,7 +266,7 @@ namespace Figaro
         return relJoinName;
     }
 
-    
+
     std::string Database::joinRelationsAndAddColumns(
             const std::vector<std::string>& vRelNames,
             const std::vector<std::string>& vParRelNames,
@@ -506,10 +522,14 @@ namespace Figaro
 
         for (const auto relName: vGenTailRels)
         {
+            //MICRO_BENCH_INIT(measureGenTail)
+            //MICRO_BENCH_START(measureGenTail)
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
             pRel->computeQRInPlace(qrHintType);
+            //MICRO_BENCH_STOP(measureGenTail)
+            //FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
             FIGARO_LOG_INFO("Gen Tail name", relName)
         }
 

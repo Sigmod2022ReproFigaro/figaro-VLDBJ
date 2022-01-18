@@ -174,7 +174,7 @@ namespace Figaro
             uint32_t numRightAttrs)
     {
         uint32_t offset = m_attributes.size() - numRightAttrs;
-        return new Relation(m_name + "_" + extension, std::move(data), 
+        return new Relation(m_name + "_" + extension, std::move(data),
             {m_attributes.begin() + offset, m_attributes.end()});
     }
 
@@ -887,7 +887,7 @@ namespace Figaro
             vIts[idxRel].m_vRowIdxs = getHashTableMNJoin(vvvChildJoinAttrIdxs[parIdxRel][idxRel],
                 vpHashTabQueueOffsets[idxRel], vpParRels[idxRel]->m_data[rowIdxPar]);
         }
-        internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs, 
+        internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs,
             vCumNonJoinAttrIdxs, vIts, atOutIdx, addColumns);
 
         for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
@@ -912,7 +912,7 @@ namespace Figaro
         }
         while (thereIsNext)
         {
-            internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs, 
+            internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs,
                 vCumNonJoinAttrIdxs, vIts, atOutIdx, addColumns);
             thereIsNext = false;
             for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
@@ -971,7 +971,7 @@ namespace Figaro
         mParRelNameIdx[vpRels[0]->m_name] = 0;
         vCumNonJoinAttrIdxs[0] = 0;
         newName = vpRels[0]->m_name;
-        
+
         // build hash tables for all relations except root;
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
@@ -982,14 +982,14 @@ namespace Figaro
             newName += vpRels[idxRel]->m_name;
             if (!addColumns)
             {
-                newAttributes.insert(newAttributes.end(), 
-                    vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0], 
+                newAttributes.insert(newAttributes.end(),
+                    vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0],
                     vpRels[idxRel]->m_attributes.end());
             }
             else if (idxRel == 0)
             {
-                newAttributes.insert(newAttributes.end(), 
-                    vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0], 
+                newAttributes.insert(newAttributes.end(),
+                    vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0],
                     vpRels[idxRel]->m_attributes.end());
             }
             if (idxRel > 0)
@@ -1007,15 +1007,14 @@ namespace Figaro
                 if (vpParRels[idxRelChild] != nullptr)
                 {
                     parName = vpParRels[idxRelChild]->m_name;
-                } 
+                }
                 if (parName == vpRels[idxRel]->m_name)
                 {
-                    vpRels[idxRel]->getAttributesIdxs(vvParJoinAttrNames[idxRelChild], 
+                    vpRels[idxRel]->getAttributesIdxs(vvParJoinAttrNames[idxRelChild],
                         vvvChildJoinAttrIdxs[idxRel][idxRelChild]);
-                    FIGARO_LOG_INFO("HOHO", parName, "child", vpRels[idxRelChild]->m_name, vvParJoinAttrNames[idxRelChild], vvvChildJoinAttrIdxs[idxRel][idxRelChild])
                 }
             }
-            
+
         }
 
         FIGARO_LOG_INFO("Name of new relation", newName)
@@ -1031,7 +1030,7 @@ namespace Figaro
         outIdx = -1;
         //MatrixDT dataOutput {20,
         MatrixDT dataOutput {130'000'000, (uint32_t)(newAttributes.size())};
-        
+
         //omp_set_num_threads(16);
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
@@ -1039,7 +1038,7 @@ namespace Figaro
             iterateOverRootRel(vpRels, vpParRels, rowIdx, outIdx,
                 dataOutput, vvJoinAttrIdxs, vvParJoinAttrIdxs,
                 vvvChildJoinAttrIdxs,
-                vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs, 
+                vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
                 vpHashTabQueueOffsets, addColumns);
         }
         dataOutput.resize(outIdx + 1);
@@ -1059,7 +1058,7 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
     {
-        return internalJoinRelations(vpRels, vpParRels, 
+        return internalJoinRelations(vpRels, vpParRels,
             vvJoinAttrNames, vvParJoinAttrNames, false);
     }
 
@@ -1238,8 +1237,15 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
     {
-        auto r =  internalJoinRelations(vpRels, vpParRels, 
+        uint32_t oldThreads = getNumberOfThreads();
+        omp_set_num_threads(16);
+        MICRO_BENCH_INIT(computeJoinRelationsAndAddColumns)
+        MICRO_BENCH_START(computeJoinRelationsAndAddColumns)
+        auto r =  internalJoinRelations(vpRels, vpParRels,
             vvJoinAttrNames, vvParJoinAttrNames, true);
+        omp_set_num_threads(oldThreads);
+        MICRO_BENCH_STOP(computeJoinRelationsAndAddColumns)
+        FIGARO_LOG_BENCH("Compute joinRelationsAndAddColumns", MICRO_BENCH_GET_TIMER_LAP(computeJoinRelationsAndAddColumns))
         return r;
     }
 
@@ -1260,7 +1266,7 @@ namespace Figaro
         {
             newAttributes.push_back(m_attributes.at(attrIdx));
         }
-        newAttributes.insert(newAttributes.end(), 
+        newAttributes.insert(newAttributes.end(),
         second.m_attributes.begin() + joinAttrSize2, second.m_attributes.end());
 
         return Relation("ADD_" + getName() + second.getName(), std::move(result),
@@ -1283,7 +1289,7 @@ namespace Figaro
         {
             newAttributes.push_back(m_attributes.at(attrIdx));
         }
-        newAttributes.insert(newAttributes.end(), 
+        newAttributes.insert(newAttributes.end(),
         second.m_attributes.begin() + joinAttrSize2, second.m_attributes.end());
 
         return Relation("SUB_" + getName() + second.getName(), std::move(result),
@@ -1342,7 +1348,7 @@ namespace Figaro
         FIGARO_LOG_INFO("diff norm", result)
         FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
         return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
-        
+
     }
 
     Relation Relation::inverse(
@@ -2520,8 +2526,8 @@ namespace Figaro
         totalNumRows = vCumNumRowsUp.back();
 
         FIGARO_LOG_INFO("Size", vCumNumRowsUp)
-        MICRO_BENCH_INIT(copyMatrices)
-        MICRO_BENCH_START(copyMatrices)
+        //MICRO_BENCH_INIT(copyMatrices)
+        //MICRO_BENCH_START(copyMatrices)
 
         MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
         FIGARO_LOG_INFO("totalNumRows", totalNumRows)
@@ -2608,27 +2614,27 @@ namespace Figaro
         }
         FIGARO_LOG_INFO("After", catGenHeadAndTails)
 
-        MICRO_BENCH_STOP(copyMatrices)
-        FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
+        //MICRO_BENCH_STOP(copyMatrices)
+        //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
         FIGARO_LOG_INFO("Computing final R")
 
-        MICRO_BENCH_INIT(finalQR)
-        MICRO_BENCH_START(finalQR)
+        //MICRO_BENCH_INIT(finalQR)
+        //MICRO_BENCH_START(finalQR)
         catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
-        MICRO_BENCH_STOP(finalQR)
-        FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
+        //MICRO_BENCH_STOP(finalQR)
+        //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 
 
-        MICRO_BENCH_INIT(addingZeros)
-        MICRO_BENCH_START(addingZeros)
+        //MICRO_BENCH_INIT(addingZeros)
+        //MICRO_BENCH_START(addingZeros)
         minNumRows = std::min(totalNumRows, totalNumCols);
         if (totalNumCols > minNumRows)
         {
             FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
             catGenHeadAndTails = catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
         }
-        MICRO_BENCH_STOP(addingZeros)
-        FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
+        //MICRO_BENCH_STOP(addingZeros)
+        //FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
 
         if (computeQ)
         {

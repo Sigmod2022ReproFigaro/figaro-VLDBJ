@@ -62,6 +62,8 @@ namespace Figaro
 
         void persistRelation(const std::string& relationName);
 
+        void destroyAuxRelations(void);
+
         /**
          * @brief Join relation @p relationName with the children relations
          * specified in @p vChildRelNames on join attributes specified in @p vJoinAttrnames and @p vvJoinAttributeNames .
