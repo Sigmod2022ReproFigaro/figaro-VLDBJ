@@ -7,7 +7,9 @@
 #include <memory>
 #include <unordered_map>
 #include <set>
-#include "tbb/atomic.h"
+#include <tbb/atomic.h>
+#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_hash_map.h>
 
 // TODO: Optimize tuple instanciated Relation based on number of attributes.
 namespace Figaro
@@ -685,4 +687,19 @@ namespace Figaro
         }
     }
 }
+
+// Structure that defines hashing and comparison operations for user's type.
+
+namespace tbb
+{
+    template<typename... TupleArgs>
+    struct tbb_hash<std::tuple<TupleArgs...> >
+    {
+        tbb_hash() {}
+        size_t operator()(const std::tuple<TupleArgs...>& key) const {
+            return std::hash<std::tuple<TupleArgs...>>{}(key);
+        }
+    };
+}
+
 #endif

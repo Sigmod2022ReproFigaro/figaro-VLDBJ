@@ -50,8 +50,8 @@ namespace Figaro
         FIGARO_LOG_INFO("ONE HOT ENCODING")
         m_pDatabase->oneHotEncodeRelations();
 
-        MICRO_BENCH_INIT(main)
-        MICRO_BENCH_START(main)
+        MICRO_BENCH_INIT(rComp)
+        MICRO_BENCH_START(rComp)
         MICRO_BENCH_START(downCnt)
         pElement->accept(&computeDownVisitor);
         MICRO_BENCH_STOP(downCnt)
@@ -73,15 +73,15 @@ namespace Figaro
         ASTVisitorQRResult* pQRrResult = (ASTVisitorQRResult*)pElement->accept(&figaroSecondPassVisitor);
         std::string rName = pQRrResult->getRRelationName();
         m_pDatabase->persistRelation(rName);
-        m_pDatabase->destroyAuxRelations();
-
-
-
-        delete pQRrResult;
         MICRO_BENCH_STOP(secondPass)
         FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(secondPass));
 
+        MICRO_BENCH_STOP(rComp)
+        FIGARO_LOG_BENCH("Figaro", "Computation of R",  MICRO_BENCH_GET_TIMER_LAP(rComp));
 
+        m_pDatabase->destroyAuxRelations();
+
+        delete pQRrResult;
         if (pElement->isComputeQ())
         {
             MICRO_BENCH_START(qComp)
@@ -100,8 +100,7 @@ namespace Figaro
             //double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
             //FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
         }
-        MICRO_BENCH_STOP(main)
-        FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
+
 
         return new ASTVisitorQRResult(rName, qName);
     }

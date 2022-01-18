@@ -37,14 +37,11 @@ namespace Figaro
         {
             m_numRows = 0;
             m_numCols = 0;
-            //FIGARO_LOG_DBG("Tried destroying data");
             if (nullptr != m_pStorage)
             {
-                //FIGARO_LOG_DBG("Not nullptr", m_pStorage)
                 delete m_pStorage;
                 m_pStorage = nullptr;
             }
-            //FIGARO_LOG_DBG("Destroyed data");
         }
 
         uint64_t getNumEntries(void) const
@@ -67,7 +64,6 @@ namespace Figaro
 
         Matrix(Matrix&& other)
         {
-            //FIGARO_LOG_DBG("Entered move constructor")
             m_pStorage = other.m_pStorage;
             m_numRows = other.m_numRows;
             m_numCols = other.m_numCols;
@@ -75,7 +71,6 @@ namespace Figaro
             other.m_pStorage = nullptr;
             other.m_numCols = 0;
             other.m_numRows = 0;
-            //FIGARO_LOG_DBG("Finished move constructor")
         }
         Matrix& operator=(Matrix&& other)
         {
@@ -90,7 +85,6 @@ namespace Figaro
                 other.m_numCols = 0;
                 other.m_numRows = 0;
             }
-            //FIGARO_LOG_DBG("Finished move assignment")
             return *this;
         }
 

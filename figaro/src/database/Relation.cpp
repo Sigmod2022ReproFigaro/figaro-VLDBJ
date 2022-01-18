@@ -11,23 +11,7 @@
 #include <unordered_map>
 #include "utils/Performance.h"
 #include <omp.h>
-#include <tbb/concurrent_unordered_map.h>
-#include <tbb/concurrent_hash_map.h>
 #include <tbb/parallel_sort.h>
-
-
-// Structure that defines hashing and comparison operations for user's type.
-namespace tbb
-{
-    template<typename... TupleArgs>
-    struct tbb_hash<std::tuple<TupleArgs...> >
-    {
-        tbb_hash() {}
-        size_t operator()(const std::tuple<TupleArgs...>& key) const {
-            return std::hash<std::tuple<TupleArgs...>>{}(key);
-        }
-    };
-}
 
 namespace Figaro
 {
@@ -874,7 +858,6 @@ namespace Figaro
                     {
                         uint32_t parIdxRel = vParRelIdxs[idxRelRight];
                         uint32_t rowIdxPar = vIts[parIdxRel].getRowIdx();
-                        //FIGARO_LOG_INFO("idxRel", idxRel, vvvChildJoinAttrIdxs[parIdxRel][idxRelRight])
                         // get child idx join attrnames and then pass them vvCurJoinAttrIdx
                         vIts[idxRelRight].m_vRowIdxs = getHashTableMNJoin(vvvChildJoinAttrIdxs[parIdxRel][idxRelRight],
                             vpHashTabQueueOffsets[idxRelRight], vpParRels[idxRelRight]->m_data[rowIdxPar]);
@@ -967,21 +950,16 @@ namespace Figaro
 
         }
 
-        FIGARO_LOG_INFO("Name of new relation", newName)
-        FIGARO_LOG_INFO("Name of new attributes", newAttributes)
 
         for (uint32_t idxRel = 1; idxRel < vParRelIdxs.size(); idxRel++)
         {
             vParRelIdxs[idxRel] = mParRelNameIdx[vpParRels[idxRel]->m_name];
         }
 
-        FIGARO_LOG_DBG("vParRelIdxs", vParRelIdxs)
-
         outIdx = -1;
-        //MatrixDT dataOutput {20,
         MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
-        omp_set_num_threads(16);
+        omp_set_num_threads(4);
         MICRO_BENCH_INIT(iterateOverRootRelTimer)
         MICRO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
@@ -994,8 +972,7 @@ namespace Figaro
                 vpHashTabQueueOffsets, addColumns);
         }
         MICRO_BENCH_STOP(iterateOverRootRelTimer)
-        FIGARO_LOG_BENCH("join and adD", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
-        FIGARO_LOG_BENCH("Join size", outIdx+1)
+        FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
