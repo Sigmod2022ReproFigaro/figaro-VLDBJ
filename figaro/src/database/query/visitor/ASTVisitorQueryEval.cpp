@@ -97,8 +97,8 @@ namespace Figaro
             MICRO_BENCH_STOP(qComp)
 
             FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
-            double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
-            FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
+            //double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
+            //FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
         }
         MICRO_BENCH_STOP(main)
         FIGARO_LOG_BENCH("Figaro", "query evaluation",  MICRO_BENCH_GET_TIMER_LAP(main));
@@ -155,8 +155,8 @@ namespace Figaro
         FIGARO_LOG_INFO("VISITING EVAL RIGHT MULTIPLY NODE")
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
-        MICRO_BENCH_INIT(joinTime)
-        MICRO_BENCH_START(joinTime)
+        //MICRO_BENCH_INIT(joinTime)
+        //MICRO_BENCH_START(joinTime)
         pElement->getLeftOperand()->accept(&joinAttrVisitor);
         /*
         ASTNodeEvalJoin* pNodeEvalJoin = new ASTNodeEvalJoin(pElement->getLeftOperand()->copy(), {}, {}, 0);
@@ -177,15 +177,16 @@ namespace Figaro
             (ASTVisitorJoinResult*)pNodeEvalJoin->accept(&astJoinVisitor);
         delete pJoinResult;
         */
-        MICRO_BENCH_STOP(joinTime)
-        FIGARO_LOG_BENCH("Join time", MICRO_BENCH_GET_TIMER_LAP(joinTime))
+        //MICRO_BENCH_STOP(joinTime)
+        //FIGARO_LOG_BENCH("Join time", MICRO_BENCH_GET_TIMER_LAP(joinTime))
 
         ASTVisitorJoinResult* pMatrix =
             (ASTVisitorJoinResult*)pElement->getRightOperand()->accept(this);
 
+        uint32_t joinSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0]);
         ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
             true, joinAttrVisitor.getPreOrderRelNames(), joinAttrVisitor.getPreOrderParRelNames(),
-            joinAttrVisitor.getPreOrderVVJoinAttrNames(), joinAttrVisitor.getPreOrderVVParJoinAttrNames());
+            joinAttrVisitor.getPreOrderVVJoinAttrNames(), joinAttrVisitor.getPreOrderVVParJoinAttrNames(), joinSize);
 
         ASTVisitorJoinResult* pMatMulResult = (ASTVisitorJoinResult*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();

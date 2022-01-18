@@ -336,7 +336,7 @@ namespace Figaro
             const std::vector<uint32_t>& vParJoinAttrIdxs,
             void*& pHashTablePt);
 
-        
+
         static void internalOutputTuple(
             const std::vector<Relation*>& vpRels,
             Relation::MatrixDT& dataOut,
@@ -367,6 +367,7 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize,
             bool addColumns = false);
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
@@ -450,7 +451,8 @@ namespace Figaro
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize);
 
         Relation joinRelationsAndAddColumns(const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
@@ -462,7 +464,8 @@ namespace Figaro
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize);
 
         Relation addRelation(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
@@ -494,6 +497,8 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
+
+        uint32_t getDownCountSum(void) const;
 
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
@@ -628,6 +633,55 @@ namespace Figaro
         else
         {
             FIGARO_LOG_DBG("Damn")
+        }
+    }
+
+    inline void Relation::internalOutputTuple(
+        const std::vector<Relation*>& vpRels,
+        Relation::MatrixDT& dataOut,
+        const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
+        const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
+        const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
+        std::vector<Relation::IteratorJoin>& vIts,
+        tbb::atomic<uint32_t>& atOutIdx,
+        bool addColumns
+    )
+    {
+        uint32_t outIdx;
+        outIdx = atOutIdx.fetch_and_increment() + 1;
+        if (!addColumns)
+        {
+            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
+            {
+                uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
+                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
+                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
+                {
+                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
+                        = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+
+                }
+            }
+        }
+        else
+        {
+            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
+            {
+                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
+                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
+                {
+                    if (idxRel == 0)
+                    {
+                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                            = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                    }
+                    else
+                    {
+                         dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                            += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                    }
+                }
+            }
         }
     }
 }

@@ -209,7 +209,8 @@ namespace Figaro
             const std::vector<std::string>& vRelNames,
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize)
     {
         std::vector<Relation*> vpRels;
         std::vector<Relation*> vpParRels;
@@ -234,7 +235,7 @@ namespace Figaro
 
         Relation relJoin = Relation::joinRelations(
             vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames);
+            vvJoinAttrNames, vvParJoinAttrNames, joinSize);
         std::string relJoinName = relJoin.getName();
         m_relations.emplace(relJoin.getName(), std::move(relJoin));;
         FIGARO_LOG_INFO("New rel name", relJoin.getName())
@@ -271,7 +272,8 @@ namespace Figaro
             const std::vector<std::string>& vRelNames,
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize)
     {
         std::vector<Relation*> vpRels;
         std::vector<Relation*> vpParRels;
@@ -296,7 +298,7 @@ namespace Figaro
 
         Relation relJoin = Relation::joinRelationsAndAddColumns(
             vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames);
+            vvJoinAttrNames, vvParJoinAttrNames, joinSize);
         std::string relJoinName = relJoin.getName();
         m_relations.emplace(relJoin.getName(), std::move(relJoin));;
         FIGARO_LOG_INFO("New rel name", relJoin.getName())
@@ -363,6 +365,12 @@ namespace Figaro
         }
         rel.computeDownCounts(vpChildRels, vJoinAttrNames, vParJoinAttrNames,
             vvJoinAttributeNames, isRootNode);
+    }
+
+    uint32_t Database::getDownCountSum(const std::string& relationName) const
+    {
+        const Relation& rel = m_relations.at(relationName);
+        return rel.getDownCountSum();
     }
 
 

@@ -8,7 +8,7 @@ namespace Figaro
         FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
         numNonJoinAttrs = m_pDatabase->
-            getRelationAttributeNames(pElement->getRelationName()).size() 
+            getRelationAttributeNames(pElement->getRelationName()).size()
             - pElement->getJoinAttributeNames().size();
         MICRO_BENCH_INIT(rightMultiply)
         MICRO_BENCH_START(rightMultiply)
@@ -74,7 +74,7 @@ namespace Figaro
         if (m_useLFTJoin)
         {
             pResult = pElement->getLeftOperand()->accept(this);
-            std::unordered_map<std::string, uint32_t> htNameIdx; 
+            std::unordered_map<std::string, uint32_t> htNameIdx;
             for (uint32_t idxRel = 0; idxRel < m_vPreOrderRelNames.size(); idxRel++)
             {
                 htNameIdx[m_vPreOrderRelNames[idxRel]] = idxRel;
@@ -98,7 +98,7 @@ namespace Figaro
             }
             std::string qRelName = m_pDatabase->joinRelationsAndAddColumns(
                 m_vRelNames, m_vParRelNames,
-                m_vvJoinAttrNames, m_vvParJoinAttrNames);
+                m_vvJoinAttrNames, m_vvParJoinAttrNames, m_joinSize);
             pResult = new ASTVisitorJoinResult(qRelName);
         }
         else

@@ -11,6 +11,7 @@ namespace Figaro
         std::string m_relName;
         uint32_t startRowIdx = 0;
         bool m_useLFTJoin;
+        uint32_t m_joinSize;
         std::vector<std::string> m_vRelNames;
         std::vector<std::string> m_vParRelNames;
         std::vector<std::string> m_vPreOrderRelNames;
@@ -25,11 +26,13 @@ namespace Figaro
             const std::vector<std::string>& vPreOrderRelNames = {},
             const std::vector<std::string>& vPreOrderParRelNames = {},
             const std::vector<std::vector<std::string> >& vvJoinAttrNames = {},
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames = {}): ASTVisitor(pDatabase), m_relName(relName), 
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames = {},
+            uint32_t joinSize = 0): ASTVisitor(pDatabase), m_relName(relName),
                 m_useLFTJoin(useLFTJoin), m_vPreOrderRelNames(vPreOrderRelNames),
                 m_vPreOrderParRelNames(vPreOrderParRelNames),
                 m_vvJoinAttrNames(vvJoinAttrNames),
-                m_vvParJoinAttrNames(vvParJoinAttrNames) {}
+                m_vvParJoinAttrNames(vvParJoinAttrNames),
+                m_joinSize(joinSize) {}
         virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         virtual  ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;

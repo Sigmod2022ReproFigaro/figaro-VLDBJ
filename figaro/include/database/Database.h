@@ -83,7 +83,8 @@ namespace Figaro
             const std::vector<std::string>& vRelNames,
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize);
 
         std::string joinRelationsAndAddColumns(const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,
@@ -96,7 +97,8 @@ namespace Figaro
             const std::vector<std::string>& vRelNames,
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames);
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize);
 
 
         std::string multiply(const std::string& relationName1,
@@ -118,6 +120,8 @@ namespace Figaro
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
+
+        uint32_t getDownCountSum(const std::string& relationName) const;
 
         void computeUpAndCircleCounts(
             const std::string& relationName,

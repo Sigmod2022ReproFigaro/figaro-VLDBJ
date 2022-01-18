@@ -894,13 +894,11 @@ TEST(Relation, JoinLeapFrog)
     FIGARO_LOG_DBG("relC", relC)
     std::vector<Relation*> vRels = {&relA, &relB, &relC};
     std::vector<Relation*> vParRels = {nullptr, &relA, &relA};
-    std::vector<std::vector<std::string> > vvJoinAttrs = {{"A"}, {"A"}, {"A"}}; 
+    std::vector<std::vector<std::string> > vvJoinAttrs = {{"A"}, {"A"}, {"A"}};
     std::vector<std::vector<std::string> > vvParJoinAttrs = {{}, {"A"}, {"A"}};
     FIGARO_LOG_DBG("MAJMUN")
-    Relation joinRel = Relation::joinRelations(vRels, vParRels, vvJoinAttrs, vvParJoinAttrs);
+    Relation joinRel = Relation::joinRelations(vRels, vParRels, vvJoinAttrs, vvParJoinAttrs, 12);
     FIGARO_LOG_DBG(joinRel);
-    /*
-    */
 }
 
 TEST(Relation, Multiply)
@@ -1049,7 +1047,7 @@ TEST(Relation, AdditionAndSubtraction)
     A[0][0] = 1;
     A[0][1] = 2;
     A[0][2] = 3;
-    
+
     A[1][0] = 4;
     A[1][1] = 5;
     A[1][2] = 6;
@@ -1057,7 +1055,7 @@ TEST(Relation, AdditionAndSubtraction)
     B[0][0] = 7;
     B[0][1] = 8;
     B[0][2] = 9;
-    
+
     B[1][0] = 10;
     B[1][1] = 11;
     B[1][2] = 12;

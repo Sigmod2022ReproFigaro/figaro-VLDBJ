@@ -62,13 +62,13 @@ namespace Figaro
         if (m_isLeapFrog)
         {
             newRelName = m_pDatabase->joinRelations(m_vPreOrderRelNames, m_vPreOrderParRelNames,
-                m_vvJoinAttrNames, m_vvParJoinAttrNames);
+                m_vvJoinAttrNames, m_vvParJoinAttrNames, m_joinSize);
         }
-        else 
+        else
         {
             return nullptr;
             ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(this);
-            
+
             newRelName = pJoinResult->getJoinRelName();
             delete pJoinResult;
         }

@@ -804,56 +804,6 @@ namespace Figaro
         return joinRel;
     }
 
-
-    void Relation::internalOutputTuple(
-        const std::vector<Relation*>& vpRels,
-        Relation::MatrixDT& dataOut,
-        const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
-        const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
-        const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
-        std::vector<Relation::IteratorJoin>& vIts,
-        tbb::atomic<uint32_t>& atOutIdx,
-        bool addColumns
-    )
-    {
-        uint32_t outIdx;
-        outIdx = atOutIdx.fetch_and_increment() + 1;
-        if (!addColumns)
-        {
-            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
-            {
-                uint32_t offset = vCumNonJoinAttrIdxs[idxRel] ;
-                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
-                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
-                {
-                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
-                        = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-
-                }
-            }
-        }
-        else
-        {
-            for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
-            {
-                uint32_t relRowIdx = vIts[idxRel].getRowIdx();
-                for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
-                {
-                    if (idxRel == 0)
-                    {
-                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
-                            = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                    }
-                    else
-                    {
-                         dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
-                            += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                    }
-                }
-            }
-        }
-    }
-
     void Relation::iterateOverRootRel(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
@@ -900,7 +850,6 @@ namespace Figaro
                 {
                     uint32_t parIdxRel = vParRelIdxs[idxRelRight];
                     uint32_t rowIdxPar = vIts[parIdxRel].getRowIdx();
-                    //FIGARO_LOG_INFO("idxRelRight", idxRelRight, vvvChildJoinAttrIdxs[parIdxRel][idxRelRight])
                     // get child idx join attrnames and then pass them vvCurJoinAttrIdx
                     vIts[idxRelRight].m_vRowIdxs = getHashTableMNJoin(vvvChildJoinAttrIdxs[parIdxRel][idxRelRight],
                         vpHashTabQueueOffsets[idxRelRight], vpParRels[idxRelRight]->m_data[rowIdxPar]);
@@ -942,6 +891,7 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize,
             bool addColumns)
     {
         // Iterate over
@@ -1029,9 +979,11 @@ namespace Figaro
 
         outIdx = -1;
         //MatrixDT dataOutput {20,
-        MatrixDT dataOutput {130'000'000, (uint32_t)(newAttributes.size())};
+        MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
-        //omp_set_num_threads(16);
+        omp_set_num_threads(16);
+        MICRO_BENCH_INIT(iterateOverRootRelTimer)
+        MICRO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
@@ -1041,7 +993,8 @@ namespace Figaro
                 vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
                 vpHashTabQueueOffsets, addColumns);
         }
-        dataOutput.resize(outIdx + 1);
+        MICRO_BENCH_STOP(iterateOverRootRelTimer)
+        FIGARO_LOG_BENCH("join and adD", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
         FIGARO_LOG_BENCH("Join size", outIdx+1)
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
@@ -1056,10 +1009,11 @@ namespace Figaro
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize)
     {
         return internalJoinRelations(vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames, false);
+            vvJoinAttrNames, vvParJoinAttrNames, joinSize, false);
     }
 
 
@@ -1235,18 +1189,19 @@ namespace Figaro
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
-            const std::vector<std::vector<std::string> >& vvParJoinAttrNames)
+            const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
+            uint32_t joinSize)
     {
-        uint32_t oldThreads = getNumberOfThreads();
-        omp_set_num_threads(16);
-        MICRO_BENCH_INIT(computeJoinRelationsAndAddColumns)
-        MICRO_BENCH_START(computeJoinRelationsAndAddColumns)
-        auto r =  internalJoinRelations(vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames, true);
-        omp_set_num_threads(oldThreads);
-        MICRO_BENCH_STOP(computeJoinRelationsAndAddColumns)
-        FIGARO_LOG_BENCH("Compute joinRelationsAndAddColumns", MICRO_BENCH_GET_TIMER_LAP(computeJoinRelationsAndAddColumns))
-        return r;
+        //uint32_t oldThreads = getNumberOfThreads();
+        //omp_set_num_threads(4);
+        //MICRO_BENCH_INIT(computeJoinRelationsAndAddColumns)
+        //MICRO_BENCH_START(computeJoinRelationsAndAddColumns)
+        return internalJoinRelations(vpRels, vpParRels,
+            vvJoinAttrNames, vvParJoinAttrNames, joinSize, true);
+        //omp_set_num_threads(oldThreads);
+        //MICRO_BENCH_STOP(computeJoinRelationsAndAddColumns)
+        //FIGARO_LOG_BENCH("Compute joinRelationsAndAddColumns", MICRO_BENCH_GET_TIMER_LAP(computeJoinRelationsAndAddColumns))
+        //return r;
     }
 
 
@@ -1915,7 +1870,17 @@ namespace Figaro
         m_vParBlockStartIdxsAfterFirstPass = std::move(vParBlockStartIdxsAfterFirstPass);
     }
 
-   void Relation::computeUpAndCircleCounts(
+    uint32_t Relation::getDownCountSum(void) const
+    {
+        uint32_t downCountSum = 0;
+        for (uint32_t distCnt = 0; distCnt < m_countsJoinAttrs.getNumRows(); distCnt++)
+        {
+            downCountSum += m_countsJoinAttrs[distCnt][m_cntsJoinIdxD];
+        }
+        return downCountSum;
+    }
+
+    void Relation::computeUpAndCircleCounts(
         const std::vector<Relation*>& vpChildRels,
         const std::vector<std::string>& vParJoinAttrNames,
         const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
