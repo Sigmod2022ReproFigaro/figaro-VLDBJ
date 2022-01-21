@@ -164,6 +164,11 @@ function main()
         ./figaro $(echo $ARGS) \
          >"${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
+    "PROFILER_HOTSPOTS")
+        vtune -collect hotspots -result-dir "${FIGARO_PROFILER_DUMP_PATH}" \
+        ./figaro $(echo $ARGS) \
+         >"${FIGARO_LOG_FILE_PATH}" 2>&1;
+        ;;
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         #vtune -collect performance-snapshot

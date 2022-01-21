@@ -154,6 +154,7 @@ class SystemTest(ABC):
         CLEAN = 7
         PROFILER_MEMORY = 8
         PROFILER_THREADS = 9
+        PROFILER_HOTSPOTS = 10
 
     map_mode_to_str = {TestMode.DEBUG : "DEBUG",
                     TestMode.INFO : "INFO",
@@ -163,7 +164,8 @@ class SystemTest(ABC):
                     TestMode.ACCURACY: "ACCURACY",
                     TestMode.CLEAN: "CLEAN",
                     TestMode.PROFILER_MEMORY: "PROFILER_MEMORY",
-                    TestMode.PROFILER_THREADS: "PROFILER_THREADS"}
+                    TestMode.PROFILER_THREADS: "PROFILER_THREADS",
+                    TestMode.PROFILER_HOTSPOTS: "PROFILER_HOTSPOTS"}
 
 
     @staticmethod
@@ -293,6 +295,12 @@ class SystemTest(ABC):
             self.clean_data(SystemTest.TestMode.DUMP)
         elif self.test_mode == SystemTest.TestMode.PROFILER_MEMORY:
             logging.info(info_str.format(mode="profiler memory"))
+            self.run_profiler()
+        elif self.test_mode == SystemTest.TestMode.PROFILER_THREADS:
+            logging.info(info_str.format(mode="profiler threads"))
+            self.run_profiler()
+        elif self.test_mode == SystemTest.TestMode.PROFILER_HOTSPOTS:
+            logging.info(info_str.format(mode="profiler hotspots"))
             self.run_profiler()
         else:
             logging.error('This type of system test does not exist')
