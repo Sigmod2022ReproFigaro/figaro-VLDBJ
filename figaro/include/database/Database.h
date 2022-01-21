@@ -113,6 +113,12 @@ namespace Figaro
         std::string inverse(const std::string& relationName1,
             const std::vector<std::string>& vJoinAttrNames);
 
+        void buildIndices(
+            const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            bool isRootNode);
+
         void computeDownCounts(
             const std::string& relationName,
             const std::vector<std::string>& vChildRelNames,

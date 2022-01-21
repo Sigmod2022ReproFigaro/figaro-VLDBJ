@@ -1727,6 +1727,40 @@ namespace Figaro
 
     }
 
+    void Relation::buildIndices(
+        const std::vector<std::string>& vJoinAttrNames,
+        const std::vector<std::string>& vParJoinAttrNames,
+        bool isRootNode)
+    {
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        std::vector<uint32_t> vParBlockStartIdxs;
+        std::vector<uint32_t> vParBlockStartIdxsAfterFirstPass;
+
+        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
+        getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
+
+        MatrixUI32T cntsJoin {m_data.getNumRows(), vJoinAttrNames.size() + 4};
+        vParBlockStartIdxs.reserve(m_data.getNumRows());
+        vParBlockStartIdxsAfterFirstPass.reserve(m_data.getNumRows());
+
+        m_cntsJoinIdxE = cntsJoin.getNumCols() - 4;
+        m_cntsJoinIdxC = cntsJoin.getNumCols() - 3;
+        m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
+        m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
+
+        MICRO_BENCH_INIT(indicesComp)
+        MICRO_BENCH_START(indicesComp)
+        getDistinctValsAndBuildIndices(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin,
+            vParBlockStartIdxs, vParBlockStartIdxsAfterFirstPass, isRootNode);
+
+        m_countsJoinAttrs = std::move(cntsJoin);
+        m_vParBlockStartIdxs = std::move(vParBlockStartIdxs);
+        m_vParBlockStartIdxsAfterFirstPass = std::move(vParBlockStartIdxsAfterFirstPass);
+        MICRO_BENCH_STOP(indicesComp)
+        FIGARO_LOG_BENCH("Indices building" + m_name, MICRO_BENCH_GET_TIMER_LAP(indicesComp))
+    }
+
     void Relation::computeDownCounts(
         const std::vector<Relation*>& vpChildRels,
         const std::vector<std::string>& vJoinAttrNames,
@@ -1736,8 +1770,6 @@ namespace Figaro
     {
         std::vector<uint32_t> vJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
-        std::vector<uint32_t> vParBlockStartIdxs;
-        std::vector<uint32_t> vParBlockStartIdxsAfterFirstPass;
         std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
         uint32_t numDistParVals;
@@ -1753,42 +1785,28 @@ namespace Figaro
             vpChildRels[idxChild]->getAttributesIdxs(vvJoinAttributeNames[idxChild], vvJoinAttrIdxs[idxChild]);
             getAttributesIdxs(vvJoinAttributeNames[idxChild], vvCurJoinAttrIdxs[idxChild]);
         }
-
-        MatrixUI32T cntsJoin {m_data.getNumRows(), vJoinAttrNames.size() + 4};
-        vParBlockStartIdxs.reserve(m_data.getNumRows());
-        vParBlockStartIdxsAfterFirstPass.reserve(m_data.getNumRows());
-
-        m_cntsJoinIdxE = cntsJoin.getNumCols() - 4;
-        m_cntsJoinIdxC = cntsJoin.getNumCols() - 3;
-        m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
-        m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
-
-        MICRO_BENCH_INIT(flagsCmp)
-        ////MICRO_BENCH_INIT(hashTable)
         MICRO_BENCH_INIT(pureDownCnt)
-        MICRO_BENCH_START(flagsCmp)
-        getDistinctValsAndBuildIndices(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin,
-            vParBlockStartIdxs, vParBlockStartIdxsAfterFirstPass, isRootNode);
-        MICRO_BENCH_STOP(flagsCmp)
-        FIGARO_LOG_BENCH("Figaro", "flag computation " + m_name, MICRO_BENCH_GET_TIMER_LAP(flagsCmp))
-        numDistParVals = vParBlockStartIdxs.size() - 1;
+        /*
+        ////MICRO_BENCH_INIT(hashTable)
+        */
+        numDistParVals = m_vParBlockStartIdxs.size() - 1;
         ////MICRO_BENCH_START(hashTable)
         initHashTable(vParJoinAttrIdxs, numDistParVals, m_pHTParCounts);
         ////MICRO_BENCH_STOP(hashTable)
         ////FIGARO_LOG_BENCH("Figaro hashTable computation", m_name, MICRO_BENCH_GET_TIMER_LAP(hashTable))
+
         MICRO_BENCH_START(pureDownCnt)
-        // TODO: Replace this with template function.
         if (isRootNode)
         {
             #pragma omp parallel for schedule(static)
             for (uint32_t distCnt = 0;
-                distCnt < cntsJoin.getNumRows(); distCnt++)
+                distCnt < m_countsJoinAttrs.getNumRows(); distCnt++)
             {
-                cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
+                m_countsJoinAttrs[distCnt][m_cntsJoinIdxC] = m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
 
                 // SELECT COUNT(*) JOIN RELATIONS IN SUBTREE
                 // WHERE join_attributes = current join attribute
-                uint32_t curDownCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
+                uint32_t curDownCnt = m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
                 for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
                 {
                     FIGARO_LOG_DBG("CHILD", vpChildRels[idxChild]->m_name)
@@ -1796,12 +1814,12 @@ namespace Figaro
                         getParCntFromHashTable(
                             vvCurJoinAttrIdxs[idxChild],
                             vpChildRels[idxChild]->m_pHTParCounts.get(),
-                            cntsJoin[distCnt]);
+                            m_countsJoinAttrs[distCnt]);
                     uint32_t downCnt = std::get<0>(cnts);
                     curDownCnt *= downCnt;
                 }
                 // J_i
-                cntsJoin[distCnt][m_cntsJoinIdxD] = curDownCnt;
+                m_countsJoinAttrs[distCnt][m_cntsJoinIdxD] = curDownCnt;
             }
         }
         else
@@ -1810,41 +1828,38 @@ namespace Figaro
             for (uint32_t distCntPar = 0; distCntPar < numDistParVals; distCntPar++)
             {
                 uint32_t sum = 0;
-                uint32_t parCurBlockStartIdx = vParBlockStartIdxs[distCntPar];
-                uint32_t parNextBlockStartIdx = vParBlockStartIdxs[distCntPar + 1];
+                uint32_t parCurBlockStartIdx = m_vParBlockStartIdxs[distCntPar];
+                uint32_t parNextBlockStartIdx = m_vParBlockStartIdxs[distCntPar + 1];
                 // Distinct parent attribute
                 for (uint32_t distCnt = parCurBlockStartIdx;
                     distCnt < parNextBlockStartIdx; distCnt++)
                 {
-                    cntsJoin[distCnt][m_cntsJoinIdxC] = cntsJoin[distCnt][m_cntsJoinIdxV];
+                    m_countsJoinAttrs[distCnt][m_cntsJoinIdxC] = m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
 
 
                     // SELECT COUNT(*) JOIN RELATIONS IN SUBTREE
                     // WHERE join_attributes = current join attribute
-                    uint32_t curDownCnt = cntsJoin[distCnt][m_cntsJoinIdxV];
+                    uint32_t curDownCnt = m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
                     for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
                     {
                         Figaro::Relation::DownUpCntT& cnts =
                             getParCntFromHashTable(
                                 vvCurJoinAttrIdxs[idxChild],
                                 vpChildRels[idxChild]->m_pHTParCounts.get(),
-                                cntsJoin[distCnt]);
+                                m_countsJoinAttrs[distCnt]);
                         uint32_t downCnt = std::get<0>(cnts);
                         curDownCnt *= downCnt;
                     }
-                    cntsJoin[distCnt][m_cntsJoinIdxD] = curDownCnt;
+                    m_countsJoinAttrs[distCnt][m_cntsJoinIdxD] = curDownCnt;
                     sum += curDownCnt;
 
                 }
                 insertParDownCntFromHashTable(vParJoinAttrIdxs,
-                    cntsJoin[parCurBlockStartIdx], sum, m_pHTParCounts);
+                    m_countsJoinAttrs[parCurBlockStartIdx], sum, m_pHTParCounts);
             }
         }
         MICRO_BENCH_STOP(pureDownCnt)
-        FIGARO_LOG_BENCH("Figaro pure down count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
-        m_countsJoinAttrs = std::move(cntsJoin);
-        m_vParBlockStartIdxs = std::move(vParBlockStartIdxs);
-        m_vParBlockStartIdxsAfterFirstPass = std::move(vParBlockStartIdxsAfterFirstPass);
+        FIGARO_LOG_BENCH("Figaro down count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
     }
 
     uint32_t Relation::getDownCountSum(void) const
