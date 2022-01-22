@@ -69,9 +69,9 @@ namespace Figaro
         pElement->accept(&computeUpAndCircleVisitor);
         MICRO_BENCH_STOP(rUpCntCompt)
 
+        FIGARO_LOG_BENCH("Figaro", "query evaluation indices building",  MICRO_BENCH_GET_TIMER_LAP(rIndicesComp));
         FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(rDownCntComp));
         FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(rUpCntCompt));
-        FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(rIndicesComp));
 
         MICRO_BENCH_START(rFirstPassComp)
         ASTVisitorFirstPassResult* pResult =
@@ -112,9 +112,12 @@ namespace Figaro
             delete pQResult;
             MICRO_BENCH_STOP(qComp)
 
-            FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
-            double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
-            FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
+            if (m_saveResult)
+            {
+                FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
+                double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
+                FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
+            }
         }
         /************* Q COMPUTATION END ***********/
 
@@ -143,7 +146,7 @@ namespace Figaro
             m_pDatabase->evalPostprocessing(pElement->getRelationOrder().at(0),
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
         MICRO_BENCH_STOP(qrPostprocEval)
-        FIGARO_LOG_BENCH("Postproc eval", MICRO_BENCH_GET_TIMER_LAP(qrPostprocEval))
+        FIGARO_LOG_BENCH("Figaro", "Postproc eval", MICRO_BENCH_GET_TIMER_LAP(qrPostprocEval))
         return new ASTVisitorQRResult(rName, qName);
     }
 
@@ -225,12 +228,5 @@ namespace Figaro
     {
         return new ASTVisitorJoinResult(pElement->getRelationName());
     }
-
-
-
-
-
-
-
 
 }
