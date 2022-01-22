@@ -347,6 +347,17 @@ namespace Figaro
         return ortMeasure;
     }
 
+    void Database::buildIndices(
+            const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames,
+            const std::vector<std::string>& vParJoinAttrNames,
+            bool isRootNode)
+    {
+        Relation& rel = m_relations.at(relationName);
+
+        rel.buildIndices(vJoinAttrNames, vParJoinAttrNames, isRootNode);
+    }
+
     void Database::computeDownCounts(
         const std::string& relationName,
         const std::vector<std::string>& vChildRelNames,
