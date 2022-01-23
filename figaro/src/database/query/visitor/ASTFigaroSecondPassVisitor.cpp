@@ -101,12 +101,12 @@ namespace Figaro
         FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("QR Givens");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
-        MICRO_BENCH_INIT(mainAlgorithm)
-        MICRO_BENCH_START(mainAlgorithm)
+        //MICRO_BENCH_INIT(mainAlgorithm)
+        //MICRO_BENCH_START(mainAlgorithm)
          ASTVisitorSecondPassResult* pResult =
             (ASTVisitorSecondPassResult*)pElement->getOperand()->accept(this);
-        MICRO_BENCH_STOP(mainAlgorithm)
-        FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
+        //MICRO_BENCH_STOP(mainAlgorithm)
+        //FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
 
         for (const auto& relName: vRelOrder)
         {
@@ -118,8 +118,8 @@ namespace Figaro
             vGenTailRelNames.push_back(pResult->getHtNamesTmpRels().at(relName).m_genTailsName);
         }
 
-        MICRO_BENCH_INIT(postprocess)
-        MICRO_BENCH_START(postprocess)
+        //MICRO_BENCH_INIT(postprocess)
+        //MICRO_BENCH_START(postprocess)
         auto [rName, qName] =
             m_pDatabase->computePostprocessing
             (pElement->getRelationOrder(),
@@ -127,8 +127,8 @@ namespace Figaro
             vTailRelNames,
             vGenTailRelNames,
             m_qrHintType, m_saveResult, m_joinRelName);
-        MICRO_BENCH_STOP(postprocess)
-        FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
+        //MICRO_BENCH_STOP(postprocess)
+        //FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
         FIGARO_LOG_INFO("FInished")
         delete pResult;
         return new ASTVisitorQRResult(rName, qName);

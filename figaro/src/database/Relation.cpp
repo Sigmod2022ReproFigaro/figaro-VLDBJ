@@ -1388,8 +1388,8 @@ namespace Figaro
 
             if (areJoinAttrsPK)
             {
-                MICRO_BENCH_INIT(testStupidLoop)
-                MICRO_BENCH_START(testStupidLoop)
+                //MICRO_BENCH_INIT(testStupidLoop)
+                //MICRO_BENCH_START(testStupidLoop)
                 for (rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
                 {
                     const double* pCurAttrVals = m_data[rowIdx];
@@ -1401,15 +1401,15 @@ namespace Figaro
                     }
                 }
                 vParBlockStartIdxs.push_back(rowIdx);
-                MICRO_BENCH_STOP(testStupidLoop)
-                FIGARO_LOG_BENCH("Stupid loop", MICRO_BENCH_GET_TIMER_LAP(testStupidLoop))
+                //MICRO_BENCH_STOP(testStupidLoop)
+                //FIGARO_LOG_BENCH("Stupid loop", MICRO_BENCH_GET_TIMER_LAP(testStupidLoop))
 
                 distCnt = 0;
                 pParPrevAttrVals = &vParPrevAttrVals[0];
 
                 vParBlockStartIdxsAfterFirstPass.resize(vParBlockStartIdxs.size());
-                MICRO_BENCH_INIT(generalLoops)
-                MICRO_BENCH_START(generalLoops)
+                //MICRO_BENCH_INIT(generalLoops)
+                //MICRO_BENCH_START(generalLoops)
                 #pragma omp parallel for schedule(static)
                 for (uint32_t distParCnt = 0; distParCnt < vParBlockStartIdxs.size() - 1; distParCnt++)
                 {
@@ -1430,8 +1430,8 @@ namespace Figaro
                     }
                     // Dummy indices
                 }
-                MICRO_BENCH_STOP(generalLoops)
-                FIGARO_LOG_BENCH("General loop", MICRO_BENCH_GET_TIMER_LAP(generalLoops))
+                //MICRO_BENCH_STOP(generalLoops)
+                //FIGARO_LOG_BENCH("General loop", MICRO_BENCH_GET_TIMER_LAP(generalLoops))
                 distCnt = m_data.getNumRows();
                 vParBlockStartIdxsAfterFirstPass.back() = distCnt;
                 //cntJoinVals.resize(distCnt);
@@ -1590,16 +1590,16 @@ namespace Figaro
         m_cntsJoinIdxD = cntsJoin.getNumCols() - 2;
         m_cntsJoinIdxV = cntsJoin.getNumCols() - 1;
 
-        MICRO_BENCH_INIT(indicesComp)
-        MICRO_BENCH_START(indicesComp)
+        //MICRO_BENCH_INIT(indicesComp)
+        //MICRO_BENCH_START(indicesComp)
         getDistinctValsAndBuildIndices(vJoinAttrIdxs, vParJoinAttrIdxs, cntsJoin,
             vParBlockStartIdxs, vParBlockStartIdxsAfterFirstPass, isRootNode);
 
         m_countsJoinAttrs = std::move(cntsJoin);
         m_vParBlockStartIdxs = std::move(vParBlockStartIdxs);
         m_vParBlockStartIdxsAfterFirstPass = std::move(vParBlockStartIdxsAfterFirstPass);
-        MICRO_BENCH_STOP(indicesComp)
-        FIGARO_LOG_BENCH("Indices building" + m_name, MICRO_BENCH_GET_TIMER_LAP(indicesComp))
+        //MICRO_BENCH_STOP(indicesComp)
+        //FIGARO_LOG_BENCH("Indices building" + m_name, MICRO_BENCH_GET_TIMER_LAP(indicesComp))
     }
 
     void Relation::computeDownCounts(
@@ -1626,7 +1626,7 @@ namespace Figaro
             vpChildRels[idxChild]->getAttributesIdxs(vvJoinAttributeNames[idxChild], vvJoinAttrIdxs[idxChild]);
             getAttributesIdxs(vvJoinAttributeNames[idxChild], vvCurJoinAttrIdxs[idxChild]);
         }
-        MICRO_BENCH_INIT(pureDownCnt)
+        //MICRO_BENCH_INIT(pureDownCnt)
         /*
         ////MICRO_BENCH_INIT(hashTable)
         */
@@ -1636,7 +1636,7 @@ namespace Figaro
         ////MICRO_BENCH_STOP(hashTable)
         ////FIGARO_LOG_BENCH("Figaro hashTable computation", m_name, MICRO_BENCH_GET_TIMER_LAP(hashTable))
 
-        MICRO_BENCH_START(pureDownCnt)
+        //MICRO_BENCH_START(pureDownCnt)
         if (isRootNode)
         {
             #pragma omp parallel for schedule(static)
@@ -1699,8 +1699,8 @@ namespace Figaro
                     m_countsJoinAttrs[parCurBlockStartIdx], sum, m_pHTParCounts);
             }
         }
-        MICRO_BENCH_STOP(pureDownCnt)
-        FIGARO_LOG_BENCH("Figaro down count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
+        //MICRO_BENCH_STOP(pureDownCnt)
+        //FIGARO_LOG_BENCH("Figaro down count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
     }
 
     uint32_t Relation::getDownCountSum(void) const
@@ -1723,8 +1723,8 @@ namespace Figaro
         std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
         std::vector<uint32_t> vParJoinAttrIdxs;
         uint32_t numDistParVals;
-        MICRO_BENCH_INIT(pureUpCnt)
-        MICRO_BENCH_START(pureUpCnt)
+        //MICRO_BENCH_INIT(pureUpCnt)
+        //MICRO_BENCH_START(pureUpCnt)
         vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
         getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
@@ -1798,8 +1798,8 @@ namespace Figaro
                 }
             }
         }
-        MICRO_BENCH_STOP(pureUpCnt)
-        FIGARO_LOG_BENCH("Figaro pure up count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureUpCnt))
+        //MICRO_BENCH_STOP(pureUpCnt)
+        //FIGARO_LOG_BENCH("Figaro pure up count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureUpCnt))
     }
 
    // We assume join attributes are before nonJoinAttributes.
@@ -1971,8 +1971,8 @@ namespace Figaro
         pHeadRel->getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         pHeadRel->getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
         vAttrsAggAway = pHeadRel->m_attributes;
-        MICRO_BENCH_INIT(aggregateAway)
-        MICRO_BENCH_START(aggregateAway)
+        //MICRO_BENCH_INIT(aggregateAway)
+        //MICRO_BENCH_START(aggregateAway)
 
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
@@ -2069,8 +2069,8 @@ namespace Figaro
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
 
-        MICRO_BENCH_STOP(aggregateAway)
-        FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+        //MICRO_BENCH_STOP(aggregateAway)
+        //FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
         FIGARO_LOG_INFO("Before moving out", dataOutput.getNumRows());
         return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), vAttrsAggAway);
     }
@@ -2094,8 +2094,8 @@ namespace Figaro
 
         std::vector<Attribute> attributes;
 
-        MICRO_BENCH_INIT(genHT)
-        MICRO_BENCH_START(genHT)
+        //MICRO_BENCH_INIT(genHT)
+        //MICRO_BENCH_START(genHT)
         pAggAwayRel->getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
         pAggAwayRel->getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
         // TODO: Replace this
@@ -2237,9 +2237,9 @@ namespace Figaro
 
         m_dataScales = std::move(dataScales);
         m_scales = std::move(scales);
-        MICRO_BENCH_STOP(genHT)
+        //MICRO_BENCH_STOP(genHT)
         //MICRO_BENCH_STOP(genHTMainLoop)
-        FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
+        //FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
         FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
         return std::make_tuple(
