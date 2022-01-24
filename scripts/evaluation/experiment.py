@@ -55,7 +55,7 @@ def set_exp1_real(system_tests_path: str):
 
 
 def set_exp1_synt(system_tests_path: str):
-    test_syn_perf_data_path = os.path.join(system_tests_path, "test_cartesian_product", "tests_specs.conf")
+    test_syn_perf_data_path = os.path.join(system_tests_path, "test_syn_perf", "tests_specs.conf")
     test_set_all_to_true(test_syn_perf_data_path)
     subtests_to_set = ["synthetic_performance_figaro", "synthetic_performance_mkl"]
     test_set_to_true(test_syn_perf_data_path, subtests_to_set)
@@ -135,7 +135,7 @@ def run_exp3(username: str, password: str, root_path: str,
 
 
 def set_exp4_synt(system_tests_path: str):
-    test_syn_perf_data_path = os.path.join(system_tests_path, "test_accuracy_cart_prod", "tests_specs.conf")
+    test_syn_perf_data_path = os.path.join(system_tests_path, "test_syn_accur", "tests_specs.conf")
     test_set_all_to_true(test_syn_perf_data_path)
     subtests_to_set = ["synthetic_accuracy_figaro",
         "synthetic_accuracy_mkl"]
