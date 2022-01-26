@@ -21,14 +21,14 @@ def generate_cart_prod_two_rel(db_idx, db_config_path, query_config_path, userna
                 "--r_relation_num_rows", str(num_rows),
                 "--s_relation_num_rows", str(num_rows),
                 "--data_path", data_path])
-    full_query_join_conf = os.path.join(system_tests_path, "test_cartesian_product/queries/query_full_join.conf")
+    full_query_join_conf = os.path.join(system_tests_path, "test_syn_perf/queries/query_full_join.conf")
     dg.main(["-d", db_config_path_t,
         "-q", full_query_join_conf,"-u", username, "-p", password])
 
 
 def vary_row_and_col_num(username, password, system_tests_path: str, data_path: str):
-    db_config_path = os.path.join(system_tests_path, "test_cartesian_product/databases/database_specs{db_idx}.conf")
-    query_config_path = os.path.join(system_tests_path, "test_cartesian_product/queries/query_full_join.conf")
+    db_config_path = os.path.join(system_tests_path, "test_syn_perf/databases/database_specs{db_idx}.conf")
+    query_config_path = os.path.join(system_tests_path, "test_syn_perf/queries/query_full_join.conf")
     db_idx = 1
     num_rows_a = [512, 1024, 2048, 4096, 8192]
     num_cols_a = [64, 256, 1024, 4096]

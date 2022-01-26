@@ -102,7 +102,7 @@ def generate_db_schema(system_tests_path: str, num_non_join_attrs: int, db_outpu
     db_json = {"database": {"name": db_name,
         "relations": relations_json} }
 
-    db_conf_path = os.path.join(system_tests_path, "test_accuracy_cart_prod/databases/database_specs{db_idx}.conf").replace("{db_idx}", str(db_idx))
+    db_conf_path = os.path.join(system_tests_path, "test_syn_accur/databases/database_specs{db_idx}.conf").replace("{db_idx}", str(db_idx))
 
     with open (db_conf_path, 'w') as db_conf_file:
         json.dump(db_json, db_conf_file, indent=4)
