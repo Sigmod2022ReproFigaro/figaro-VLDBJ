@@ -273,7 +273,7 @@ class DatabasePsql:
 
 
     def full_reducer_join(self, query: Query, percent: float=None):
-        self.evaluate_join(query, num_repetitions=1)
+        self.evaluate_join(query, num_repetitions=1, order_by=DumpConf.OrderRelation.JOIN_ATTRIBUTE)
         if percent is not None:
             self.limit_join(query, percent)
         self.remove_dangling_tuples(query)
