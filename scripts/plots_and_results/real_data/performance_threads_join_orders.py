@@ -182,9 +182,9 @@ def main(args):
                 "DBRetailer": ["CensusRoot", "InventoryRoot", "ItemRoot", "LocationRoot", "WeatherRoot"]}
 
 
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag",
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag/thread48",
     "mkl": "comparisons/performance/python/mkl",
-    "figaro_lapack": "comparisons/performance/figaro/lapack",
+    "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
     "openblas": "comparisons/performance/python/openblas",
     "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
     "post_proc_mkl": "comparisons/performance/postprocess/lapack"}

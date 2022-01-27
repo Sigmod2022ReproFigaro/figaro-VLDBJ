@@ -139,19 +139,19 @@ def main(args):
     ohe = args.ohe
     #exp_names = ["figaro_thin",  "post_proc_mkl", "post_proc_thin"]
 
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag", "mkl": "comparisons/performance/python/mkl",
-    "figaro_lapack": "comparisons/performance/figaro/lapack",
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag/thread48", "mkl": "comparisons/performance/python/mkl",
+    "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
     "openblas": "comparisons/performance/python/openblas",
     "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
     "post_proc_mkl": "comparisons/performance/postprocess/lapack"}
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
     if ohe:
-        join_orders = {"DBRetailer": "ItemRoot48",
-        "DBFavorita": "ItemsRoot48", "DBYelp": "UserRoot48"}
+        join_orders = {"DBRetailer": "ItemRoot",
+        "DBFavorita": "ItemsRoot", "DBYelp": "UserRoot"}
     else:
-        join_orders = {"DBRetailer": "LocationRoot48",
-            "DBFavorita": "StoresRoot48", "DBYelp": "BusinessRoot48"}
+        join_orders = {"DBRetailer": "LocationRoot",
+            "DBFavorita": "StoresRoot", "DBYelp": "BusinessRoot"}
 
     start_per = 10
     end_per = 100
