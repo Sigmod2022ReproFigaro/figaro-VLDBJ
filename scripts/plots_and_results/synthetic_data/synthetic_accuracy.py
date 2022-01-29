@@ -126,7 +126,7 @@ def main(args):
 
     figaro_impls = ["figaro_lapack", "figaro_thin"]
     exp_names = [ "figaro_lapack", "figaro_thin", "postprocess_lapack"]
-    exp_paths = {"figaro_lapack": "dumps/figaro/lapack", "postprocess_lapack": "dumps/postprocess/lapack", "figaro_thin": "dumps/figaro/thin_diag"}
+    exp_paths = {"figaro_lapack": "dumps/figaro/lapack/thread48", "postprocess_lapack": "dumps/postprocess/lapack/col_major/only_r/thread48", "figaro_thin": "dumps/figaro/thin_diag/thread48"}
 
     row_nums = [512, 1024, 2048, 4096, 8192]
     column_nums = [16, 64, 256, 1024, 4096]
