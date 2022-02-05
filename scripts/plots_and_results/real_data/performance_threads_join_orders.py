@@ -40,10 +40,10 @@ def collect_times(ohe: bool, root_path: str, exp_name: str, db_names: list,
                 else:
                     db_name_pref = "{}100".format(db_name)
                 db_name_full = "{} {} {}".format(db_name_pref, join_order, thread_num)
-                path_xlsx = os.path.join(perf_path, db_name_pref, join_order+str(thread_num), XLSX_NAME)
+                path_xlsx = os.path.join(perf_path, "thread"+str(thread_num), db_name_pref, join_order, XLSX_NAME)
                 print(path_xlsx)
                 if os.path.isfile(path_xlsx):
-                    print("PATH", path_xlsx)
+                    #print("PATH", path_xlsx)
                     workbook = load_workbook(filename=path_xlsx, data_only=True)
                     sheet = workbook.active
                     row_count = sheet.max_row
@@ -62,7 +62,7 @@ def collect_times(ohe: bool, root_path: str, exp_name: str, db_names: list,
                         out_sheet.cell(row=row_idx_dst, column=col_idx).value = val
 
                     out_sheet.cell(row=start_row_idx + num_measurement, column=col_idx).value = '=AVERAGE({}{}:{}{})'.format(col_letter, start_row_idx + 1,
-                            col_letter,6)
+                            col_letter,22)
                     time_avg = np.mean(np_measures[1:])
                 else:
                     time_avg = float("inf")
@@ -182,7 +182,7 @@ def main(args):
                 "DBRetailer": ["CensusRoot", "InventoryRoot", "ItemRoot", "LocationRoot", "WeatherRoot"]}
 
 
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag/thread48",
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag",
     "mkl": "comparisons/performance/python/mkl",
     "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
     "openblas": "comparisons/performance/python/openblas",
@@ -191,7 +191,7 @@ def main(args):
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
 
-    num_measurement = 5
+    num_measurement = 21
 
     df_measurement_exps = collect_times(ohe, root_path, exp_name, db_names,
         exp_paths, join_orders, thread_nums_exp,

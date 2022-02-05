@@ -6,12 +6,9 @@ import numpy as np
 import pandas as pd
 import argparse
 import os
-from openpyxl import load_workbook, Workbook
+from openpyxl import load_workbook
 from openpyxl.utils.cell import get_column_letter
 import logging
-from data_management.database import Database
-from data_management.database_psql import DatabasePsql
-from data_management.query import Query
 import argparse
 import sys
 import numpy as np
@@ -142,8 +139,8 @@ def main(args):
     exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag/thread48", "mkl": "comparisons/performance/python/mkl",
     "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
     "openblas": "comparisons/performance/python/openblas",
-    "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
-    "post_proc_mkl": "comparisons/performance/postprocess/lapack"}
+    "post_proc_thin": "comparisons/performance/postprocess/thin_diag/thread48",
+    "post_proc_mkl": "comparisons/performance/postprocess/lapack/col_major/only_r/thread48"}
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
     if ohe:
@@ -157,7 +154,7 @@ def main(args):
     end_per = 100
     per_inc = 10
 
-    num_measurement = 5
+    num_measurement = 21
 
     df_measurement_exps = collect_times(ohe, root_path, exp_names, db_names,
         exp_paths, join_orders, start_per, end_per, per_inc,
