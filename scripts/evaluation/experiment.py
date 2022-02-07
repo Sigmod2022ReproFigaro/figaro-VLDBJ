@@ -148,7 +148,7 @@ def run_exp4(username: str, password: str, root_path: str,
 
     args = ["-p", password, "-u", username, "-r", root_path,
                "-s", system_tests_path]
-    args_synt_accur = args + ["--test", "_accuracy_cart_prod"]
+    args_synt_accur = args + ["--test", "_syn_accur"]
 
     eval.main(args_synt_accur)
 
