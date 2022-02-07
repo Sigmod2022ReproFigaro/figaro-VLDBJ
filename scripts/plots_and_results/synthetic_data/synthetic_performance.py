@@ -118,14 +118,15 @@ def main(args):
     root_path = args.root_path
     dump_results = args.dump_results
 
-    num_measurement = 5
+    num_measurement = 21
+
 
     figaro_impls = ["figaro_thin", "figaro_lapack"]
     exp_names = [*figaro_impls, "postprocess_mkl"]
     exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag/thread48",
                 "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
                 "mkl": "comparisons/performance/python/mkl",
-                "postprocess_mkl": "comparisons/performance/postprocess/lapack",}
+                "postprocess_mkl": "comparisons/performance/postprocess/lapack/col_major/only_r/thread48",}
 
     column_nums = [64, 256, 1024, 4096]
     row_nums = [512, 1024, 2048, 4096, 8192]
