@@ -64,6 +64,12 @@ namespace Figaro
             return nullptr;
         }
 
+         virtual ASTVisitorAbsResult* visitNodeLinReg(ASTNodeLinReg* pElement)  override
+        {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
         virtual ~ASTRightMultiplyVisitor() override {}
     };
 }

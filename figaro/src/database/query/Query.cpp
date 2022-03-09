@@ -24,7 +24,7 @@ namespace Figaro
         // TODO: Replace with factory pattern.
         // TODO: Rename GIV_QR with FIGARO_QR
         if ((operatorName == "GIV_QR") || (operatorName == "POSTPROCESS_QR")
-        || (operatorName == "eval_join"))
+        || (operatorName == "eval_join") || (operatorName == "LIN_REG"))
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -72,6 +72,12 @@ namespace Figaro
                 pCreatedNode = new ASTNodePostProcQR(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
+            }
+            else if (operatorName == "LIN_REG")
+            {
+                pCreatedNode = new ASTNodeLinReg(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                FIGARO_LOG_INFO("CREATE LIN_REG NODE")
             }
             else
             {

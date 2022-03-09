@@ -150,6 +150,15 @@ namespace Figaro
         return new ASTVisitorQRResult(rName, qName);
     }
 
+
+    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)
+    {
+        // TODO: copy tree that computes R
+        // TODO: multiply R by itself.
+        // TODO: store result
+        return nullptr;
+    }
+
     ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         FIGARO_LOG_INFO("VISITING EVAL JOIN NODE")
