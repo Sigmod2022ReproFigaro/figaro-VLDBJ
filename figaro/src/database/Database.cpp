@@ -323,6 +323,36 @@ namespace Figaro
         return mulRelName;
     }
 
+    std::string Database::selfMatrixMultiply(
+            const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames)
+    {
+        Relation& rel = m_relations.at(relationName);
+
+        FIGARO_LOG_DBG(rel)
+
+        Relation smmRel = rel.selfMatrixMultiply(vJoinAttrNames);
+
+        std::string smmRelName = smmRel.getName();
+        m_relations.emplace(smmRelName, std::move(smmRel));
+        return smmRelName;
+    }
+
+    std::string Database::linearRegression(
+            const std::string& relationName,
+            const std::string& labelName)
+    {
+        Relation& rel = m_relations.at(relationName);
+
+        FIGARO_LOG_DBG(rel)
+
+        Relation linRegRel = rel.linearRegression(labelName);
+
+        std::string linRegRelName = linRegRel.getName();
+        m_relations.emplace(linRegRelName, std::move(linRegRel));
+        return linRegRelName;
+    }
+
     std::string Database::inverse(const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames)
     {
@@ -338,9 +368,9 @@ namespace Figaro
     }
 
     double Database::checkOrthogonality(const std::string& relationName,
-            const std::vector<std::string>& vJoinAttrNames)
+            const std::vector<std::string>& vJoinAttrNames) const
     {
-        Relation& rel = m_relations.at(relationName);
+        const Relation& rel = m_relations.at(relationName);
 
         double ortMeasure = rel.checkOrthogonality(vJoinAttrNames);
 

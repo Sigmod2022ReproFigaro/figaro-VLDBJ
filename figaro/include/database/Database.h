@@ -107,8 +107,17 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2);
 
-        double checkOrthogonality(const std::string& relationName,
+        std::string selfMatrixMultiply(
+            const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames);
+
+        std::string linearRegression(
+            const std::string& relationRName,
+            const std::string& labelName
+        );
+
+        double checkOrthogonality(const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames) const;
 
         std::string inverse(const std::string& relationName1,
             const std::vector<std::string>& vJoinAttrNames);

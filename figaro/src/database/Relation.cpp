@@ -1263,6 +1263,57 @@ namespace Figaro
             m_attributes);
     }
 
+
+    Relation Relation::linearRegression(
+            const std::string& labelName) const
+    {
+        uint32_t labelIdx = getAttributeIdx(labelName);
+        uint32_t numAttrs = m_attributes.size();
+
+        // multiply R by itself.
+        auto smmMat = m_data.selfMatrixMultiply(0);
+        MatrixDT APrimeB{numAttrs - 1, 1};
+        MatrixDT APrimeA{numAttrs - 1, numAttrs - 1};
+
+        // extract A' * b
+        for (uint32_t idx = 0, curIdx = 0; idx < smmMat.getNumRows(); idx++)
+        {
+            if (idx == labelIdx)
+            {
+                continue;
+            }
+            APrimeB[curIdx][0] = smmMat[labelIdx][idx];
+            curIdx++;
+        }
+
+        // extract A ' * A
+        for (uint32_t rowIdx = 0, curRowIdx=0; rowIdx < smmMat.getNumRows(); rowIdx++  )
+        {
+            if (rowIdx == labelIdx)
+            {
+                continue;
+            }
+            for (uint32_t colIdx = 0, curColIdx=0; colIdx < smmMat.getNumCols(); colIdx++)
+            {
+                if (colIdx == labelIdx)
+                {
+                    continue;
+                }
+                APrimeA[curRowIdx][curColIdx] = smmMat[rowIdx][colIdx];
+                curColIdx ++;
+            }
+        }
+
+        // linear regression
+        auto resX = APrimeA.computeInverse().multiply(APrimeB, 0, 0);
+
+
+        return Relation("LIN_REG" + getName() + labelName, std::move(resX),
+            {Attribute()});
+
+
+    }
+
     double Relation::norm(
             const std::vector<std::string>& vJoinAttrNames) const
     {

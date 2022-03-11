@@ -151,12 +151,27 @@ namespace Figaro
     }
 
 
-    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)
+    ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)
     {
-        // TODO: copy tree that computes R
-        // TODO: multiply R by itself.
-        // TODO: store result
-        return nullptr;
+        FIGARO_LOG_INFO("VISITING LIN REG NODE")
+
+        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTJoinVisitor astJoinVisitor(m_pDatabase);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        // computation of R
+        ASTNodeQRGivens astQRGivens(
+            pElement->getOperand()->copy(),
+            pElement->getRelationOrder(),
+            pElement->getDropAttributes(),
+            pElement->getNumThreads(), false);
+        ASTVisitorQRResult* pQrResult = (ASTVisitorQRResult*)astQRGivens.accept(this);
+        std::string rRelName = pQrResult->getRRelationName();
+        delete pQrResult;
+
+        std::string linRegVec = m_pDatabase->linearRegression(rRelName, {});
+
+        return new ASTVisitorJoinResult(linRegVec);
     }
 
     ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)

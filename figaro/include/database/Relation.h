@@ -484,6 +484,9 @@ namespace Figaro
         Relation selfMatrixMultiply(
         const std::vector<std::string>& vJoinAttrNames) const;
 
+        Relation linearRegression(
+            const std::string& labelName) const;
+
         double norm(
             const std::vector<std::string>& vJoinAttrNames) const;
 

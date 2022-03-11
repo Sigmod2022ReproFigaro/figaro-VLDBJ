@@ -26,7 +26,7 @@ namespace Figaro
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
         ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
         ASTVisitorQRResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
-        ASTVisitorQRResult* visitNodeLinReg(ASTNodeLinReg* pElement) override;
+        ASTVisitorJoinResult* visitNodeLinReg(ASTNodeLinReg* pElement) override;
         ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) override { return nullptr; }
         ASTVisitorJoinResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
         ASTVisitorJoinResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
