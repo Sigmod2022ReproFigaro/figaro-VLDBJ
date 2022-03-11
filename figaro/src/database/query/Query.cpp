@@ -30,6 +30,7 @@ namespace Figaro
             std::vector<std::string> vRelationOrder;
             std::vector<std::string> vDropAttrNames;
             uint32_t numThreads;
+            std::string labelName;
             bool computeQ = false;
 
             for (const auto& relName: jsonQueryConfig["relation_order"])
@@ -59,6 +60,11 @@ namespace Figaro
                 computeQ = jsonQueryConfig["compute_all"];
             }
 
+            if (jsonQueryConfig.contains("label_name"))
+            {
+                labelName = jsonQueryConfig["label_name"];
+            }
+
 
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
             if (operatorName == "GIV_QR")
@@ -76,7 +82,8 @@ namespace Figaro
             else if (operatorName == "LIN_REG")
             {
                 pCreatedNode = new ASTNodeLinReg(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                labelName);
                 FIGARO_LOG_INFO("CREATE LIN_REG NODE")
             }
             else

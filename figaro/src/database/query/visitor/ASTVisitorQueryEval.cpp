@@ -169,7 +169,8 @@ namespace Figaro
         std::string rRelName = pQrResult->getRRelationName();
         delete pQrResult;
 
-        std::string linRegVec = m_pDatabase->linearRegression(rRelName, {});
+        std::string linRegVec = m_pDatabase->linearRegression(rRelName,
+            pElement->getLabelName());
 
         return new ASTVisitorJoinResult(linRegVec);
     }

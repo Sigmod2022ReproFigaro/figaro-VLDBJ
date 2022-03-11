@@ -1275,6 +1275,9 @@ namespace Figaro
         MatrixDT APrimeB{numAttrs - 1, 1};
         MatrixDT APrimeA{numAttrs - 1, numAttrs - 1};
 
+        FIGARO_LOG_INFO("smmMat", smmMat);
+        FIGARO_LOG_INFO("labelIdx", labelIdx);
+
         // extract A' * b
         for (uint32_t idx = 0, curIdx = 0; idx < smmMat.getNumRows(); idx++)
         {
@@ -1285,6 +1288,8 @@ namespace Figaro
             APrimeB[curIdx][0] = smmMat[labelIdx][idx];
             curIdx++;
         }
+
+        FIGARO_LOG_INFO("APrimeB", APrimeB);
 
         // extract A ' * A
         for (uint32_t rowIdx = 0, curRowIdx=0; rowIdx < smmMat.getNumRows(); rowIdx++  )
@@ -1302,11 +1307,14 @@ namespace Figaro
                 APrimeA[curRowIdx][curColIdx] = smmMat[rowIdx][colIdx];
                 curColIdx ++;
             }
+            curRowIdx ++;
         }
+
+        FIGARO_LOG_INFO("APrimeA", APrimeA);
 
         // linear regression
         auto resX = APrimeA.computeInverse().multiply(APrimeB, 0, 0);
-
+        FIGARO_LOG_INFO("resX", resX);
 
         return Relation("LIN_REG" + getName() + labelName, std::move(resX),
             {Attribute()});
