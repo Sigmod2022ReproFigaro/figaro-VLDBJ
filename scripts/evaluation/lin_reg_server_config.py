@@ -57,12 +57,15 @@ def test_perf_data_set_set(test_perf_data_set_path: str, data_set: str):
         tests_json = json.dump(tests_perf_data_set_json, tests_file_json, indent=4)
 
 
-def test_perf_query_set(test_perf_query_path: str, skip_list: list, label: str):
+def test_perf_query_set(test_perf_query_path: str, skip_list: list, label: str,
+    is_figaro: bool):
+
     with open(test_perf_query_path, 'r') as tests_file_json:
         tests_perf_query_json = json.load(tests_file_json)
 
     tests_perf_query = tests_perf_query_json["query"]
     tests_perf_query["evaluation_hint"]["skip_attributes"] = skip_list
+    tests_perf_query["evaluation_hint"]["figaro"] = is_figaro
     tests_perf_query["evaluation_hint"]["label_name"] = label
 
 
@@ -85,7 +88,8 @@ def set_dataset(system_tests_path: str, data_set: str):
     test_perf_data_set_set(test_perf_path, data_set)
 
 
-def set_features(system_tests_path: str, data_set: str, features: list, label: str):
+def set_features(system_tests_path: str, data_set: str, features: list, label: str,
+    is_figaro: bool):
     query_dict = {
         "yelp": "query_specs_business_root.conf",
         "favorita": "query_specs_stores_root.conf",
@@ -96,12 +100,14 @@ def set_features(system_tests_path: str, data_set: str, features: list, label: s
         "retailer": "usretailer"}
 
     feature_names_dict = {
-        "yelp": ["CityId,StateId,Latitude,Longitude,StarsB,ReviewCountB,IsOpen,StarsR,ReviewYear,ReviewMonth,ReviewDay,Useful,Funny,Cool,ReviewCountU,YearJoined,UserUseful,UserFunny,UserCool,Fans,AverageStars,ComplimentHot,ComplimentMore,ComplimentProfile,ComplimentCute,ComplimentList,ComplimentNote,ComplimentPlain,ComplimentCool,ComplimentFunny,ComplimentWriter,ComplimentPhotos,CategoryId,DayOfWeekC,CheckinCount,DayOfWeekH,HoursH"],
+        "yelp": ["CityId","StateId","Latitude","Longitude","StarsB","ReviewCountB","IsOpen","StarsR","ReviewYear","ReviewMonth","ReviewDay","Useful","Funny","Cool","ReviewCountU","YearJoined","UserUseful","UserFunny","UserCool","Fans","AverageStars","ComplimentHot","ComplimentMore","ComplimentProfile","ComplimentCute","ComplimentList","ComplimentNote","ComplimentPlain","ComplimentCool","ComplimentFunny","ComplimentWriter","ComplimentPhotos","CategoryId","DayOfWeekC","CheckinCount","DayOfWeekH","HoursH"],
         "favorita": ["UnitSales","OnPromotion","OilPrize","HolidayType","Locale","LocaleId","Transferred","Transactions","City","State","StoreType","Cluster","Family","ItemClass","Perishable"],
-        "retailer": ["Locn","DateId","Ksn","InventoryUnits","Locn","Zip","RgnCd","ClimZnNbr","TotalAreaSqFt","SellAreaSqFt","AvgHi","SuperTargetDistance","SuperTargetDriveTime","TargetDistance","TargetDriveTime","WalmartDistance","WalmartDriveTime","WalmartSuperCenterDistance","WalmartSuperCenterDriveTime","Locn","DateId","Rain","Snow","MaxTemp","MinTemp","MeanWind","Thunder","Ksn","SubCategory","Category","CategoryCluster","Prize","Zip","Population","White","Asian","Pacific","Black","MedianAge","OccupiedHouseUnits","HouseUnits","Families","Households","HusbWife","Males","Females","HouseholdChildren","Hispanic"]}
+        "retailer": ["InventoryUnits","RgnCd","ClimZnNbr","TotalAreaSqFt","SellAreaSqFt","AvgHi","SuperTargetDistance","SuperTargetDriveTime","TargetDistance","TargetDriveTime","WalmartDistance","WalmartDriveTime","WalmartSuperCenterDistance","WalmartSuperCenterDriveTime","Rain","Snow","MaxTemp","MinTemp","MeanWind","Thunder","SubCategory","Category","CategoryCluster","Prize","Population","White","Asian","Pacific","Black","MedianAge","OccupiedHouseUnits","HouseUnits","Families","Households","HusbWife","Males","Females","HouseholdChildren","Hispanic"]}
 
     skip_set = feature_names_dict[data_set]
     for feature in features:
+        #print("feature", feature)
+        #print(skip_set)
         skip_set.remove(feature)
 
     skip_set.remove(label)
@@ -111,7 +117,7 @@ def set_features(system_tests_path: str, data_set: str, features: list, label: s
         query_dict[data_set])
     #print(test_perf_query_path)
     #print(skip_set)
-    test_perf_query_set(test_perf_query_path, list(skip_set), label)
+    test_perf_query_set(test_perf_query_path, list(skip_set), label, is_figaro)
 
 
 
@@ -136,7 +142,7 @@ def main(args):
 
     set_system(system_tests_path, is_figaro)
     set_dataset(system_tests_path, data_set)
-    set_features(system_tests_path, data_set, features, label)
+    set_features(system_tests_path, data_set, features, label, is_figaro)
 
 
 

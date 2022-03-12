@@ -32,6 +32,7 @@ namespace Figaro
             uint32_t numThreads;
             std::string labelName;
             bool computeQ = false;
+            bool isFigaro = false;
 
             for (const auto& relName: jsonQueryConfig["relation_order"])
             {
@@ -64,6 +65,10 @@ namespace Figaro
             {
                 labelName = jsonQueryConfig["label_name"];
             }
+            if (jsonQueryConfig.contains("figaro"))
+            {
+                isFigaro = jsonQueryConfig["figaro"];
+            }
 
 
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
@@ -83,7 +88,7 @@ namespace Figaro
             {
                 pCreatedNode = new ASTNodeLinReg(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
-                labelName);
+                labelName, isFigaro);
                 FIGARO_LOG_INFO("CREATE LIN_REG NODE")
             }
             else

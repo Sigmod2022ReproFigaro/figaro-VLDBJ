@@ -154,20 +154,36 @@ namespace Figaro
     ASTVisitorJoinResult* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)
     {
         FIGARO_LOG_INFO("VISITING LIN REG NODE")
+        std::string rRelName;
 
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
         ASTJoinVisitor astJoinVisitor(m_pDatabase);
 
         omp_set_num_threads(pElement->getNumThreads());
-        // computation of R
-        ASTNodeQRGivens astQRGivens(
-            pElement->getOperand()->copy(),
-            pElement->getRelationOrder(),
-            pElement->getDropAttributes(),
-            pElement->getNumThreads(), false);
-        ASTVisitorQRResult* pQrResult = (ASTVisitorQRResult*)astQRGivens.accept(this);
-        std::string rRelName = pQrResult->getRRelationName();
-        delete pQrResult;
+        if (pElement->isFigaro())
+        {
+            // computation of R
+            ASTNodeQRGivens astQRGivens(
+                pElement->getOperand()->copy(),
+                pElement->getRelationOrder(),
+                pElement->getDropAttributes(),
+                pElement->getNumThreads(), false);
+            ASTVisitorQRResult* pQrResult = (ASTVisitorQRResult*)astQRGivens.accept(this);
+            rRelName = pQrResult->getRRelationName();
+            delete pQrResult;
+        }
+        else
+        {
+            ASTNodePostProcQR astNodePostProc(
+                pElement->getOperand()->copy(),
+                pElement->getRelationOrder(),
+                pElement->getDropAttributes(),
+                pElement->getNumThreads(), false
+            );
+            ASTVisitorQRResult* pQrResult = (ASTVisitorQRResult*)astNodePostProc.accept(this);
+            rRelName = pQrResult->getRRelationName();
+            delete pQrResult;
+        }
 
         std::string linRegVec = m_pDatabase->linearRegression(rRelName,
             pElement->getLabelName());
