@@ -1040,6 +1040,15 @@ namespace Figaro
             }
         }
 
+        void computeSingularValueDecomposition(uint32_t numThreads = 1, bool computeU = false)
+        {
+            computeQRGivens(numThreads, true, QRGivensHintType::THIN_DIAG, computeU);
+            if (computeU)
+            {
+
+            }
+        }
+
         void makeDiagonalElementsPositiveInR(void)
         {
             auto& matA = *this;

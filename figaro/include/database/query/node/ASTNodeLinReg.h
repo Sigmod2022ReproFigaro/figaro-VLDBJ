@@ -16,13 +16,14 @@ namespace Figaro
         std::vector<std::string> m_vDropAttributes;
         uint32_t m_numThreads;
         std::string m_labelName;
+        bool m_isFigaro;
     public:
         ASTNodeLinReg(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes,
         uint32_t numThreads,
-        const std::string& labelName): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
+        const std::string& labelName, bool isFigaro): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
         m_vDropAttributes(vDropAttributes),
-        m_numThreads(numThreads),
-        m_labelName(labelName){};
+        m_numThreads(numThreads), m_labelName(labelName),
+        m_isFigaro(isFigaro) {};
         virtual ~ASTNodeLinReg() override { delete m_pOperand; }
         ASTNode* getOperand(void)
         {
@@ -43,12 +44,18 @@ namespace Figaro
             return m_vDropAttributes;
         }
 
+        bool isFigaro(void) const
+        {
+            return m_isFigaro;
+        }
+
         ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNodeLinReg* copy() override
         {
             return new ASTNodeLinReg(m_pOperand->copy(),
-                m_vRelationOrder, m_vDropAttributes, m_numThreads, m_labelName);
+                m_vRelationOrder, m_vDropAttributes, m_numThreads, m_labelName,
+                m_isFigaro);
         }
     };
 

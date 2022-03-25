@@ -1,7 +1,10 @@
+from cmath import log
 import json
 import logging
 
 from typing import List
+
+from numpy import logical_not
 
 from data_management.database import Database
 
@@ -64,6 +67,9 @@ class Query:
 
 
         #TODO: TESTTTTT!!!
+        #logging.info("cur_rel_attr_names {}".format(cur_rel_attr_names))
+        #logging.info("join_attrs_set {}".format(join_attrs_set))
+        #logging.info("skip_attrs {}".format(self.skip_attrs))
         non_join_attrs_set = set(cur_rel_attr_names).difference(join_attrs_set).difference(self.skip_attrs)
         join_attrs_list = list(join_attrs_set)
         non_join_attrs_list = list(non_join_attrs_set)
@@ -87,6 +93,7 @@ class Query:
             self.num_threads = json_eval_hint.get("num_threads", None)
             self.skip_attrs = json_eval_hint.get(
                 "skip_attributes", [])
+            self.label_name = json_eval_hint.get("label_name", "")
 
             self.compute_join_and_non_join_attrs(json_eval_hint)
 
@@ -97,11 +104,14 @@ class Query:
     def get_eval_hint(self) -> dict:
         return self.eval_hint
 
+
     def get_conf_path(self) -> str:
         return self.query_config_path
 
+
     def get_name(self) -> str:
         return self.name
+
 
     def get_num_threads(self) -> int:
         return self.num_threads
@@ -113,6 +123,10 @@ class Query:
 
     def get_skip_attrs(self)-> List[str]:
         return self.skip_attrs
+
+
+    def get_label_name(self)->str:
+        return self.label_name
 
 
     def get_join_attrs(self, relation_name: str)-> List[str]:
