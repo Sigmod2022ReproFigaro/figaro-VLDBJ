@@ -180,6 +180,7 @@ namespace Figaro
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), false
             );
+            m_saveResult = true;
             ASTVisitorQRResult* pQrResult = (ASTVisitorQRResult*)astNodePostProc.accept(this);
             rRelName = pQrResult->getRRelationName();
             delete pQrResult;
@@ -187,7 +188,6 @@ namespace Figaro
 
         std::string linRegVec = m_pDatabase->linearRegression(rRelName,
             pElement->getLabelName());
-
         return new ASTVisitorJoinResult(linRegVec);
     }
 

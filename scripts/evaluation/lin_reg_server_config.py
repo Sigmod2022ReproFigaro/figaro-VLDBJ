@@ -48,7 +48,7 @@ def test_perf_data_set_set(test_perf_data_set_path: str, data_set: str):
     for test_perf_data_set in tests_perf_data_set:
         disabled = True
         database_conf_path = test_perf_data_set["database_conf_path"]
-        if (data_set in database_conf_path) and ("100" in database_conf_path):
+        if (data_set in database_conf_path) and ("20" in database_conf_path):
             disabled = False
 
         test_perf_data_set["disable"] = disabled
@@ -100,7 +100,7 @@ def set_features(system_tests_path: str, data_set: str, features: list, label: s
         "retailer": "usretailer"}
 
     feature_names_dict = {
-        "yelp": ["CityId","StateId","Latitude","Longitude","StarsB","ReviewCountB","IsOpen","StarsR","ReviewYear","ReviewMonth","ReviewDay","Useful","Funny","Cool","ReviewCountU","YearJoined","UserUseful","UserFunny","UserCool","Fans","AverageStars","ComplimentHot","ComplimentMore","ComplimentProfile","ComplimentCute","ComplimentList","ComplimentNote","ComplimentPlain","ComplimentCool","ComplimentFunny","ComplimentWriter","ComplimentPhotos","CategoryId","DayOfWeekC","CheckinCount","DayOfWeekH","HoursH"],
+        "yelp": ["ReviewId","CityId","StateId","Latitude","Longitude","StarsB","ReviewCountB","IsOpen","StarsR","ReviewYear","ReviewMonth","ReviewDay","Useful","Funny","Cool","ReviewCountU","YearJoined","UserUseful","UserFunny","UserCool","Fans","AverageStars","ComplimentHot","ComplimentMore","ComplimentProfile","ComplimentCute","ComplimentList","ComplimentNote","ComplimentPlain","ComplimentCool","ComplimentFunny","ComplimentWriter","ComplimentPhotos","CategoryId","DayOfWeekC","CheckinCount","DayOfWeekH","HoursH"],
         "favorita": ["UnitSales","OnPromotion","OilPrize","HolidayType","Locale","LocaleId","Transferred","Transactions","City","State","StoreType","Cluster","Family","ItemClass","Perishable"],
         "retailer": ["InventoryUnits","RgnCd","ClimZnNbr","TotalAreaSqFt","SellAreaSqFt","AvgHi","SuperTargetDistance","SuperTargetDriveTime","TargetDistance","TargetDriveTime","WalmartDistance","WalmartDriveTime","WalmartSuperCenterDistance","WalmartSuperCenterDriveTime","Rain","Snow","MaxTemp","MinTemp","MeanWind","Thunder","SubCategory","Category","CategoryCluster","Prize","Population","White","Asian","Pacific","Black","MedianAge","OccupiedHouseUnits","HouseUnits","Families","Households","HusbWife","Males","Females","HouseholdChildren","Hispanic"]}
 
