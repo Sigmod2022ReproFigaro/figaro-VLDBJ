@@ -111,10 +111,10 @@ namespace Figaro
             qName = pQResult->getJoinRelName();
             delete pQResult;
             MICRO_BENCH_STOP(qComp)
-
+            FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
             if (m_saveResult)
             {
-                FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
+
                 double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
                 FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
             }

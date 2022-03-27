@@ -979,16 +979,32 @@ namespace Figaro
                     LAPACKE_dorgqr(LAPACK_COL_MAJOR, m_numRows, rank, rank,
                         pMat, m_numRows, tau);
                 }
+
             }
 
             matA.resize(rank);
-            for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
-                for (uint32_t colIdx = 0; colIdx < std::min(rowIdx, m_numCols); colIdx++)
+                for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
                 {
-                    matA(rowIdx, colIdx) = 0;
+                    for (uint32_t colIdx = 0; colIdx < std::min(rowIdx, m_numCols); colIdx++)
+                    {
+                        matA(rowIdx, colIdx) = 0;
+                    }
                 }
             }
+            else
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    for (uint32_t rowIdx = colIdx + 1; rowIdx < rank; rowIdx++)
+                    {
+                        matA(rowIdx, colIdx) = 0;
+                    }
+                }
+            }
+
+
             delete [] tau;
         }
 
