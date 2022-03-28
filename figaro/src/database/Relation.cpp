@@ -1395,6 +1395,7 @@ namespace Figaro
         FIGARO_LOG_DBG("vPKIndices", m_name, vPKIndices, vJoinAttrIdxs)
         FIGARO_LOG_DBG("areJoinAttrsPK", m_name, areJoinAttrsPK)
         //areJoinAttrsPK = false;
+        // TEMPORARY HACK
         // TODO: Add parallel detection of
         // For counter and down count.
 
@@ -2317,13 +2318,16 @@ namespace Figaro
             numNonJoinAttrs += pRel->m_data.getNumCols();
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
-        m_data.computeQRGivens(getNumberOfThreads(), true, qrTypeHint);
+        m_data.computeQRGivens(
+            getNumberOfThreads(), true, qrTypeHint,
+                false /* computeQ*/, false /* saveResult*/);
     }
 
 
     void Relation::computeQRInPlace(Figaro::QRGivensHintType qrHintType)
     {
-        m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType);
+        m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType,
+            false /* computeQ*/, false /* saveResult*/);
     }
 
     std::tuple<Relation*, Relation*>
@@ -2471,7 +2475,8 @@ namespace Figaro
 
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
-        catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType);
+        catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType,
+            false /* computeQ*/, false /* saveResult*/);
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 
@@ -2519,28 +2524,38 @@ namespace Figaro
         Relation* pQ = nullptr;
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
+            MatrixDT matR = MatrixDT{0, 0};
+            MatrixDT matQ = MatrixDT{0, 0};
             m_data.computeQRGivens(getNumberOfThreads(), true,
-                qrHintType, computeQ);
+                qrHintType, computeQ, saveResult, &matR, &matQ);
             if (saveResult)
             {
-                FIGARO_LOG_INFO("R before positive diagonal", m_data)
-                m_data.makeDiagonalElementsPositiveInR();
+                FIGARO_LOG_INFO("R before positive diagonal", matR)
+                matR.makeDiagonalElementsPositiveInR();
                 FIGARO_LOG_INFO("R after positive diagonal", m_data)
-                pR = createFactorRelation("R", std::move(m_data), m_attributes.size());
+                pR = createFactorRelation("R", std::move(matR), m_attributes.size());
+                pQ = createFactorRelation("Q", std::move(matQ), m_attributes.size());
             }
         }
         else
         {
+            MatrixDColT matR = MatrixDColT{0, 0};
+            MatrixDColT matQ = MatrixDColT{0, 0};
             m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true,
-                 qrHintType, computeQ);
+                 qrHintType, computeQ, saveResult, &matR, &matQ);
             if (saveResult)
             {
                 m_dataColumnMajor.makeDiagonalElementsPositiveInR();
-                MatrixDT curMat{m_dataColumnMajor.getNumRows(), m_dataColumnMajor.getNumCols()};
-                curMat.copyBlockToThisMatrixFromCol(
-                    m_dataColumnMajor, 0, curMat.getNumRows() - 1,
-                    0, curMat.getNumCols() - 1, 0, 0);
-                pR = createFactorRelation("R", std::move(curMat), m_attributes.size());
+                MatrixDT matRR{matR.getNumRows(), matR.getNumCols()};
+                MatrixDT matRQ{matQ.getNumRows(), matQ.getNumCols()};
+                matRR.copyBlockToThisMatrixFromCol(
+                    matR, 0, matRR.getNumRows() - 1,
+                    0, matRR.getNumCols() - 1, 0, 0);
+                matRQ.copyBlockToThisMatrixFromCol(
+                    matQ, 0, matRQ.getNumRows() - 1,
+                    0, matRQ.getNumCols() - 1, 0, 0);
+                pR = createFactorRelation("R", std::move(matRR), m_attributes.size());
+                pQ = createFactorRelation("Q", std::move(matRQ), m_attributes.size());
             }
         }
         return std::make_tuple(pR, pQ);

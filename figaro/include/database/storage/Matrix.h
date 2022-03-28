@@ -33,6 +33,7 @@ namespace Figaro
         //static constexpr uint32_t MIN_COLS_PAR = 0;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
+        using MatrixType = Matrix<T, L>;
         void destroyData(void)
         {
             m_numRows = 0;
@@ -134,7 +135,7 @@ namespace Figaro
             }
         }
 
-        Matrix<T, L> operator*(const Matrix<T, L>& second) const
+        MatrixType operator*(const MatrixType& second) const
         {
             // TODO: Based on type generate different code
             const double* pA = getArrPt();
@@ -142,20 +143,20 @@ namespace Figaro
             uint32_t m = getNumRows();
             uint32_t n = second.getNumCols();
             uint32_t k = getNumCols();
-            Matrix<T, L> matC{m, n};
+            MatrixType matC{m, n};
             double* pC = matC.getArrPt();
             cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CblasNoTrans, CblasNoTrans,
                 m, n, k, 1.0, pA, k, pB, n, 0.0, pC, n);
             return matC;
         }
 
-        Matrix<T, L> add(const Matrix<T, L>& second,
+        MatrixType add(const MatrixType& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
         {
             auto& matA = *this;
             uint32_t m = getNumRows();
             uint32_t n = getNumCols() - numJoinAttr1;
-            Matrix<T, L> matC{m, numJoinAttr1 + n };
+            MatrixType matC{m, numJoinAttr1 + n };
             for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
@@ -175,13 +176,13 @@ namespace Figaro
         }
 
 
-        Matrix<T, L> subtract(const Matrix<T, L>& second,
+        MatrixType subtract(const MatrixType& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
         {
             auto& matA = *this;
             uint32_t m = getNumRows();
             uint32_t n = getNumCols() - numJoinAttr1;
-            Matrix<T, L> matC{m, numJoinAttr1 + n };
+            MatrixType matC{m, numJoinAttr1 + n };
             for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
@@ -201,7 +202,7 @@ namespace Figaro
         }
 
 
-        Matrix<T, L> multiply(const Matrix<T, L>& second,
+        MatrixType multiply(const MatrixType& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2,
             uint32_t startRowIdx1 = 0) const
         {
@@ -209,7 +210,7 @@ namespace Figaro
             uint32_t m = getNumRows();
             uint32_t n = second.getNumCols() - numJoinAttr2;
             uint32_t k = getNumCols() - numJoinAttr1;
-            Matrix<T, L> matC{m, n + numJoinAttr1};
+            MatrixType matC{m, n + numJoinAttr1};
             double* pC = matC.getArrPt() + numJoinAttr1;
             auto& matA = *this;
 
@@ -233,14 +234,14 @@ namespace Figaro
             return matC;
         }
 
-        Matrix<T, L> selfMatrixMultiply(
+        MatrixType selfMatrixMultiply(
             uint32_t numJoinAttr) const
         {
             // TODO: Based on type generate different code
             uint32_t m = getNumCols() - numJoinAttr;
             uint32_t n = getNumCols() - numJoinAttr;
             uint32_t k = getNumRows();
-            Matrix<T, L> matC{m, m};
+            MatrixType matC{m, m};
             double* pC = matC.getArrPt();
             auto& matA = *this;
             FIGARO_LOG_DBG(matA)
@@ -319,7 +320,7 @@ namespace Figaro
             m_pStorage->setToZeros();
         }
 
-        friend std::ostream& operator<<(std::ostream& out, const Matrix<T, L>& m)
+        friend std::ostream& operator<<(std::ostream& out, const MatrixType& m)
         {
             out << "Figaro matrix" << std::endl;
 
@@ -349,10 +350,10 @@ namespace Figaro
         }
 
 
-        Matrix<T, L> getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd,
+        MatrixType getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd,
                         uint32_t colIdxBegin, uint32_t colIdxEnd) const
         {
-            Matrix<T, L> tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
+            MatrixType tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
             for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
             {
                 for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
@@ -363,36 +364,36 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T, L> getRightCols(uint32_t numCols) const
+        MatrixType getRightCols(uint32_t numCols) const
         {
             return getBlock(0, m_numRows - 1, m_numCols - numCols, m_numCols - 1);
         }
 
-        Matrix<T, L> getLeftCols(uint32_t numCols) const
+        MatrixType getLeftCols(uint32_t numCols) const
         {
             return getBlock(0, m_numRows - 1, 0, numCols - 1);
         }
 
-        Matrix<T, L> getTopRows(uint32_t numRows) const
+        MatrixType getTopRows(uint32_t numRows) const
         {
             return getBlock(0, numRows - 1, 0, m_numCols - 1);
         }
 
-        Matrix<T, L> getBottomRows(uint32_t numRows) const
+        MatrixType getBottomRows(uint32_t numRows) const
         {
             return getBlock(m_numRows - numRows, m_numRows - 1, 0, m_numCols - 1);
         }
 
-        static Matrix<T, L> zeros(uint32_t numRows, uint32_t numCols)
+        static MatrixType zeros(uint32_t numRows, uint32_t numCols)
         {
-            Matrix<T, L> m(numRows, numCols);
+            MatrixType m(numRows, numCols);
             m.m_pStorage->setToZeros();
             return m;
         }
 
-        static Matrix<T, L> identity(uint32_t numRows)
+        static MatrixType identity(uint32_t numRows)
         {
-            Matrix<T, L> matEye(numRows, numRows);
+            MatrixType matEye(numRows, numRows);
             matEye.m_pStorage->setToZeros();
             for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
             {
@@ -406,10 +407,10 @@ namespace Figaro
         // TODO: parallelization
 
 
-        Matrix<T, L> concatenateHorizontally(const Matrix<T, L>& m) const
+        MatrixType concatenateHorizontally(const MatrixType& m) const
         {
             FIGARO_LOG_ASSERT(getNumRows() == m.getNumRows());
-            Matrix<T, L> tmp(m_numRows, m_numCols + m.m_numCols);
+            MatrixType tmp(m_numRows, m_numCols + m.m_numCols);
             auto& thisRef = *this;
 
             FIGARO_LOG_DBG("Entered concatenateHorizontally")
@@ -428,10 +429,10 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T, L> concatenateVertically(const Matrix<T, L>& m) const
+        MatrixType concatenateVertically(const MatrixType& m) const
         {
             FIGARO_LOG_ASSERT(m_numCols == m.m_numCols);
-            Matrix<T, L> tmp(m_numRows + m.m_numRows, m_numCols);
+            MatrixType tmp(m_numRows + m.m_numRows, m_numCols);
             auto& thisRef = *this;
 
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
@@ -452,9 +453,9 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T, L> concatenateHorizontallyScalar(T scalar, uint32_t numCols) const
+        MatrixType concatenateHorizontallyScalar(T scalar, uint32_t numCols) const
         {
-            Matrix<T, L> tmp(m_numRows, m_numCols + numCols);
+            MatrixType tmp(m_numRows, m_numCols + numCols);
             auto& thisRef = *this;
 
             FIGARO_LOG_DBG("Entered concatenateHorizontallyScalar")
@@ -473,9 +474,9 @@ namespace Figaro
             return tmp;
         }
 
-        Matrix<T, L> concatenateVerticallyScalar(T scalar, uint32_t numRows) const
+        MatrixType concatenateVerticallyScalar(T scalar, uint32_t numRows) const
         {
-            Matrix<T, L> tmp(m_numRows + numRows, m_numCols);
+            MatrixType tmp(m_numRows + numRows, m_numCols);
             auto& thisRef = *this;
 
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
@@ -497,7 +498,7 @@ namespace Figaro
         }
 
 
-        void copyBlockToThisMatrix(const Matrix<T, L>& matSource,
+        void copyBlockToThisMatrix(const MatrixType& matSource,
             uint32_t rowSrcBeginIdx, uint32_t rowSrcEndIdx,
             uint32_t colSrcBeginIdx, uint32_t colSrcEndIdx,
             uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
@@ -533,11 +534,11 @@ namespace Figaro
 
           /**
          *
-         * @return Matrix<T, L>
+         * @return MatrixType
          */
-        Matrix<T, L> computeInverse(uint32_t numJoinAttr = 0) const
+        MatrixType computeInverse(uint32_t numJoinAttr = 0) const
         {
-            Matrix<T, L> inverse {m_numRows, m_numCols};
+            MatrixType inverse {m_numRows, m_numCols};
             inverse.copyBlockToThisMatrix(*this,
                 0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
             uint32_t M = m_numRows;
@@ -941,69 +942,141 @@ namespace Figaro
             this->resize(std::min(m_numCols, m_numRows));
         }
 
-        void computeQRGivensParallelizedLaPack(bool computeQ)
+        /**
+         * @brief If computeQ is set to false, computed R in place will be an upper triangular
+         * matrix. If compute Q is set to true, computed R in place will not be
+         * upper triangular.
+         *
+         */
+        void computeQRGivensParallelizedLaPack(bool computeQ, bool saveResult,
+            MatrixType *pMatR, MatrixType *pMatQ)
         {
             auto& matA = *this;
             uint32_t rank = std::min(getNumRows(), getNumCols());
             double* tau = new double [getNumCols()];
             double* pMat = getArrPt();
+            MatrixType& matR = *pMatR;
+            MatrixType& matQ = *pMatQ;
+            uint32_t ldA;
+            uint32_t memLayout;
+
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
-                LAPACKE_dgeqrf(
-                LAPACK_ROW_MAJOR,
-                m_numRows,
-                m_numCols,
-                pMat /* *a */,
-                m_numCols,/*lda*/
-                tau/* tau */
-                );
-                if (computeQ)
-                {
-                    FIGARO_LOG_BENCH("Should not happen", "Hi hi")
-                    LAPACKE_dorgqr(LAPACK_ROW_MAJOR, m_numRows, rank, rank,
-                        pMat, m_numCols, tau);
-                }
+                memLayout = LAPACK_ROW_MAJOR;
+                ldA = m_numCols;
             }
             else
             {
-                LAPACKE_dgeqrf(
-                LAPACK_COL_MAJOR,
-                m_numRows,
-                m_numCols,
-                pMat /* *a */,
-                m_numRows,/*lda*/
-                tau/* tau */
-                );
-                if (computeQ)
-                {
-                    LAPACKE_dorgqr(LAPACK_COL_MAJOR, m_numRows, rank, rank,
-                        pMat, m_numRows, tau);
-                }
-
+                memLayout = LAPACK_COL_MAJOR;
+                ldA = m_numRows;
             }
 
-            matA.resize(rank);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            LAPACKE_dgeqrf(memLayout, m_numRows, m_numCols,
+                pMat /* *a */, ldA,/*lda*/ tau/* tau */);
+
+            if (!computeQ)
             {
-                for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                if constexpr (L == MemoryLayout::ROW_MAJOR)
                 {
-                    for (uint32_t colIdx = 0; colIdx < std::min(rowIdx, m_numCols); colIdx++)
+                    for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
                     {
-                        matA(rowIdx, colIdx) = 0;
+                        for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                        {
+                            if (colIdx < rowIdx)
+                            {
+                                matA(rowIdx, colIdx) = 0;
+                            }
+                        }
                     }
                 }
-            }
-            else
-            {
-                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                else
                 {
-                    for (uint32_t rowIdx = colIdx + 1; rowIdx < rank; rowIdx++)
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                     {
-                        matA(rowIdx, colIdx) = 0;
+                        for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                        {
+                            if (colIdx < rowIdx)
+                            {
+                                matA(rowIdx, colIdx) = 0;
+                            }
+                        }
                     }
                 }
             }
 
+            if (saveResult)
+            {
+                FIGARO_LOG_ASSERT(pMatR != nullptr);
+                // Copying R to a newly allocated matrix.
+                matR = std::move(MatrixType{rank, m_numCols});
+                if constexpr (L == MemoryLayout::ROW_MAJOR)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                    {
+                        for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                        {
+                            if (colIdx < rowIdx)
+                            {
+                                matR(rowIdx, colIdx) = 0;
+                            }
+                            else
+                            {
+                                matR(rowIdx, colIdx) = matA(rowIdx, colIdx); // copy elements.
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                    {
+                        for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                        {
+                            if (colIdx < rowIdx)
+                            {
+                                matR(rowIdx, colIdx) = 0;
+                            }
+                            else
+                            {
+                                matR(rowIdx, colIdx) = matA(rowIdx, colIdx); // copy elements.
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Copying Q
+            if (computeQ)
+            {
+                LAPACKE_dorgqr(memLayout, m_numRows, rank, rank,
+                    pMat, ldA, tau);
+                FIGARO_LOG_DBG("matQ", *this);
+                if (saveResult)
+                {
+                    FIGARO_LOG_ASSERT(pMatQ != nullptr);
+                    matQ = std::move(MatrixType{m_numRows, rank});
+                    if constexpr (L == MemoryLayout::ROW_MAJOR)
+                    {
+                        for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+                        {
+                            for (uint32_t colIdx = 0; colIdx < rank; colIdx++)
+                            {
+                                matQ(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (uint32_t colIdx = 0; colIdx < rank; colIdx++)
+                        {
+                            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+                            {
+                                matQ(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                            }
+                        }
+                    }
+                }
+            }
 
             delete [] tau;
         }
@@ -1014,7 +1087,8 @@ namespace Figaro
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
         void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, Figaro::QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG,
-        bool computeQ = false)
+        bool computeQ = false, bool saveResult = false,
+        MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
         {
             Figaro::QRGivensHintType qrType;
             if ((0 == m_numRows) || (0 == m_numCols))
@@ -1052,7 +1126,7 @@ namespace Figaro
             else if (qrType == QRGivensHintType::LAPACK)
             {
                 FIGARO_LOG_INFO("Lapack")
-                computeQRGivensParallelizedLaPack(computeQ);
+                computeQRGivensParallelizedLaPack(computeQ, saveResult, pMatR, pMatQ);
             }
         }
 
