@@ -2545,7 +2545,7 @@ namespace Figaro
                  qrHintType, computeQ, saveResult, &matR, &matQ);
             if (saveResult)
             {
-                m_dataColumnMajor.makeDiagonalElementsPositiveInR();
+                matR.makeDiagonalElementsPositiveInR();
                 MatrixDT matRR{matR.getNumRows(), matR.getNumCols()};
                 MatrixDT matRQ{matQ.getNumRows(), matQ.getNumCols()};
                 matRR.copyBlockToThisMatrixFromCol(
