@@ -1155,13 +1155,14 @@ namespace Figaro
             {
                 memLayout = LAPACK_ROW_MAJOR;
                 ldA = m_numCols;
+                ldU = rank;
             }
             else
             {
                 memLayout = LAPACK_COL_MAJOR;
                 ldA = m_numRows;
+                ldU = m_numRows;
             }
-            ldU = rank;
             ldvT = rank;
             matU = std::move(MatrixType{m_numRows, rank});
             matS = std::move(MatrixType{rank, 1});
@@ -1171,6 +1172,7 @@ namespace Figaro
                 pMatS->getArrPt(), pMatU->getArrPt(), ldU,
                 pMatV->getArrPt(), ldvT);
         }
+
 
         void makeDiagonalElementsPositiveInR(void)
         {
