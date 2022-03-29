@@ -33,7 +33,14 @@ namespace Figaro
         //static constexpr uint32_t MIN_COLS_PAR = 0;
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
+
         using MatrixType = Matrix<T, L>;
+        using MatrixTypeCol = Matrix<T, MemoryLayout::COL_MAJOR>;
+        using MatrixTypeRow = Matrix<T, MemoryLayout::ROW_MAJOR>;
+
+        template <typename U, MemoryLayout V>
+        friend class Matrix;
+
         void destroyData(void)
         {
             m_numRows = 0;
@@ -338,7 +345,7 @@ namespace Figaro
                 for (uint32_t col = 0; col < colNum; col++)
                 {
 
-                    out << m[row][col];
+                    out << m(row, col);
                     if (col != (colNum - 1))
                     {
                         out << " ";
@@ -955,8 +962,6 @@ namespace Figaro
             uint32_t rank = std::min(getNumRows(), getNumCols());
             double* tau = new double [getNumCols()];
             double* pMat = getArrPt();
-            MatrixType& matR = *pMatR;
-            MatrixType& matQ = *pMatQ;
             uint32_t ldA;
             uint32_t memLayout;
 
@@ -1007,6 +1012,7 @@ namespace Figaro
             if (saveResult)
             {
                 FIGARO_LOG_ASSERT(pMatR != nullptr);
+                MatrixType& matR = *pMatR;
                 // Copying R to a newly allocated matrix.
                 matR = std::move(MatrixType{rank, m_numCols});
                 if constexpr (L == MemoryLayout::ROW_MAJOR)
@@ -1053,6 +1059,7 @@ namespace Figaro
                 FIGARO_LOG_DBG("matQ", *this);
                 if (saveResult)
                 {
+                    MatrixType& matQ = *pMatQ;
                     FIGARO_LOG_ASSERT(pMatQ != nullptr);
                     matQ = std::move(MatrixType{m_numRows, rank});
                     if constexpr (L == MemoryLayout::ROW_MAJOR)
@@ -1130,13 +1137,39 @@ namespace Figaro
             }
         }
 
-        void computeSingularValueDecomposition(uint32_t numThreads = 1, bool computeU = false)
+        void computeSingularValueDecomposition(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatV)
         {
-            computeQRGivens(numThreads, true, QRGivensHintType::THIN_DIAG, computeU);
-            if (computeU)
-            {
+            double *pArr = getArrPt();
+            uint32_t memLayout;
+            uint32_t ldA, ldU, ldvT;
+            MatrixType& matU = *pMatU;
+            MatrixType& matS = *pMatS;
+            MatrixType& matV = *pMatV;
 
+            uint32_t rank;
+
+            rank = std::min(m_numRows, m_numCols);
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                memLayout = LAPACK_ROW_MAJOR;
+                ldA = m_numCols;
             }
+            else
+            {
+                memLayout = LAPACK_COL_MAJOR;
+                ldA = m_numRows;
+            }
+            ldU = rank;
+            ldvT = rank;
+            matU = std::move(MatrixType{m_numRows, rank});
+            matS = std::move(MatrixType{rank, 1});
+            matV = std::move(MatrixType{rank, m_numCols});
+
+            LAPACKE_dgesdd(memLayout, 'S', m_numRows, m_numCols, pArr, ldA,
+                pMatS->getArrPt(), pMatU->getArrPt(), ldU,
+                pMatV->getArrPt(), ldvT);
         }
 
         void makeDiagonalElementsPositiveInR(void)

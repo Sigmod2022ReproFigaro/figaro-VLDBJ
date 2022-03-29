@@ -172,7 +172,7 @@ function main()
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         #vtune -collect performance-snapshot
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*computeQRGivens* > "${FIGARO_LOG_FILE_PATH}" 2>&1
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*computeSVDLapack* > "${FIGARO_LOG_FILE_PATH}" 2>&1
         #valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         #>   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \

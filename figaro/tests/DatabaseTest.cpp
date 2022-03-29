@@ -307,6 +307,67 @@ TEST(Matrix, computeQRGivensLapackQ)
     EXPECT_NEAR(std::abs(matrixQ[2][1]), std::abs(0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
 }
 
+TEST(Matrix, computeSVDLapackRow)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix[0][0] = 1; matrix[0][1] = 2;
+    matrix[1][0] = 3; matrix[1][1] = 4;
+    matrix[2][0] = 4; matrix[2][1] = 3;
+    matrix.computeSingularValueDecomposition(1,
+        &matrixU, &matrixS, &matrixVT);
+
+    EXPECT_NEAR(matrixU(0, 0), -0.292567560669349, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(1, 0), -0.678945554804918, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(2, 0), -0.673377424669574, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(0, 1), -0.534975788460430, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(1, 1), -0.467461349309033, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(2, 1), 0.703761886338924, GIVENS_TEST_PRECISION_ERROR);
+
+    FIGARO_LOG_DBG("matrixU", matrixU)
+    FIGARO_LOG_DBG("matrixS", matrixS)
+    FIGARO_LOG_DBG("matrixVT", matrixVT)
+}
+
+TEST(Matrix, computeSVDLapackCol)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
+    matrix.computeSingularValueDecomposition(1,
+        &matrixU, &matrixS, &matrixVT);
+
+    EXPECT_NEAR(matrixU(0, 0), -0.292567560669349, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(1, 0), -0.678945554804918, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(2, 0), -0.673377424669574, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(0, 1), -0.534975788460430, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(1, 1), -0.467461349309033, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixU(2, 1), 0.703761886338924, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 7.317324188951234, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 1.206965912438775, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT(0, 0), -0.686441353978375, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixVT(1, 0), 0.727185167304955, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixVT(0, 1), -0.727185167304955, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixVT(1, 1), -0.686441353978375, GIVENS_TEST_PRECISION_ERROR);
+
+    FIGARO_LOG_DBG("matrixU", matrixU)
+    FIGARO_LOG_DBG("matrixS", matrixS)
+    FIGARO_LOG_DBG("matrixVT", matrixVT)
+}
+
+
 TEST(Storage, MatrixIterator)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 4;

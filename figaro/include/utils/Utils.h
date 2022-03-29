@@ -49,7 +49,9 @@ struct std::hash<std::tuple<TupleArgs...> >
         //
         template<size_t Idx = 0, typename... TupleTypes>
         inline typename std::enable_if<Idx == sizeof...(TupleTypes), void>::type
-        hash_combine_tup(size_t& seed, const std::tuple<TupleTypes...>& tup) const
+        hash_combine_tup(
+            [[maybe_unused]] size_t& seed,
+            [[maybe_unused]] const std::tuple<TupleTypes...>& tup) const
         {
         }
 
