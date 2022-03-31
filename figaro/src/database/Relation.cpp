@@ -1314,7 +1314,7 @@ namespace Figaro
 
         // linear regression
         auto resX = APrimeA.computeInverse().multiply(APrimeB, 0, 0);
-        FIGARO_LOG_INFO("resX", resX);
+        FIGARO_LOG_BENCH("resX", resX);
 
         return Relation("LIN_REG" + getName() + labelName, std::move(resX),
             {Attribute()});
@@ -1394,7 +1394,7 @@ namespace Figaro
         }
         FIGARO_LOG_DBG("vPKIndices", m_name, vPKIndices, vJoinAttrIdxs)
         FIGARO_LOG_DBG("areJoinAttrsPK", m_name, areJoinAttrsPK)
-        //areJoinAttrsPK = false;
+        areJoinAttrsPK = false;
         // TEMPORARY HACK
         // TODO: Add parallel detection of
         // For counter and down count.
@@ -2551,9 +2551,12 @@ namespace Figaro
                 matRR.copyBlockToThisMatrixFromCol(
                     matR, 0, matRR.getNumRows() - 1,
                     0, matRR.getNumCols() - 1, 0, 0);
-                matRQ.copyBlockToThisMatrixFromCol(
-                    matQ, 0, matRQ.getNumRows() - 1,
-                    0, matRQ.getNumCols() - 1, 0, 0);
+                if (computeQ)
+                {
+                    matRQ.copyBlockToThisMatrixFromCol(
+                        matQ, 0, matRQ.getNumRows() - 1,
+                        0, matRQ.getNumCols() - 1, 0, 0);
+                }
                 pR = createFactorRelation("R", std::move(matRR), m_attributes.size());
                 pQ = createFactorRelation("Q", std::move(matRQ), m_attributes.size());
             }
