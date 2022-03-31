@@ -543,23 +543,32 @@ namespace Figaro
          *
          * @return MatrixType
          */
-        MatrixType computeInverse(uint32_t numJoinAttr = 0) const
+        MatrixType computeInverse(uint32_t numJoinAttr = 0, bool isTriangular = false) const
         {
             MatrixType inverse {m_numRows, m_numCols};
             inverse.copyBlockToThisMatrix(*this,
                 0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
             uint32_t M = m_numRows;
             uint32_t N = m_numCols - numJoinAttr;
-            long long int * pIpivot = new long long int[std::min(M, N)];
             uint32_t ldA = N + numJoinAttr;
             double* pA = inverse.getArrPt() + numJoinAttr;
-            LAPACKE_dgetrf(
-                LAPACK_ROW_MAJOR, M, N,
-                pA, ldA, pIpivot);
 
-            LAPACKE_dgetri(LAPACK_ROW_MAJOR, M, pA,
-                    ldA, pIpivot);
-            delete [ ] pIpivot;
+            if (isTriangular)
+            {
+                LAPACKE_dtrtri(LAPACK_ROW_MAJOR, 'U', 'N', N, pA, ldA);
+            }
+            else
+            {
+                long long int * pIpivot = new long long int[std::min(M, N)];
+                LAPACKE_dgetrf(
+                    LAPACK_ROW_MAJOR, M, N,
+                    pA, ldA, pIpivot);
+
+                LAPACKE_dgetri(LAPACK_ROW_MAJOR, M, pA,
+                        ldA, pIpivot);
+                delete [ ] pIpivot;
+            }
+
             return inverse;
         }
 
