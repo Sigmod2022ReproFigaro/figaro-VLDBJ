@@ -1239,8 +1239,16 @@ namespace Figaro
             MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
         {
             MatrixType& matR = *pMatR;
-            matR = std::move(selfMatrixMultiply(0));
+            MatrixType& matQ = *pMatQ;
+            MatrixType& matA = *this;
+
+            matR = selfMatrixMultiply(0);
             matR.computeCholesky();
+
+            if (computeQ)
+            {
+                matQ = matA * matR.computeInverse(0, true);
+            }
         }
 
 

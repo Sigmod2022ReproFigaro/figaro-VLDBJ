@@ -260,7 +260,7 @@ TEST(Matrix, computeQRGivensThinR)
 TEST(Matrix, computeQRHouseholderRRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
-    Figaro::Matrix<double> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
 
     matrix[0][0] = 1; matrix[0][1] = 2;
     matrix[1][0] = 3; matrix[1][1] = 4;
@@ -291,6 +291,50 @@ TEST(Matrix, computeQRHouseholderRColMajor)
 
     EXPECT_NEAR(std::abs(matrix(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+}
+
+TEST(Matrix, computeQRCholeskyRRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixR(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
+
+    matrix.computeQRCholesky(false, false, &matrixR);
+
+    EXPECT_EQ(matrixR.getNumRows(), matrix.getNumCols());
+    EXPECT_EQ(matrixR.getNumCols(), matrix.getNumCols());
+
+    EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixR(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+}
+
+TEST(Matrix, computeQRCholeskyRColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixR(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
+
+    matrix.computeQRCholesky(false, false, &matrixR);
+
+    EXPECT_EQ(matrixR.getNumRows(), matrix.getNumCols());
+    EXPECT_EQ(matrixR.getNumCols(), matrix.getNumCols());
+
+    EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixR(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
 }
 
 
@@ -325,6 +369,68 @@ TEST(Matrix, computeQRHouseholderQRowMajor)
 }
 
 TEST(Matrix, computeQRHouseholderQColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixR(0, 0), matrixQ(0,0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
+
+    matrix.computeQRHouseholder(true, true, &matrixR, &matrixQ);
+
+    EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixR(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+
+    FIGARO_LOG_DBG("matrixR", matrixR)
+    FIGARO_LOG_DBG("matrixQ", matrixQ)
+
+    EXPECT_NEAR(std::abs(matrixQ(0, 0)), std::abs(-0.196116135138184), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(1, 0)), std::abs(-0.588348405414552), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(2, 0)), std::abs(-0.784464540552736), GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixQ(0, 1)), std::abs(0.577350269189625), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(1, 1)), std::abs(-0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(2, 1)), std::abs(0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeQRCholeskyQRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixR(0, 0), matrixQ(0,0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
+
+    matrix.computeQRHouseholder(true, true, &matrixR, &matrixQ);
+
+    EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixR(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+
+    FIGARO_LOG_DBG("matrixR", matrixR)
+    FIGARO_LOG_DBG("matrixQ", matrixQ)
+
+    EXPECT_NEAR(std::abs(matrixQ(0, 0)), std::abs(-0.196116135138184), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(1, 0)), std::abs(-0.588348405414552), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(2, 0)), std::abs(-0.784464540552736), GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixQ(0, 1)), std::abs(0.577350269189625), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(1, 1)), std::abs(-0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(2, 1)), std::abs(0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeQRCholeskyQColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
@@ -853,7 +959,6 @@ TEST(Matrix, InverseTriangularColMajor)
         }
     }
 }
-
 
 
 TEST(Storage, MatrixIterator)
