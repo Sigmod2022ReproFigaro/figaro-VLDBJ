@@ -354,6 +354,27 @@ TEST(Matrix, computeQRHouseholderQColMajor)
     EXPECT_NEAR(std::abs(matrixQ(2, 1)), std::abs(0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
 }
 
+
+TEST(Matrix, computeCholeskyRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 2, NUM_COLS = 2;
+    Figaro::Matrix<double> matrix(NUM_ROWS, NUM_COLS);
+
+    matrix(0, 0) = 26; matrix(0, 1) = 26;
+    matrix(1, 0) = 26; matrix(1, 1) = 29;
+    FIGARO_LOG_DBG("HOHOH")
+    matrix.computeCholesky();
+
+    FIGARO_LOG_DBG("matrix", matrix)
+
+    EXPECT_NEAR(std::abs(matrix(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrix(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
 TEST(Matrix, computeSVDLapackRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;

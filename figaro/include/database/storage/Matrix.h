@@ -958,6 +958,38 @@ namespace Figaro
             this->resize(std::min(m_numCols, m_numRows));
         }
 
+        void setToZeroBelowMainDiagonal(void)
+        {
+            MatrixType& matA = *this;
+            uint32_t rank = std::min(m_numRows, m_numCols);
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                    {
+                        if (colIdx < rowIdx)
+                        {
+                            matA(rowIdx, colIdx) = 0;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                    {
+                        if (colIdx < rowIdx)
+                        {
+                            matA(rowIdx, colIdx) = 0;
+                        }
+                    }
+                }
+            }
+        }
+
         /**
          * @brief If computeQ is set to false, computed R in place will be an upper triangular
          * matrix. If compute Q is set to true, computed R in place will not be
@@ -990,32 +1022,7 @@ namespace Figaro
 
             if (!computeQ)
             {
-                if constexpr (L == MemoryLayout::ROW_MAJOR)
-                {
-                    for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
-                    {
-                        for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
-                        {
-                            if (colIdx < rowIdx)
-                            {
-                                matA(rowIdx, colIdx) = 0;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
-                    {
-                        for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
-                        {
-                            if (colIdx < rowIdx)
-                            {
-                                matA(rowIdx, colIdx) = 0;
-                            }
-                        }
-                    }
-                }
+                matA.setToZeroBelowMainDiagonal();
             }
 
             if (saveResult)
@@ -1151,6 +1158,29 @@ namespace Figaro
             MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
         {
             computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
+        }
+
+
+        void computeCholesky(uint32_t numThreads = 1,
+            MatrixType* pMatR = nullptr)
+        {
+            double *pArr = getArrPt();
+            uint32_t memLayout;
+            MatrixType& matA = *this;
+            uint32_t ldA;
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                memLayout = LAPACK_ROW_MAJOR;
+                ldA = m_numCols;
+            }
+            else
+            {
+                memLayout = LAPACK_COL_MAJOR;
+                ldA = m_numRows;
+            }
+            matA.setToZeroBelowMainDiagonal();
+
+            LAPACKE_dpotrf(memLayout, 'U', m_numCols, pArr, ldA);
         }
 
         void computeSingularValueDecomposition(uint32_t numThreads,
