@@ -444,6 +444,331 @@ TEST(Matrix, computeSVDLapackColMajor)
 }
 
 
+TEST(Matrix, MultiplicationRowMajor)
+{
+    static constexpr uint32_t M = 3, N = 2, K = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> A(M, K), B(K, N), expC(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), K);
+
+    EXPECT_EQ(B.getNumRows(), K);
+    EXPECT_EQ(B.getNumCols(), N);
+
+
+    A(0, 0) = 0;
+    A(0, 1) = 1;
+    A(0, 2) = 2;
+
+    A(1, 0) = 3;
+    A(1, 1) = 4;
+    A(1, 2) = 5;
+
+    A(2, 0) = 6;
+    A(2, 1) = 7;
+    A(2, 2) = 8;
+
+    B(0, 0) = 0;
+    B(0, 1) = 1;
+
+    B(1, 0) = 2;
+    B(1, 1) = 3;
+
+    B(2, 0) = 4;
+    B(2, 1) = 5;
+
+    expC(0, 0) = 10;
+    expC(0, 1) = 13;
+
+    expC(1, 0) = 28;
+    expC(1, 1) = 40;
+
+    expC(2, 0) = 46;
+    expC(2, 1) = 67;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> C = A * B;
+    EXPECT_EQ(C.getNumRows(), expC.getNumRows());
+    EXPECT_EQ(C.getNumCols(), expC.getNumCols());
+
+    for (uint32_t row = 0; row < expC.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expC.getNumCols(); col++)
+        {
+            EXPECT_NEAR(C(row, col), expC(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
+TEST(Matrix, MultiplicationColMajor)
+{
+    static constexpr uint32_t M = 3, N = 2, K = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> A(M, K), B(K, N), expC(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), K);
+
+    EXPECT_EQ(B.getNumRows(), K);
+    EXPECT_EQ(B.getNumCols(), N);
+
+
+    A(0, 0) = 0;
+    A(0, 1) = 1;
+    A(0, 2) = 2;
+
+    A(1, 0) = 3;
+    A(1, 1) = 4;
+    A(1, 2) = 5;
+
+    A(2, 0) = 6;
+    A(2, 1) = 7;
+    A(2, 2) = 8;
+
+    B(0, 0) = 0;
+    B(0, 1) = 1;
+
+    B(1, 0) = 2;
+    B(1, 1) = 3;
+
+    B(2, 0) = 4;
+    B(2, 1) = 5;
+
+    expC(0, 0) = 10;
+    expC(0, 1) = 13;
+
+    expC(1, 0) = 28;
+    expC(1, 1) = 40;
+
+    expC(2, 0) = 46;
+    expC(2, 1) = 67;
+
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> C = A * B;
+    EXPECT_EQ(C.getNumRows(), expC.getNumRows());
+    EXPECT_EQ(C.getNumCols(), expC.getNumCols());
+
+    for (uint32_t row = 0; row < expC.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expC.getNumCols(); col++)
+        {
+            EXPECT_NEAR(C(row, col), expC(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
+
+TEST(Matrix, SelfMatrixMultiplyRowMajor)
+{
+    static constexpr uint32_t M = 3, N = 4;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> A(M, N), expB(N, N);
+
+    A(0, 0) = 1;
+    A(0, 1) = 2;
+    A(0, 2) = 2;
+    A(0, 3) = 3;
+
+    A(1, 0) = 1;
+    A(1, 1) = 2;
+    A(1, 2) = 4;
+    A(1, 3) = 6;
+
+    A(2, 0) = 1;
+    A(2, 1) = 2;
+    A(2, 2) = 6;
+    A(2, 3) = 7;
+
+
+    expB(0, 0) = 3;
+    expB(0, 1) = 6;
+    expB(0, 2) = 12;
+    expB(0, 3) = 16;
+
+    expB(1, 0) = 6;
+    expB(1, 1) = 12;
+    expB(1, 2) = 24;
+    expB(1, 3) = 32;
+
+    expB(2, 0) = 12;
+    expB(2, 1) = 24;
+    expB(2, 2) = 56;
+    expB(2, 3) = 72;
+
+    expB(3, 0) = 16;
+    expB(3, 1) = 32;
+    expB(3, 2) = 72;
+    expB(3, 3) = 94;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> B = A.selfMatrixMultiply(0);
+
+    EXPECT_EQ(B.getNumRows(), expB.getNumRows());
+    EXPECT_EQ(B.getNumCols(), expB.getNumCols());
+
+    for (uint32_t row = 0; row < expB.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expB.getNumCols(); col++)
+        {
+            EXPECT_NEAR(B(row, col), expB(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+TEST(Matrix, SelfMatrixMultiplyColMajor)
+{
+    static constexpr uint32_t M = 3, N = 4;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> A(M, N), expB(N, N);
+
+    A(0, 0) = 1;
+    A(0, 1) = 2;
+    A(0, 2) = 2;
+    A(0, 3) = 3;
+
+    A(1, 0) = 1;
+    A(1, 1) = 2;
+    A(1, 2) = 4;
+    A(1, 3) = 6;
+
+    A(2, 0) = 1;
+    A(2, 1) = 2;
+    A(2, 2) = 6;
+    A(2, 3) = 7;
+
+
+    expB(0, 0) = 3;
+    expB(0, 1) = 6;
+    expB(0, 2) = 12;
+    expB(0, 3) = 16;
+
+    expB(1, 0) = 6;
+    expB(1, 1) = 12;
+    expB(1, 2) = 24;
+    expB(1, 3) = 32;
+
+    expB(2, 0) = 12;
+    expB(2, 1) = 24;
+    expB(2, 2) = 56;
+    expB(2, 3) = 72;
+
+    expB(3, 0) = 16;
+    expB(3, 1) = 32;
+    expB(3, 2) = 72;
+    expB(3, 3) = 94;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> B = A.selfMatrixMultiply(0);
+
+    EXPECT_EQ(B.getNumRows(), expB.getNumRows());
+    EXPECT_EQ(B.getNumCols(), expB.getNumCols());
+
+    for (uint32_t row = 0; row < expB.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expB.getNumCols(); col++)
+        {
+            EXPECT_NEAR(B(row, col), expB(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
+
+TEST(Matrix, Inverse)
+{
+    static constexpr uint32_t M = 3, N = 3;
+    Figaro::Relation::MatrixDT A(M, N), expInv(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), N);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+
+    A[1][0] = 4;
+    A[1][1] = 5;
+    A[1][2] = 6;
+
+    A[2][0] = 10;
+    A[2][1] = 11;
+    A[2][2] = 13;
+
+    expInv[0][0] = 0.3333333333333333;
+    expInv[0][1] = -2.3333333333333333;
+    expInv[0][2] = 1;
+
+    expInv[1][0] = -2.6666666666666667;
+    expInv[1][1] = 5.66666666666666667;
+    expInv[1][2] = -2;
+
+    expInv[2][0] = 2;
+    expInv[2][1] = -3;
+    expInv[2][2] = 1;
+
+    FIGARO_LOG_DBG(A)
+    FIGARO_LOG_DBG(expInv)
+
+    Figaro::Relation::MatrixDT inv = A.computeInverse();
+    EXPECT_EQ(inv.getNumRows(), expInv.getNumRows());
+    EXPECT_EQ(inv.getNumCols(), expInv.getNumCols());
+
+    for (uint32_t row = 0; row < expInv.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expInv.getNumCols(); col++)
+        {
+            EXPECT_NEAR(inv(row, col), expInv(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
+TEST(Matrix, InverseTriangular)
+{
+    static constexpr uint32_t M = 3, N = 3;
+    Figaro::Relation::MatrixDT A(M, N), expInv(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), N);
+
+    A[0][0] = 1;
+    A[0][1] = 2;
+    A[0][2] = 3;
+
+    A[1][0] = 0;
+    A[1][1] = 4;
+    A[1][2] = 5;
+
+    A[2][0] = 0;
+    A[2][1] = 0;
+    A[2][2] = 7;
+
+    expInv[0][0] = 1;
+    expInv[0][1] = -0.500000000000000;
+    expInv[0][2] = -0.071428571428571;
+
+    expInv[1][0] = 0;
+    expInv[1][1] = 0.250000000000000;
+    expInv[1][2] = -0.178571428571429;
+
+    expInv[2][0] = 0;
+    expInv[2][1] = 0;
+    expInv[2][2] = 0.142857142857143;
+
+    FIGARO_LOG_DBG(A)
+    FIGARO_LOG_DBG(expInv)
+
+    Figaro::Relation::MatrixDT inv = A.computeInverse(0, true);
+    FIGARO_LOG_DBG(expInv)
+    EXPECT_EQ(inv.getNumRows(), expInv.getNumRows());
+    EXPECT_EQ(inv.getNumCols(), expInv.getNumCols());
+
+    for (uint32_t row = 0; row < expInv.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expInv.getNumCols(); col++)
+        {
+            EXPECT_NEAR(inv(row, col), expInv(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
 TEST(Storage, MatrixIterator)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 4;
@@ -823,201 +1148,6 @@ TEST(DatabaseConfig, FigaroQR)
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery(true, true, true, true);
 }
-
-TEST(Matrix, QRLAPACK)
-{
-    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 4;
-    Figaro::Relation::MatrixDT matrix(NUM_ROWS, NUM_COLS);
-
-    EXPECT_EQ(matrix.getNumRows(), NUM_ROWS);
-    EXPECT_EQ(matrix.getNumCols(), NUM_COLS);
-    matrix[0][0] = 0.421761282626275;
-    matrix[0][1] = 0.0357116785741896;
-    matrix[0][2] = 0.743132468124916;
-    matrix[0][3] = 0.0318328463774207;
-
-    matrix[1][0] = 0.915735525189067;
-    matrix[1][1] = 0.849129305868777;
-    matrix[1][2] = 0.392227019534168;
-    matrix[1][3] = 0.276922984960890;
-
-    matrix[2][0] = 0.792207329559554;
-    matrix[2][1] = 0.933993247757551;
-    matrix[2][2] = 0.655477890177557;
-    matrix[2][3] = 0.0461713906311539;
-
-    matrix[3][0] = 0.959492426392903;
-    matrix[3][1] = 0.678735154857774;
-    matrix[3][2] = 0.171186687811562;
-    matrix[3][3] = 0.0971317812358475;
-
-    matrix[4][0] = 0.655740699156587;
-    matrix[4][1] = 0.757740130578333;
-    matrix[4][2] = 0.706046088019609;
-    matrix[4][3] = 0.823457828327293;
-
-    matrix.computeQR(1, true, Figaro::QRHintType::HOUSEHOLDER_LAPACK);
-    FIGARO_LOG_DBG(matrix)
-
-}
-
-TEST(Matrix, Multiplication)
-{
-    static constexpr uint32_t M = 3, N = 2, K = 3;
-    Figaro::Relation::MatrixDT A(M, K), B(K, N), expC(M, N);
-
-    EXPECT_EQ(A.getNumRows(), M);
-    EXPECT_EQ(A.getNumCols(), K);
-
-    EXPECT_EQ(B.getNumRows(), K);
-    EXPECT_EQ(B.getNumCols(), N);
-
-
-    A[0][0] = 0;
-    A[0][1] = 1;
-    A[0][2] = 2;
-
-    A[1][0] = 3;
-    A[1][1] = 4;
-    A[1][2] = 5;
-
-    A[2][0] = 6;
-    A[2][1] = 7;
-    A[2][2] = 8;
-
-    B[0][0] = 0;
-    B[0][1] = 1;
-
-    B[1][0] = 2;
-    B[1][1] = 3;
-
-    B[2][0] = 4;
-    B[2][1] = 5;
-
-    expC[0][0] = 10;
-    expC[0][1] = 13;
-
-    expC[1][0] = 28;
-    expC[1][1] = 40;
-
-    expC[2][0] = 46;
-    expC[2][1] = 67;
-
-    FIGARO_LOG_DBG("B", B)
-
-    Figaro::Relation::MatrixDT C = A * B;
-    EXPECT_EQ(C.getNumRows(), expC.getNumRows());
-    EXPECT_EQ(C.getNumCols(), expC.getNumCols());
-
-    for (uint32_t row = 0; row < expC.getNumRows(); row ++)
-    {
-        for (uint32_t col = 0; col < expC.getNumCols(); col++)
-        {
-            EXPECT_NEAR(C(row, col), expC(row, col), QR_TEST_PRECISION_ERROR);
-        }
-    }
-}
-
-
-
-TEST(Matrix, Inverse)
-{
-    static constexpr uint32_t M = 3, N = 3;
-    Figaro::Relation::MatrixDT A(M, N), expInv(M, N);
-
-    EXPECT_EQ(A.getNumRows(), M);
-    EXPECT_EQ(A.getNumCols(), N);
-
-    A[0][0] = 1;
-    A[0][1] = 2;
-    A[0][2] = 3;
-
-    A[1][0] = 4;
-    A[1][1] = 5;
-    A[1][2] = 6;
-
-    A[2][0] = 10;
-    A[2][1] = 11;
-    A[2][2] = 13;
-
-    expInv[0][0] = 0.3333333333333333;
-    expInv[0][1] = -2.3333333333333333;
-    expInv[0][2] = 1;
-
-    expInv[1][0] = -2.6666666666666667;
-    expInv[1][1] = 5.66666666666666667;
-    expInv[1][2] = -2;
-
-    expInv[2][0] = 2;
-    expInv[2][1] = -3;
-    expInv[2][2] = 1;
-
-    FIGARO_LOG_DBG(A)
-    FIGARO_LOG_DBG(expInv)
-
-    Figaro::Relation::MatrixDT inv = A.computeInverse();
-    EXPECT_EQ(inv.getNumRows(), expInv.getNumRows());
-    EXPECT_EQ(inv.getNumCols(), expInv.getNumCols());
-
-    for (uint32_t row = 0; row < expInv.getNumRows(); row ++)
-    {
-        for (uint32_t col = 0; col < expInv.getNumCols(); col++)
-        {
-            EXPECT_NEAR(inv(row, col), expInv(row, col), QR_TEST_PRECISION_ERROR);
-        }
-    }
-}
-
-
-TEST(Matrix, InverseTriangular)
-{
-    static constexpr uint32_t M = 3, N = 3;
-    Figaro::Relation::MatrixDT A(M, N), expInv(M, N);
-
-    EXPECT_EQ(A.getNumRows(), M);
-    EXPECT_EQ(A.getNumCols(), N);
-
-    A[0][0] = 1;
-    A[0][1] = 2;
-    A[0][2] = 3;
-
-    A[1][0] = 0;
-    A[1][1] = 4;
-    A[1][2] = 5;
-
-    A[2][0] = 0;
-    A[2][1] = 0;
-    A[2][2] = 7;
-
-    expInv[0][0] = 1;
-    expInv[0][1] = -0.500000000000000;
-    expInv[0][2] = -0.071428571428571;
-
-    expInv[1][0] = 0;
-    expInv[1][1] = 0.250000000000000;
-    expInv[1][2] = -0.178571428571429;
-
-    expInv[2][0] = 0;
-    expInv[2][1] = 0;
-    expInv[2][2] = 0.142857142857143;
-
-    FIGARO_LOG_DBG(A)
-    FIGARO_LOG_DBG(expInv)
-
-    Figaro::Relation::MatrixDT inv = A.computeInverse(0, true);
-    FIGARO_LOG_DBG(expInv)
-    EXPECT_EQ(inv.getNumRows(), expInv.getNumRows());
-    EXPECT_EQ(inv.getNumCols(), expInv.getNumCols());
-
-    for (uint32_t row = 0; row < expInv.getNumRows(); row ++)
-    {
-        for (uint32_t col = 0; col < expInv.getNumCols(); col++)
-        {
-            EXPECT_NEAR(inv(row, col), expInv(row, col), QR_TEST_PRECISION_ERROR);
-        }
-    }
-}
-
 
 
 

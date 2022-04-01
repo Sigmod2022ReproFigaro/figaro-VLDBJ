@@ -144,7 +144,7 @@ namespace Figaro
 
         MatrixType operator*(const MatrixType& second) const
         {
-            // TODO: Based on type generate different code
+            CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
             const double* pA = getArrPt();
             const double* pB = second.getArrPt();
             uint32_t m = getNumRows();
@@ -152,8 +152,12 @@ namespace Figaro
             uint32_t k = getNumCols();
             MatrixType matC{m, n};
             double* pC = matC.getArrPt();
-            cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                m, n, k, 1.0, pA, k, pB, n, 0.0, pC, n);
+            uint32_t ldA = getLeadingDimension();
+            uint32_t ldB = second.getLeadingDimension();
+            uint32_t ldC = matC.getLeadingDimension();
+
+            cblas_dgemm(cBlasMemLayout, CblasNoTrans, CblasNoTrans,
+                m, n, k, 1.0, pA, ldA, pB, ldB, 0.0, pC, ldC);
             return matC;
         }
 
@@ -250,18 +254,18 @@ namespace Figaro
             uint32_t k = getNumRows();
             MatrixType matC{m, m};
             double* pC = matC.getArrPt();
-            auto& matA = *this;
-            FIGARO_LOG_DBG(matA)
-            uint32_t ldA = getNumCols();// TODO: Here fix
-            uint32_t ldB = n;
-            uint32_t ldC = m;
+            uint32_t ldA = getLeadingDimension();
+            uint32_t ldB = getLeadingDimension();
+            uint32_t ldC = matC.getLeadingDimension();
+            CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
 
-            const double* pA = getArrPt() + numJoinAttr;// * k;
+            const double* pA = getArrPt() + numJoinAttr;
             const double* pB = getArrPt() + numJoinAttr;
 
-            cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CblasTrans, CblasNoTrans,
-                m, n, k, 1.0, pA, ldA, pB, ldB, 0.0,
-                    pC, ldC);
+            // TODO: Add fix for numJoinAttr
+
+            cblas_dgemm(cBlasMemLayout, CblasTrans, CblasNoTrans,
+                m, n, k, 1.0, pA, ldA, pB, ldB, 0.0, pC, ldC);
             return matC;
         }
 
@@ -958,6 +962,42 @@ namespace Figaro
             this->resize(std::min(m_numCols, m_numRows));
         }
 
+        constexpr uint32_t getLapackMajorOrder(void) const
+        {
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return LAPACK_ROW_MAJOR;
+            }
+            else
+            {
+                return LAPACK_COL_MAJOR;
+            }
+        }
+
+        constexpr CBLAS_LAYOUT getCblasMajorOrder(void) const
+        {
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return CBLAS_ORDER::CblasRowMajor;
+            }
+            else
+            {
+                return CBLAS_ORDER::CblasColMajor;
+            }
+        }
+
+        constexpr uint32_t getLeadingDimension(void) const
+        {
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return m_numCols;
+            }
+            else
+            {
+                return m_numRows;
+            }
+        }
+
         void setToZeroBelowMainDiagonal(void)
         {
             MatrixType& matA = *this;
@@ -1004,16 +1044,14 @@ namespace Figaro
             double* tau = new double [getNumCols()];
             double* pMat = getArrPt();
             uint32_t ldA;
-            uint32_t memLayout;
+            uint32_t memLayout = getLapackMajorOrder();
 
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
-                memLayout = LAPACK_ROW_MAJOR;
                 ldA = m_numCols;
             }
             else
             {
-                memLayout = LAPACK_COL_MAJOR;
                 ldA = m_numRows;
             }
 
@@ -1160,22 +1198,26 @@ namespace Figaro
             computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
         }
 
+        void computeQRCholesky(bool computeQ = false, bool saveResult = false,
+            MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
+        {
+
+        }
+
 
         void computeCholesky(uint32_t numThreads = 1,
             MatrixType* pMatR = nullptr)
         {
             double *pArr = getArrPt();
-            uint32_t memLayout;
+            uint32_t memLayout = getLapackMajorOrder();
             MatrixType& matA = *this;
             uint32_t ldA;
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
-                memLayout = LAPACK_ROW_MAJOR;
                 ldA = m_numCols;
             }
             else
             {
-                memLayout = LAPACK_COL_MAJOR;
                 ldA = m_numRows;
             }
             matA.setToZeroBelowMainDiagonal();
@@ -1188,7 +1230,7 @@ namespace Figaro
             MatrixType* pMatV)
         {
             double *pArr = getArrPt();
-            uint32_t memLayout;
+            uint32_t memLayout = getLapackMajorOrder();
             uint32_t ldA, ldU, ldvT;
             MatrixType& matU = *pMatU;
             MatrixType& matS = *pMatS;
@@ -1199,13 +1241,11 @@ namespace Figaro
             rank = std::min(m_numRows, m_numCols);
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
-                memLayout = LAPACK_ROW_MAJOR;
                 ldA = m_numCols;
                 ldU = rank;
             }
             else
             {
-                memLayout = LAPACK_COL_MAJOR;
                 ldA = m_numRows;
                 ldU = m_numRows;
             }
