@@ -515,13 +515,29 @@ namespace Figaro
             uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
         {
             auto& matA = *this;
-            for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
+
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
+                {
+                    for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
+                    {
+                        uint32_t colIdxDst = colIdxSrc - colSrcBeginIdx + colDstBeginIdx;
+                        uint32_t rowIdxDst = rowIdxSrc - rowSrcBeginIdx + rowDstBeginIdx;
+                        matA(rowIdxDst, colIdxDst) = matSource(rowIdxSrc, colIdxSrc);
+                    }
+                }
+            }
+            else
             {
                 for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
                 {
-                    uint32_t colIdxDst = colIdxSrc - colSrcBeginIdx + colDstBeginIdx;
-                    uint32_t rowIdxDst = rowIdxSrc - rowSrcBeginIdx + rowDstBeginIdx;
-                    matA[rowIdxDst][colIdxDst] = matSource[rowIdxSrc][colIdxSrc];
+                    for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
+                    {
+                        uint32_t colIdxDst = colIdxSrc - colSrcBeginIdx + colDstBeginIdx;
+                        uint32_t rowIdxDst = rowIdxSrc - rowSrcBeginIdx + rowDstBeginIdx;
+                        matA(rowIdxDst, colIdxDst) = matSource(rowIdxSrc, colIdxSrc);
+                    }
                 }
             }
         }
@@ -553,24 +569,25 @@ namespace Figaro
             inverse.copyBlockToThisMatrix(*this,
                 0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
             uint32_t M = m_numRows;
-            uint32_t N = m_numCols - numJoinAttr;
-            uint32_t ldA = N + numJoinAttr;
-            double* pA = inverse.getArrPt() + numJoinAttr;
+            uint32_t N = m_numCols;
+            uint32_t ldA = getLeadingDimension();
+            uint32_t rank = std::min(M, N);
+            double* pA = inverse.getArrPt();
+            CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
 
             if (isTriangular)
             {
-                LAPACKE_dtrtri(LAPACK_ROW_MAJOR, 'U', 'N', N, pA, ldA);
+                LAPACKE_dtrtri(cBlasMemLayout, 'U', 'N', N, pA, ldA);
             }
             else
             {
-                long long int * pIpivot = new long long int[std::min(M, N)];
-                LAPACKE_dgetrf(
-                    LAPACK_ROW_MAJOR, M, N,
+                long long int* pIpivot = new long long int[rank];
+                LAPACKE_dgetrf(cBlasMemLayout, M, N,
                     pA, ldA, pIpivot);
 
-                LAPACKE_dgetri(LAPACK_ROW_MAJOR, M, pA,
-                        ldA, pIpivot);
-                delete [ ] pIpivot;
+                LAPACKE_dgetri(cBlasMemLayout, M,
+                    pA, ldA, pIpivot);
+                delete [] pIpivot;
             }
 
             return inverse;
@@ -1198,13 +1215,6 @@ namespace Figaro
             computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
         }
 
-        void computeQRCholesky(bool computeQ = false, bool saveResult = false,
-            MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
-        {
-
-        }
-
-
         void computeCholesky(uint32_t numThreads = 1,
             MatrixType* pMatR = nullptr)
         {
@@ -1224,6 +1234,15 @@ namespace Figaro
 
             LAPACKE_dpotrf(memLayout, 'U', m_numCols, pArr, ldA);
         }
+
+        void computeQRCholesky(bool computeQ = false, bool saveResult = false,
+            MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
+        {
+            MatrixType& matR = *pMatR;
+            matR = std::move(selfMatrixMultiply(0));
+            matR.computeCholesky();
+        }
+
 
         void computeSingularValueDecomposition(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
