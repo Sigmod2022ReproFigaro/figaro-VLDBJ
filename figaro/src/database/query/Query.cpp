@@ -188,7 +188,7 @@ namespace Figaro
     }
 
      void Query::evaluateQuery(bool evalCounts, bool evalFirstFigaroPass,
-        bool evalSecondFigaroPass, bool evalPostProcess, Figaro::QRGivensHintType qrHintType,
+        bool evalSecondFigaroPass, bool evalPostProcess, Figaro::QRHintType qrHintType,
         Figaro::MemoryLayout memoryLayout, bool saveResult)
     {
         MICRO_BENCH_INIT(joinEval)

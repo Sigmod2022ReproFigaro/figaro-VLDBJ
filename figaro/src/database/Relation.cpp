@@ -2310,7 +2310,7 @@ namespace Figaro
 
     void Relation::computeQROfGeneralizedHead(
          const std::vector<Relation*>& vpTailRels,
-        Figaro::QRGivensHintType qrTypeHint)
+        Figaro::QRHintType qrTypeHint)
     {
         uint32_t numNonJoinAttrs = 0;
         for (const auto pRel: vpTailRels)
@@ -2318,15 +2318,15 @@ namespace Figaro
             numNonJoinAttrs += pRel->m_data.getNumCols();
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
-        m_data.computeQRGivens(
+        m_data.computeQR(
             getNumberOfThreads(), true, qrTypeHint,
                 false /* computeQ*/, false /* saveResult*/);
     }
 
 
-    void Relation::computeQRInPlace(Figaro::QRGivensHintType qrHintType)
+    void Relation::computeQRInPlace(Figaro::QRHintType qrHintType)
     {
-        m_data.computeQRGivens(getNumberOfThreads(), true, qrHintType,
+        m_data.computeQR(getNumberOfThreads(), true, qrHintType,
             false /* computeQ*/, false /* saveResult*/);
     }
 
@@ -2336,7 +2336,7 @@ namespace Figaro
         Relation* pGenHeadRoot,
         const std::vector<Relation*>& vpTailRels,
         const std::vector<Relation*>& vpGenTailRels,
-        Figaro::QRGivensHintType qrHintType,
+        Figaro::QRHintType qrHintType,
         bool saveResult,
         const Relation* pJoinRel)
     {
@@ -2475,7 +2475,7 @@ namespace Figaro
 
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
-        catGenHeadAndTails.computeQRGivens(getNumberOfThreads(), true, qrHintType,
+        catGenHeadAndTails.computeQR(getNumberOfThreads(), true, qrHintType,
             false /* computeQ*/, false /* saveResult*/);
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
@@ -2515,7 +2515,7 @@ namespace Figaro
     }
 
     std::tuple<Relation*, Relation*> Relation::computeQR(
-        Figaro::QRGivensHintType qrHintType,
+        Figaro::QRHintType qrHintType,
         Figaro::MemoryLayout memoryLayout,
         bool computeQ,
         bool saveResult)
@@ -2526,7 +2526,7 @@ namespace Figaro
         {
             MatrixDT matR = MatrixDT{0, 0};
             MatrixDT matQ = MatrixDT{0, 0};
-            m_data.computeQRGivens(getNumberOfThreads(), true,
+            m_data.computeQR(getNumberOfThreads(), true,
                 qrHintType, computeQ, saveResult, &matR, &matQ);
             if (saveResult)
             {
@@ -2541,7 +2541,7 @@ namespace Figaro
         {
             MatrixDColT matR = MatrixDColT{0, 0};
             MatrixDColT matQ = MatrixDColT{0, 0};
-            m_dataColumnMajor.computeQRGivens(getNumberOfThreads(), true,
+            m_dataColumnMajor.computeQR(getNumberOfThreads(), true,
                  qrHintType, computeQ, saveResult, &matR, &matQ);
             if (saveResult)
             {

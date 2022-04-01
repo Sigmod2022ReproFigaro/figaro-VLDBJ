@@ -552,9 +552,9 @@ namespace Figaro
 
         void computeQROfGeneralizedHead(
             const std::vector<Relation*>& vpTailRels,
-            Figaro::QRGivensHintType qrHintType);
+            Figaro::QRHintType qrHintType);
 
-        void computeQRInPlace(Figaro::QRGivensHintType qrHintType);
+        void computeQRInPlace(Figaro::QRHintType qrHintType);
 
         // Should be called for a root relation.
         std::tuple<Relation*, Relation*> computeQROfConcatenatedGeneralizedHeadAndTails(
@@ -562,12 +562,12 @@ namespace Figaro
             Relation* pGenHeadRoot,
             const std::vector<Relation*>& vpTailRels,
             const std::vector<Relation*>& vpGenTailEls,
-            Figaro::QRGivensHintType qrHintType,
+            Figaro::QRHintType qrHintType,
             bool saveResult,
             const Relation* pJoinRel);
 
         std::tuple<Relation*, Relation*>
-        computeQR(Figaro::QRGivensHintType qrHintType,
+        computeQR(Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
             bool saveResult);

@@ -175,7 +175,7 @@ namespace Figaro
             const std::string& genHeadRoot,
             const std::vector<std::string>& vTailRels,
             const std::vector<std::string>& vGenTailRels,
-            Figaro::QRGivensHintType qrHintType,
+            Figaro::QRHintType qrHintType,
             bool saveResult,
             const std::string& joinRelName);
 
@@ -183,7 +183,7 @@ namespace Figaro
 
         std::tuple<std::string, std::string> evalPostprocessing(
             const std::string& relName,
-            Figaro::QRGivensHintType qrHintType,
+            Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
             bool saveResult);

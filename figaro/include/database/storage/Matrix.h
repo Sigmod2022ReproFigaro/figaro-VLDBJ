@@ -16,13 +16,13 @@ namespace Figaro
         COL_MAJOR = 1
     };
 
-    enum class QRGivensHintType
+    enum class QRHintType
     {
         THIN_BOTTOM = 0,
         THIN_DIAG = 1,
         THICK_BOTTOM = 2,
         THICK_DIAG = 3,
-        LAPACK = 4
+        HOUSEHOLDER_LAPACK = 4
     };
 
     // Row-major order of storing elements of matrix is assumed.
@@ -838,7 +838,7 @@ namespace Figaro
          *
          */
         void computeQRGivensParallelizedThinMatrix(uint32_t numThreads,
-            Figaro::QRGivensHintType qrType)
+            Figaro::QRHintType qrType)
         {
             uint32_t blockSize;
             uint32_t numBlocks;
@@ -891,12 +891,12 @@ namespace Figaro
                 uint32_t rowBlockEndIdx;
                 rowBlockBeginIdx = vRowBlockBeginIdx[blockIdx];
                 rowBlockEndIdx = vRowBlockEndIdx[blockIdx];
-                if (qrType == QRGivensHintType::THIN_BOTTOM)
+                if (qrType == QRHintType::THIN_BOTTOM)
                 {
                     computeQRGivensSequentialBlockBottom(rowBlockBeginIdx,
                         rowBlockEndIdx, 0, m_numCols - 1);
                 }
-                else if (qrType == QRGivensHintType::THIN_DIAG)
+                else if (qrType == QRHintType::THIN_DIAG)
                 {
                     computeQRGivensSequentialBlockDiag(rowBlockBeginIdx,
                         rowBlockEndIdx, 0, m_numCols - 1);
@@ -925,11 +925,11 @@ namespace Figaro
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
 
-            if (qrType == QRGivensHintType::THIN_BOTTOM)
+            if (qrType == QRHintType::THIN_BOTTOM)
             {
                 computeQRGivensParallelBlockBottom(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
             }
-            else if (qrType == QRGivensHintType::THIN_DIAG)
+            else if (qrType == QRHintType::THIN_DIAG)
             {
                 computeQRGivensParallelBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
             }
@@ -944,14 +944,14 @@ namespace Figaro
         }
 
 
-        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, Figaro::QRGivensHintType qrType)
+        void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, Figaro::QRHintType qrType)
         {
-            if (qrType == QRGivensHintType::THICK_DIAG)
+            if (qrType == QRHintType::THICK_DIAG)
             {
                 computeQRGivensParallelBlockDiag(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
 
             }
-            else if (qrType == QRGivensHintType::THICK_BOTTOM)
+            else if (qrType == QRHintType::THICK_BOTTOM)
             {
                 computeQRGivensParallelBlockBottom(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
             }
@@ -964,7 +964,7 @@ namespace Figaro
          * upper triangular.
          *
          */
-        void computeQRGivensParallelizedLaPack(bool computeQ, bool saveResult,
+        void computeQRLapack(bool computeQ, bool saveResult,
             MatrixType *pMatR, MatrixType *pMatQ)
         {
             auto& matA = *this;
@@ -1102,11 +1102,11 @@ namespace Figaro
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
-        void computeQRGivens(uint32_t numThreads = 1, bool useHint = false, Figaro::QRGivensHintType qrTypeHint = QRGivensHintType::THIN_DIAG,
+        void computeQR(uint32_t numThreads = 1, bool useHint = false, Figaro::QRHintType qrTypeHint = QRHintType::THIN_DIAG,
         bool computeQ = false, bool saveResult = false,
         MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
         {
-            Figaro::QRGivensHintType qrType;
+            Figaro::QRHintType qrType;
             if ((0 == m_numRows) || (0 == m_numCols))
             {
                 return;
@@ -1119,31 +1119,38 @@ namespace Figaro
             {
                 if (m_numCols > MIN_COLS_PAR)
                 {
-                    qrType = QRGivensHintType::THICK_DIAG;
+                    qrType = QRHintType::THICK_DIAG;
                 }
                 else
                 {
-                    qrType = QRGivensHintType::THIN_DIAG;
+                    qrType = QRHintType::THIN_DIAG;
                 }
             }
 
-            if ((qrType == QRGivensHintType::THICK_DIAG) ||
-                (qrType == QRGivensHintType::THICK_BOTTOM))
+            if ((qrType == QRHintType::THICK_DIAG) ||
+                (qrType == QRHintType::THICK_BOTTOM))
             {
                 FIGARO_LOG_INFO("Thick version")
                 computeQRGivensParallelizedThickMatrix(numThreads, qrType);
             }
-            else if ((qrType == QRGivensHintType::THIN_DIAG) ||
-                (qrType == QRGivensHintType::THIN_BOTTOM))
+            else if ((qrType == QRHintType::THIN_DIAG) ||
+                (qrType == QRHintType::THIN_BOTTOM))
             {
                 FIGARO_LOG_INFO("Thin version")
                 computeQRGivensParallelizedThinMatrix(numThreads, qrType);
             }
-            else if (qrType == QRGivensHintType::LAPACK)
+            else if (qrType == QRHintType::HOUSEHOLDER_LAPACK)
             {
-                FIGARO_LOG_INFO("Lapack")
-                computeQRGivensParallelizedLaPack(computeQ, saveResult, pMatR, pMatQ);
+                FIGARO_LOG_INFO("HOUSEHOLDER_LAPACK")
+                computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
             }
+        }
+
+        void computeQRHouseholder(
+            bool computeQ = false, bool saveResult = false,
+            MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
+        {
+            computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
         }
 
         void computeSingularValueDecomposition(uint32_t numThreads,

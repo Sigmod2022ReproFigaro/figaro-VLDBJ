@@ -33,7 +33,7 @@ namespace Figaro
          */
         void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
             bool evalSecondFigaroPass = true, bool evalPostProcess = true,
-            Figaro::QRGivensHintType qrHintType = Figaro::QRGivensHintType::THIN_DIAG,
+            Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG,
             Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
             bool saveResult = false);
 

@@ -10,14 +10,14 @@ namespace Figaro
     class ASTVisitorQueryEval: public ASTVisitor
     {
         MemoryLayout m_memoryLayout;
-        QRGivensHintType m_qrHintType;
+        QRHintType m_qrHintType;
         Database* m_pDatabase;
         bool m_saveResult;
     public:
         ASTVisitorQueryEval(
             Database* pDatabase,
             Figaro::MemoryLayout memoryLayout,
-            Figaro::QRGivensHintType qrHintType,
+            Figaro::QRHintType qrHintType,
             bool saveResult
             ): ASTVisitor(pDatabase), m_memoryLayout(memoryLayout),
                 m_pDatabase(pDatabase), m_qrHintType(qrHintType),

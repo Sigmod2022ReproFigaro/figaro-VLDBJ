@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     std::string strMemoryLayout;
     std::string queryConfigPath;
 
-    Figaro::QRGivensHintType qrHintType = Figaro::QRGivensHintType::THIN_DIAG;
+    Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG;
     Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
     bool pureFigaro = false;
@@ -76,23 +76,23 @@ int main(int argc, char *argv[])
         postprocessMode = vm["postprocess"].as<std::string>();
         if (postprocessMode == "THIN_BOTTOM")
         {
-            qrHintType = Figaro::QRGivensHintType::THIN_BOTTOM;
+            qrHintType = Figaro::QRHintType::THIN_BOTTOM;
         }
         else if (postprocessMode == "THIN_DIAG")
         {
-            qrHintType = Figaro::QRGivensHintType::THIN_DIAG;
+            qrHintType = Figaro::QRHintType::THIN_DIAG;
         }
         else if (postprocessMode == "THICK_BOTTOM")
         {
-            qrHintType = Figaro::QRGivensHintType::THICK_BOTTOM;
+            qrHintType = Figaro::QRHintType::THICK_BOTTOM;
         }
         else if (postprocessMode == "THICK_DIAG")
         {
-            qrHintType = Figaro::QRGivensHintType::THICK_DIAG;
+            qrHintType = Figaro::QRHintType::THICK_DIAG;
         }
         else if (postprocessMode == "LAPACK")
         {
-            qrHintType = Figaro::QRGivensHintType::LAPACK;
+            qrHintType = Figaro::QRHintType::HOUSEHOLDER_LAPACK;
         }
         FIGARO_LOG_INFO("postprocessMode", postprocessMode)
     }
