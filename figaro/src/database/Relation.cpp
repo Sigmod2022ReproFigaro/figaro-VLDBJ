@@ -2526,8 +2526,11 @@ namespace Figaro
         {
             MatrixDT matR = MatrixDT{0, 0};
             MatrixDT matQ = MatrixDT{0, 0};
+            /*
             m_data.computeQR(getNumberOfThreads(), true,
                 qrHintType, computeQ, saveResult, &matR, &matQ);
+            */
+            matR.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", matR)
@@ -2541,8 +2544,11 @@ namespace Figaro
         {
             MatrixDColT matR = MatrixDColT{0, 0};
             MatrixDColT matQ = MatrixDColT{0, 0};
+            /*
             m_dataColumnMajor.computeQR(getNumberOfThreads(), true,
                  qrHintType, computeQ, saveResult, &matR, &matQ);
+            */
+            m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 matR.makeDiagonalElementsPositiveInR();
