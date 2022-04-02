@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import shutil
 import json
-from evaluation.custom_logging import init_logging
+from evaluation.custom_logging import init_logging, set_logging_level
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from data_management.database import Database
@@ -94,7 +94,7 @@ def ohe_and_dump_database(db_config, query: Query, database: Database):
         logging.debug("ohe data")
         logging.debug("Dimensions before ohe row {} col {}".format(table.shape[0], table.shape[1]))
         table_np = transform_data(table, attrs_without_dropped, attrs_cat , False)
-        logging.debug("Dimensions after ohe row {} col {}".format(table_np.shape[0], table_np.shape[1]))
+        logging.info("Dimensions after ohe row {} col {}".format(table_np.shape[0], table_np.shape[1]))
         data_out_path = os.path.join(db_ohe_path, rel_name +".csv")
         logging.debug(data_out_path)
         np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
@@ -126,15 +126,14 @@ def eval_ohe_and_dump_join(username: str, password: str,
         query.get_non_join_cat_attr_names_ordered(), False)
     data_out_path = join_ohe_path
     logging.debug(data_out_path)
-    logging.debug("Dimensions row {} col {}".format(table_np.shape[0], table_np.shape[1]))
+    logging.info("Dimensions row {} col {}".format(table_np.shape[0], table_np.shape[1]))
     np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
 
 
 def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str,
     database_size: bool, join_size: bool):
     db_names = ["retailer", "favorita", "yelp",
-        "retailer_ohe", "favorita_ohe", "yelp_ohe",
-        "retailer", "favorita", "yelp"]
+        "retailer_ohe", "favorita_ohe", "yelp_ohe"]
     db_configs =  {
         "retailer":
         {
@@ -219,4 +218,5 @@ def main(args):
 
 if __name__ == "__main__":
     init_logging()
+    set_logging_level(logging.INFO)
     main(sys.argv[1:])

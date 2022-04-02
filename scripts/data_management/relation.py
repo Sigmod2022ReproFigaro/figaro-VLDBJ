@@ -53,6 +53,13 @@ class Relation:
         return attr_names
 
 
+    def get_all_attribute_names(self):
+        attr_names = []
+        for attribute in self.attributes:
+            attr_names.append(attribute.name)
+
+        return attr_names
+
     def get_pk_attribute_names(self)-> List[str]:
         return [attribute.name for attribute in self.attributes if attribute.primary_key]
 
