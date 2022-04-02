@@ -70,7 +70,6 @@ def ohe_and_dump_database(db_config, query: Query, database: Database):
 
     for rel_json in rels_json:
         rel_name = rel_json["name"]
-        attrs_json = rel_json["attributes"]
         data_path = rel_json["data_path"]
         logging.debug(rel_name)
         attrs = database.get_all_attribute_names(rel_name=rel_name)
@@ -101,7 +100,6 @@ def ohe_and_dump_database(db_config, query: Query, database: Database):
         np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
 
 
-
 def eval_ohe_and_dump_join(username: str, password: str,
     database: Database, query: Query, dump_path: str):
     join_path = os.path.join(dump_path, "join.csv")
@@ -126,13 +124,14 @@ def eval_ohe_and_dump_join(username: str, password: str,
 
     table_np = transform_data(table, query.get_non_join_attr_names_ordered(),
         query.get_non_join_cat_attr_names_ordered(), False)
-    data_out_path = os.path.join(join_ohe_path)
+    data_out_path = join_ohe_path
     logging.debug(data_out_path)
     logging.debug("Dimensions row {} col {}".format(table_np.shape[0], table_np.shape[1]))
     np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
 
 
-def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str):
+def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str,
+    database_size: bool, join_size: bool):
     db_names = ["retailer", "favorita", "yelp",
         "retailer_ohe", "favorita_ohe", "yelp_ohe",
         "retailer", "favorita", "yelp"]
@@ -186,9 +185,12 @@ def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: s
 
         database = Database(db_config_path, "")
         query = Query(query_config_path=query_config_path, database=database)
-        ohe_and_dump_database(db_configs[db_name], query, database)
-        eval_ohe_and_dump_join(username, password, database,
-            query, db_config["dump_path"])
+        if database_size:
+            ohe_and_dump_database(db_configs[db_name], query, database)
+
+        if join_size:
+            eval_ohe_and_dump_join(username, password, database,
+                query, db_config["dump_path"])
 
 
 def main(args):
@@ -201,14 +203,18 @@ def main(args):
                         dest="password", required=True)
     parser.add_argument("-u", "--username", action="store",
                         dest="username", required=True)
+    parser.add_argument("--database_size", default=False, action='store_true')
+    parser.add_argument("--join_size", default=False, action='store_true')
     args = parser.parse_args(args)
 
     data_path = args.data_path
     username = args.username
     password = args.password
     system_tests_path = args.system_tests_path
+    compute_database_size = args.database_size
+    compute_join_size = args.join_size
     ohe_and_dump_join_and_databases(data_path, system_tests_path,
-        username, password)
+        username, password, compute_database_size, compute_join_size)
 
 
 if __name__ == "__main__":
