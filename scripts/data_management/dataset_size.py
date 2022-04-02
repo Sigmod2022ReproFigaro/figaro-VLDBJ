@@ -26,11 +26,11 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 import threadpoolctl
 from threadpoolctl import threadpool_limits
-from scripts.data_management.database import Database
+from data_management.database import Database
 
-from scripts.data_management.database_psql import DatabasePsql
-from scripts.data_management.query import Query
-from scripts.evaluation.system_test.system_test import DumpConf
+from data_management.database_psql import DatabasePsql
+from data_management.query import Query
+from evaluation.system_test.system_test import DumpConf
 
 class DummyEncoder(BaseEstimator, TransformerMixin):
     def __init__(self, sparse):
@@ -129,6 +129,9 @@ def eval_ohe_and_dump_join(username: str, password: str,
     db_config_path = db_config["db_config_path"]
     query_config_path = db_config["query_config_path"]
     dump_path = db_config["dump_path"]
+    join_path = dump_path + "join.csv"
+    join_ohe_path = dump_path + "join.csv"
+
     database = Database(db_config_path, "")
     query = Query(query_config_path=query_config_path, database=database)
     database_psql = DatabasePsql(host_name="",user_name=username,
@@ -140,9 +143,18 @@ def eval_ohe_and_dump_join(username: str, password: str,
     num_repetitions = 1
     database_psql.evaluate_join(query, num_repetitions=num_repetitions,
         order_by=DumpConf.OrderRelation.JOIN_ATTRIBUTE)
-    database_psql.dump_join(dump_path + "join.csv")
+    database_psql.dump_join(query, join_path)
     # Need due to memory usage.
     database_psql.drop_database()
+
+    table = pd.read_csv(join_path, names=query.get_non_join_attr_names_ordered(),
+            delimiter=",", header=None)
+
+    table_np = transform_data(table, query.get_non_join_attr_names_ordered(),
+        query.get_non_join_cat_attr_names_ordered(), False)
+    data_out_path = os.path.join(join_ohe_path)
+    logging.debug(data_out_path)
+    np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
     # Get order of attributes to ohe.
 
 def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str):
@@ -198,6 +210,7 @@ def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: s
             )
         db_configs[db_name]["dump_path"] = os.path.join(
             real_dataset_path, db_name)
+        db_configs[db_name]["query_config_path"] = os.path.join(system_tests_path, db_configs[db_name]["query_config_path"])
 
     for db_name in db_names:
         #ohe_and_dump_database(db_configs[db_name])
