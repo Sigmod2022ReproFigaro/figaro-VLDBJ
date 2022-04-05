@@ -1230,9 +1230,9 @@ namespace Figaro
             {
                 ldA = m_numRows;
             }
-            matA.setToZeroBelowMainDiagonal();
 
             LAPACKE_dpotrf(memLayout, 'U', m_numCols, pArr, ldA);
+            matA.setToZeroBelowMainDiagonal();
         }
 
         void computeQRCholesky(bool computeQ = false, bool saveResult = false,
@@ -1247,7 +1247,8 @@ namespace Figaro
 
             if (computeQ)
             {
-                matQ = matA * matR.computeInverse(0, true);
+                auto invR = matR.computeInverse(0, true);
+                matQ = matA * invR;
             }
         }
 
