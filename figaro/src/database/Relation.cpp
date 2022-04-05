@@ -452,13 +452,20 @@ namespace Figaro
             mCatAttrsDist[attrIdx] = std::set<uint32_t>{};
         }
 
+
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
             for (const auto& attrIdx: vCatAttrIdxs)
             {
-               mCatAttrsDist[attrIdx].insert(static_cast<uint32_t>(m_data[rowIdx][attrIdx]));
+                mCatAttrsDist[attrIdx].insert(static_cast<uint32_t>(m_data[rowIdx][attrIdx]));
             }
         }
+
+        for (const auto& attrIdx: vCatAttrIdxs)
+        {
+            FIGARO_LOG_INFO("Cat attributes", attrIdx, mCatAttrsDist[attrIdx])
+        }
+
 
         // Set up shifts.
         curShift = 0;
@@ -1346,7 +1353,7 @@ namespace Figaro
         const std::vector<std::string>& vJoinAttrNames
     ) const
     {
-        auto result = m_data.computeInverse(vJoinAttrNames.size());
+        auto result = m_data.computeInverse(vJoinAttrNames.size(), true);
         return Relation("INV_" + getName(), std::move(result), m_attributes);
     }
 
@@ -2530,7 +2537,7 @@ namespace Figaro
             m_data.computeQR(getNumberOfThreads(), true,
                 qrHintType, computeQ, saveResult, &matR, &matQ);
             */
-            matR.computeQRCholesky(computeQ, true, &matR, &matQ);
+            m_data.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", matR)
