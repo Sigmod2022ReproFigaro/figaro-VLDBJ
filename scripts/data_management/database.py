@@ -41,6 +41,12 @@ class Database:
                 return rel.get_attribute_names([], is_cat)
 
 
+    def get_all_attribute_names(self, rel_name: str, is_cat: bool = False) -> List[str]:
+        for rel in self.relations:
+            if rel.name == rel_name:
+                return rel.get_all_attribute_names()
+
+
     def get_relation(self, name) -> Relation:
         for relation in self.relations:
             if relation.name == name:

@@ -3,9 +3,6 @@ import json
 import logging
 
 from typing import List
-
-from numpy import logical_not
-
 from data_management.database import Database
 
 class Query:
