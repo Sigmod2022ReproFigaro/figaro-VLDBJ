@@ -1,3 +1,4 @@
+source .non_inter_paths.sh
 FIGARO_PATH=/home/zivanovic/Figaro
 mkdir -p ${FIGARO_PATH}/data
 ############## Path setup ################
