@@ -1,5 +1,6 @@
 LOCAL_PATH=/home/zivanovic/local
-mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib}
+DOWN_PATH=/home/zivanovic/downloads
+mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib, $DOWN_PATH}
 sudo apt install --yes vim
 sudo apt install --yes cmake
 sudo apt install --yes build-essential wget m4 flex bison git unzip
@@ -34,17 +35,15 @@ sudo -u postgres psql -c "ALTER SYSTEM SET Full_page_writes=off"
 sudo -u postgres psql -c "ALTER SYSTEM SET Bgwriter_lru_maxpages=0"
 sudo -u postgres psql -c "ALTER SYSTEM SET work_mem='64GB'"
 sudo systemctl restart postgresql.service
+
 ############# Python ####################
-sudo apt install --yes software-properties-common
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt purge --yes python3
-sudo apt install --yes python3.7
+cd $DOWN_PATH
+sudo apt install --yes python3.8
 sudo apt install --yes curl
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-sudo python3.7 get-pip.py
-sudo apt install --yes python3.7-venv
-pip3 install setup
-pip3 install cython
+sudo python3.8 get-pip.py
+sudo apt install --yes python3.8-venv
+pip3.8 install cython
 
 ############# C++ libraries ####################
 sudo apt install --yes libboost-all-dev libeigen3-dev libtbb-dev libgtest-dev
@@ -52,20 +51,20 @@ mkdir -p $LOCAL_PATH/include/nlohmann
 wget https://github.com/nlohmann/json/blob/develop/include/nlohmann/json.hpp -P $LOCAL_PATH/include/nlohmann
 
 ############### OpenBlas ##################
-cd ~
-mkdir -p downloads
-cd downloads
+cd $DOWN_PATH
 wget https://sourceforge.net/projects/openblas/files/v0.3.13/OpenBLAS%200.3.13%20version.zip/download
 unzip download
 rm download
 cd xianyi-OpenBLAS-d2b11c4
 make -j48
 make PREFIX=$LOCAL_PATH install
+rm xianyi-OpenBLAS-d2b11c4 -rf
 
 ################ Intel MKL ######################
 wget https://registrationcenter-download.intel.com/akdlm/irc_nas/17769/l_BaseKit_p_2021.2.0.2883_offline.sh -o oneApi.sh
 MKL_PATH=$LOCAL_PATH/intel
 sh l_BaseKit_p_2021.2.0.2883_offline.sh -a -s --eula accept --install-dir $MKL_PATH
+rm l_BaseKit_p_2021.2.0.2883_offline.sh
 PATH_UPDATE="export LIBRARY_PATH=$MKL_PATH/mkl/2021.2.0/lib/intel64/:\$LIBRARY_PATH\n
 export LD_LIBRARY_PATH=$MKL_PATH/mkl/2021.2.0/lib/intel64/\n
 export CPLUS_INCLUDE_PATH=$MKL_PATH/mkl/2021.2.0/include/:\$CPLUS_INCLUDE_PATH\n
@@ -96,12 +95,10 @@ mv /home/zivanovic/numpy-openblas/site.cfg.example numpy-openblas/site.cfg
 echo -e $Config_MKL>>numpy-mkl/site.cfg
 echo -e $Config_OpenBlas>>numpy-openblas/site.cfg
 
-
-
 cd numpy-mkl
 git submodule update --init
 cd ../numpy-openblas
 git submodule update --init
 cd ~
-python3.7 /home/zivanovic/numpy-mkl/setup.py build
-python3.7 /home/zivanovic/numpy-openblas/setup.py build
+python3.8 /home/zivanovic/numpy-mkl/setup.py build
+python3.8 /home/zivanovic/numpy-openblas/setup.py build
