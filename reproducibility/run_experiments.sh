@@ -14,13 +14,6 @@ cd $FIGARO_PATH
 
 git clone --branch Sigmod-2022-Repro https://gitlab.ifi.uzh.ch/dast/papers/figaro-code.git
 cd $FIGARO_SCRIPTS_PATH
-########### Setting up python MKL environment #########
-python3.8 -m venv run-env-mkl
-source run-env-mkl/bin/activate
-pip install -r requirements.txt
-pip uninstall -y numpy
-$NUMPY_PATH/numpy-mkl/setup.py install
-deactivate
 
 ######### Setting up python OpenBlas environment ########
 python3.8 -m venv run-env-openblas
@@ -28,6 +21,14 @@ source run-env-openblas/bin/activate
 pip install -r requirements.txt
 pip uninstall -y numpy
 $NUMPY_PATH/numpy-openblas/setup.py install
+deactivate
+
+########### Setting up python MKL environment #########
+python3.8 -m venv run-env-mkl
+source run-env-mkl/bin/activate
+pip install -r requirements.txt
+pip uninstall -y numpy
+$NUMPY_PATH/numpy-mkl/setup.py install
 #deactivate
 
 ########## Download data #############

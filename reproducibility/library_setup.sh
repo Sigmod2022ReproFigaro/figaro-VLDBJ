@@ -1,6 +1,6 @@
 LOCAL_PATH=/home/zivanovic/local
 DOWN_PATH=/home/zivanovic/downloads
-mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib, $DOWN_PATH}
+mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib,$DOWN_PATH}
 sudo apt install --yes vim
 sudo apt install --yes cmake
 sudo apt install --yes build-essential wget m4 flex bison git unzip
@@ -38,12 +38,9 @@ sudo systemctl restart postgresql.service
 
 ############# Python ####################
 cd $DOWN_PATH
-sudo apt install --yes python3.8
-sudo apt install --yes curl
-curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-sudo python3.8 get-pip.py
-sudo apt install --yes python3.8-venv
-pip3.8 install cython
+sudo apt-get install python3-dev python3-pip python3-venv python3-wheel -y
+pip3 install wheel
+pip3 install cython
 
 ############# C++ libraries ####################
 sudo apt install --yes libboost-all-dev libeigen3-dev libtbb-dev libgtest-dev
