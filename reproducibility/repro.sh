@@ -1,7 +1,7 @@
 ########### Clonning scripts ###########
 git clone --branch Sigmod-2022-Repro https://gitlab.ifi.uzh.ch/dast/papers/figaro-code.git
 mv figaro-code/reproducibility*.sh .
-
+find . -iname \*.sh -print0 | xargs -r0 chmod 777
 ####### Old container removal
 DOCK_OLD_CID=`docker ps -a | tail -1 | awk '{print $NF}'`
 docker stop $DOCK_OLD_CID && docker rm $DOCK_OLD_CID
