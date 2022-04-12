@@ -56,13 +56,13 @@ make PREFIX=$LOCAL_PATH install
 
 ################ Intel MKL ######################
 wget https://registrationcenter-download.intel.com/akdlm/irc_nas/17769/l_BaseKit_p_2021.2.0.2883_offline.sh -o oneApi.sh
-sh l_BaseKit_p_2021.2.0.2883_offline.sh -a -s --eula accept --install-dir $LOCAL_PATH/intel
-PATH_UPDATE="export LIBRARY_PATH=$LOCAL_PATH/intel/mkl/2021.2.0/lib/intel64/:\$LIBRARY_PATH\n
-export LD_LIBRARY_PATH=$LOCAL_PATH/intel/mkl/2021.2.0/lib/intel64/:\$LD_LIBRARY_PATH\n
-export CPLUS_INCLUDE_PATH=$LOCAL_PATH/intel/mkl/2021.2.0/include/:$CPLUS_INCLUDE_PATH\n
-source $LOCAL_PATH/intel/vtune/2021.2.0/vtune-vars.sh\n
-export LIBRARY_PATH=$LOCAL_PATH/intel/tbb/2021.2.0/lib/intel64/gcc4.8:\$LIBRARY_PATH\n
-export CPLUS_INCLUDE_PATH=$LOCAL_PATH/intel/mkl/2021.2.0/include:\$CPLUS_INCLUDE_PATH"
+MKL_PATH=$LOCAL_PATH/intel
+sh l_BaseKit_p_2021.2.0.2883_offline.sh -a -s --eula accept --install-dir $MKL_PATH
+PATH_UPDATE="export LIBRARY_PATH=$MKL_PATH/mkl/2021.2.0/lib/intel64/:\$LIBRARY_PATH\n
+export LD_LIBRARY_PATH=$MKL_PATH/mkl/2021.2.0/lib/intel64/\n
+export CPLUS_INCLUDE_PATH=$MKL_PATH/mkl/2021.2.0/include/:\$CPLUS_INCLUDE_PATH\n
+source $MKL_PATH/vtune/2021.2.0/vtune-vars.sh\n
+export LIBRARY_PATH=$MKL_PATH/tbb/2021.2.0/lib/intel64/gcc4.8:\$LIBRARY_PATH\n"
 echo -e $PATH_UPDATE>>~/.bashrc
 source ~/.bashrc
 
@@ -79,8 +79,8 @@ runtime_library_dirs = $LOCAL_PATH/lib\n
 "
 Config_MKL="
 [mkl]
-library_dirs = /local/scratch/local/intel/mkl/2021.2.0/lib/intel64\n
-include_dirs = /local/scratch/local/intel/mkl/2021.2.0/include\n
+library_dirs = $MKL_PATH/mkl/2021.2.0/lib/intel64\n
+include_dirs = $MKL_PATH/mkl/2021.2.0/include\n
 libraries = mkl_rt\n
 "
 mv /home/zivanovic/numpy-mkl/site.cfg.example numpy-mkl/site.cfg
@@ -88,11 +88,14 @@ mv /home/zivanovic/numpy-openblas/site.cfg.example numpy-openblas/site.cfg
 echo -e $Config_MKL>>numpy-mkl/site.cfg
 echo -e $Config_OpenBlas>>numpy-openblas/site.cfg
 
-sudo apt install python3-pip
-pip3 install --yes setup
-pip3 install --yes cython
+sudo apt install --yes python3-pip
+sudo apt install --yes python3.8-ven
+pip3 install setup
+pip3 install cython
 cd numpy-mkl
 git submodule update --init
-# Submodule ...
+cd ../numpy-openblas
+git submodule update --init
+cd ~
 python3 /home/zivanovic/numpy-mkl/setup.py build
 python3 /home/zivanovic/numpy-openblas/setup.py build

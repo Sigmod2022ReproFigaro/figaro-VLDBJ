@@ -11,17 +11,17 @@ def percent_generator(data_path: str, system_tests_path: str, username: str, pas
         "retailer":
         {
             "db_config_path": "test_real_data/databases/usretailer/database_specs_usretailer.conf",
-            "query_config_path": "test_real_data/queries/usretailer/thread48/query_specs_location_root.conf"
+            "query_config_path": "test_real_data/queries/usretailer/query_specs_location_root.conf"
         },
         "favorita":
         {
             "db_config_path": "test_real_data/databases/favorita/database_specs_favorita.conf",
-            "query_config_path": "test_real_data/queries/favorita/thread48/query_specs_oil_root.conf"
+            "query_config_path": "test_real_data/queries/favorita/query_specs_oil_root.conf"
         },
         "yelp":
         {
             "db_config_path": "test_real_data/databases/yelp/database_specs_yelp.conf",
-            "query_config_path": "test_real_data/queries/yelp/thread48/query_specs_user_root.conf"
+            "query_config_path": "test_real_data/queries/yelp/query_specs_user_root.conf"
         }
     }
 
