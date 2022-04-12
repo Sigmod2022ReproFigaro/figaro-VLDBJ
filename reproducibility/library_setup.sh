@@ -75,17 +75,17 @@ cd ~
 git clone --depth 1 https://github.com/numpy/numpy numpy-openblas --branch v1.22.0
 git clone --depth 1 https://github.com/numpy/numpy numpy-mkl --branch v1.22.0
 Config_OpenBlas="
-[openblas]
+[openblas]\n
 libraries = openblas\n
 library_dirs = $LOCAL_PATH/lib\n
 include_dirs = $LOCAL_PATH/include\n
 runtime_library_dirs = $LOCAL_PATH/lib\n
 "
 Config_MKL="
-[mkl]
+[mkl]\n
+libraries = mkl_rt\n
 library_dirs = $MKL_PATH/mkl/2021.2.0/lib/intel64\n
 include_dirs = $MKL_PATH/mkl/2021.2.0/include\n
-libraries = mkl_rt\n
 "
 mv /home/zivanovic/numpy-mkl/site.cfg.example numpy-mkl/site.cfg
 mv /home/zivanovic/numpy-openblas/site.cfg.example numpy-openblas/site.cfg
