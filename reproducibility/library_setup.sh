@@ -2,8 +2,7 @@ LOCAL_PATH=/home/zivanovic/local
 mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib}
 sudo apt install --yes vim
 sudo apt install --yes cmake
-sudo apt install --yes build-essential wget m4 flex bison
-
+sudo apt install --yes build-essential wget m4 flex bison git unzip
 ########################### gcc-10.1 from source
 cd $LOCAL_PATH
 wget https://ftpmirror.gnu.org/gcc/gcc-10.1.0/gcc-10.1.0.tar.xz
@@ -35,8 +34,17 @@ sudo -u postgres psql -c "ALTER SYSTEM SET Full_page_writes=off"
 sudo -u postgres psql -c "ALTER SYSTEM SET Bgwriter_lru_maxpages=0"
 sudo -u postgres psql -c "ALTER SYSTEM SET work_mem='64GB'"
 sudo systemctl restart postgresql.service
-sudo apt install --yes python
-sudo apt install --yes git unzip
+############# Python ####################
+sudo apt install --yes software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt purge --yes python3
+sudo apt install --yes python3.7
+sudo apt install --yes curl
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+sudo python3.7 get-pip.py
+sudo apt install --yes python3.7-venv
+pip3 install setup
+pip3 install cython
 
 ############# C++ libraries ####################
 sudo apt install --yes libboost-all-dev libeigen3-dev libtbb-dev libgtest-dev
@@ -88,14 +96,12 @@ mv /home/zivanovic/numpy-openblas/site.cfg.example numpy-openblas/site.cfg
 echo -e $Config_MKL>>numpy-mkl/site.cfg
 echo -e $Config_OpenBlas>>numpy-openblas/site.cfg
 
-sudo apt install --yes python3-pip
-sudo apt install --yes python3.8-ven
-pip3 install setup
-pip3 install cython
+
+
 cd numpy-mkl
 git submodule update --init
 cd ../numpy-openblas
 git submodule update --init
 cd ~
-python3 /home/zivanovic/numpy-mkl/setup.py build
-python3 /home/zivanovic/numpy-openblas/setup.py build
+python3.7 /home/zivanovic/numpy-mkl/setup.py build
+python3.7 /home/zivanovic/numpy-openblas/setup.py build
