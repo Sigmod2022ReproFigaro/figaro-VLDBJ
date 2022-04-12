@@ -12,8 +12,8 @@ DOCK_CID=`docker ps -a | tail -1 | awk '{print $NF}'`
 HOME_PATH=/home/zivanovic
 echo $DOCK_CID
 pwd
-docker cp user_create.sh $DOCK_CID:/user_create.sh
-docker exec --user root -ti $DOCK_CID bash user_create.sh | tee log_user_create.txt
+docker cp user_install.sh $DOCK_CID:/user_install.sh
+docker exec --user root -ti $DOCK_CID bash user_install.sh | tee log_user_install.txt
 
 docker cp library_setup.sh $DOCK_CID:/$HOME_PATH/library_setup.sh
 docker cp run_experiments.sh $DOCK_CID:/$HOME_PATH/run_experiments.sh
