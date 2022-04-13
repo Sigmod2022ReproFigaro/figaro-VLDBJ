@@ -114,8 +114,8 @@ namespace Figaro
             FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
             if (m_saveResult)
             {
-                //double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
-                //FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
+                double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
+                FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
             }
         }
         /************* Q COMPUTATION END ***********/

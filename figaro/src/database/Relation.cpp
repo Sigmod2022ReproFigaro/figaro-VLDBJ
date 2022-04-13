@@ -1338,6 +1338,7 @@ namespace Figaro
         FIGARO_LOG_INFO("diff norm", eye.norm(0))
         FIGARO_LOG_INFO("diff norm", result)
         FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
+        FIGARO_LOG_BENCH("Dimensions", m_data.getNumRows(), m_data.getNumCols())
         return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
 
     }
@@ -1346,7 +1347,7 @@ namespace Figaro
         const std::vector<std::string>& vJoinAttrNames
     ) const
     {
-        auto result = m_data.computeInverse(vJoinAttrNames.size());
+        auto result = m_data.computeInverse(vJoinAttrNames.size(), true);
         return Relation("INV_" + getName(), std::move(result), m_attributes);
     }
 
@@ -1394,7 +1395,7 @@ namespace Figaro
         }
         FIGARO_LOG_DBG("vPKIndices", m_name, vPKIndices, vJoinAttrIdxs)
         FIGARO_LOG_DBG("areJoinAttrsPK", m_name, areJoinAttrsPK)
-        areJoinAttrsPK = false;
+        //areJoinAttrsPK = false;
         // TEMPORARY HACK
         // TODO: Add parallel detection of
         // For counter and down count.
@@ -2496,7 +2497,7 @@ namespace Figaro
         {
             FIGARO_LOG_INFO("Computing Q")
             qData = std::move(
-                pJoinRel->m_data * catGenHeadAndTails.computeInverse());
+                pJoinRel->m_data * catGenHeadAndTails.computeInverse(0, true));
             FIGARO_LOG_BENCH("join Rel Size", pJoinRel->m_data.getNumRows())
         }
 
@@ -2526,11 +2527,11 @@ namespace Figaro
         {
             MatrixDT matR = MatrixDT{0, 0};
             MatrixDT matQ = MatrixDT{0, 0};
-            /*
+
             m_data.computeQR(getNumberOfThreads(), true,
                 qrHintType, computeQ, saveResult, &matR, &matQ);
-            */
-            matR.computeQRCholesky(computeQ, true, &matR, &matQ);
+
+            //matR.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", matR)
@@ -2544,11 +2545,11 @@ namespace Figaro
         {
             MatrixDColT matR = MatrixDColT{0, 0};
             MatrixDColT matQ = MatrixDColT{0, 0};
-            /*
+
             m_dataColumnMajor.computeQR(getNumberOfThreads(), true,
                  qrHintType, computeQ, saveResult, &matR, &matQ);
-            */
-            m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
+
+            //m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 matR.makeDiagonalElementsPositiveInR();
