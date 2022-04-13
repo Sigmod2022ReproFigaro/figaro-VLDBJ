@@ -25,7 +25,7 @@ echo -e $PATH_UPDATE | tee -a ~/.bashrc ~/.non_inter_paths.sh
 
 ##################### PSQL ###############
 sudo apt install --yes postgresql postgresql-contrib systemctl
-sudo -i -u postgres service postgresql start
+sudo service postgresql start
 sudo -u postgres psql -c "CREATE USER zivanovic WITH ENCRYPTED PASSWORD '12345' CREATEDB;
 AlTER USer zivanovic SUPERUSER;"
 sudo -u postgres psql -c "ALTER SYSTEM SET autovacuum=off"
@@ -34,7 +34,7 @@ sudo -u postgres psql -c "ALTER SYSTEM SET Synchronous_commit=off"
 sudo -u postgres psql -c "ALTER SYSTEM SET Full_page_writes=off"
 sudo -u postgres psql -c "ALTER SYSTEM SET Bgwriter_lru_maxpages=0"
 sudo -u postgres psql -c "ALTER SYSTEM SET work_mem='64GB'"
-sudo systemctl restart postgresql.service
+sudo service postgresql restart
 
 ############# Python ####################
 cd $DOWN_PATH
