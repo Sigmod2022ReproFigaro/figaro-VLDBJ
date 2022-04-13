@@ -1,11 +1,18 @@
 LOCAL_PATH=/home/zivanovic/local
 DOWN_PATH=/home/zivanovic/downloads
+
 mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib,$DOWN_PATH}
+PATH_UPDATE="export PATH=$LOCAL_PATH/bin:\$PATH\n
+export CPLUS_INCLUDE_PATH=$LOCAL_PATH/include\n
+export LIBRARY_PATH=$LOCAL_PATH/lib:\$LIBRARY_PATH"
+echo -e $PATH_UPDATE | tee -a ~/.bashrc ~/.non_inter_paths.sh
+
 sudo apt install --yes vim
 sudo apt install --yes cmake
 sudo apt install --yes build-essential wget m4 flex bison git unzip
-########################### gcc-10.1 from source
-cd $LOCAL_PATH
+
+########################### gcc-10.1 from source ######################
+cd $DOWN_PATH
 wget https://ftpmirror.gnu.org/gcc/gcc-10.1.0/gcc-10.1.0.tar.xz
 tar xf gcc-10.1.0.tar.xz
 rm gcc-10.1.0.tar.xz
@@ -13,15 +20,11 @@ cd gcc-10.1.0
 contrib/download_prerequisites
 cd ..
 mkdir build && cd build
-../gcc-10.1.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=$LOCAL_PATH/gcc-10.1 --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --program-suffix=-10
+../gcc-10.1.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=$LOCAL_PATH --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --program-suffix=-10
 make -j24
 make install-strip
-PATH_UPDATE="export PATH=$LOCAL_PATH/bin:\$PATH\n
-export PATH=$LOCAL_PATH/gcc-10.1/bin:\$PATH\n
-export CPLUS_INCLUDE_PATH=$LOCAL_PATH/include\n
-export LIBRARY_PATH=$LOCAL_PATH/lib:\$LIBRARY_PATH"
-echo -e $PATH_UPDATE | tee -a ~/.bashrc ~/.non_inter_paths.sh
-rm -rf
+cd $DOWN_PATH
+rm gcc-10.1.0 -rf
 
 ##################### PSQL ###############
 sudo apt install --yes postgresql postgresql-contrib systemctl
@@ -58,6 +61,7 @@ rm download
 cd xianyi-OpenBLAS-d2b11c4
 make -j48
 make PREFIX=$LOCAL_PATH install
+cd $DOWN_PATH
 rm xianyi-OpenBLAS-d2b11c4 -rf
 
 ################ Intel MKL ######################
