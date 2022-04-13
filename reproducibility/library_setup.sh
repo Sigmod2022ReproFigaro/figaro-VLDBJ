@@ -13,15 +13,15 @@ cd gcc-10.1.0
 contrib/download_prerequisites
 cd ..
 mkdir build && cd build
-../gcc-10.1.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=$LOCAL_PATH/gcc-10.1 --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --program-suffix=-10.1
+../gcc-10.1.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=$LOCAL_PATH/gcc-10.1 --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --program-suffix=-10
 make -j24
 make install-strip
 PATH_UPDATE="export PATH=$LOCAL_PATH/bin:\$PATH\n
 export PATH=$LOCAL_PATH/gcc-10.1/bin:\$PATH\n
 export CPLUS_INCLUDE_PATH=$LOCAL_PATH/include\n
-export LIBRARY_PATH=$LOCAL_PATH/gcc-10.1.0/lib64\n
 export LIBRARY_PATH=$LOCAL_PATH/lib:\$LIBRARY_PATH"
 echo -e $PATH_UPDATE | tee -a ~/.bashrc ~/.non_inter_paths.sh
+rm -rf
 
 ##################### PSQL ###############
 sudo apt install --yes postgresql postgresql-contrib systemctl
@@ -45,7 +45,10 @@ pip3 install cython
 ############# C++ libraries ####################
 sudo apt install --yes libboost-all-dev libeigen3-dev libtbb-dev libgtest-dev
 mkdir -p $LOCAL_PATH/include/nlohmann
-wget https://github.com/nlohmann/json/blob/develop/include/nlohmann/json.hpp -P $LOCAL_PATH/include/nlohmann
+cd $DOWN_PATH
+git clone --depth 1 https://github.com/nlohmann/json/
+cp json/single_include/nlohmann/json.hpp $LOCAL_PATH/include/nlohmann/json.hpp
+rm json -rf
 
 ############### OpenBlas ##################
 cd $DOWN_PATH
