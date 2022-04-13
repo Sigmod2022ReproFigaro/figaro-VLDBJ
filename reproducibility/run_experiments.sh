@@ -1,4 +1,4 @@
-source .non_inter_paths.sh
+source ~/.non_inter_paths.sh
 FIGARO_PATH=/home/zivanovic/Figaro
 mkdir -p ${FIGARO_PATH}/data
 ############## Path setup ################
@@ -39,7 +39,7 @@ python -m evaluation.data_generation -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWO
 # Run experiments
 #for i in {1..4}
 #do
-#	python -m evaluation.experiment -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD -r $FIGARO_ROOT_PATH -s $FIGARO_SYSTEMS_TESTS_PATH -e $i
+#	python -m evaluation.experiment -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD -r $FIGARO_CODE_PATH -s $FIGARO_SYSTEMS_TESTS_PATH -e $i
 #done
 
 

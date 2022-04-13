@@ -21,7 +21,7 @@ export PATH=$LOCAL_PATH/gcc-10.1/bin:\$PATH\n
 export CPLUS_INCLUDE_PATH=$LOCAL_PATH/include\n
 export LIBRARY_PATH=$LOCAL_PATH/gcc-10.1.0/lib64\n
 export LIBRARY_PATH=$LOCAL_PATH/lib:\$LIBRARY_PATH"
-echo -e $PATH_UPDATE | tee -a ~/.bashrc .non_inter_paths.sh
+echo -e $PATH_UPDATE | tee -a ~/.bashrc ~/.non_inter_paths.sh
 
 ##################### PSQL ###############
 sudo apt install --yes postgresql postgresql-contrib systemctl
@@ -67,8 +67,8 @@ export LD_LIBRARY_PATH=$MKL_PATH/mkl/2021.2.0/lib/intel64/\n
 export CPLUS_INCLUDE_PATH=$MKL_PATH/mkl/2021.2.0/include/:\$CPLUS_INCLUDE_PATH\n
 source $MKL_PATH/vtune/2021.2.0/vtune-vars.sh\n
 export LIBRARY_PATH=$MKL_PATH/tbb/2021.2.0/lib/intel64/gcc4.8:\$LIBRARY_PATH\n"
-echo -e $PATH_UPDATE | tee -a ~/.bashrc .non_inter_paths.sh
-source .non_inter_paths.sh
+echo -e $PATH_UPDATE | tee -a ~/.bashrc ~/.non_inter_paths.sh
+source ~/.non_inter_paths.sh
 
 ################### Numpy from source ##########
 cd ~
