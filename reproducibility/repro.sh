@@ -1,13 +1,23 @@
 ########### Clonning scripts ###########
-git clone --branch Sigmod-2022-Repro https://gitlab.ifi.uzh.ch/dast/papers/figaro-code.git
-mv "figaro-code/reproducibility/"* .
-find . -iname \*.sh -print0 | xargs -r0 chmod 777
+#git clone --branch Sigmod-2022-Repro https://gitlab.ifi.uzh.ch/dast/papers/figaro-code.git
+#mv "figaro-code/reproducibility/"* .
+#find . -iname \*.sh -print0 | xargs -r0 chmod 777
 ####### Old container removal
 DOCK_OLD_CID=`docker ps -a | tail -1 | awk '{print $NF}'`
 docker stop $DOCK_OLD_CID && docker rm $DOCK_OLD_CID
 
 ############### New cointainer creation ###########
-docker run -td ubuntu:20.04
+DOCKER_DATA_PATH=/local/scratch/Sigmod2022Repro/data/
+DOCKER_DUMP_PATH=/local/scratch/Sigmod2022Repro/dumps/
+DOCKER_POSTGRESS_PATH=/local/scratch/Sigmod2022Repro/postgresData/
+FIGARO_PSQL_PATH=/figaroPostgresql
+FIGARO_DUMP_PATH=/figaroDumps
+FIGARO_DATA_PATH=/figaroData
+docker run -td \
+-v $DOCKER_DATA_PATH:$FIGARO_DATA_PATH \
+-v $DOCKER_DUMP_PATH:$FIGARO_DUMP_PATH \
+-v $DOCKER_POSTGRESS_PATH:$FIGARO_PSQL_PATH \
+ubuntu:20.04
 DOCK_CID=`docker ps -a | tail -1 | awk '{print $NF}'`
 HOME_PATH=/home/zivanovic
 echo $DOCK_CID
