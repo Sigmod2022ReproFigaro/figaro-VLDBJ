@@ -15,7 +15,7 @@ def remove_dangling_tuples(username: str, password: str, database: Database, que
     database_psql.drop_database()
     database_psql.create_database(database)
     database_psql.full_reducer_join(query=query, percent=percent)
-    #database_psql.drop_database()
+    database_psql.drop_database()
 
 
 def vary_percentage(username: str, password: str, database: Database, query: Query):

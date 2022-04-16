@@ -13,7 +13,7 @@ DOCKER_POSTGRESS_PATH=/local/scratch/Sigmod2022Repro/postgresData/
 FIGARO_PSQL_PATH=/figaroPostgresql
 FIGARO_DUMP_PATH=/figaroDumps
 FIGARO_DATA_PATH=/figaroData
-docker run -td \
+docker run -td  --shm-size=2gb \
 -v $DOCKER_DATA_PATH:$FIGARO_DATA_PATH \
 -v $DOCKER_DUMP_PATH:$FIGARO_DUMP_PATH \
 -v $DOCKER_POSTGRESS_PATH:$FIGARO_PSQL_PATH \
