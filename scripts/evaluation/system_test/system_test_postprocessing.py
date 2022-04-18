@@ -84,6 +84,7 @@ class SystemTestPostprocess(SystemTestCompetitor):
     def eval(self, dump = False):
         postprocess_str = DecompConf.postprocess_mode_to_str(self.conf_decomp.postprocessing)
         memory_layout = DecompConf.memory_layout_to_str(self.conf_decomp.memory_layout)
+        compute_all = "true" if self.conf_decomp.compute_all else "false"
 
         # Generate database config
         database_json = self.get_database_json()
@@ -105,6 +106,7 @@ class SystemTestPostprocess(SystemTestCompetitor):
                 "--db_config_path={}".format(dump_db_config_path),
                 "--query_config_path={}".format(dump_query_config_path),
                 "--num_threads={}".format(self.conf_perf.num_threads),
+                "--compute_all={}".format(compute_all),
                 "--postprocess={}".format(postprocess_str),
                 "--memory_layout={}".format(memory_layout),
                 "--implementation={}".format("postprocess"),

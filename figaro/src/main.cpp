@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG;
     Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
+    bool computeAll = false;
     bool pureFigaro = false;
     uint32_t precision;
     uint32_t numThreads = 1;
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
     ("query_config_path", po::value<std::string>(&queryConfigPath))
     ("precision", po::value<uint32_t>(&precision))
     ("num_threads", po::value<uint32_t>(&numThreads))
+    ("compute_all",  boost::program_options::value<bool>())
     ("postprocess", po::value<std::string>(&postprocessMode))
     ("memory_layout", po::value<std::string>(&strMemoryLayout))
     ;
@@ -123,6 +125,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (vm.count("compute_all"))
+    {
+        computeAll = vm["compute_all"].as<bool>();
+    }
+
     dbConfigPath = vm["db_config_path"].as<std::string>();
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
@@ -134,7 +141,7 @@ int main(int argc, char *argv[])
     database.loadData();
 
     Figaro::Query query(&database);
-    query.loadQuery(queryConfigPath);
+    query.loadQuery(queryConfigPath, computeAll);
     query.evaluateQuery(true, true, true, true, qrHintType, memoryLayout, dump);
     if (dump)
     {
@@ -146,6 +153,11 @@ int main(int argc, char *argv[])
             std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
             database.outputRelationToFile(fileDumpR,
                 pQrResult->getRRelationName(), ',', precision);
+            if (computeAll)
+            {
+                double ortMeasure = database.checkOrthogonality(pQrResult->getQRelationName(), {});
+                FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
+            }
         }
         else if (pResult->getResultType() == Figaro::ASTVisitorAbsResult::ResultType::JOIN_RESULT)
         {

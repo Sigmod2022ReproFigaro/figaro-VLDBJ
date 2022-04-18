@@ -263,8 +263,11 @@ class SystemTest(ABC):
         return system_test
 
     def run(self):
-        info_str = "Run {{mode}} for database {db_name} and query {query_name}".format(
-            db_name=self.database.get_name(), query_name=self.query.get_name())
+        q_str = "Q and R" if (self.conf_decomp.compute_all) else "R"
+        decomp_str = q_str + " in a qr decomposition"
+        info_str = "Run {{mode}} for database {db_name} and query {query_name} and {decomp_str}".format(
+            db_name=self.database.get_name(), query_name=self.query.get_name(),
+            decomp_str=decomp_str)
 
         logging.info("Starting cleaning old data")
         self.clean_data(self.test_mode)

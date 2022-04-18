@@ -60,6 +60,10 @@ namespace Figaro
             {
                 computeQ = jsonQueryConfig["compute_all"];
             }
+            else
+            {
+                computeQ = m_computeAll;
+            }
 
             if (jsonQueryConfig.contains("label_name"))
             {
@@ -171,7 +175,7 @@ namespace Figaro
         return errorCode;
     }
 
-    ErrorCode Query::loadQuery(const std::string& queryConfigPath)
+    ErrorCode Query::loadQuery(const std::string& queryConfigPath, bool computeAll)
     {
         std::ifstream inputFileStream(queryConfigPath);
         json jsonQueryConfig;
@@ -183,6 +187,7 @@ namespace Figaro
         }
         inputFileStream >> jsonQueryConfig;
         FIGARO_LOG_INFO("Database Configuration", jsonQueryConfig);
+        m_computeAll = computeAll;
         errorCode = createAST(jsonQueryConfig["query"]["evaluation_hint"]);
         return errorCode;
     }
@@ -193,7 +198,6 @@ namespace Figaro
     {
         MICRO_BENCH_INIT(joinEval)
         MICRO_BENCH_START(joinEval)
-
         ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, qrHintType, saveResult);
         m_pResult = m_pASTRoot->accept(&queryEvalVisitor);
         MICRO_BENCH_STOP(joinEval)
