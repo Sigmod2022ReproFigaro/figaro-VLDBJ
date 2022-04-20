@@ -112,11 +112,6 @@ namespace Figaro
             delete pQResult;
             MICRO_BENCH_STOP(qComp)
             FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
-            if (m_saveResult)
-            {
-                double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
-                FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
-            }
         }
         /************* Q COMPUTATION END ***********/
 
@@ -146,11 +141,6 @@ namespace Figaro
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
         MICRO_BENCH_STOP(qrPostprocEval)
         FIGARO_LOG_BENCH("Figaro", "Postproc eval", MICRO_BENCH_GET_TIMER_LAP(qrPostprocEval))
-        if (m_saveResult)
-        {
-            double ortMeasure = m_pDatabase->checkOrthogonality(qName, {});
-            FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
-        }
         return new ASTVisitorQRResult(rName, qName);
     }
 

@@ -960,8 +960,8 @@ namespace Figaro
         MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
         omp_set_num_threads(4);
-        MICRO_BENCH_INIT(iterateOverRootRelTimer)
-        MICRO_BENCH_START(iterateOverRootRelTimer)
+        //MICRO_BENCH_INIT(iterateOverRootRelTimer)
+        //MICRO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
@@ -971,8 +971,8 @@ namespace Figaro
                 vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
                 vpHashTabQueueOffsets, addColumns);
         }
-        MICRO_BENCH_STOP(iterateOverRootRelTimer)
-        FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
+        //MICRO_BENCH_STOP(iterateOverRootRelTimer)
+        //FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
@@ -2610,6 +2610,7 @@ namespace Figaro
                 }
             }
             m_dataColumnMajor = std::move(tmpOut);
+            m_data = std::move(MatrixDT{0, 0});
         }
         else if (memoryLayout == MemoryLayout::COL_MAJOR)
         {

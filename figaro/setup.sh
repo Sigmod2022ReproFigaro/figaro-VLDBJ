@@ -152,7 +152,6 @@ function main()
         > "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "DUMP")
-        echo "${FIGARO_COMPUTE_ALL}"
         ./figaro $(echo $ARGS) \
         --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
         > "${FIGARO_LOG_FILE_PATH}" 2>&1;
