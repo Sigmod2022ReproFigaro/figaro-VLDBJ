@@ -1,6 +1,7 @@
 import os
 import logging
 import argparse
+from pathlib import Path
 import sys
 import pandas as pd
 import numpy as np
@@ -54,6 +55,20 @@ def transform_data(data, columns, cat_columns, sparse):
     return one_hot_a
 
 
+def get_dir_size(folder: str) -> int:
+    dir_size = sum(p.stat().st_size for p in Path(folder).rglob('*'))
+    return dir_size
+
+
+def get_dir_size_str(path: str) -> str:
+    size = get_dir_size(path)
+    for unit in ("B", "K", "M", "G", "T"):
+        if size < 1024:
+            break
+        size /= 1024
+    return f"{size:.1f}{unit}"
+
+
 def ohe_and_dump_database(db_config, query: Query, database: Database):
     db_config_path = db_config["db_config_path"]
     db_ohe_path = db_config["db_ohe_path"]
@@ -63,10 +78,13 @@ def ohe_and_dump_database(db_config, query: Query, database: Database):
     with open(db_config_path, 'r') as db_config_file:
         db_config_json = json.load(db_config_file)
 
+    num_rows = 0
+
     rels_json = db_config_json["database"]["relations"]
 
-    os.rmdir(db_ohe_path)
+    shutil.rmtree(db_ohe_path, ignore_errors=True)
     os.makedirs(db_ohe_path)
+    logging.info("OHE and dumping relations from {}".format(database.name))
 
     for rel_json in rels_json:
         rel_name = rel_json["name"]
@@ -89,15 +107,26 @@ def ohe_and_dump_database(db_config, query: Query, database: Database):
 
         table = pd.read_csv(data_path, names=attrs,
             delimiter=",", header=None)
+        num_rows += len(table)
+
+
         logging.debug("dropping columns")
         table = table.drop(drop_attrs, axis="columns")
         logging.debug("ohe data")
         logging.debug("Dimensions before ohe row {} col {}".format(table.shape[0], table.shape[1]))
         table_np = transform_data(table, attrs_without_dropped, attrs_cat , False)
-        logging.info("Dimensions after ohe row {} col {}".format(table_np.shape[0], table_np.shape[1]))
+        logging.debug("Dimensions after ohe row {} col {}".format(table_np.shape[0], table_np.shape[1]))
         data_out_path = os.path.join(db_ohe_path, rel_name +".csv")
         logging.debug(data_out_path)
         np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
+
+    logging.info("Size of database on disk of the database {} {} ".
+        format(database.name, get_dir_size_str(db_ohe_path)))
+    logging.info("Number of rows: {} ".
+        format(num_rows))
+
+    # Needed for memory usage
+    shutil.rmtree(db_ohe_path, ignore_errors=True)
 
 
 def eval_ohe_and_dump_join(username: str, password: str,
@@ -105,6 +134,8 @@ def eval_ohe_and_dump_join(username: str, password: str,
     join_path = os.path.join(dump_path, "join.csv")
     join_ohe_path = os.path.join(dump_path, "join.csv")
     logging.debug("join path {}".format(join_path))
+
+    logging.info("OHE and dumping join from {}".format(database.name))
 
     database_psql = DatabasePsql(host_name="",user_name=username,
         password=password, database=database)
@@ -128,6 +159,10 @@ def eval_ohe_and_dump_join(username: str, password: str,
     logging.debug(data_out_path)
     logging.info("Dimensions row {} col {}".format(table_np.shape[0], table_np.shape[1]))
     np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
+
+    logging.info("Size of database on disk of the database {} {} ".
+        format(database.name, get_dir_size_str(data_out_path)))
+    os.remove(data_out_path)
 
 
 def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str,
