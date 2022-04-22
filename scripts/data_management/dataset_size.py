@@ -181,7 +181,7 @@ def eval_ohe_and_dump_join(username: str, password: str,
 
 def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str,
     database_size: bool, join_size: bool):
-    db_names = ["yelp",
+    db_names = ["retailer", "favorita", "yelp",
         "retailer_ohe", "favorita_ohe", "yelp_ohe"]
     db_configs =  {
         "retailer":
