@@ -55,6 +55,14 @@ def transform_data(data, columns, cat_columns, sparse):
     return one_hot_a
 
 
+def convert_bytes_to_unit_str(size: int) -> str:
+    for unit in ("B", "K", "M", "G", "T"):
+        if size < 1024:
+            break
+        size /= 1024
+    return f"{size:.1f}{unit}"
+
+
 def get_dir_size(folder: str) -> int:
     dir_size = sum(p.stat().st_size for p in Path(folder).rglob('*'))
     return dir_size
@@ -62,11 +70,17 @@ def get_dir_size(folder: str) -> int:
 
 def get_dir_size_str(path: str) -> str:
     size = get_dir_size(path)
-    for unit in ("B", "K", "M", "G", "T"):
-        if size < 1024:
-            break
-        size /= 1024
-    return f"{size:.1f}{unit}"
+    return convert_bytes_to_unit_str(size)
+
+
+def get_file_size(file_path: str) -> int:
+    file_size = Path(file_path).stat().st_size
+    return file_size
+
+
+def get_file_size_str(file_path: str) -> int:
+    size = get_file_size(file_path)
+    return convert_bytes_to_unit_str(size)
 
 
 def ohe_and_dump_database(db_config, query: Query, database: Database):
@@ -155,19 +169,19 @@ def eval_ohe_and_dump_join(username: str, password: str,
 
     table_np = transform_data(table, query.get_non_join_attr_names_ordered(),
         query.get_non_join_cat_attr_names_ordered(), False)
-    data_out_path = join_ohe_path
-    logging.debug(data_out_path)
+    data_out_file_path = join_ohe_path
+    logging.debug(data_out_file_path)
     logging.info("Dimensions row {} col {}".format(table_np.shape[0], table_np.shape[1]))
-    np.savetxt(data_out_path, np.asarray(table_np), delimiter=',')
+    np.savetxt(data_out_file_path, np.asarray(table_np), delimiter=',')
 
     logging.info("Size of database on disk of the database {} {} ".
-        format(database.name, get_dir_size_str(data_out_path)))
-    os.remove(data_out_path)
+        format(database.name, get_file_size_str(data_out_file_path)))
+    os.remove(data_out_file_path)
 
 
 def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: str, username: str, password: str,
     database_size: bool, join_size: bool):
-    db_names = ["retailer", "favorita", "yelp",
+    db_names = ["yelp",
         "retailer_ohe", "favorita_ohe", "yelp_ohe"]
     db_configs =  {
         "retailer":
