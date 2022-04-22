@@ -967,8 +967,8 @@ namespace Figaro
         MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
         omp_set_num_threads(4);
-        MICRO_BENCH_INIT(iterateOverRootRelTimer)
-        MICRO_BENCH_START(iterateOverRootRelTimer)
+        //MICRO_BENCH_INIT(iterateOverRootRelTimer)
+        //MICRO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
@@ -978,8 +978,8 @@ namespace Figaro
                 vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
                 vpHashTabQueueOffsets, addColumns);
         }
-        MICRO_BENCH_STOP(iterateOverRootRelTimer)
-        FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
+        //MICRO_BENCH_STOP(iterateOverRootRelTimer)
+        //FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
@@ -1345,6 +1345,7 @@ namespace Figaro
         FIGARO_LOG_INFO("diff norm", eye.norm(0))
         FIGARO_LOG_INFO("diff norm", result)
         FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
+        FIGARO_LOG_BENCH("Dimensions", m_data.getNumRows(), m_data.getNumCols())
         return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
 
     }
@@ -1401,7 +1402,7 @@ namespace Figaro
         }
         FIGARO_LOG_DBG("vPKIndices", m_name, vPKIndices, vJoinAttrIdxs)
         FIGARO_LOG_DBG("areJoinAttrsPK", m_name, areJoinAttrsPK)
-        areJoinAttrsPK = false;
+        //areJoinAttrsPK = false;
         // TEMPORARY HACK
         // TODO: Add parallel detection of
         // For counter and down count.
@@ -2503,7 +2504,7 @@ namespace Figaro
         {
             FIGARO_LOG_INFO("Computing Q")
             qData = std::move(
-                pJoinRel->m_data * catGenHeadAndTails.computeInverse());
+                pJoinRel->m_data * catGenHeadAndTails.computeInverse(0, true));
             FIGARO_LOG_BENCH("join Rel Size", pJoinRel->m_data.getNumRows())
         }
 
@@ -2533,11 +2534,11 @@ namespace Figaro
         {
             MatrixDT matR = MatrixDT{0, 0};
             MatrixDT matQ = MatrixDT{0, 0};
-            /*
+
             m_data.computeQR(getNumberOfThreads(), true,
                 qrHintType, computeQ, saveResult, &matR, &matQ);
-            */
-            m_data.computeQRCholesky(computeQ, true, &matR, &matQ);
+
+            //matR.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", matR)
@@ -2551,11 +2552,11 @@ namespace Figaro
         {
             MatrixDColT matR = MatrixDColT{0, 0};
             MatrixDColT matQ = MatrixDColT{0, 0};
-            /*
+
             m_dataColumnMajor.computeQR(getNumberOfThreads(), true,
                  qrHintType, computeQ, saveResult, &matR, &matQ);
-            */
-            m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
+
+            //m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
                 matR.makeDiagonalElementsPositiveInR();
@@ -2616,6 +2617,7 @@ namespace Figaro
                 }
             }
             m_dataColumnMajor = std::move(tmpOut);
+            m_data = std::move(MatrixDT{0, 0});
         }
         else if (memoryLayout == MemoryLayout::COL_MAJOR)
         {

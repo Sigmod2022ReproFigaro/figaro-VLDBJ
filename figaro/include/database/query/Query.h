@@ -14,7 +14,7 @@ namespace Figaro
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr;
         ASTVisitorAbsResult* m_pResult;
-        bool m_saveResult;
+        bool m_computeAll;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
@@ -27,7 +27,7 @@ namespace Figaro
         /** Parses query and creates abstract syntax tree from
          * configuration specified at the path @p queryConfigPath.
          */
-        ErrorCode loadQuery(const std::string& queryConfigPath);
+        ErrorCode loadQuery(const std::string& queryConfigPath, bool computeAll = false);
 
         /** Evaluates expressions from abstract syntax tree.
          */

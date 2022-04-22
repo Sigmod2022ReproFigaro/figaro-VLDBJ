@@ -18,7 +18,7 @@ import numpy as np
 from evaluation.custom_logging import init_logging, set_logging_level
 import matplotlib.pyplot as plt
 
-WEB_DATA_SET_PATH = "https://drive.google.com/u/0/uc?id=1xlGxL8q8EVliKsshgBS94y2Ej_siXYio&export=download"
+WEB_DATA_SET_PATH = "https://drive.google.com/u/0/uc?id=1xlGxL8q8EVliKsshgBS94y2Ej_siXYio&export=download&confirm=t"
 
 def generate_data(username: str, password: str, system_tests_path: str,
     data_path: str, data_type: str):

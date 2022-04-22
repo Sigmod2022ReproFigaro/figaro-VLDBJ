@@ -11,6 +11,7 @@ function init_global_paths()
     FIGARO_PRECISION=14
     FIGARO_NUM_THREADS=1
     FIGARO_POSTPROCESS="THIN1_DIAG"
+    FIGARO_COMPUTE_ALL=false
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
     FIGARO_IMPLEMENTATION="FIGARO"
     FIGARO_PROFILER_DUMP_PATH="..."
@@ -70,6 +71,10 @@ function get_str_args()
         --memory_layout=*)
             EXTENSION="${option#*=}"
             FIGARO_MEMORY_LAYOUT=$EXTENSION
+        ;;
+        --compute_all=*)
+            EXTENSION="${option#*=}"
+            FIGARO_COMPUTE_ALL=$EXTENSION
         ;;
         --profiler_dump_path=*)
             EXTENSION="${option#*=}"
@@ -139,6 +144,7 @@ function main()
     ARGS+="--postprocess ${FIGARO_POSTPROCESS} "
     ARGS+="--memory_layout ${FIGARO_MEMORY_LAYOUT} "
     ARGS+="--implementation ${FIGARO_IMPLEMENTATION} "
+    ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
 
     case "${FIGARO_TEST_MODE}" in
     "DEBUG"|"INFO")

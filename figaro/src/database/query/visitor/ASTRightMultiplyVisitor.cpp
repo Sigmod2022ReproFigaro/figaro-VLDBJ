@@ -10,8 +10,8 @@ namespace Figaro
         numNonJoinAttrs = m_pDatabase->
             getRelationAttributeNames(pElement->getRelationName()).size()
             - pElement->getJoinAttributeNames().size();
-        MICRO_BENCH_INIT(rightMultiply)
-        MICRO_BENCH_START(rightMultiply)
+        //MICRO_BENCH_INIT(rightMultiply)
+        //MICRO_BENCH_START(rightMultiply)
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
         pElement->getJoinAttributeNames(), {}, startRowIdx);
         if (m_useLFTJoin)
@@ -22,8 +22,8 @@ namespace Figaro
         startRowIdx += numNonJoinAttrs;
         FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
         FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
-        MICRO_BENCH_STOP(rightMultiply)
-        FIGARO_LOG_BENCH("rightMultiplyRelation", MICRO_BENCH_GET_TIMER_LAP(rightMultiply))
+        //MICRO_BENCH_STOP(rightMultiply)
+        //FIGARO_LOG_BENCH("rightMultiplyRelation", MICRO_BENCH_GET_TIMER_LAP(rightMultiply))
         return new ASTVisitorJoinResult(mulRelName);
     }
 

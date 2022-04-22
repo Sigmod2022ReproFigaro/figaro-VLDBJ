@@ -23,8 +23,10 @@ else()
 endif()
 
 # MKL linkage
-set(FIGARO_MKL_GCC_LINK_PATH "/local/scratch/local/intel/tbb/2021.2.0/lib/intel64/gcc4.8")
-set(FIGARO_MKL_INCLUDE_PATH "/local/scratch/local/intel/mkl/2021.2.0/include")
+#set(FIGARO_MKL_GCC_LINK_PATH "/local/scratch/local/intel/tbb/2021.2.0/lib/intel64/gcc4.8")
+#set(FIGARO_MKL_INCLUDE_PATH "/local/scratch/local/intel/mkl/2021.2.0/include")
+set(FIGARO_MKL_INCLUDE_PATH)
+
 
 add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE -DEIGEN_USE_MKL_ALL	 -DMKL_ILP64 )
 #add_definitions( -DEIGEN_USE_BLAS -DEIGEN_USE_LAPACKE)
@@ -63,7 +65,7 @@ elseif(FIGARO_INFO)
 endif()
 
 
-link_directories(${FIGARO_MKL_GCC_LINK_PATH})
+#link_directories(${FIGARO_MKL_GCC_LINK_PATH})
 
 # Add libraries.
 if (FIGARO_RUN)

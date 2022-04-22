@@ -184,7 +184,7 @@ def main(args):
 
     exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag",
     "mkl": "comparisons/performance/python/mkl",
-    "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
+    "figaro_lapack": "comparisons/performance/figaro/only_r/lapack/thread48",
     "openblas": "comparisons/performance/python/openblas",
     "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
     "post_proc_mkl": "comparisons/performance/postprocess/lapack"}

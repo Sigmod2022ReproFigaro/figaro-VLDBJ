@@ -1021,6 +1021,7 @@ namespace Figaro
             uint32_t rank = std::min(m_numRows, m_numCols);
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
+                this->resize(rank);
                 for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
                 {
                     for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)

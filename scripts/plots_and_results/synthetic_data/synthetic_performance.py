@@ -123,8 +123,8 @@ def main(args):
 
     figaro_impls = ["figaro_thin", "figaro_lapack"]
     exp_names = [*figaro_impls, "postprocess_mkl"]
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag/thread48",
-                "figaro_lapack": "comparisons/performance/figaro/lapack/thread48",
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/only_r/thin_diag/thread48",
+                "figaro_lapack": "comparisons/performance/figaro/only_r/lapack/thread48",
                 "mkl": "comparisons/performance/python/mkl",
                 "postprocess_mkl": "comparisons/performance/postprocess/lapack/col_major/only_r/thread48",}
 
