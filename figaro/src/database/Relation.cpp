@@ -1365,9 +1365,10 @@ namespace Figaro
         MatrixUI32T& cntJoinVals,
         std::vector<uint32_t>& vParBlockStartIdxs,
         std::vector<uint32_t>& vParBlockStartIdxsAfterFirstPass,
-        bool isRootNode)
+        bool isRootNode,
+        bool computeCounts)
     {
-            uint32_t distCnt;
+        uint32_t distCnt;
         uint32_t prevRowIdx;
         uint32_t cumParBlockSizes;
         uint32_t rowIdx;
@@ -1963,6 +1964,89 @@ namespace Figaro
         return std::make_tuple(std::move(relHeads), std::move(relTails));
     }
 
+
+       // We assume join attributes are before nonJoinAttributes.
+    std::tuple<Relation, Relation> Relation::computeLUHeadsAndTails(
+        const std::vector<std::string>& vJoinAttrNames, bool isLeafNode)
+    {
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vNonJoinAttrIdxs;
+        uint32_t numDistinctValues;
+        uint32_t numJoinAttrs;
+        uint32_t numNonJoinAttrs;
+        uint32_t numTailRows;
+
+        getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
+        getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+
+        FIGARO_LOG_DBG("vJoinAttrNames", vJoinAttrNames, "Relation", m_name)
+        FIGARO_LOG_DBG("vJoinAttrIdxs", vJoinAttrIdxs)
+        FIGARO_LOG_DBG("vNonJoinAttrIdxs", vNonJoinAttrIdxs)
+
+        numDistinctValues = m_countsJoinAttrs.getNumRows();
+        numJoinAttrs = vJoinAttrIdxs.size();
+        numNonJoinAttrs = vNonJoinAttrIdxs.size();
+        numTailRows = m_data.getNumRows() - numDistinctValues;
+
+        // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
+        MatrixDT dataHeads{numDistinctValues, getNumberOfAttributes()};
+        MatrixDT dataTails{numTailRows, numNonJoinAttrs};
+        //MatrixDT dataScale{numDistinctValues, 1};
+        //MatrixDT scale{numDistinctValues, 1};
+        //std::vector<double> allScales(numDistinctValues);
+
+        // 2) Iterate over join attributes and compute Heads and Tails of relation that
+        // project away these attributes.
+        #pragma omp parallel for schedule(static)
+        for (uint32_t distCnt = 0; distCnt < numDistinctValues; distCnt++)
+        {
+            uint32_t headRowIdx;
+            uint32_t nextHeadRowIdx;
+            uint32_t numDistVals;
+
+            headRowIdx = (distCnt == 0) ? 0 : m_countsJoinAttrs[distCnt - 1][m_cntsJoinIdxE];
+            nextHeadRowIdx = m_countsJoinAttrs[distCnt][m_cntsJoinIdxE];
+            numDistVals =  m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
+
+             // Copy join attributes to be used as indices.
+            for (const uint32_t joinAttrIdx: vJoinAttrIdxs)
+            {
+                dataHeads[distCnt][joinAttrIdx] = m_data[headRowIdx][joinAttrIdx];
+            }
+
+            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                dataHeads[distCnt][nonJoinAttrIdx] = m_data[headRowIdx][nonJoinAttrIdx];
+            }
+            for (uint32_t rowIdx = headRowIdx + 1;
+                rowIdx < nextHeadRowIdx;
+                rowIdx++)
+            {
+                uint32_t tailRowIdx = rowIdx - distCnt - 1;
+                // Double needed due to casts.
+                double i = rowIdx - headRowIdx + 1;
+                for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
+                {
+                    double prevRowSum;
+                    double tailVal;
+                    prevRowSum = dataHeads[distCnt][nonJoinAttrIdx];
+                    tailVal = dataHeads[distCnt][nonJoinAttrIdx] - dataHeads[0][nonJoinAttrIdx];
+                    dataTails[tailRowIdx][nonJoinAttrIdx - numJoinAttrs] =
+                        tailVal;
+                }
+            }
+
+        }
+
+        m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
+        Relation relHeads("HEAD_" + m_name, std::move(dataHeads), m_attributes);
+        Relation relTails("TAIL_" + m_name, std::move(dataTails), m_attributes);
+
+        FIGARO_LOG_INFO("number of rows", relHeads.m_data.getNumRows(), "num cols", relTails.m_data.getNumCols());
+
+        return std::make_tuple(std::move(relHeads), std::move(relTails));
+    }
+
     void Relation::schemaJoins(
         std::vector<Attribute>& attributes,
         const std::vector<Relation*>& vpChildRels,
@@ -2143,6 +2227,114 @@ namespace Figaro
         return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), vAttrsAggAway);
     }
 
+
+    Relation Relation::LUaggregateAwayChildrenRelations(
+        Relation* pHeadRel,
+        const std::vector<Relation*>& vpChildRels,
+        const std::vector<Relation*>& vpChildHeadRels,
+        const std::vector<std::string>& vJoinAttributeNames,
+        const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+        const std::vector<std::string>& vSubTreeRelNames,
+        const std::vector<std::vector<std::string> >& vvSubTreeRelnames)
+    {
+        uint32_t numJoinAttrsCurRel;
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> >  vvCurJoinAttrIdxs;
+        std::vector<uint32_t> vNonJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvJoinAttrIdxs;
+        std::vector<std::vector<uint32_t> > vvNonJoinAttrIdxs;
+        std::vector<uint32_t> vNumJoinAttrs;
+        std::vector<Attribute> vAttrsAggAway;
+
+        // Cumulative sum of non-join attributes of relations before.
+        // We assume preorder layout of data columns.
+        std::vector<uint32_t> vCumNumNonJoinAttrs;
+        std::vector<uint32_t> vCumNumRelSubTree;
+        std::vector<void*> vpHashTabRowPt;
+
+        numJoinAttrsCurRel = vJoinAttributeNames.size();
+        vvJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vvNonJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vvCurJoinAttrIdxs.resize(vvJoinAttributeNames.size());
+        vNumJoinAttrs.resize(vvJoinAttributeNames.size());
+        vCumNumNonJoinAttrs.resize(vpChildRels.size());
+        vCumNumRelSubTree.resize(vpChildRels.size());
+        vpHashTabRowPt.resize(vpChildRels.size());
+
+        pHeadRel->getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        pHeadRel->getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
+        vAttrsAggAway = pHeadRel->m_attributes;
+        //MICRO_BENCH_INIT(aggregateAway)
+        //MICRO_BENCH_START(aggregateAway)
+
+        for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
+        {
+            vpChildHeadRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
+                vvJoinAttrIdxs[idxRel]);
+            vpChildHeadRels[idxRel]->getAttributesIdxsComplement(vvJoinAttrIdxs[idxRel], vvNonJoinAttrIdxs[idxRel]);
+            pHeadRel->getAttributesIdxs(vvJoinAttributeNames[idxRel], vvCurJoinAttrIdxs[idxRel]);
+            initHashTableRowIdxs(vvJoinAttrIdxs[idxRel],
+                vpChildHeadRels[idxRel]->m_data, vpHashTabRowPt[idxRel]);
+            vNumJoinAttrs[idxRel] = vvJoinAttributeNames[idxRel].size();
+            if (idxRel == 0)
+            {
+                vCumNumNonJoinAttrs[idxRel] = vNonJoinAttrIdxs.size();
+                vCumNumRelSubTree[idxRel] = 1;
+            }
+            else
+            {
+                vCumNumNonJoinAttrs[idxRel] = vCumNumNonJoinAttrs[idxRel-1] +
+                                            vvNonJoinAttrIdxs[idxRel - 1].size();
+                vCumNumRelSubTree[idxRel] = vCumNumRelSubTree[idxRel-1] + vvSubTreeRelnames[idxRel-1].size();
+            }
+        }
+        schemaJoins(vAttrsAggAway, vpChildRels, vpChildHeadRels,
+             vvJoinAttrIdxs, vvNonJoinAttrIdxs);
+
+
+        MatrixDT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)vAttrsAggAway.size()};
+        MatrixDT scales{pHeadRel->m_data.getNumRows(), vpChildRels.size() + 1};
+        MatrixDT dataScales{pHeadRel->m_data.getNumRows(), vSubTreeRelNames.size()};
+
+        #pragma omp parallel for schedule(static)
+        for (uint32_t rowIdx = 0; rowIdx < pHeadRel->m_data.getNumRows(); rowIdx++)
+        {
+            // TODO: Optimization change the way how the values are extracted to tree.
+            for (const auto& joinAttrIdx: vJoinAttrIdxs)
+            {
+                dataOutput[rowIdx][joinAttrIdx] = pHeadRel->m_data[rowIdx][joinAttrIdx];
+            }
+            // TODO: Add reordering relations based on global order
+            for (const auto& nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                dataOutput[rowIdx][nonJoinAttrIdx] = pHeadRel->m_data[rowIdx][nonJoinAttrIdx];
+            }
+            for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel ++)
+            {
+
+                uint32_t childRowIdx = getChildRowIdx(rowIdx, vvCurJoinAttrIdxs[idxRel],
+                                                      pHeadRel->m_data, vpHashTabRowPt[idxRel]);
+                // Copying data from children relations.
+                const double* childRowPt = vpChildHeadRels[idxRel]->m_data[childRowIdx];
+                for (const auto nonJoinAttrIdx: vvNonJoinAttrIdxs[idxRel])
+                {
+                    uint32_t idxOut = numJoinAttrsCurRel + vCumNumNonJoinAttrs[idxRel] +
+                                    nonJoinAttrIdx - vNumJoinAttrs[idxRel];
+                    dataOutput[rowIdx][idxOut] = childRowPt[nonJoinAttrIdx];
+                }
+            }
+        }
+        for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
+        {
+            destroyHashTableRowIdxs(vvCurJoinAttrIdxs[idxChild], vpHashTabRowPt[idxChild]);
+        }
+
+        //MICRO_BENCH_STOP(aggregateAway)
+        //FIGARO_LOG_BENCH("Figaro", "aggregate away" + m_name,  MICRO_BENCH_GET_TIMER_LAP(aggregateAway));
+        FIGARO_LOG_INFO("Before moving out", dataOutput.getNumRows());
+        return Relation("AGG_AWAY_" + m_name, std::move(dataOutput), vAttrsAggAway);
+    }
+
     std::tuple<Relation, Relation>
     Relation::computeAndScaleGeneralizedHeadAndTail(
         Relation* pAggAwayRel,
@@ -2290,6 +2482,133 @@ namespace Figaro
                 {
                     dataHeadOut[distParCnt][attrIdx - numOmittedAttrs] =
                         multiplier * vCurScaleSum[attrIdx - numJoinAttrs];
+                }
+
+            }
+        }
+        m_vSubTreeDataOffsets.pop_back();
+        // Updates m_vSubTreeDataOffsets to drop omitted attrs.
+        for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
+        {
+            m_vSubTreeDataOffsets[idxRel] -= numOmittedAttrs;
+        }
+
+        schemaRemoveNonParJoinAttrs(attributes, vJoinAttrIdxs, vParJoinAttrIdxs);
+
+        m_dataScales = std::move(dataScales);
+        m_scales = std::move(scales);
+        //MICRO_BENCH_STOP(genHT)
+        //MICRO_BENCH_STOP(genHTMainLoop)
+        //FIGARO_LOG_BENCH("Figaro", "computeAndScaleGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
+        ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
+        FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
+        return std::make_tuple(
+            Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), attributes),
+            Relation("GEN_TAIL" + m_name, std::move(dataTailsOut), attributes));
+    }
+
+    std::tuple<Relation, Relation>
+    Relation::LUcomputeAndScaleGeneralizedHeadAndTail(
+        Relation* pAggAwayRel,
+        const std::vector<std::string>& vJoinAttributeNames,
+        const std::vector<std::string>& vParJoinAttributeNames,
+        bool isRootNode,
+        uint32_t numRelsSubTree
+        )
+    {
+        std::vector<uint32_t> vJoinAttrIdxs;
+        std::vector<uint32_t> vParJoinAttrIdxs;
+        uint32_t numParDistVals;
+        uint32_t numJoinAttrs;
+        uint32_t numParJoinAttrs;
+        uint32_t numOmittedAttrs;
+        uint32_t numNonJoinAttrs;
+
+        std::vector<Attribute> attributes;
+
+        //MICRO_BENCH_INIT(genHT)
+        //MICRO_BENCH_START(genHT)
+        pAggAwayRel->getAttributesIdxs(vJoinAttributeNames, vJoinAttrIdxs);
+        pAggAwayRel->getAttributesIdxs(vParJoinAttributeNames, vParJoinAttrIdxs);
+        // TODO: Replace this
+        numParDistVals = m_vParBlockStartIdxsAfterFirstPass.size() - 1;
+        numJoinAttrs = vJoinAttributeNames.size();
+        numNonJoinAttrs = pAggAwayRel->getNumberOfAttributes() - numJoinAttrs;
+        numParJoinAttrs = vParJoinAttrIdxs.size();
+        numOmittedAttrs = numJoinAttrs - numParJoinAttrs;
+
+        attributes = pAggAwayRel->m_attributes;
+
+        MatrixDT dataHeadOut { numParDistVals,
+            pAggAwayRel->getNumberOfAttributes() - numOmittedAttrs};
+        MatrixDT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
+            numNonJoinAttrs};
+        MatrixDT scales{numParDistVals, 1};
+        MatrixDT dataScales{numParDistVals, m_dataScales.getNumCols()};
+
+        FIGARO_LOG_INFO("Compute Generalized Head and Tail for relation", m_name)
+
+        FIGARO_LOG_DBG("vJoinAttributeNames", vJoinAttributeNames)
+        // temporary adds an element to denote the end limit.
+        m_vSubTreeDataOffsets.push_back(pAggAwayRel->m_attributes.size());
+        //MICRO_BENCH_INIT(genHTMainLoop)
+        //MICRO_BENCH_START(genHTMainLoop)
+        #pragma omp parallel for schedule(static)
+        for (uint32_t distParCnt = 0; distParCnt < numParDistVals; distParCnt++)
+        {
+            uint32_t startIdx;
+            std::vector<double> vCurScaleSum(numNonJoinAttrs);
+
+            startIdx = m_vParBlockStartIdxsAfterFirstPass[distParCnt];
+            //FIGARO_LOG_DBG("Getting counts")
+
+            //FIGARO_LOG_INFO("Scaling data by data_scale")
+            // Scaling data by data_scale
+            for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
+            {
+                for (uint32_t attrIdx = m_vSubTreeDataOffsets[idxRel];
+                            attrIdx < m_vSubTreeDataOffsets[idxRel + 1];
+                            attrIdx++)
+                {
+                    vCurScaleSum[attrIdx - numJoinAttrs] = pAggAwayRel->m_data[startIdx][attrIdx];
+                }
+            }
+            //FIGARO_LOG_INFO("Generalized tail computation")
+            // Generalized head and tail computation.
+            for (uint32_t rowIdx = startIdx + 1;
+                rowIdx < m_vParBlockStartIdxsAfterFirstPass[distParCnt+1];
+                rowIdx++)
+            {
+                uint32_t tailRowIdx = rowIdx - distParCnt - 1;
+                for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
+                {
+                    for (uint32_t attrIdx = m_vSubTreeDataOffsets[idxRel];
+                        attrIdx < m_vSubTreeDataOffsets[idxRel + 1];
+                        attrIdx++)
+                    {
+                        uint32_t shiftIdx = attrIdx - numJoinAttrs;
+                        // A_i
+                        dataTailsOut[tailRowIdx][shiftIdx] =
+                            (pAggAwayRel->m_data[rowIdx][attrIdx] - vCurScaleSum[shiftIdx]);
+                    }
+                }
+            }
+
+            // Copies join parent attributes to generalized head.
+            for (const auto& parJoinAttrIdx: vParJoinAttrIdxs)
+            {
+                dataHeadOut[distParCnt][parJoinAttrIdx] = pAggAwayRel->m_data[startIdx][parJoinAttrIdx];
+            }
+
+            //  Generalized Head computation.
+            for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
+            {
+                for (uint32_t attrIdx = m_vSubTreeDataOffsets[idxRel];
+                    attrIdx < m_vSubTreeDataOffsets[idxRel + 1];
+                    attrIdx++)
+                {
+                    dataHeadOut[distParCnt][attrIdx - numOmittedAttrs] =
+                        vCurScaleSum[attrIdx - numJoinAttrs];
                 }
 
             }

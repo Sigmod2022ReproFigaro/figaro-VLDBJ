@@ -573,19 +573,19 @@ namespace Figaro
             uint32_t ldA = getLeadingDimension();
             uint32_t rank = std::min(M, N);
             double* pA = inverse.getArrPt();
-            CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
+            uint32_t memLayout = getLapackMajorOrder();
 
             if (isTriangular)
             {
-                LAPACKE_dtrtri(cBlasMemLayout, 'U', 'N', N, pA, ldA);
+                LAPACKE_dtrtri(memLayout, 'U', 'N', N, pA, ldA);
             }
             else
             {
                 long long int* pIpivot = new long long int[rank];
-                LAPACKE_dgetrf(cBlasMemLayout, M, N,
+                LAPACKE_dgetrf(memLayout, M, N,
                     pA, ldA, pIpivot);
 
-                LAPACKE_dgetri(cBlasMemLayout, M,
+                LAPACKE_dgetri(memLayout, M,
                     pA, ldA, pIpivot);
                 delete [] pIpivot;
             }
@@ -1288,6 +1288,86 @@ namespace Figaro
                 pMatV->getArrPt(), ldvT);
         }
 
+        void computeLUDecomposition(uint32_t numThreads,
+            MatrixType* pMatL, MatrixType* pMatU)
+        {
+            uint32_t ldA = getLeadingDimension();
+            uint32_t memLayout = getLapackMajorOrder();
+            uint32_t M = m_numRows;
+            uint32_t N = m_numCols;
+            double* pA = getArrPt();
+            MatrixType& matA = *this;
+
+            uint32_t rank = std::min(M, N);
+
+            long long int* pIpivot = new long long int[rank];
+            LAPACKE_dgetrf(memLayout, M, N,
+                pA, ldA, pIpivot);
+            if (pMatL != nullptr)
+            {
+                MatrixType& matL = *pMatL;
+                MatrixType& matU = *pMatU;
+                matL = std::move(MatrixType{M, N});
+                matU = std::move(MatrixType{rank, N});
+                if constexpr (L == MemoryLayout::ROW_MAJOR)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < M; rowIdx++)
+                    {
+                        for (uint32_t colIdx = 0; colIdx < N; colIdx++)
+                        {
+                            double lVal = 0;
+                            double uVal = 0;
+                            if (rowIdx > colIdx)
+                            {
+                                lVal = matA(rowIdx, colIdx);
+                            }
+                            else if (rowIdx == colIdx)
+                            {
+                                lVal = 1;
+                            }
+                            if (rowIdx <= colIdx)
+                            {
+                                uVal = matA(rowIdx, colIdx);
+                            }
+                            matL(rowIdx, colIdx) = lVal;
+                            if (rowIdx < rank)
+                            {
+                                matU(rowIdx, colIdx) = uVal;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (uint32_t colIdx = 0; colIdx < N; colIdx++)
+                    {
+                        for (uint32_t rowIdx = 0; rowIdx < M; rowIdx++)
+                        {
+                            double lVal = 0;
+                            double uVal = 0;
+                            if (rowIdx > colIdx)
+                            {
+                                lVal = matA(rowIdx, colIdx);
+                            }
+                            else if (rowIdx == colIdx)
+                            {
+                                lVal = 1;
+                            }
+                            if (rowIdx <= colIdx)
+                            {
+                                uVal = matA(rowIdx, colIdx);
+                            }
+                            matL(rowIdx, colIdx) = lVal;
+                             if (rowIdx < rank)
+                            {
+                                matU(rowIdx, colIdx) = uVal;
+                            }
+                        }
+                    }
+                }
+            }
+            delete [] pIpivot;
+        }
 
         void makeDiagonalElementsPositiveInR(void)
         {

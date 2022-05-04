@@ -278,7 +278,8 @@ namespace Figaro
             MatrixUI32T& cntDiffVals,
             std::vector<uint32_t>& vRowIdxParDiffVals,
             std::vector<uint32_t>& vParBlockStartIdxsAfterFirstPass,
-            bool isRootNode);
+            bool isRootNode,
+            bool computeCounts = true);
 
         /**
          *  Builds hash index where key is @p vJoinAttrIdx over the @p data
@@ -526,6 +527,10 @@ namespace Figaro
         std::tuple<Relation, Relation> computeHeadsAndTails(
             const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
 
+
+         std::tuple<Relation, Relation> computeLUHeadsAndTails(
+            const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
+
         /**
          *  It will join relations by copying data from the children relations @p vpChildRels
          *  in the join tree to the current head data. The join attributes that are
@@ -543,7 +548,24 @@ namespace Figaro
             const std::vector<std::string>& vSubTreeRelNames,
             const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
 
+        Relation LUaggregateAwayChildrenRelations(
+            Relation* pHeadRel,
+            const std::vector<Relation*>& vpChildRels,
+            const std::vector<Relation*>& vpChildHeadRels,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            const std::vector<std::string>& vSubTreeRelNames,
+            const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
+
         std::tuple<Relation, Relation> computeAndScaleGeneralizedHeadAndTail(
+            Relation* pAggAwayRel,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames,
+            bool isRootNode,
+            uint32_t numRelsSubTree);
+
+
+        std::tuple<Relation, Relation> LUcomputeAndScaleGeneralizedHeadAndTail(
             Relation* pAggAwayRel,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
