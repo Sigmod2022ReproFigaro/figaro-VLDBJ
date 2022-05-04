@@ -1,12 +1,12 @@
 #ifndef _FIGARO_VISITOR_SECOND_PASS_RESULT_H_
 #define _FIGARO_VISITOR_SECOND_PASS_RESULT_H_
 
-#include "ASTVisitorAbsResult.h"
+#include "./result/ASTVisitorResultAbs.h"
 #include "database/Relation.h"
 
 namespace Figaro
 {
-    class ASTVisitorSecondPassResult: public ASTVisitorAbsResult
+    class ASTVisitorSecondPassResult: public ASTVisitorResultAbs
     {
     public:
         struct SecondPassRelNames
@@ -26,7 +26,7 @@ namespace Figaro
             const std::string& genHeadsName,
             const std::unordered_map<std::string, SecondPassRelNames>& htNamesTmpRels,
             const std::vector<std::string>& vSubTreeRelNames) :
-            ASTVisitorAbsResult(ASTVisitorAbsResult::ResultType::SECOND_PASS_RESULT),
+            ASTVisitorResultAbs(ASTVisitorResultAbs::ResultType::SECOND_PASS_RESULT),
             m_genHeadsName(genHeadsName),
             m_htNamesTmpRels(htNamesTmpRels),
             m_vSubTreeRelNames(vSubTreeRelNames) { }

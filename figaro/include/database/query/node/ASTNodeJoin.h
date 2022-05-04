@@ -75,7 +75,7 @@ namespace Figaro
         void checkAndUpdateChildrenParJoinAttributes(void);
 
 
-        ASTVisitorAbsResult* accept(ASTVisitor* pVisitor) override;
+        ASTVisitorResultAbs* accept(ASTVisitor* pVisitor) override;
 
 
         virtual ASTNodeJoin* copy() override

@@ -5,7 +5,7 @@
 namespace Figaro
 {
 
-    ASTVisitorAbsResult* ASTNodeLinReg::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeLinReg::accept(ASTVisitor *pVisitor)
     {
         return pVisitor->visitNodeLinReg(this);
     }

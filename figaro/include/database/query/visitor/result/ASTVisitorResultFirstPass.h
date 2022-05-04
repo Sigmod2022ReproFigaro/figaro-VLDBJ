@@ -1,12 +1,12 @@
-#ifndef _FIGARO_VISITOR_FIRST_PASS_RESULT_H_
-#define _FIGARO_VISITOR_FIRST_PASS_RESULT_H_
+#ifndef _FIGARO_VISITOR_RESULT_FIRST_PASS_H_
+#define _FIGARO_VISITOR_RESULT_FIRST_PASS_H_
 
-#include "ASTVisitorAbsResult.h"
+#include "ASTVisitorResultAbs.h"
 #include "database/Relation.h"
 
 namespace Figaro
 {
-    class ASTVisitorFirstPassResult: public ASTVisitorAbsResult
+    class ASTVisitorResultFirstPass: public ASTVisitorResultAbs
     {
     public:
         struct FirstPassRelNames
@@ -23,19 +23,19 @@ namespace Figaro
     private:
         std::unordered_map<std::string, FirstPassRelNames> m_htNamesTmpRels;
         /**
-         * @brief Construct a new ASTVisitorJoinResult object
+         * @brief Construct a new ASTVisitorResultJoin object
          *
          * @param rRelName  if it is empty, it means this factor has not been computed.
          * @param qRelName if it is empty, it means this factor has not been computed
          */
     public:
-        ASTVisitorFirstPassResult(
+        ASTVisitorResultFirstPass(
             const std::unordered_map<std::string, FirstPassRelNames>& htNamesTmpRels) :
-            ASTVisitorAbsResult(ASTVisitorAbsResult::ResultType::FIRST_PASS_RESULT),
+            ASTVisitorResultAbs(ASTVisitorResultAbs::ResultType::FIRST_PASS_RESULT),
             m_htNamesTmpRels(htNamesTmpRels) { }
         const std::unordered_map<std::string, FirstPassRelNames>&
         getHtNamesTmpRels(void) const { return m_htNamesTmpRels; }
-        ~ASTVisitorFirstPassResult() {}
+        ~ASTVisitorResultFirstPass() {}
     };
 
 }

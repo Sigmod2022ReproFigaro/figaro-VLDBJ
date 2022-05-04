@@ -5,7 +5,7 @@
 namespace Figaro
 {
 
-    ASTVisitorAbsResult* ASTNodeInverse::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeInverse::accept(ASTVisitor *pVisitor)
     {
         return pVisitor->visitNodeInverse(this);
     }

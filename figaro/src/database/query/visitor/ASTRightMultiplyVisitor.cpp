@@ -1,9 +1,9 @@
 #include "database/query/visitor/ASTRightMultiplyVisitor.h"
-#include "database/query/visitor/ASTVisitorJoinResult.h"
+#include "database/query/visitor/result/ASTVisitorResultJoin.h"
 
 namespace Figaro
 {
-    ASTVisitorJoinResult* ASTRightMultiplyVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultJoin* ASTRightMultiplyVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
@@ -24,23 +24,23 @@ namespace Figaro
         FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
         //MICRO_BENCH_STOP(rightMultiply)
         //FIGARO_LOG_BENCH("rightMultiplyRelation", MICRO_BENCH_GET_TIMER_LAP(rightMultiply))
-        return new ASTVisitorJoinResult(mulRelName);
+        return new ASTVisitorResultJoin(mulRelName);
     }
 
-    ASTVisitorJoinResult* ASTRightMultiplyVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultJoin* ASTRightMultiplyVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vRelNames;
         std::string centralRelName;
         std::string joinRelName = "";
         FIGARO_LOG_INFO("VISITING JOIN")
-        ASTVisitorJoinResult* pJoinResult =
-            (ASTVisitorJoinResult*)pElement->getCentralRelation()->accept(this);
+        ASTVisitorResultJoin* pJoinResult =
+            (ASTVisitorResultJoin*)pElement->getCentralRelation()->accept(this);
         centralRelName = pJoinResult->getJoinRelName();
         FIGARO_LOG_INFO("central rel name", centralRelName)
         delete pJoinResult;
         for (const auto& pChild: pElement->getChildren())
         {
-            ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)(pChild->accept(this));
+            ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)(pChild->accept(this));
             vRelNames.push_back(pJoinResult->getJoinRelName());
             delete pJoinResult;
         }
@@ -63,14 +63,14 @@ namespace Figaro
             MICRO_BENCH_STOP(joinRelationsAndAddColumns)
             FIGARO_LOG_BENCH("Value" + centralRelName, MICRO_BENCH_GET_TIMER_LAP(joinRelationsAndAddColumns))
         }
-        return new ASTVisitorJoinResult(joinRelName);
+        return new ASTVisitorResultJoin(joinRelName);
     }
 
-    ASTVisitorAbsResult* ASTRightMultiplyVisitor::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
+    ASTVisitorResultAbs* ASTRightMultiplyVisitor::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
     {
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
         FIGARO_LOG_INFO("VISITING LEFT")
-        ASTVisitorAbsResult* pResult;
+        ASTVisitorResultAbs* pResult;
         if (m_useLFTJoin)
         {
             pResult = pElement->getLeftOperand()->accept(this);
@@ -99,7 +99,7 @@ namespace Figaro
             std::string qRelName = m_pDatabase->joinRelationsAndAddColumns(
                 m_vRelNames, m_vParRelNames,
                 m_vvJoinAttrNames, m_vvParJoinAttrNames, m_joinSize);
-            pResult = new ASTVisitorJoinResult(qRelName);
+            pResult = new ASTVisitorResultJoin(qRelName);
         }
         else
         {

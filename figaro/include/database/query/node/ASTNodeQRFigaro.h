@@ -44,7 +44,7 @@ namespace Figaro
 
         bool isComputeQ(void) const { return m_computeQ; }
 
-        ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+        ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNode* copy() override
         {

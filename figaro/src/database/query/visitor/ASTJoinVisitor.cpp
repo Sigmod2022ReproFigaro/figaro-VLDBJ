@@ -4,18 +4,18 @@
 
 namespace Figaro
 {
-    ASTVisitorJoinResult* ASTJoinVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultJoin* ASTJoinVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         FIGARO_LOG_INFO("VISITING RELATION NODE")
-        return new ASTVisitorJoinResult(pElement->getRelationName());
+        return new ASTVisitorResultJoin(pElement->getRelationName());
     }
 
-    ASTVisitorJoinResult* ASTJoinVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultJoin* ASTJoinVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vRelNames;
         for (const auto& pChild: pElement->getChildren())
         {
-            ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)(pChild->accept(this));
+            ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)(pChild->accept(this));
             vRelNames.push_back(pJoinResult->getJoinRelName());
             delete pJoinResult;
         }
@@ -31,14 +31,14 @@ namespace Figaro
         {
             m_pDatabase->destroyTemporaryRelation(relName);
         }
-        return new ASTVisitorJoinResult(newRelName);
+        return new ASTVisitorResultJoin(newRelName);
     }
 
-    ASTVisitorAbsResult* ASTJoinVisitor::visitNodeAssign(ASTNodeAssign* pElement)
+    ASTVisitorResultAbs* ASTJoinVisitor::visitNodeAssign(ASTNodeAssign* pElement)
     {
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, Figaro::MemoryLayout::ROW_MAJOR);
         pElement->getOperand()->accept(&joinAttrVisitor);
-        ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(this);
+        ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)pElement->getOperand()->accept(this);
         std::string newRelName = pElement->getRelationName();
         m_pDatabase->renameRelation(
             pJoinResult->getJoinRelName(), pElement->getRelationName());
@@ -52,10 +52,10 @@ namespace Figaro
         */
 
         delete pJoinResult;
-        return new ASTVisitorJoinResult(newRelName);
+        return new ASTVisitorResultJoin(newRelName);
     }
 
-    ASTVisitorJoinResult* ASTJoinVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
+    ASTVisitorResultJoin* ASTJoinVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         std::string newRelName;
         FIGARO_LOG_INFO("VISITING EVAL JOIN NODE", m_isLeapFrog ? "LEAP_FROG" : "HASH_JOIN")
@@ -67,11 +67,11 @@ namespace Figaro
         else
         {
             return nullptr;
-            ASTVisitorJoinResult* pJoinResult = (ASTVisitorJoinResult*)pElement->getOperand()->accept(this);
+            ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)pElement->getOperand()->accept(this);
 
             newRelName = pJoinResult->getJoinRelName();
             delete pJoinResult;
         }
-        return new ASTVisitorJoinResult(newRelName);
+        return new ASTVisitorResultJoin(newRelName);
     }
 }

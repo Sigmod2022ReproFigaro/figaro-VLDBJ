@@ -2,7 +2,7 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTBuildIndicesVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultAbs* ASTBuildIndicesVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         bool isRootNode;
         const auto& relationName = pElement->getRelationName();
@@ -15,7 +15,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTBuildIndicesVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultAbs* ASTBuildIndicesVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         bool isRootNode;
         FIGARO_LOG_DBG("Join");
@@ -33,7 +33,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTBuildIndicesVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultAbs* ASTBuildIndicesVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");

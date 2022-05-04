@@ -11,7 +11,8 @@
 #include "database/query/node/ASTNodeRightMultiply.h"
 #include "database/query/node/ASTNodeInverse.h"
 #include "database/query/node/ASTNodeLinReg.h"
-#include "ASTVisitorAbsResult.h"
+#include "database/query/node/ASTNodeLUFigaro.h"
+#include "./result/ASTVisitorResultAbs.h"
 #include "database/Database.h"
 
 namespace Figaro
@@ -24,15 +25,16 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttributeNames);
     public:
         ASTVisitor(Database* pDatabase): m_pDatabase(pDatabase) {}
-        virtual ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeInverse(ASTNodeInverse* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeLinReg(ASTNodeLinReg* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeRelation(ASTNodeRelation* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeAssign(ASTNodeAssign* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeInverse(ASTNodeInverse* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeLinReg(ASTNodeLinReg* pElement) = 0;
 
         virtual ~ASTVisitor() {}
     };

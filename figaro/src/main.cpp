@@ -1,6 +1,6 @@
 #include "database/Database.h"
 #include "database/query/Query.h"
-#include "database/query/visitor/ASTVisitorQRResult.h"
+#include "database/query/visitor/result/ASTVisitorResultQR.h"
 #include "utils/Performance.h"
 
 #include <boost/program_options.hpp>
@@ -145,11 +145,11 @@ int main(int argc, char *argv[])
     query.evaluateQuery(true, true, true, true, qrHintType, memoryLayout, dump);
     if (dump)
     {
-        Figaro::ASTVisitorAbsResult* pResult = query.getResult();
+        Figaro::ASTVisitorResultAbs* pResult = query.getResult();
         FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
-        if (pResult->getResultType() == Figaro::ASTVisitorAbsResult::ResultType::QR_RESULT)
+        if (pResult->getResultType() == Figaro::ASTVisitorResultAbs::ResultType::QR_RESULT)
         {
-            Figaro::ASTVisitorQRResult* pQrResult = (Figaro::ASTVisitorQRResult*)pResult;
+            Figaro::ASTVisitorResultQR* pQrResult = (Figaro::ASTVisitorResultQR*)pResult;
             std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
             database.outputRelationToFile(fileDumpR,
                 pQrResult->getRRelationName(), ',', precision);
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
                 FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
             }
         }
-        else if (pResult->getResultType() == Figaro::ASTVisitorAbsResult::ResultType::JOIN_RESULT)
+        else if (pResult->getResultType() == Figaro::ASTVisitorResultAbs::ResultType::JOIN_RESULT)
         {
             FIGARO_LOG_BENCH("dumping", "JOIN")
 

@@ -21,7 +21,7 @@ namespace Figaro
             return m_pOperand;
         };
 
-        virtual ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+        virtual ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNode* copy()
         {

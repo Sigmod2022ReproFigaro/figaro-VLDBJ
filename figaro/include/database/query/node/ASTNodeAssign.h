@@ -24,7 +24,7 @@ namespace Figaro
 
         std::string getRelationName(void) const { return m_relationName; }
 
-        virtual ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+        virtual ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNode* copy()
         {

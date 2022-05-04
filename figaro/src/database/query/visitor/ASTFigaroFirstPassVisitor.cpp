@@ -2,7 +2,7 @@
 
 namespace Figaro
 {
-    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultFirstPass* ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         std::vector<std::string> childrenNames;
         std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
@@ -14,13 +14,13 @@ namespace Figaro
         auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
         true);
 
-        std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> namesTmpRels =
+        std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames> namesTmpRels =
         {{relationName,
-        ASTVisitorFirstPassResult::FirstPassRelNames(headsName, tailsName)}};
-        return new ASTVisitorFirstPassResult(namesTmpRels);
+        ASTVisitorResultFirstPass::FirstPassRelNames(headsName, tailsName)}};
+        return new ASTVisitorResultFirstPass(namesTmpRels);
     }
 
-    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultFirstPass* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         FIGARO_LOG_INFO("Join");
         FIGARO_LOG_INFO("Central");
@@ -32,29 +32,29 @@ namespace Figaro
              false);
 
 
-        std::unordered_map<std::string, ASTVisitorFirstPassResult::FirstPassRelNames> namesTmpRels =
+        std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames> namesTmpRels =
         {{relationName,
-        ASTVisitorFirstPassResult::FirstPassRelNames(headsName, tailsName)}};
+        ASTVisitorResultFirstPass::FirstPassRelNames(headsName, tailsName)}};
 
         for (const auto& pChild: pElement->getChildren())
         {
             FIGARO_LOG_INFO("Child");
-            ASTVisitorFirstPassResult* pResult = (ASTVisitorFirstPassResult*)pChild->accept(this);
+            ASTVisitorResultFirstPass* pResult = (ASTVisitorResultFirstPass*)pChild->accept(this);
 
             namesTmpRels.insert(
                 pResult->getHtNamesTmpRels().begin(),
                 pResult->getHtNamesTmpRels().end());
             delete pResult;
         }
-        return new ASTVisitorFirstPassResult(namesTmpRels);
+        return new ASTVisitorResultFirstPass(namesTmpRels);
     }
 
-    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultFirstPass* ASTFigaroFirstPassVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
         FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("QR Givens");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
-        ASTVisitorFirstPassResult* pResult = (ASTVisitorFirstPassResult*)pElement->getOperand()->accept(this);
+        ASTVisitorResultFirstPass* pResult = (ASTVisitorResultFirstPass*)pElement->getOperand()->accept(this);
         return pResult;
     }
 }

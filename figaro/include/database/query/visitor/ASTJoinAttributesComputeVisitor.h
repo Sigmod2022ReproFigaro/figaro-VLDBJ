@@ -1,11 +1,11 @@
 #ifndef _FIGARO_AST_JOIN_ATTRIBUTES_COMPUTE_VISITOR_H_
 #define _FIGARO_AST_JOIN_ATTRIBUTES_COMPUTE_VISITOR_H_
 
-#include "ASTVisitorQRGivensAbs.h"
+#include "ASTVisitorQRFigaroAbs.h"
 
 namespace Figaro
 {
-    class ASTJoinAttributesComputeVisitor: public ASTVisitorQRGivensAbs
+    class ASTJoinAttributesComputeVisitor: public ASTVisitorQFigaroAbs
     {
         void initializeEnumAndDenomRelations(ASTNodeRelation* pRel);
         bool m_sortValues;
@@ -14,12 +14,12 @@ namespace Figaro
     public:
         ASTJoinAttributesComputeVisitor(
             Database* pDatabase, bool sortValues,
-            Figaro::MemoryLayout memoryLayout): ASTVisitorQRGivensAbs(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
-        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override;
-        ASTVisitorAbsResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) override;
-        ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
+            Figaro::MemoryLayout memoryLayout): ASTVisitorQFigaroAbs(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
+        ASTVisitorResultAbs* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
+        ASTVisitorResultAbs* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) override;
+        ASTVisitorResultAbs* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
 
         std::vector<std::string> getPreOrderRelNames(void) const
         {

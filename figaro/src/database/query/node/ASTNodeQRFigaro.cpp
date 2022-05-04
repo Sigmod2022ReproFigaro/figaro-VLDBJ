@@ -5,8 +5,8 @@
 namespace Figaro
 {
 
-    ASTVisitorAbsResult* ASTNodeQRFigaro::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeQRFigaro::accept(ASTVisitor *pVisitor)
     {
-        return pVisitor->visitNodeQRGivens(this);
+        return pVisitor->visitNodeQRFigaro(this);
     }
 }

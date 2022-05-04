@@ -2,7 +2,7 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTComputeUpAndCircleCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultAbs* ASTComputeUpAndCircleCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         bool isRootNode;
         const auto& relationName = pElement->getRelationName();
@@ -15,7 +15,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTComputeUpAndCircleCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultAbs* ASTComputeUpAndCircleCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         bool isRootNode;
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
@@ -34,7 +34,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTComputeUpAndCircleCountsVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultAbs* ASTComputeUpAndCircleCountsVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");

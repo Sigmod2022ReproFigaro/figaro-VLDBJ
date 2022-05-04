@@ -1,9 +1,9 @@
 #ifndef _FIGARO_AST_VISITOR_QR_GIVENS_H_
 #define _FIGARO_AST_VISITOR_QR_GIVENS_H_
 
-#include "ASTVisitorQRGivensAbs.h"
-#include "ASTVisitorJoinResult.h"
-#include "ASTVisitorQRResult.h"
+#include "ASTVisitorQRFigaroAbs.h"
+#include "./result/ASTVisitorResultJoin.h"
+#include "./result/ASTVisitorResultQR.h"
 
 namespace Figaro
 {
@@ -22,15 +22,16 @@ namespace Figaro
             ): ASTVisitor(pDatabase), m_memoryLayout(memoryLayout),
                 m_pDatabase(pDatabase), m_qrHintType(qrHintType),
                 m_saveResult(saveResult){}
-        ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
-        ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override;
-        ASTVisitorQRResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) override;
-        ASTVisitorJoinResult* visitNodeLinReg(ASTNodeLinReg* pElement) override;
-        ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) override { return nullptr; }
-        ASTVisitorJoinResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
-        ASTVisitorJoinResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
-        ASTVisitorJoinResult* visitNodeInverse(ASTNodeInverse* pElement) override;
+        ASTVisitorResultJoin* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
+        ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
+        ASTVisitorResultQR* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) override;
+        ASTVisitorResultQR* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
+        ASTVisitorResultJoin* visitNodeLinReg(ASTNodeLinReg* pElement) override;
+        ASTVisitorResultAbs* visitNodeAssign(ASTNodeAssign* pElement) override { return nullptr; }
+        ASTVisitorResultJoin* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
+        ASTVisitorResultJoin* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
+        ASTVisitorResultJoin* visitNodeInverse(ASTNodeInverse* pElement) override;
 
         virtual ~ASTVisitorQueryEval() override {}
     };

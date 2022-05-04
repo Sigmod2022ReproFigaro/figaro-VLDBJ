@@ -5,7 +5,7 @@
 namespace Figaro
 {
 
-    ASTVisitorAbsResult* ASTNodeEvalJoin::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeEvalJoin::accept(ASTVisitor *pVisitor)
     {
         return pVisitor->visitNodeEvalJoin(this);
     }

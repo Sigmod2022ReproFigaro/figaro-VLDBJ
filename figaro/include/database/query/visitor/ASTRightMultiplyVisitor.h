@@ -2,7 +2,7 @@
 #define _FIGARO_AST_RIGHT_MULTIPLY_VISITOR_H_
 
 #include "ASTVisitor.h"
-#include "ASTVisitorJoinResult.h"
+#include "./result/ASTVisitorResultJoin.h"
 
 namespace Figaro
 {
@@ -33,38 +33,44 @@ namespace Figaro
                 m_vvJoinAttrNames(vvJoinAttrNames),
                 m_vvParJoinAttrNames(vvParJoinAttrNames),
                 m_joinSize(joinSize) {}
-        virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        virtual  ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
+        virtual ASTVisitorResultJoin* visitNodeRelation(ASTNodeRelation* pElement) override;
+        virtual ASTVisitorResultJoin* visitNodeJoin(ASTNodeJoin* pElement) override;
+        virtual  ASTVisitorResultAbs* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
 
-        virtual ASTVisitorAbsResult* visitNodeQRGivens([[maybe_unused]] ASTNodeQRFigaro* pElement) override {
+        virtual ASTVisitorResultAbs* visitNodeQRFigaro([[maybe_unused]] ASTNodeQRFigaro* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
             }
-        virtual ASTVisitorAbsResult* visitNodePostProcQR([[maybe_unused]] ASTNodeQRPostProc* pElement) override {
+
+        virtual ASTVisitorResultAbs* visitNodeLUFigaro([[maybe_unused]] ASTNodeLUFigaro* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+            }
+
+        virtual ASTVisitorResultAbs* visitNodeQRPostProc([[maybe_unused]] ASTNodeQRPostProc* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-        virtual ASTVisitorAbsResult* visitNodeAssign([[maybe_unused]] ASTNodeAssign* pElement)  override
+        virtual ASTVisitorResultAbs* visitNodeAssign([[maybe_unused]] ASTNodeAssign* pElement)  override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-        virtual ASTVisitorAbsResult* visitNodeEvalJoin([[maybe_unused]] ASTNodeEvalJoin* pElement)  override
+        virtual ASTVisitorResultAbs* visitNodeEvalJoin([[maybe_unused]] ASTNodeEvalJoin* pElement)  override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-        virtual ASTVisitorAbsResult* visitNodeInverse([[maybe_unused]]  ASTNodeInverse* pElement)  override
+        virtual ASTVisitorResultAbs* visitNodeInverse([[maybe_unused]]  ASTNodeInverse* pElement)  override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-         virtual ASTVisitorAbsResult* visitNodeLinReg([[maybe_unused]] ASTNodeLinReg* pElement)  override
+         virtual ASTVisitorResultAbs* visitNodeLinReg([[maybe_unused]] ASTNodeLinReg* pElement)  override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;

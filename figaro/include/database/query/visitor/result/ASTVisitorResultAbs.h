@@ -1,9 +1,9 @@
-#ifndef _FIGARO_VISITOR_ABS_RESULT_H_
-#define _FIGARO_VISITOR_ABS_RESULT_H_
+#ifndef _FIGARO_VISITOR_RESULT_ABS_H_
+#define _FIGARO_VISITOR_RESULT_ABS_H_
 
 namespace Figaro
 {
-    class ASTVisitorAbsResult
+    class ASTVisitorResultAbs
     {
         public:
         enum class ResultType
@@ -16,7 +16,7 @@ namespace Figaro
     private:
         ResultType m_resultType;
     public:
-        ASTVisitorAbsResult(ResultType resultType): m_resultType(resultType) {}
+        ASTVisitorResultAbs(ResultType resultType): m_resultType(resultType) {}
         ResultType getResultType() const {
             return  m_resultType;
         };

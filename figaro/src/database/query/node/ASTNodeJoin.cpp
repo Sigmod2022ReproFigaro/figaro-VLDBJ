@@ -47,7 +47,7 @@ namespace Figaro
         return m_pCenRelation->getJoinAttributeNames();
     }
 
-    ASTVisitorAbsResult* ASTNodeJoin::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeJoin::accept(ASTVisitor *pVisitor)
     {
         return pVisitor->visitNodeJoin(this);
     }

@@ -93,7 +93,7 @@ namespace Figaro
         return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels, vSubTreeRelNames);
     }
 
-    ASTVisitorQRResult* ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultQR* ASTFigaroSecondPassVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
         std::vector<std::string> vGenTailRelNames;
         std::vector<std::string> vTailRelNames;
@@ -131,7 +131,7 @@ namespace Figaro
         //FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
         FIGARO_LOG_INFO("FInished")
         delete pResult;
-        return new ASTVisitorQRResult(rName, qName);
+        return new ASTVisitorResultQR(rName, qName);
     }
 
 }

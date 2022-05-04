@@ -42,7 +42,7 @@ namespace Figaro
             return m_vDropAttributes;
         }
 
-        ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+        ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNodeQRPostProc* copy() override
         {

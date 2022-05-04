@@ -2,7 +2,7 @@
 #define _FIGARO_AST_NODE_H_
 
 #include "utils/Utils.h"
-#include "database/query/visitor/ASTVisitorAbsResult.h"
+#include "database/query/visitor/result/ASTVisitorResultAbs.h"
 
 namespace Figaro
 {
@@ -11,7 +11,7 @@ namespace Figaro
     {
         friend class ASTVisitor;
     public:
-        virtual ASTVisitorAbsResult* accept(ASTVisitor* pVisitor) = 0;
+        virtual ASTVisitorResultAbs* accept(ASTVisitor* pVisitor) = 0;
         virtual ~ASTNode() = 0;
         virtual ASTNode* copy() = 0;
     };

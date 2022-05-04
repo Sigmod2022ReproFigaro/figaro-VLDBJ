@@ -5,7 +5,7 @@
 namespace Figaro
 {
 
-    ASTVisitorAbsResult* ASTNodeRightMultiply::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeRightMultiply::accept(ASTVisitor *pVisitor)
     {
         return pVisitor->visitNodeRightMultiply(this);
     }

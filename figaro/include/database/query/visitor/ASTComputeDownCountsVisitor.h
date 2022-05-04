@@ -1,18 +1,18 @@
 #ifndef _FIGARO_AST_FIGARO_COMPUTE_DOWN_COUNTS_VISITOR_H_
 #define _FIGARO_AST_FIGARO_COMPUTE_DOWN_COUNTS_VISITOR_H_
 
-#include "ASTVisitorQRGivensAbs.h"
+#include "ASTVisitorQRFigaroAbs.h"
 
 namespace Figaro
 {
-    class ASTComputeDownCountsVisitor: public ASTVisitorQRGivensAbs
+    class ASTComputeDownCountsVisitor: public ASTVisitorQFigaroAbs
     {
     public:
         ASTComputeDownCountsVisitor(
-            Database* pDatabase): ASTVisitorQRGivensAbs(pDatabase) {}
-        ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override;
+            Database* pDatabase): ASTVisitorQFigaroAbs(pDatabase) {}
+        ASTVisitorResultAbs* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
 
         virtual ~ASTComputeDownCountsVisitor() override {}
     };

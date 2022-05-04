@@ -49,7 +49,7 @@ namespace Figaro
             return m_isFigaro;
         }
 
-        ASTVisitorAbsResult* accept(ASTVisitor *pVisitor) override;
+        ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNodeLinReg* copy() override
         {

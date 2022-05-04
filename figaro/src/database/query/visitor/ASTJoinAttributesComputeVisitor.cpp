@@ -3,7 +3,7 @@
 
 namespace Figaro
 {
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultAbs* ASTJoinAttributesComputeVisitor::visitNodeRelation(ASTNodeRelation* pElement)
     {
         std::string parName = "";
         m_vPreOrderASTNodeAbsRels.push_back(pElement);
@@ -19,7 +19,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultAbs* ASTJoinAttributesComputeVisitor::visitNodeJoin(ASTNodeJoin* pElement)
     {
         FIGARO_LOG_DBG("Join");
         FIGARO_LOG_DBG("Central");
@@ -44,7 +44,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultAbs* ASTJoinAttributesComputeVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
         FIGARO_LOG_INFO("QR Givens");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
@@ -54,7 +54,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodePostProcQR(ASTNodeQRPostProc* pElement)
+    ASTVisitorResultAbs* ASTJoinAttributesComputeVisitor::visitNodeQRPostProc(ASTNodeQRPostProc* pElement)
     {
         FIGARO_LOG_INFO("QR Postprocess");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
@@ -63,7 +63,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
+    ASTVisitorResultAbs* ASTJoinAttributesComputeVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         FIGARO_LOG_INFO("Eval join");
         m_vPreOrderASTNodeAbsRels.clear();
