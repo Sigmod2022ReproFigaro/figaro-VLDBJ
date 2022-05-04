@@ -79,19 +79,19 @@ namespace Figaro
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
             if (operatorName == "LU_FIGARO")
             {
-                pCreatedNode = new ASTNodeQRGivens(
+                pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE GIV_QR NODE")
             }
             if (operatorName == "GIV_QR")
             {
-                pCreatedNode = new ASTNodeQRGivens(
+                pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE GIV_QR NODE")
             }
             else if (operatorName == "POSTPROCESS_QR")
             {
-                pCreatedNode = new ASTNodePostProcQR(
+                pCreatedNode = new ASTNodeQRPostProc(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
             }

@@ -34,7 +34,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTComputeUpAndCircleCountsVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorAbsResult* ASTComputeUpAndCircleCountsVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
     {
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");

@@ -13,7 +13,7 @@
 
 namespace Figaro
 {
-    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
     {
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true, m_memoryLayout);
         ASTBuildIndicesVisitor buildIndicesVisitor(m_pDatabase);
@@ -119,7 +119,7 @@ namespace Figaro
         return new ASTVisitorQRResult(rName, qName);
     }
 
-    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodePostProcQR(ASTNodePostProcQR* pElement)
+    ASTVisitorQRResult* ASTVisitorQueryEval::visitNodePostProcQR(ASTNodeQRPostProc* pElement)
     {
         FIGARO_LOG_INFO("VISITING POST PROC QR NODE")
         ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
@@ -157,7 +157,7 @@ namespace Figaro
         if (pElement->isFigaro())
         {
             // computation of R
-            ASTNodeQRGivens astQRGivens(
+            ASTNodeQRFigaro astQRGivens(
                 pElement->getOperand()->copy(),
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
@@ -168,7 +168,7 @@ namespace Figaro
         }
         else
         {
-            ASTNodePostProcQR astNodePostProc(
+            ASTNodeQRPostProc astNodePostProc(
                 pElement->getOperand()->copy(),
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),

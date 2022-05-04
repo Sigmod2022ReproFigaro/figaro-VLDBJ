@@ -3,8 +3,8 @@
 
 #include "database/query/node/ASTNode.h"
 #include "database/query/node/ASTNodeJoin.h"
-#include "database/query/node/ASTNodeQRGivens.h"
-#include "database/query/node/ASTNodePostProcQR.h"
+#include "database/query/node/ASTNodeQRFigaro.h"
+#include "database/query/node/ASTNodeQRPostProc.h"
 #include "database/query/node/ASTNodeAssign.h"
 #include "database/query/node/ASTNodeRelation.h"
 #include "database/query/node/ASTNodeEvalJoin.h"
@@ -26,8 +26,8 @@ namespace Figaro
         ASTVisitor(Database* pDatabase): m_pDatabase(pDatabase) {}
         virtual ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) = 0;
-        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) = 0;
+        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeAssign(ASTNodeAssign* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
         virtual ASTVisitorAbsResult* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;

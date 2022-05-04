@@ -17,10 +17,10 @@ namespace Figaro
             Figaro::MemoryLayout memoryLayout): ASTVisitorQRGivensAbs(pDatabase), m_sortValues(sortValues), m_memoryLayout(memoryLayout) {}
         ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
-        ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override;
+        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override;
+        ASTVisitorAbsResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) override;
         ASTVisitorAbsResult* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
-        
+
         std::vector<std::string> getPreOrderRelNames(void) const
         {
             std::vector<std::string> vPreOrderRelNames;
@@ -29,7 +29,7 @@ namespace Figaro
                 vPreOrderRelNames.push_back(astNodeAbsRel->getRelation()->getRelationName());
             }
             return vPreOrderRelNames;
-        } 
+        }
 
         std::vector<std::string> getPreOrderParRelNames(void) const
         {

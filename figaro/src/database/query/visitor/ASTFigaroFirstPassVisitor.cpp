@@ -49,7 +49,7 @@ namespace Figaro
         return new ASTVisitorFirstPassResult(namesTmpRels);
     }
 
-    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorFirstPassResult* ASTFigaroFirstPassVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
     {
         FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("QR Givens");

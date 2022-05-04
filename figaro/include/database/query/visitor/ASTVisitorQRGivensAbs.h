@@ -12,7 +12,7 @@ namespace Figaro
         ASTVisitorQRGivensAbs(Database* pDatabase):
             ASTVisitor(pDatabase)
          {}
-        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override {
+        virtual ASTVisitorAbsResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }

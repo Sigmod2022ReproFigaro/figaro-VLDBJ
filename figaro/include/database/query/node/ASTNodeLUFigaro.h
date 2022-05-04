@@ -1,5 +1,5 @@
 #ifndef _AST_NODE_LU_FIGARO_H_
-#define _AST_NODE_LU_GIVENS_H_
+#define _AST_NODE_LU_FIGARO_H_
 
 #include "utils/Utils.h"
 #include "ASTNode.h"

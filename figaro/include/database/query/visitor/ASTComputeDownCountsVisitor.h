@@ -12,7 +12,7 @@ namespace Figaro
             Database* pDatabase): ASTVisitorQRGivensAbs(pDatabase) {}
         ASTVisitorAbsResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorAbsResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorAbsResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override;
 
         virtual ~ASTComputeDownCountsVisitor() override {}
     };

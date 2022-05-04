@@ -33,7 +33,7 @@ namespace Figaro
                  }
         ASTVisitorSecondPassResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorSecondPassResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override;
+        ASTVisitorQRResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override;
         virtual ~ASTFigaroSecondPassVisitor() override {}
 
 

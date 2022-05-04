@@ -44,7 +44,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
     {
         FIGARO_LOG_INFO("QR Givens");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
@@ -54,7 +54,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodePostProcQR(ASTNodePostProcQR* pElement)
+    ASTVisitorAbsResult* ASTJoinAttributesComputeVisitor::visitNodePostProcQR(ASTNodeQRPostProc* pElement)
     {
         FIGARO_LOG_INFO("QR Postprocess");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())

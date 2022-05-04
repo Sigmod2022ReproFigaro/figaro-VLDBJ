@@ -31,10 +31,10 @@ namespace Figaro
          {}
         virtual ASTVisitorJoinResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorJoinResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        virtual ASTVisitorJoinResult* visitNodeQRGivens(ASTNodeQRGivens* pElement) override {
+        virtual ASTVisitorJoinResult* visitNodeQRGivens(ASTNodeQRFigaro* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;}
-        virtual ASTVisitorJoinResult* visitNodePostProcQR(ASTNodePostProcQR* pElement) override {
+        virtual ASTVisitorJoinResult* visitNodePostProcQR(ASTNodeQRPostProc* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }

@@ -93,7 +93,7 @@ namespace Figaro
         return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels, vSubTreeRelNames);
     }
 
-    ASTVisitorQRResult* ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRGivens* pElement)
+    ASTVisitorQRResult* ASTFigaroSecondPassVisitor::visitNodeQRGivens(ASTNodeQRFigaro* pElement)
     {
         std::vector<std::string> vGenTailRelNames;
         std::vector<std::string> vTailRelNames;
