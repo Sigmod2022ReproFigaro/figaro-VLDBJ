@@ -145,12 +145,12 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-        std::tuple<std::string, std::string> computeHeadsAndTails(
+        std::tuple<std::string, std::string> computeQRHeadsAndTails(
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames,
             bool isLeafNode);
 
-        std::string aggregateAwayChildrenRelations(
+        std::string aggregateAwayQRChildrenRelations(
             const std::string& relationName,
             const std::string& relHeadName,
             const std::vector<std::string>& vChildRelNames,
@@ -161,7 +161,7 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
 
         std::tuple<std::string, std::string>
-        computeAndScaleGeneralizedHeadAndTail(
+        computeAndScaleQRGeneralizedHeadAndTail(
             const std::string& relationName,
             const std::string& aggrAwayRelName,
             const std::vector<std::string>& vJoinAttributeNames,
@@ -170,7 +170,42 @@ namespace Figaro
             uint32_t numRelsSubTree);
 
         std::tuple<std::string, std::string>
-        computePostprocessing(
+        computeQRPostprocessing(
+            const std::vector<std::string>& vRelationOrder,
+            const std::string& genHeadRoot,
+            const std::vector<std::string>& vTailRels,
+            const std::vector<std::string>& vGenTailRels,
+            Figaro::QRHintType qrHintType,
+            bool saveResult,
+            const std::string& joinRelName);
+
+
+        std::tuple<std::string, std::string> computeLUHeadsAndTails(
+            const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames,
+            bool isLeafNode);
+
+        std::string aggregateAwayLUChildrenRelations(
+            const std::string& relationName,
+            const std::string& relHeadName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vChildHeadRelNames,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            const std::vector<std::string>& vSubTreeRelNames,
+            const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
+
+        std::tuple<std::string, std::string>
+        computeAndScaleLUGeneralizedHeadAndTail(
+            const std::string& relationName,
+            const std::string& aggrAwayRelName,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::string>& vParJoinAttributeNames,
+            bool isRootNode,
+            uint32_t numRelsSubTree);
+
+        std::tuple<std::string, std::string>
+        computeLUPostprocessing(
             const std::vector<std::string>& vRelationOrder,
             const std::string& genHeadRoot,
             const std::vector<std::string>& vTailRels,
@@ -181,7 +216,7 @@ namespace Figaro
 
         void changeMemoryLayout(void);
 
-        std::tuple<std::string, std::string> evalPostprocessing(
+        std::tuple<std::string, std::string> evalQRPostprocessing(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,

@@ -524,7 +524,7 @@ namespace Figaro
          *  TAIL(remaining attributes)
          * GROUP BY attrNames.
          */
-        std::tuple<Relation, Relation> computeHeadsAndTails(
+        std::tuple<Relation, Relation> computeQRHeadsAndTails(
             const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
 
 
@@ -539,7 +539,7 @@ namespace Figaro
          *  @p vJoinAttributeNames and each @p vvJoinAttributeNames[i] is a subset of
          *  @p vJoinAttributeNames .
          */
-        Relation aggregateAwayChildrenRelations(
+        Relation aggregateAwayQRChildrenRelations(
             Relation* pHeadRel,
             const std::vector<Relation*>& vpChildRels,
             const std::vector<Relation*>& vpChildHeadRels,
@@ -548,7 +548,7 @@ namespace Figaro
             const std::vector<std::string>& vSubTreeRelNames,
             const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
 
-        Relation LUaggregateAwayChildrenRelations(
+        Relation aggregateAwayLUChildrenRelations(
             Relation* pHeadRel,
             const std::vector<Relation*>& vpChildRels,
             const std::vector<Relation*>& vpChildHeadRels,
@@ -557,7 +557,7 @@ namespace Figaro
             const std::vector<std::string>& vSubTreeRelNames,
             const std::vector<std::vector<std::string> >& vvSubTreeRelnames);
 
-        std::tuple<Relation, Relation> computeAndScaleGeneralizedHeadAndTail(
+        std::tuple<Relation, Relation> computeAndScaleQRGeneralizedHeadAndTail(
             Relation* pAggAwayRel,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
@@ -565,7 +565,7 @@ namespace Figaro
             uint32_t numRelsSubTree);
 
 
-        std::tuple<Relation, Relation> LUcomputeAndScaleGeneralizedHeadAndTail(
+        std::tuple<Relation, Relation> computeAndScaleLUGeneralizedHeadAndTail(
             Relation* pAggAwayRel,
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
@@ -576,10 +576,26 @@ namespace Figaro
             const std::vector<Relation*>& vpTailRels,
             Figaro::QRHintType qrHintType);
 
+        void computeLUOfGeneralizedHead(
+            const std::vector<Relation*>& vpTailRels,
+            Figaro::QRHintType qrHintType);
+
         void computeQRInPlace(Figaro::QRHintType qrHintType);
+
+        void computeLUInPlace(Figaro::QRHintType qrHintType);
 
         // Should be called for a root relation.
         std::tuple<Relation*, Relation*> computeQROfConcatenatedGeneralizedHeadAndTails(
+            const std::vector<Relation*>& pRelationOrder,
+            Relation* pGenHeadRoot,
+            const std::vector<Relation*>& vpTailRels,
+            const std::vector<Relation*>& vpGenTailEls,
+            Figaro::QRHintType qrHintType,
+            bool saveResult,
+            const Relation* pJoinRel);
+
+        // Should be called for a root relation.
+        std::tuple<Relation*, Relation*> computeLUOfConcatenatedGeneralizedHeadAndTails(
             const std::vector<Relation*>& pRelationOrder,
             Relation* pGenHeadRoot,
             const std::vector<Relation*>& vpTailRels,

@@ -14,13 +14,13 @@ It contains the following files and directories:
         - Basic operations on relations. This group includes: sorting a specified relation based on specified attributes (sortRelation), removing specified attributes from the specified relation (dropAttributesFromRelations), updating the schema of a relation which include reordering of attributes and deletion (updateSchemaOfRelation), and one hot encoding all categorical attributes in all relations and then dropping the first column of one hot encoded attributes.
         - Figaro algorithm parts + post-processing that:
             - compute the necessary count queries (computeDownCounts, computeUpAndCircleCounts),
-            - evaluate parts of the figaro algorithm: computeHeadsAndTails, aggregateAwayChildrenRelations,
-            - apply the corresponding post-processing method: computePostprocessing. In particular this method upper-triangularizes the following three types of blocks:
+            - evaluate parts of the figaro algorithm: computeQRHeadsAndTails, aggregateAwayQRChildrenRelations,
+            - apply the corresponding post-processing method: computeQRPostprocessing. In particular this method upper-triangularizes the following three types of blocks:
                 - for tails of a relation it calls computeQROfTail;
                 - for generalized tails that correspond to a join tree node in the bottom-up traversal of figaro it calls computeQROfGeneralizedTail;
                 - for the remaining data when figaro terminates it calls computeQROfGeneralizedHead;
             After that it concatenates the upper-triangularized results and applies again an upper-triangularization method: computeQROfConcatenatedGeneralizedHeadAndTails
-        - Applying a post-processing method to the join result (evalPostprocessing)
+        - Applying a post-processing method to the join result (evalQRPostprocessing)
     - [Relation.cpp](src/database/Relation.cpp) implements the main logic of the operations of figaro on relations. Its functions can again be divided in several groups:
         - basic modifying and accessing operations on the schema: getAttributeIdx, getAttributesIdxs, getAttributesIdxsComplement, getCategoricalAttributeIdxs, schemaJoins, schemaRemoveNonParJoinAttrs, schemaDropAttrs, schemaOneHotEncode
         - index building for parallel and faster evaluation of the figaro algorithm: getDistinctValsAndBuildIndices. In cases when the composite join attributes is a primary key we skip certain checks. This leads to significant speed-ups in index building.
@@ -28,7 +28,7 @@ It contains the following files and directories:
         - count queries used in Figaro:
             - computeDownCounts. This implementation first builds indices over the data using getDistinctValsAndBuildIndices, which are used for parallelization of the algorithm.
             - computeUpAndCircleCounts. It re-uses the the indices computed in computeDownCounts and parallelizes the computation of the up and circle count queries including the necessary synchronizations.
-        - parts of the figaro algorithm that are implementation of Database.cpp functions: computeHeadsAndTails, aggregateAwayChildrenRelations, computeAndScaleGeneralizedHeadAndTail, computeQROfGeneralizedHead, computeQROfTail, computeQROfGeneralizedTail, computeQROfConcatenatedGeneralizedHeadAndTails
+        - parts of the figaro algorithm that are implementation of Database.cpp functions: computeQRHeadsAndTails, aggregateAwayQRChildrenRelations, computeAndScaleQRGeneralizedHeadAndTail, computeQROfGeneralizedHead, computeQROfTail, computeQROfGeneralizedTail, computeQROfConcatenatedGeneralizedHeadAndTails
         - post-processing on the join result: computeQR
     - the folder query contains code files for join order specification including the join tree data structure and join tree node types, the join tree visitors and query evaluators.
         - visitors:

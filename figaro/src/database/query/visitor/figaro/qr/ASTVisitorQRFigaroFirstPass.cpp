@@ -11,7 +11,7 @@ namespace Figaro
         FIGARO_LOG_INFO("formJoinAttrNames", formJoinAttrNames)
 
 
-        auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
+        auto [headsName, tailsName] =  m_pDatabase->computeQRHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
         true);
 
         std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames> namesTmpRels =
@@ -28,7 +28,7 @@ namespace Figaro
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         const auto& formJoinAttrNames = getFormateJoinAttributeNames(pElement->getJoinAttributeNames());
         FIGARO_LOG_INFO("formJoinAttrNames", formJoinAttrNames)
-        auto [headsName, tailsName] =  m_pDatabase->computeHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
+        auto [headsName, tailsName] =  m_pDatabase->computeQRHeadsAndTails(relationName, pElement->getJoinAttributeNames(),
              false);
 
 

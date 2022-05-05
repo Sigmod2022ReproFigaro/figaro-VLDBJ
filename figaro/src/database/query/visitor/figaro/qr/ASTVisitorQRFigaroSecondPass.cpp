@@ -58,7 +58,7 @@ namespace Figaro
         }
         // TODO: return new relation
         std::string aggrAwayRelName =
-            m_pDatabase-> aggregateAwayChildrenRelations(
+            m_pDatabase-> aggregateAwayQRChildrenRelations(
             relationName,
             m_htTmpRelsNames.at(relationName).m_headsName,
             vChildrenNames,
@@ -79,7 +79,7 @@ namespace Figaro
             parJoinAttributeNames = pElement->getParJoinAttributeNames();
         }
         // TODO: pass new relation
-        auto [genHeadRelName, genTailRelName] = m_pDatabase->computeAndScaleGeneralizedHeadAndTail(
+        auto [genHeadRelName, genTailRelName] = m_pDatabase->computeAndScaleQRGeneralizedHeadAndTail(
             relationName,
             aggrAwayRelName,
             pElement->getJoinAttributeNames(),
@@ -121,7 +121,7 @@ namespace Figaro
         //MICRO_BENCH_INIT(postprocess)
         //MICRO_BENCH_START(postprocess)
         auto [rName, qName] =
-            m_pDatabase->computePostprocessing
+            m_pDatabase->computeQRPostprocessing
             (pElement->getRelationOrder(),
             pResult->getGenHeadsName(),
             vTailRelNames,

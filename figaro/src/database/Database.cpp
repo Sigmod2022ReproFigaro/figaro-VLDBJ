@@ -465,13 +465,13 @@ namespace Figaro
         return rel.getCircCounts();
     }
 
-    std::tuple<std::string, std::string> Database::computeHeadsAndTails(
+    std::tuple<std::string, std::string> Database::computeLUHeadsAndTails(
         const std::string& relationName,
         const std::vector<std::string>& vJoinAttrNames,
         bool isLeafNode)
     {
         Relation& rel = m_relations.at(relationName);
-        auto [relHeads, relTails] = rel.computeHeadsAndTails(vJoinAttrNames, isLeafNode);
+        auto [relHeads, relTails] = rel.computeLUHeadsAndTails(vJoinAttrNames, isLeafNode);
         auto headsName = relHeads.getName();
         auto tailName = relTails.getName();
         m_relations.emplace(relHeads.getName(), std::move(relHeads));
@@ -479,7 +479,7 @@ namespace Figaro
         return {headsName, tailName};
     }
 
-    std::string Database::aggregateAwayChildrenRelations(
+    std::string Database::aggregateAwayLUChildrenRelations(
             const std::string& relationName,
             const std::string& relHeadName,
             const std::vector<std::string>& vChildRelNames,
@@ -507,7 +507,7 @@ namespace Figaro
         }
         FIGARO_LOG_INFO(vChildRelNames);
 
-        Relation relAggAway = rel.aggregateAwayChildrenRelations(&relHead, vpChildRels,
+        Relation relAggAway = rel.aggregateAwayLUChildrenRelations(&relHead, vpChildRels,
             vpChildHeadRels, vJoinAttributeNames, vvJoinAttributeNames,
             vSubTreeRelNames, vvSubTreeRelnames);
         std::string aggregatedAwayName = relAggAway.getName();
@@ -516,7 +516,7 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::computeAndScaleGeneralizedHeadAndTail(
+    Database::computeAndScaleLUGeneralizedHeadAndTail(
         const std::string& relationName,
         const std::string& aggrAwayRelName,
         const std::vector<std::string>& vJoinAttributeNames,
@@ -527,7 +527,7 @@ namespace Figaro
         Relation& rel = m_relations.at(relationName);
         Relation& aggAwayRel = m_relations.at(aggrAwayRelName);
         auto [genHeadRel, genTailRel] =
-        rel.computeAndScaleGeneralizedHeadAndTail(
+        rel.computeAndScaleLUGeneralizedHeadAndTail(
             &aggAwayRel,
             vJoinAttributeNames, vParJoinAttributeNames,
             isRootNode, numRelsSubTree);
@@ -541,7 +541,141 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::computePostprocessing(
+    Database::computeLUPostprocessing(
+            const std::vector<std::string>& vRelationOrder,
+            const std::string& genHeadRoot,
+            const std::vector<std::string>& vTailRels,
+            const std::vector<std::string>& vGenTailRels,
+            Figaro::QRHintType qrHintType,
+            bool saveResult,
+            const std::string& joinRelName)
+    {
+        std::vector<Relation*> vpRels;
+        std::vector<Relation*> vpRelTails;
+        std::vector<Relation*> vpRelGenTails;
+        Relation* pRootRel;
+        Relation* pJoinRel = nullptr;
+        for (const auto relName: vRelationOrder)
+        {
+            Relation* pRel = &m_relations.at(relName);
+            vpRels.push_back(pRel);
+        }
+        for (const auto relName: vTailRels)
+        {
+            Relation* pRel = &m_relations.at(relName);
+            FIGARO_LOG_ASSERT(pRel != nullptr)
+            vpRelTails.push_back(pRel);
+            pRel->computeLUInPlace(qrHintType);
+            FIGARO_LOG_INFO("Tail name", relName)
+        }
+
+        for (const auto relName: vGenTailRels)
+        {
+            //MICRO_BENCH_INIT(measureGenTail)
+            //MICRO_BENCH_START(measureGenTail)
+            Relation* pRel = &m_relations.at(relName);
+            FIGARO_LOG_ASSERT(pRel != nullptr)
+            vpRelGenTails.push_back(pRel);
+            pRel->computeLUInPlace(qrHintType);
+            //MICRO_BENCH_STOP(measureGenTail)
+            //FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
+            FIGARO_LOG_INFO("Gen Tail name", relName)
+        }
+
+        pRootRel = &m_relations.at(genHeadRoot);
+        FIGARO_LOG_INFO("Root Rel name", pRootRel->getName())
+        pRootRel->computeLUOfGeneralizedHead(vpRelTails, qrHintType);
+
+        if (joinRelName != "")
+        {
+            pJoinRel = &m_relations.at(joinRelName);
+        }
+        auto qrResult = pRootRel->computeLUOfConcatenatedGeneralizedHeadAndTails(
+            vpRels,
+            pRootRel,
+            vpRelTails, vpRelGenTails,
+            qrHintType, saveResult, pJoinRel);
+        return saveQRResult(qrResult);
+    }
+
+
+     std::tuple<std::string, std::string> Database::computeQRHeadsAndTails(
+        const std::string& relationName,
+        const std::vector<std::string>& vJoinAttrNames,
+        bool isLeafNode)
+    {
+        Relation& rel = m_relations.at(relationName);
+        auto [relHeads, relTails] = rel.computeQRHeadsAndTails(vJoinAttrNames, isLeafNode);
+        auto headsName = relHeads.getName();
+        auto tailName = relTails.getName();
+        m_relations.emplace(relHeads.getName(), std::move(relHeads));
+        m_relations.emplace(relTails.getName(), std::move(relTails));
+        return {headsName, tailName};
+    }
+
+    std::string Database::aggregateAwayQRChildrenRelations(
+            const std::string& relationName,
+            const std::string& relHeadName,
+            const std::vector<std::string>& vChildRelNames,
+            const std::vector<std::string>& vChildHeadRelNames,
+            const std::vector<std::string>& vJoinAttributeNames,
+            const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
+            const std::vector<std::string>& vSubTreeRelNames,
+            const std::vector<std::vector<std::string> >& vvSubTreeRelnames)
+    {
+        Relation& rel = m_relations.at(relationName);
+        Relation& relHead = m_relations.at(relHeadName);
+        std::vector<Relation*> vpChildRels;
+        std::vector<Relation*> vpChildHeadRels;
+
+        for (const auto childRelName: vChildRelNames)
+        {
+            Relation* pRel = &m_relations.at(childRelName);
+            vpChildRels.push_back(pRel);
+        }
+        FIGARO_LOG_INFO(vChildHeadRelNames);
+        for (const auto childHeadRelName: vChildHeadRelNames)
+        {
+            Relation* pRel = &m_relations.at(childHeadRelName);
+            vpChildHeadRels.push_back(pRel);
+        }
+        FIGARO_LOG_INFO(vChildRelNames);
+
+        Relation relAggAway = rel.aggregateAwayQRChildrenRelations(&relHead, vpChildRels,
+            vpChildHeadRels, vJoinAttributeNames, vvJoinAttributeNames,
+            vSubTreeRelNames, vvSubTreeRelnames);
+        std::string aggregatedAwayName = relAggAway.getName();
+        m_relations.emplace(aggregatedAwayName, std::move(relAggAway));
+        return aggregatedAwayName;
+    }
+
+    std::tuple<std::string, std::string>
+    Database::computeAndScaleQRGeneralizedHeadAndTail(
+        const std::string& relationName,
+        const std::string& aggrAwayRelName,
+        const std::vector<std::string>& vJoinAttributeNames,
+        const std::vector<std::string>& vParJoinAttributeNames,
+        bool isRootNode,
+        uint32_t numRelsSubTree)
+    {
+        Relation& rel = m_relations.at(relationName);
+        Relation& aggAwayRel = m_relations.at(aggrAwayRelName);
+        auto [genHeadRel, genTailRel] =
+        rel.computeAndScaleQRGeneralizedHeadAndTail(
+            &aggAwayRel,
+            vJoinAttributeNames, vParJoinAttributeNames,
+            isRootNode, numRelsSubTree);
+        std::string genHeadRelname = genHeadRel.getName();
+        std::string genTailRelname = genTailRel.getName();
+
+        m_relations.emplace(genHeadRelname, std::move(genHeadRel));
+        m_relations.emplace(genTailRelname, std::move(genTailRel));
+
+        return {genHeadRelname, genTailRelname};
+    }
+
+    std::tuple<std::string, std::string>
+    Database::computeQRPostprocessing(
             const std::vector<std::string>& vRelationOrder,
             const std::string& genHeadRoot,
             const std::vector<std::string>& vTailRels,
@@ -608,7 +742,7 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::evalPostprocessing(
+    Database::evalQRPostprocessing(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
