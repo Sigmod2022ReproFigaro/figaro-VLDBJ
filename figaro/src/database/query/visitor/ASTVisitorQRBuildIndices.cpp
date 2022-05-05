@@ -1,4 +1,4 @@
-#include "database/query/visitor/ASTBuildIndicesVisitor.h"
+#include "database/query/visitor/ASTVisitorBuildIndices.h"
 
 namespace Figaro
 {

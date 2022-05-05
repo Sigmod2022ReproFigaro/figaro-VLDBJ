@@ -1,13 +1,13 @@
 #include "database/query/visitor/ASTVisitorQueryEval.h"
 
-#include "database/query/visitor/ASTJoinAttributesComputeVisitor.h"
-#include "database/query/visitor/ASTBuildIndicesVisitor.h"
-#include "database/query/visitor/ASTComputeDownCountsVisitor.h"
-#include "database/query/visitor/ASTComputeUpAndCircleCountsVisitor.h"
-#include "database/query/visitor/ASTFigaroFirstPassVisitor.h"
-#include "database/query/visitor/ASTFigaroSecondPassVisitor.h"
-#include "database/query/visitor/ASTJoinVisitor.h"
-#include "database/query/visitor/ASTRightMultiplyVisitor.h"
+#include "database/query/visitor/ASTVisitorComputeJoinAttributes.h"
+#include "database/query/visitor/ASTVisitorBuildIndices.h"
+#include "database/query/visitor/ASTVisitorComputeDownCounts.h"
+#include "database/query/visitor/ASTVisitorComputeUpAndCircleCounts.h"
+#include "database/query/visitor/ASTVisitorQRFigaroFirstPass.h"
+#include "database/query/visitor/ASTVisitorQRFigaroSecondPass.h"
+#include "database/query/visitor/ASTVisitorJoin.h"
+#include "database/query/visitor/ASTVisitorRightMultiply.h"
 #include "database/query/node/ASTNodeInverse.h"
 #include "omp.h"
 
@@ -15,11 +15,11 @@ namespace Figaro
 {
     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, true, m_memoryLayout);
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, true, m_memoryLayout);
         ASTBuildIndicesVisitor buildIndicesVisitor(m_pDatabase);
-        ASTComputeDownCountsVisitor computeDownVisitor(m_pDatabase);
-        ASTComputeUpAndCircleCountsVisitor computeUpAndCircleVisitor(m_pDatabase);
-        ASTFigaroFirstPassVisitor figaroFirstPassVisitor(m_pDatabase);
+        ASTVisitorComputeDownCounts computeDownVisitor(m_pDatabase);
+        ASTVisitorComputeUpAndCircleCounts computeUpAndCircleVisitor(m_pDatabase);
+        ASTVisitorQRFigaroFirstPass figaroFirstPassVisitor(m_pDatabase);
 
         std::string joinRelName = "";
         std::string qName = "";
@@ -44,8 +44,8 @@ namespace Figaro
         if (pElement->isComputeQ())
         {
             /*
-            ASTJoinVisitor astJoinVisitor(m_pDatabase);
-            ASTVisitorResultJoin* pResult = (ASTVisitorResultJoin*)pElement->getOperand()->accept(&astJoinVisitor);
+            ASTVisitorJoin ASTVisitorJoin(m_pDatabase);
+            ASTVisitorResultJoin* pResult = (ASTVisitorResultJoin*)pElement->getOperand()->accept(&ASTVisitorJoin);
             joinRelName = pResult->getJoinRelName();
             delete pResult;
             */
@@ -80,7 +80,7 @@ namespace Figaro
         //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(rFirstPassComp));
 
         //MICRO_BENCH_START(rSecondPassComp)
-        ASTFigaroSecondPassVisitor figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels());
+        ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels());
         delete pResult;
         ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
         std::string rName = pQRrResult->getRRelationName();
@@ -122,7 +122,7 @@ namespace Figaro
     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeQRPostProc(ASTNodeQRPostProc* pElement)
     {
         FIGARO_LOG_INFO("VISITING POST PROC QR NODE")
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
         omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
@@ -147,7 +147,81 @@ namespace Figaro
 
      ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLUFigaro(ASTNodeLUFigaro* pElement)
      {
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, true, m_memoryLayout);
+        ASTBuildIndicesVisitor buildIndicesVisitor(m_pDatabase);
+        ASTVisitorComputeDownCounts computeDownVisitor(m_pDatabase);
+        ASTVisitorComputeUpAndCircleCounts computeUpAndCircleVisitor(m_pDatabase);
+        ASTVisitorQRFigaroFirstPass figaroFirstPassVisitor(m_pDatabase);
 
+        std::string joinRelName = "";
+        std::string qName = "";
+
+        FIGARO_LOG_INFO("VISITING QR GIVENS NODE")
+
+        FIGARO_LOG_INFO("HELPER PREPROCESSING")
+        omp_set_num_threads(pElement->getNumThreads());
+        // Project away operator.
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
+        pElement->accept(&joinAttrVisitor);
+
+        MICRO_BENCH_INIT(rIndicesComp)
+        MICRO_BENCH_INIT(rFirstPassComp)
+        MICRO_BENCH_INIT(rSecondPassComp)
+        MICRO_BENCH_INIT(qComp)
+
+        FIGARO_LOG_INFO("JOIN EVALUATION")
+        FIGARO_LOG_INFO("ONE HOT ENCODING")
+        m_pDatabase->oneHotEncodeRelations();
+
+        /************* R COMPUTATION START ***********/
+        MICRO_BENCH_INIT(rComp)
+        MICRO_BENCH_START(rComp)
+
+        //MICRO_BENCH_START(rIndicesComp)
+        pElement->accept(&buildIndicesVisitor);
+        //MICRO_BENCH_STOP(rIndicesComp)
+
+        // TODO: replace first and secon
+        //MICRO_BENCH_START(rFirstPassComp)
+        ASTVisitorResultFirstPass* pResult =
+        (ASTVisitorResultFirstPass*)pElement->accept(&figaroFirstPassVisitor);
+        //MICRO_BENCH_STOP(rFirstPassComp)
+        //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(rFirstPassComp));
+
+        //MICRO_BENCH_START(rSecondPassComp)
+        ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels());
+        delete pResult;
+        ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
+        std::string rName = pQRrResult->getRRelationName();
+        m_pDatabase->persistRelation(rName);
+        //MICRO_BENCH_STOP(rSecondPassComp)
+        //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(rSecondPassComp));
+
+        MICRO_BENCH_STOP(rComp)
+        FIGARO_LOG_BENCH("Figaro", "Computation of R",  MICRO_BENCH_GET_TIMER_LAP(rComp));
+
+        /************* R COMPUTATION END ***********/
+
+        m_pDatabase->destroyAuxRelations();
+
+        delete pQRrResult;
+
+        MICRO_BENCH_START(qComp)
+        ASTNodeRelation* astRNOde =
+            new ASTNodeRelation(rName,
+            m_pDatabase->getRelationAttributeNames(rName));
+        ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
+        ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode);
+        // Add relation.
+        ASTVisitorResultJoin* pQResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
+        qName = pQResult->getJoinRelName();
+        delete pQResult;
+        MICRO_BENCH_STOP(qComp)
+        FIGARO_LOG_BENCH("Figaro", "Computation of Q",  MICRO_BENCH_GET_TIMER_LAP(qComp));
+
+
+        return new ASTVisitorResultQR(rName, qName);
      }
 
     ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)
@@ -155,8 +229,8 @@ namespace Figaro
         FIGARO_LOG_INFO("VISITING LIN REG NODE")
         std::string rRelName;
 
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
-        ASTJoinVisitor astJoinVisitor(m_pDatabase);
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTVisitorJoin ASTVisitorJoin(m_pDatabase);
 
         omp_set_num_threads(pElement->getNumThreads());
         if (pElement->isFigaro())
@@ -193,8 +267,8 @@ namespace Figaro
     ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         FIGARO_LOG_INFO("VISITING EVAL JOIN NODE")
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
-        ASTJoinVisitor astJoinVisitor(m_pDatabase);
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTVisitorJoin ASTVisitorJoin(m_pDatabase);
 
         omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
@@ -202,7 +276,7 @@ namespace Figaro
         pElement->accept(&joinAttrVisitor);
         //m_pDatabase->oneHotEncodeRelations();
 
-        ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)pElement->accept(&astJoinVisitor);
+        ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)pElement->accept(&ASTVisitorJoin);
         std::string newRelName = pJoinResult->getJoinRelName();
         delete pJoinResult;
 
@@ -212,7 +286,7 @@ namespace Figaro
     ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
     {
         FIGARO_LOG_INFO("VISITING EVAL RIGHT MULTIPLY NODE")
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
         //MICRO_BENCH_INIT(joinTime)
         //MICRO_BENCH_START(joinTime)
@@ -226,14 +300,14 @@ namespace Figaro
         FIGARO_LOG_INFO("preOrderParRelNames", joinAttrVisitor.getPreOrderParRelNames())
         FIGARO_LOG_INFO("vvJoinAttrNames", joinAttrVisitor.getPreOrderVVJoinAttrNames())
         FIGARO_LOG_INFO("vvParJoinAttrNames", joinAttrVisitor.getPreOrderVVParJoinAttrNames())
-        ASTJoinVisitor astJoinVisitor(m_pDatabase, true,
+        ASTVisitorJoin ASTVisitorJoin(m_pDatabase, true,
             joinAttrVisitor.getPreOrderRelNames(),
             joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(),
             joinAttrVisitor.getPreOrderVVParJoinAttrNames());
         FIGARO_LOG_INFO("Works up to here")
         ASTVisitorResultJoin* pJoinResult =
-            (ASTVisitorResultJoin*)pNodeEvalJoin->accept(&astJoinVisitor);
+            (ASTVisitorResultJoin*)pNodeEvalJoin->accept(&ASTVisitorJoin);
         delete pJoinResult;
         */
         //MICRO_BENCH_STOP(joinTime)
@@ -243,7 +317,7 @@ namespace Figaro
             (ASTVisitorResultJoin*)pElement->getRightOperand()->accept(this);
 
         uint32_t joinSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0]);
-        ASTRightMultiplyVisitor astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
+        ASTVisitorRightMultiply astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
             true, joinAttrVisitor.getPreOrderRelNames(), joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(), joinAttrVisitor.getPreOrderVVParJoinAttrNames(), joinSize);
 

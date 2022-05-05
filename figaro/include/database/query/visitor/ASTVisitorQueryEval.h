@@ -1,5 +1,5 @@
-#ifndef _FIGARO_AST_VISITOR_QR_GIVENS_H_
-#define _FIGARO_AST_VISITOR_QR_GIVENS_H_
+#ifndef _FIGARO_AST_VISITOR_QUERY_EVAL_H_
+#define _FIGARO_AST_VISITOR_QUERY_EVAL_H_
 
 #include "ASTVisitorQRFigaroAbs.h"
 #include "./result/ASTVisitorResultJoin.h"

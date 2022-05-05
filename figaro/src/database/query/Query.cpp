@@ -1,6 +1,6 @@
 #include "database/query/Query.h"
 #include "database/query/visitor/ASTVisitorQueryEval.h"
-#include "database/query/visitor/ASTJoinVisitor.h"
+#include "database/query/visitor/ASTVisitorJoin.h"
 #include "utils/Performance.h"
 #include "database/storage/Matrix.h"
 #include <fstream>
@@ -81,13 +81,13 @@ namespace Figaro
             {
                 pCreatedNode = new ASTNodeLUFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
-                FIGARO_LOG_INFO("CREATE GIV_QR NODE")
+                FIGARO_LOG_INFO("CREATE LU_FIGARO NODE")
             }
             if (operatorName == "GIV_QR")
             {
                 pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
-                FIGARO_LOG_INFO("CREATE GIV_QR NODE")
+                FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
             else if (operatorName == "POSTPROCESS_QR")
             {

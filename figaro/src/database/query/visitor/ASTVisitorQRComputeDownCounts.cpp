@@ -1,8 +1,8 @@
-#include "database/query/visitor/ASTComputeDownCountsVisitor.h"
+#include "database/query/visitor/ASTVisitorComputeDownCounts.h"
 
 namespace Figaro
 {
-    ASTVisitorResultAbs* ASTComputeDownCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeDownCounts::visitNodeRelation(ASTNodeRelation* pElement)
     {
         bool isRootNode;
         std::vector<std::string> childrenNames;
@@ -21,7 +21,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorResultAbs* ASTComputeDownCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeDownCounts::visitNodeJoin(ASTNodeJoin* pElement)
     {
         bool isRootNode;
         FIGARO_LOG_DBG("Join");
@@ -44,7 +44,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorResultAbs* ASTComputeDownCountsVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeDownCounts::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");

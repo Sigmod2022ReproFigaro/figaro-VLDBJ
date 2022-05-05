@@ -1,12 +1,12 @@
-#ifndef _FIGARO_AST_JOIN_VISITOR_H_
-#define _FIGARO_AST_JOIN_VISITOR_H_
+#ifndef _FIGARO_AST_VISITOR_JOIN_H_
+#define _FIGARO_AST_VISITOR_JOIN_H_
 
 #include "ASTVisitor.h"
 #include "./result/ASTVisitorResultJoin.h"
 
 namespace Figaro
 {
-    class ASTJoinVisitor: public ASTVisitor
+    class ASTVisitorJoin: public ASTVisitor
     {
         uint32_t m_joinSize;
         bool m_isLeapFrog = false;
@@ -15,7 +15,7 @@ namespace Figaro
         std::vector<std::vector<std::string> > m_vvJoinAttrNames;
         std::vector<std::vector<std::string> > m_vvParJoinAttrNames;
     public:
-        ASTJoinVisitor(Database* pDatabase, bool isLeapFrog = false,
+        ASTVisitorJoin(Database* pDatabase, bool isLeapFrog = false,
             const std::vector<std::string>& vPreOrderRelNames = {},
             const std::vector<std::string>& vPreOrderParRelNames = {},
             const std::vector<std::vector<std::string> >& vvJoinAttrNames = {},
@@ -30,11 +30,17 @@ namespace Figaro
             m_joinSize(joinSize)
          {}
         virtual ASTVisitorResultJoin* visitNodeRelation([[maybe_unused]]ASTNodeRelation* pElement) override;
+
         virtual ASTVisitorResultJoin* visitNodeJoin(ASTNodeJoin* pElement) override;
-        virtual ASTVisitorResultJoin* visitNodeQRFigaro([[maybe_unused]]ASTNodeQRFigaro* pElement) override {
+
+        virtual ASTVisitorResultJoin* visitNodeQRFigaro([[maybe_unused]]ASTNodeQRFigaro* pElement) override
+        {
             FIGARO_LOG_ASSERT(1!=1)
-            return nullptr;}
-        virtual ASTVisitorResultJoin* visitNodeQRPostProc([[maybe_unused]]ASTNodeQRPostProc* pElement) override {
+            return nullptr;
+        }
+
+        virtual ASTVisitorResultJoin* visitNodeQRPostProc([[maybe_unused]]ASTNodeQRPostProc* pElement) override
+        {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
@@ -61,7 +67,7 @@ namespace Figaro
             return nullptr;
         }
 
-        virtual ~ASTJoinVisitor() override {}
+        virtual ~ASTVisitorJoin() override {}
         virtual ASTVisitorResultAbs* visitNodeAssign([[maybe_unused]]ASTNodeAssign* pElement)  override;
         virtual ASTVisitorResultJoin* visitNodeEvalJoin(ASTNodeEvalJoin* pElement)  override;
 

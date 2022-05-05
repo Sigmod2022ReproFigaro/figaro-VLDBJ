@@ -1,8 +1,7 @@
-#include "database/query/visitor/ASTComputeUpAndCircleCountsVisitor.h"
-
+#include "database/query/visitor/ASTVisitorComputeUpAndCircleCounts.h"
 namespace Figaro
 {
-    ASTVisitorResultAbs* ASTComputeUpAndCircleCountsVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeUpAndCircleCounts::visitNodeRelation(ASTNodeRelation* pElement)
     {
         bool isRootNode;
         const auto& relationName = pElement->getRelationName();
@@ -15,7 +14,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorResultAbs* ASTComputeUpAndCircleCountsVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeUpAndCircleCounts::visitNodeJoin(ASTNodeJoin* pElement)
     {
         bool isRootNode;
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
@@ -34,7 +33,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorResultAbs* ASTComputeUpAndCircleCountsVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeUpAndCircleCounts::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
          FIGARO_LOG_DBG("********************");
         FIGARO_LOG_DBG("QR Givens");

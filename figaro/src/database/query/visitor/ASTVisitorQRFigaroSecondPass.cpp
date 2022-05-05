@@ -1,9 +1,9 @@
-#include "database/query/visitor/ASTFigaroSecondPassVisitor.h"
+#include "database/query/visitor/ASTVisitorQRFigaroSecondPass.h"
 #include "utils/Performance.h"
 
 namespace Figaro
 {
-    ASTVisitorSecondPassResult* ASTFigaroSecondPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorSecondPassResult* ASTVisitorQRFigaroSecondPass::visitNodeRelation(ASTNodeRelation* pElement)
     {
         const auto& relationName = pElement->getRelationName();
         FIGARO_LOG_INFO("Finished visiting relation", relationName)
@@ -15,7 +15,7 @@ namespace Figaro
     }
 
     std::vector<std::string>
-    ASTFigaroSecondPassVisitor::getChildrenHeadNames(
+    ASTVisitorQRFigaroSecondPass::getChildrenHeadNames(
         const std::vector<std::string>& vChildrenNames) const
     {
         std::vector<std::string> vChildrenHeadNames;
@@ -27,7 +27,7 @@ namespace Figaro
         return vChildrenHeadNames;
     }
 
-    ASTVisitorSecondPassResult* ASTFigaroSecondPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorSecondPassResult* ASTVisitorQRFigaroSecondPass::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vChildrenNames;
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
@@ -93,7 +93,7 @@ namespace Figaro
         return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels, vSubTreeRelNames);
     }
 
-    ASTVisitorResultQR* ASTFigaroSecondPassVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultQR* ASTVisitorQRFigaroSecondPass::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
         std::vector<std::string> vGenTailRelNames;
         std::vector<std::string> vTailRelNames;

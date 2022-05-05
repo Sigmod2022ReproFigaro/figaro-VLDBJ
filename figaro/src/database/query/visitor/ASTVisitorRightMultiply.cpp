@@ -1,9 +1,9 @@
-#include "database/query/visitor/ASTRightMultiplyVisitor.h"
+#include "database/query/visitor/ASTVisitorRightMultiply.h"
 #include "database/query/visitor/result/ASTVisitorResultJoin.h"
 
 namespace Figaro
 {
-    ASTVisitorResultJoin* ASTRightMultiplyVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultJoin* ASTVisitorRightMultiply::visitNodeRelation(ASTNodeRelation* pElement)
     {
         FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
@@ -27,7 +27,7 @@ namespace Figaro
         return new ASTVisitorResultJoin(mulRelName);
     }
 
-    ASTVisitorResultJoin* ASTRightMultiplyVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultJoin* ASTVisitorRightMultiply::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vRelNames;
         std::string centralRelName;
@@ -66,7 +66,7 @@ namespace Figaro
         return new ASTVisitorResultJoin(joinRelName);
     }
 
-    ASTVisitorResultAbs* ASTRightMultiplyVisitor::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
+    ASTVisitorResultAbs* ASTVisitorRightMultiply::visitNodeRightMultiply(ASTNodeRightMultiply* pElement)
     {
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
         FIGARO_LOG_INFO("VISITING LEFT")

@@ -1,8 +1,8 @@
-#include "database/query/visitor/ASTFigaroFirstPassVisitor.h"
+#include "database/query/visitor/ASTVisitorQRFigaroFirstPass.h"
 
 namespace Figaro
 {
-    ASTVisitorResultFirstPass* ASTFigaroFirstPassVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultFirstPass* ASTVisitorQRFigaroFirstPass::visitNodeRelation(ASTNodeRelation* pElement)
     {
         std::vector<std::string> childrenNames;
         std::vector<std::vector<std::string> > vvChildrenParentJoinAttributeNames;
@@ -20,7 +20,7 @@ namespace Figaro
         return new ASTVisitorResultFirstPass(namesTmpRels);
     }
 
-    ASTVisitorResultFirstPass* ASTFigaroFirstPassVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultFirstPass* ASTVisitorQRFigaroFirstPass::visitNodeJoin(ASTNodeJoin* pElement)
     {
         FIGARO_LOG_INFO("Join");
         FIGARO_LOG_INFO("Central");
@@ -49,7 +49,7 @@ namespace Figaro
         return new ASTVisitorResultFirstPass(namesTmpRels);
     }
 
-    ASTVisitorResultFirstPass* ASTFigaroFirstPassVisitor::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultFirstPass* ASTVisitorQRFigaroFirstPass::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
         FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("QR Givens");

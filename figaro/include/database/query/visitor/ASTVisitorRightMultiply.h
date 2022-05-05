@@ -1,12 +1,12 @@
-#ifndef _FIGARO_AST_RIGHT_MULTIPLY_VISITOR_H_
-#define _FIGARO_AST_RIGHT_MULTIPLY_VISITOR_H_
+#ifndef _FIGARO_AST_VISITOR_RIGHT_MULTIPLY_H_
+#define _FIGARO_AST_VISITOR_RIGHT_MULTIPLY_H_
 
 #include "ASTVisitor.h"
 #include "./result/ASTVisitorResultJoin.h"
 
 namespace Figaro
 {
-    class ASTRightMultiplyVisitor: public ASTVisitor
+    class ASTVisitorRightMultiply: public ASTVisitor
     {
         std::string m_relName;
         uint32_t startRowIdx = 0;
@@ -19,7 +19,7 @@ namespace Figaro
         std::vector<std::vector<std::string> > m_vvJoinAttrNames;
         std::vector<std::vector<std::string> > m_vvParJoinAttrNames;
     public:
-        ASTRightMultiplyVisitor(
+        ASTVisitorRightMultiply(
             Database* pDatabase,
             const std::string& relName,
             bool useLFTJoin = false,
@@ -76,7 +76,7 @@ namespace Figaro
             return nullptr;
         }
 
-        virtual ~ASTRightMultiplyVisitor() override {}
+        virtual ~ASTVisitorRightMultiply() override {}
     };
 }
 

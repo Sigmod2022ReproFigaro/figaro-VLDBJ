@@ -1,5 +1,5 @@
-#ifndef _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
-#define _FIGARO_AST_FIGARO_SECOND_PASS_VISITOR_H_
+#ifndef _FIGARO_AST_VISITOR_FIGARO_SECOND_PASS_H_
+#define _FIGARO_AST_VISITOR_FIGARO_SECOND_PASS_H_
 
 #include "ASTVisitorQRFigaroAbs.h"
 #include "./result/ASTVisitorResultFirstPass.h"
@@ -8,7 +8,7 @@
 
 namespace Figaro
 {
-    class ASTFigaroSecondPassVisitor: public ASTVisitorQFigaroAbs
+    class ASTVisitorQRFigaroSecondPass: public ASTVisitorQFigaroAbs
     {
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
         bool m_saveResult;
@@ -20,7 +20,7 @@ namespace Figaro
         std::vector<std::string> getChildrenHeadNames(const std::vector<std::string>& vChildrenNames) const;
 
     public:
-        ASTFigaroSecondPassVisitor(
+        ASTVisitorQRFigaroSecondPass(
             Database* pDatabase, Figaro::QRHintType qrHintType, bool saveResult,
             const std::string& joinRelName,
             const std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames>
@@ -34,7 +34,7 @@ namespace Figaro
         ASTVisitorSecondPassResult* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorSecondPassResult* visitNodeJoin(ASTNodeJoin* pElement) override;
         ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
-        virtual ~ASTFigaroSecondPassVisitor() override {}
+        virtual ~ASTVisitorQRFigaroSecondPass() override {}
 
 
     };

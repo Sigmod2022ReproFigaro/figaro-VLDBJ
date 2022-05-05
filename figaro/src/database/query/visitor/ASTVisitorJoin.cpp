@@ -1,16 +1,16 @@
-#include "database/query/visitor/ASTJoinVisitor.h"
-#include "database/query/visitor/ASTJoinAttributesComputeVisitor.h"
+#include "database/query/visitor/ASTVisitorJoin.h"
+#include "database/query/visitor/ASTVisitorComputeJoinAttributes.h"
 #include <fstream>
 
 namespace Figaro
 {
-    ASTVisitorResultJoin* ASTJoinVisitor::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultJoin* ASTVisitorJoin::visitNodeRelation(ASTNodeRelation* pElement)
     {
         FIGARO_LOG_INFO("VISITING RELATION NODE")
         return new ASTVisitorResultJoin(pElement->getRelationName());
     }
 
-    ASTVisitorResultJoin* ASTJoinVisitor::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultJoin* ASTVisitorJoin::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vRelNames;
         for (const auto& pChild: pElement->getChildren())
@@ -34,9 +34,9 @@ namespace Figaro
         return new ASTVisitorResultJoin(newRelName);
     }
 
-    ASTVisitorResultAbs* ASTJoinVisitor::visitNodeAssign(ASTNodeAssign* pElement)
+    ASTVisitorResultAbs* ASTVisitorJoin::visitNodeAssign(ASTNodeAssign* pElement)
     {
-        ASTJoinAttributesComputeVisitor joinAttrVisitor(m_pDatabase, false, Figaro::MemoryLayout::ROW_MAJOR);
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, Figaro::MemoryLayout::ROW_MAJOR);
         pElement->getOperand()->accept(&joinAttrVisitor);
         ASTVisitorResultJoin* pJoinResult = (ASTVisitorResultJoin*)pElement->getOperand()->accept(this);
         std::string newRelName = pElement->getRelationName();
@@ -55,7 +55,7 @@ namespace Figaro
         return new ASTVisitorResultJoin(newRelName);
     }
 
-    ASTVisitorResultJoin* ASTJoinVisitor::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
+    ASTVisitorResultJoin* ASTVisitorJoin::visitNodeEvalJoin(ASTNodeEvalJoin* pElement)
     {
         std::string newRelName;
         FIGARO_LOG_INFO("VISITING EVAL JOIN NODE", m_isLeapFrog ? "LEAP_FROG" : "HASH_JOIN")
