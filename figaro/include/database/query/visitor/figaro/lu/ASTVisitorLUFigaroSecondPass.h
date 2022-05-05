@@ -1,14 +1,14 @@
-#ifndef _FIGARO_AST_VISITOR_FIGARO_SECOND_PASS_H_
-#define _FIGARO_AST_VISITOR_FIGARO_SECOND_PASS_H_
+#ifndef _FIGARO_AST_VISITOR_LU_FIGARO_SECOND_PASS_H_
+#define _FIGARO_AST_VISITOR_LU_FIGARO_SECOND_PASS_H_
 
-#include "ASTVisitorQRFigaroAbs.h"
-#include "./result/ASTVisitorResultFirstPass.h"
-#include "ASTVisitorSecondPassResult.h"
-#include "./result/ASTVisitorResultQR.h"
+#include "ASTVisitorLUFigaroAbs.h"
+#include "../../result/ASTVisitorResultSecondPass.h"
+#include "../../result/ASTVisitorResultFirstPass.h"
+#include "../../result/ASTVisitorResultQR.h"
 
 namespace Figaro
 {
-    class ASTVisitorQRFigaroSecondPass: public ASTVisitorQFigaroAbs
+    class ASTVisitorLUFigaroSecondPass: public ASTVisitorLUFigaroAbs
     {
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
         bool m_saveResult;
@@ -20,21 +20,21 @@ namespace Figaro
         std::vector<std::string> getChildrenHeadNames(const std::vector<std::string>& vChildrenNames) const;
 
     public:
-        ASTVisitorQRFigaroSecondPass(
+        ASTVisitorLUFigaroSecondPass(
             Database* pDatabase, Figaro::QRHintType qrHintType, bool saveResult,
             const std::string& joinRelName,
             const std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames>
             htTmpRelsNames):
-                ASTVisitorQFigaroAbs(pDatabase),
+                ASTVisitorLUFigaroAbs(pDatabase),
                 m_saveResult(saveResult),
                  m_qrHintType(qrHintType),
                  m_joinRelName(joinRelName),
                  m_htTmpRelsNames(htTmpRelsNames) {
                  }
-        ASTVisitorSecondPassResult* visitNodeRelation(ASTNodeRelation* pElement) override;
-        ASTVisitorSecondPassResult* visitNodeJoin(ASTNodeJoin* pElement) override;
-        ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
-        virtual ~ASTVisitorQRFigaroSecondPass() override {}
+        ASTVisitorResultSecondPass* visitNodeRelation(ASTNodeRelation* pElement) override;
+        ASTVisitorResultSecondPass* visitNodeJoin(ASTNodeJoin* pElement) override;
+        ASTVisitorResultQR* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
+        virtual ~ASTVisitorLUFigaroSecondPass() override {}
 
 
     };

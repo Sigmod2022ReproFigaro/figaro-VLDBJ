@@ -1,4 +1,4 @@
-#include "database/query/visitor/ASTVisitorComputeUpAndCircleCounts.h"
+#include "database/query/visitor/figaro/qr/ASTVisitorComputeUpAndCircleCounts.h"
 namespace Figaro
 {
     ASTVisitorResultAbs* ASTVisitorComputeUpAndCircleCounts::visitNodeRelation(ASTNodeRelation* pElement)

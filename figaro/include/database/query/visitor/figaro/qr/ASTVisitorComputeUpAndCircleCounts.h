@@ -5,11 +5,11 @@
 
 namespace Figaro
 {
-    class ASTVisitorComputeUpAndCircleCounts: public ASTVisitorQFigaroAbs
+    class ASTVisitorComputeUpAndCircleCounts: public ASTVisitorQRFigaroAbs
     {
     public:
         ASTVisitorComputeUpAndCircleCounts(
-            Database* pDatabase): ASTVisitorQFigaroAbs(pDatabase) {}
+            Database* pDatabase): ASTVisitorQRFigaroAbs(pDatabase) {}
         ASTVisitorResultAbs* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override;
         ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;

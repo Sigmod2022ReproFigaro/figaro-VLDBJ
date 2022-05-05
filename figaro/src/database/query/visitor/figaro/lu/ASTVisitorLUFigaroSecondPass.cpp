@@ -1,21 +1,21 @@
-#include "database/query/visitor/ASTVisitorQRFigaroSecondPass.h"
+#include "database/query/visitor/figaro/lu/ASTVisitorLUFigaroSecondPass.h"
 #include "utils/Performance.h"
 
 namespace Figaro
 {
-    ASTVisitorSecondPassResult* ASTVisitorQRFigaroSecondPass::visitNodeRelation(ASTNodeRelation* pElement)
+    ASTVisitorResultSecondPass* ASTVisitorLUFigaroSecondPass::visitNodeRelation(ASTNodeRelation* pElement)
     {
         const auto& relationName = pElement->getRelationName();
         FIGARO_LOG_INFO("Finished visiting relation", relationName)
         std::string relHeadsName =
         m_htTmpRelsNames.at(relationName).m_headsName;
-        std::string relGenTailsName = m_pDatabase->createDummyGenTailRelation(relationName);return new ASTVisitorSecondPassResult(relHeadsName,
+        std::string relGenTailsName = m_pDatabase->createDummyGenTailRelation(relationName);return new ASTVisitorResultSecondPass(relHeadsName,
             {{relationName, relGenTailsName}},
             {relationName});
     }
 
     std::vector<std::string>
-    ASTVisitorQRFigaroSecondPass::getChildrenHeadNames(
+    ASTVisitorLUFigaroSecondPass::getChildrenHeadNames(
         const std::vector<std::string>& vChildrenNames) const
     {
         std::vector<std::string> vChildrenHeadNames;
@@ -27,14 +27,14 @@ namespace Figaro
         return vChildrenHeadNames;
     }
 
-    ASTVisitorSecondPassResult* ASTVisitorQRFigaroSecondPass::visitNodeJoin(ASTNodeJoin* pElement)
+    ASTVisitorResultSecondPass* ASTVisitorLUFigaroSecondPass::visitNodeJoin(ASTNodeJoin* pElement)
     {
         std::vector<std::string> vChildrenNames;
         const auto& relationName = pElement->getCentralRelation()->getRelationName();
         FIGARO_LOG_INFO("vpChildRels", pElement->getChildrenNames())
         vChildrenNames = pElement->getChildrenNames();
 
-        std::unordered_map<std::string, ASTVisitorSecondPassResult::SecondPassRelNames> namesTmpRels;
+        std::unordered_map<std::string, ASTVisitorResultSecondPass::SecondPassRelNames> namesTmpRels;
         std::vector<std::string> vChildGenHeadNames;
         std::vector<std::string> vSubTreeRelNames;
         std::vector<std::vector<std::string> > vvSubTreeRelNames;
@@ -44,8 +44,8 @@ namespace Figaro
         for (const auto& pChild: pElement->getChildren())
         {
             FIGARO_LOG_INFO("Child");
-            ASTVisitorSecondPassResult* pResult =
-            (ASTVisitorSecondPassResult*)pChild->accept(this);
+            ASTVisitorResultSecondPass* pResult =
+            (ASTVisitorResultSecondPass*)pChild->accept(this);
             namesTmpRels.insert(pResult->getHtNamesTmpRels().begin(),
                 pResult->getHtNamesTmpRels().end());
             vChildGenHeadNames.push_back(pResult->getGenHeadsName());
@@ -85,15 +85,15 @@ namespace Figaro
             pElement->getJoinAttributeNames(),
             parJoinAttributeNames,
             isRootNode, vSubTreeRelNames.size());
-        namesTmpRels.insert({{relationName, ASTVisitorSecondPassResult::SecondPassRelNames(genTailRelName)}});
+        namesTmpRels.insert({{relationName, ASTVisitorResultSecondPass::SecondPassRelNames(genTailRelName)}});
 
         // multiply r^-1 with each of the relations using new API
         // join relations.
 
-        return  new ASTVisitorSecondPassResult(genHeadRelName, namesTmpRels, vSubTreeRelNames);
+        return  new ASTVisitorResultSecondPass(genHeadRelName, namesTmpRels, vSubTreeRelNames);
     }
 
-    ASTVisitorResultQR* ASTVisitorQRFigaroSecondPass::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
+    ASTVisitorResultQR* ASTVisitorLUFigaroSecondPass::visitNodeLUFigaro(ASTNodeLUFigaro* pElement)
     {
         std::vector<std::string> vGenTailRelNames;
         std::vector<std::string> vTailRelNames;
@@ -103,8 +103,8 @@ namespace Figaro
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
         //MICRO_BENCH_INIT(mainAlgorithm)
         //MICRO_BENCH_START(mainAlgorithm)
-         ASTVisitorSecondPassResult* pResult =
-            (ASTVisitorSecondPassResult*)pElement->getOperand()->accept(this);
+         ASTVisitorResultSecondPass* pResult =
+            (ASTVisitorResultSecondPass*)pElement->getOperand()->accept(this);
         //MICRO_BENCH_STOP(mainAlgorithm)
         //FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
 

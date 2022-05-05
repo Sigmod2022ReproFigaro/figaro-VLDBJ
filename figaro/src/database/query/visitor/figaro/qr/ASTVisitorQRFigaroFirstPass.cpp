@@ -1,4 +1,4 @@
-#include "database/query/visitor/ASTVisitorQRFigaroFirstPass.h"
+#include "database/query/visitor/figaro/qr/ASTVisitorQRFigaroFirstPass.h"
 
 namespace Figaro
 {

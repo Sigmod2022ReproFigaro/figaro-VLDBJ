@@ -1,15 +1,15 @@
 #ifndef _FIGARO_AST_VISITOR_QR_FIGARO_ABS_H_
 #define _FIGARO_AST_VISITOR_QR_FIGARO_ABS_H_
 
-#include "ASTVisitor.h"
-#include "./result/ASTVisitorResultAbs.h"
+#include "../../ASTVisitor.h"
+#include "../../result/ASTVisitorResultAbs.h"
 
 namespace Figaro
 {
-    class ASTVisitorQFigaroAbs: public ASTVisitor
+    class ASTVisitorQRFigaroAbs: public ASTVisitor
     {
     public:
-        ASTVisitorQFigaroAbs(Database* pDatabase):
+        ASTVisitorQRFigaroAbs(Database* pDatabase):
             ASTVisitor(pDatabase)
          {}
 
@@ -53,7 +53,7 @@ namespace Figaro
         }
 
 
-        virtual ~ASTVisitorQFigaroAbs() override {}
+        virtual ~ASTVisitorQRFigaroAbs() override {}
 
 
     };
