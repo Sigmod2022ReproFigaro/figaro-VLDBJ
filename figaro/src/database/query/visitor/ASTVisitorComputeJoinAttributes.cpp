@@ -46,7 +46,7 @@ namespace Figaro
 
     ASTVisitorResultAbs* ASTVisitorComputeJoinAttributes::visitNodeQRFigaro(ASTNodeQRFigaro* pElement)
     {
-        FIGARO_LOG_INFO("QR Givens");
+        FIGARO_LOG_INFO("QR Figaro");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
         FIGARO_LOG_INFO("Skipped attributes", pElement->getDropAttributes())
         FIGARO_LOG_INFO("Number of threads", pElement->getNumThreads())
@@ -70,5 +70,16 @@ namespace Figaro
         pElement->getOperand()->accept(this);
         return nullptr;
     }
+
+    ASTVisitorResultAbs* ASTVisitorComputeJoinAttributes::visitNodeLUFigaro(ASTNodeLUFigaro* pElement)
+    {
+        FIGARO_LOG_INFO("LU Figaro");
+        FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
+        FIGARO_LOG_INFO("Skipped attributes", pElement->getDropAttributes())
+        FIGARO_LOG_INFO("Number of threads", pElement->getNumThreads())
+        pElement->getOperand()->accept(this);
+        return nullptr;
+    }
+
 
 }

@@ -83,7 +83,7 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE LU_FIGARO NODE")
             }
-            if (operatorName == "GIV_QR")
+            else if (operatorName == "GIV_QR")
             {
                 pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);

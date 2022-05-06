@@ -174,7 +174,8 @@ namespace Figaro
         ASTVisitorLUFigaroFirstPass figaroFirstPassVisitor(m_pDatabase);
 
         std::string joinRelName = "";
-        std::string qName = "";
+        std::string lName = "";
+        std::string uName = "";
 
         FIGARO_LOG_INFO("VISITING LU FIGARO NODE")
 
@@ -184,6 +185,7 @@ namespace Figaro
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
+
 
         MICRO_BENCH_INIT(lIndicesComp)
         MICRO_BENCH_INIT(lFirstPassComp)
@@ -202,48 +204,64 @@ namespace Figaro
         pElement->accept(&buildIndicesVisitor);
         //MICRO_BENCH_STOP(lIndicesComp)
 
-        //MICRO_BENCH_START(lFirstPassComp)
-        ASTVisitorResultFirstPass* pResult =
-        (ASTVisitorResultFirstPass*)pElement->accept(&figaroFirstPassVisitor);
-        //MICRO_BENCH_STOP(lFirstPassComp)
-        //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(lFirstPassComp));
-
-        //MICRO_BENCH_START(lSecondPassComp)
-        ASTVisitorLUFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels());
-        delete pResult;
-        ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
-        std::string rName = pQRrResult->getRRelationName();
-        m_pDatabase->persistRelation(rName);
-        //MICRO_BENCH_STOP(lSecondPassComp)
-        //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(lSecondPassComp));
-
-        MICRO_BENCH_STOP(uComp)
-        FIGARO_LOG_BENCH("Figaro", "Computation of U",  MICRO_BENCH_GET_TIMER_LAP(uComp));
-
-        /************* U COMPUTATION END ***********/
-
-        if (m_saveMemory)
+        if (isFlagOn("headsAndTails"))
         {
-            m_pDatabase->destroyAuxRelations();
+            //MICRO_BENCH_START(lFirstPassComp)
+            ASTVisitorResultFirstPass* pResult =
+            (ASTVisitorResultFirstPass*)pElement->accept(&figaroFirstPassVisitor);
+            //MICRO_BENCH_STOP(lFirstPassComp)
+            //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(lFirstPassComp));
+            ASTVisitorResultQR* pQRrResult = nullptr;
+            if (isFlagOn("generalizedHeadsAndTails"))
+            {
+                bool evalPostProcessing = isFlagOn("postProcessing");
+                //MICRO_BENCH_START(lSecondPassComp)
+                ASTVisitorLUFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels(), evalPostProcessing);
+                delete pResult;
+                ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
+                std::string lName = pQRrResult->getRRelationName();
+                m_pDatabase->persistRelation(lName);
+                //MICRO_BENCH_STOP(lSecondPassComp)
+                //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(lSecondPassComp));
+            }
+            else
+            {
+                delete pResult;
+            }
+            MICRO_BENCH_STOP(uComp)
+            FIGARO_LOG_BENCH("Figaro", "Computation of U",  MICRO_BENCH_GET_TIMER_LAP(uComp));
+
+            /************* U COMPUTATION END ***********/
+
+            if (m_saveMemory)
+            {
+                m_pDatabase->destroyAuxRelations();
+            }
+
+            delete pQRrResult;
+
+            if (isFlagOn("computeL"))
+            {
+
+                MICRO_BENCH_START(lComp)
+                ASTNodeRelation* astRNOde =
+                    new ASTNodeRelation(lName,
+                    m_pDatabase->getRelationAttributeNames(lName));
+                ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
+                ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode);
+                // Add relation.
+                ASTVisitorResultJoin* pQResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
+                uName = pQResult->getJoinRelName();
+                delete pQResult;
+                MICRO_BENCH_STOP(lComp)
+                FIGARO_LOG_BENCH("Figaro", "Computation of L",  MICRO_BENCH_GET_TIMER_LAP(lComp));
+            }
+
         }
 
-        delete pQRrResult;
-
-        MICRO_BENCH_START(lComp)
-        ASTNodeRelation* astRNOde =
-            new ASTNodeRelation(rName,
-            m_pDatabase->getRelationAttributeNames(rName));
-        ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
-        ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode);
-        // Add relation.
-        ASTVisitorResultJoin* pQResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
-        qName = pQResult->getJoinRelName();
-        delete pQResult;
-        MICRO_BENCH_STOP(lComp)
-        FIGARO_LOG_BENCH("Figaro", "Computation of L",  MICRO_BENCH_GET_TIMER_LAP(lComp));
 
 
-        return new ASTVisitorResultQR(rName, qName);
+        return new ASTVisitorResultQR(lName, uName);
      }
 
     ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)

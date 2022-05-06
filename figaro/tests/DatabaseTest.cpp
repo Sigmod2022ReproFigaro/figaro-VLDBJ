@@ -1109,7 +1109,7 @@ TEST(Database, PathQuery3) {
 TEST(Database, BasicQueryParsing)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
-    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "qr/" + QUERY_CONFIG_PATH_IN;
 
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
@@ -1131,7 +1131,7 @@ TEST(Database, BasicQueryParsing)
 TEST(Database, QRFigaroComputingCounts)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
-    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + + "qr/" + QUERY_CONFIG_PATH_IN;
 
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
@@ -1269,7 +1269,7 @@ TEST(Database, QRFigaroComputingCounts)
 TEST(Database, QRFigaroHeadsAndTails)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
-    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "qr/" +QUERY_CONFIG_PATH_IN;
 
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
@@ -1291,13 +1291,13 @@ TEST(Database, QRFigaroHeadsAndTails)
 
     for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel ++)
     {
-        fileInputExpHead[idxRel] = getDataPath(5) + "expectedHead" +
+        fileInputExpHead[idxRel] = getDataPath(5) + "qr/expectedHead" +
             std::to_string(idxRel + 1) + ".csv";
-        fileInputExpTail[idxRel] = getDataPath(5) + "expectedTail" +
+        fileInputExpTail[idxRel] = getDataPath(5) + "qr/expectedTail" +
             std::to_string(idxRel + 1) + ".csv";
-        fileInputExpScales[idxRel] = getDataPath(5) + "expectedScalesFirstPass" +
+        fileInputExpScales[idxRel] = getDataPath(5) + "qr/expectedScalesFirstPass" +
             std::to_string(idxRel + 1) + ".csv";
-        fileInputExpDataScales[idxRel] = getDataPath(5) + "expectedDataScalesFirstPass" +
+        fileInputExpDataScales[idxRel] = getDataPath(5) + "qr/expectedDataScalesFirstPass" +
             std::to_string(idxRel + 1) + ".csv";
 
         readMatrixDense(fileInputExpHead[idxRel], expHead[idxRel]);
@@ -1318,11 +1318,8 @@ TEST(Database, QRFigaroHeadsAndTails)
     for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel++)
     {
         const std::string relName = "R" + std::to_string(idxRel + 1);
-        FIGARO_LOG_INFO("Relation", relName)
         const auto& headDT = database.getHead(relName);
         const auto& tailDT = database.getTail(relName);
-        FIGARO_LOG_DBG("tailDt", tailDT)
-        FIGARO_LOG_DBG("tailDtComp", expTail[idxRel])
         const auto& scaleDT = database.getScales(relName);
         const auto& dataScaleDT = database.getDataScales(relName);
 
@@ -1340,7 +1337,7 @@ TEST(Database, QRFigaroHeadsAndTails)
 TEST(Database, QRFigaroGeneralizedHeadsAndTails)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
-    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "qr/" +QUERY_CONFIG_PATH_IN;
 
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
@@ -1348,9 +1345,9 @@ TEST(Database, QRFigaroGeneralizedHeadsAndTails)
     Figaro::MatrixEigenT headGen1, headGen2, tailGen2;
     Figaro::MatrixEigenT expHeadGen1, expHeadGen2, expTailGen2;
 
-    std::string fileInputExpHead2 = getDataPath(5) + "expectedHeadGen2.csv";
-    std::string fileInputExpHead1 = getDataPath(5) + "expectedHeadGen1.csv";
-    std::string fileInputExpTail2 = getDataPath(5) + "expectedTailGen2.csv";
+    std::string fileInputExpHead2 = getDataPath(5) + "qr/expectedHeadGen2.csv";
+    std::string fileInputExpHead1 = getDataPath(5) + "qr/expectedHeadGen1.csv";
+    std::string fileInputExpTail2 = getDataPath(5) + "qr/expectedTailGen2.csv";
 
     readMatrixDense(fileInputExpHead2, expHeadGen2);
     readMatrixDense(fileInputExpHead1, expHeadGen1);
@@ -1366,8 +1363,6 @@ TEST(Database, QRFigaroGeneralizedHeadsAndTails)
     query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}});
     const auto& headDT = database.getGeneralizedHead("R2");
     const auto& tailDT = database.getGeneralizedTail("R2");
-    FIGARO_LOG_DBG("tailDT", tailDT)
-    FIGARO_LOG_DBG("expTailGen2", expTailGen2)
     Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);
     Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
     compareMatrices(headGen2, expHeadGen2, true, true);
@@ -1378,7 +1373,7 @@ TEST(Database, QRFigaroGeneralizedHeadsAndTails)
 TEST(Database, QRFigaro)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
-    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "qr/" +QUERY_CONFIG_PATH_IN;
 
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
@@ -1396,6 +1391,64 @@ TEST(Database, QRFigaro)
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
                                 {"postProcessing", true}});
+}
+
+
+
+TEST(Database, LUFigaroHeadsAndTails)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "lu/" +QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+    static constexpr uint32_t NUM_RELS = 5;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> head;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expHead;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> tail;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expTail;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> scales;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expScales;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> dataScales;
+    std::array<Figaro::MatrixEigenT, NUM_RELS> expDataScales;
+    std::array<std::string, NUM_RELS> fileInputExpHead;
+    std::array<std::string, NUM_RELS> fileInputExpTail;
+    std::array<std::string, NUM_RELS> fileInputExpScales;
+    std::array<std::string, NUM_RELS> fileInputExpDataScales;
+
+
+    for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel ++)
+    {
+        fileInputExpHead[idxRel] = getDataPath(5) + "lu/expectedHead" +
+            std::to_string(idxRel + 1) + ".csv";
+        fileInputExpTail[idxRel] = getDataPath(5) + "lu/expectedTail" +
+            std::to_string(idxRel + 1) + ".csv";
+
+        readMatrixDense(fileInputExpHead[idxRel], expHead[idxRel]);
+        readMatrixDense(fileInputExpTail[idxRel], expTail[idxRel]);
+    }
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery(false, {{"headsAndTails", true}});
+
+    for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel++)
+    {
+        const std::string relName = "R" + std::to_string(idxRel + 1);
+        const auto& headDT = database.getHead(relName);
+        const auto& tailDT = database.getTail(relName);
+
+        Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, head[idxRel]);
+        Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tail[idxRel]);
+        compareMatrices(head[idxRel], expHead[idxRel], true, true);
+        compareMatrices(tail[idxRel], expTail[idxRel], true, true);
+    }
 }
 
 
@@ -1552,10 +1605,7 @@ TEST(Relation, Multiply)
         {Relation::Attribute("A", Relation::AttributeType::FLOAT),
          Relation::Attribute("B1", Relation::AttributeType::FLOAT)});
 
-    FIGARO_LOG_DBG("relA", relA)
-    FIGARO_LOG_DBG("relB", relB)
     Relation rel = relA.multiply(relB, {"A", "AA"}, {"A"});
-    FIGARO_LOG_DBG("rel", rel)
 }
 
 TEST(Relation, DISABLED_SelfMatrixMultiply)

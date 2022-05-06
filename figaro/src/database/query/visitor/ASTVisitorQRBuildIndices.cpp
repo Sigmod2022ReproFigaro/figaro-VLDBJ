@@ -42,4 +42,14 @@ namespace Figaro
         return nullptr;
     }
 
+
+    ASTVisitorResultAbs* ASTBuildIndicesVisitor::visitNodeLUFigaro(ASTNodeLUFigaro* pElement)
+    {
+        FIGARO_LOG_DBG("********************");
+        FIGARO_LOG_DBG("LU FIGARO");
+        FIGARO_LOG_DBG("Relation order", pElement->getRelationOrder())
+        pElement->getOperand()->accept(this);
+        return nullptr;
+    }
+
 }

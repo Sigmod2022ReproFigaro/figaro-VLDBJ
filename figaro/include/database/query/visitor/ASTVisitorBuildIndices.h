@@ -13,6 +13,7 @@ namespace Figaro
         ASTVisitorResultAbs* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override;
         ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
+        ASTVisitorResultAbs* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
 
         virtual ~ASTBuildIndicesVisitor() override {}
     };

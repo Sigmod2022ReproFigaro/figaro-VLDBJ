@@ -2027,10 +2027,8 @@ namespace Figaro
                 double i = rowIdx - headRowIdx + 1;
                 for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
                 {
-                    double prevRowSum;
                     double tailVal;
-                    prevRowSum = dataHeads[distCnt][nonJoinAttrIdx];
-                    tailVal = dataHeads[distCnt][nonJoinAttrIdx] - dataHeads[0][nonJoinAttrIdx];
+                    tailVal = m_data[rowIdx][nonJoinAttrIdx] - dataHeads[distCnt][nonJoinAttrIdx];
                     dataTails[tailRowIdx][nonJoinAttrIdx - numJoinAttrs] =
                         tailVal;
                 }
