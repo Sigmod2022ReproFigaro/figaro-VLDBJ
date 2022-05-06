@@ -109,7 +109,6 @@ class SystemTestPostprocess(SystemTestCompetitor):
                 "--compute_all={}".format(compute_all),
                 "--postprocess={}".format(postprocess_str),
                 "--memory_layout={}".format(memory_layout),
-                "--implementation={}".format("postprocess"),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

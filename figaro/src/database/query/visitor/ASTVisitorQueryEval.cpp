@@ -24,6 +24,7 @@ namespace Figaro
         ASTVisitorQRFigaroFirstPass figaroFirstPassVisitor(m_pDatabase);
 
         std::string joinRelName = "";
+        std::string rName = "";
         std::string qName = "";
 
         FIGARO_LOG_INFO("VISITING QR GIVENS NODE")
@@ -67,7 +68,7 @@ namespace Figaro
         pElement->accept(&computeDownVisitor);
         //MICRO_BENCH_STOP(rDownCntComp)
 
-       // MICRO_BENCH_START(rUpCntCompt)
+        // MICRO_BENCH_START(rUpCntCompt)
         pElement->accept(&computeUpAndCircleVisitor);
         //MICRO_BENCH_STOP(rUpCntCompt)
 
@@ -75,29 +76,48 @@ namespace Figaro
         //FIGARO_LOG_BENCH("Figaro", "query evaluation down",  MICRO_BENCH_GET_TIMER_LAP(rDownCntComp));
         //FIGARO_LOG_BENCH("Figaro", "query evaluation up",  MICRO_BENCH_GET_TIMER_LAP(rUpCntCompt));
 
-        //MICRO_BENCH_START(rFirstPassComp)
-        ASTVisitorResultFirstPass* pResult =
-        (ASTVisitorResultFirstPass*)pElement->accept(&figaroFirstPassVisitor);
-        //MICRO_BENCH_STOP(rFirstPassComp)
-        //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(rFirstPassComp));
+        if (isFlagOn("headsAndTails"))
+        {
 
-        //MICRO_BENCH_START(rSecondPassComp)
-        ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels());
-        delete pResult;
-        ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
-        std::string rName = pQRrResult->getRRelationName();
-        m_pDatabase->persistRelation(rName);
-        //MICRO_BENCH_STOP(rSecondPassComp)
-        //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(rSecondPassComp));
+            //MICRO_BENCH_START(rFirstPassComp)
+            ASTVisitorResultFirstPass* pResult =
+            (ASTVisitorResultFirstPass*)pElement->accept(&figaroFirstPassVisitor);
+            //MICRO_BENCH_STOP(rFirstPassComp)
+            //FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(rFirstPassComp));
+            ASTVisitorResultQR* pQRrResult = nullptr;
+            if (isFlagOn("generalizedHeadsAndTails"))
+            {
+                bool evalPostProcessing = isFlagOn("postProcessing");
+                //MICRO_BENCH_START(rSecondPassComp)
+                ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType,
+                    m_saveResult, joinRelName, pResult->getHtNamesTmpRels(),
+                    evalPostProcessing);
+                delete pResult;
+                pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
+                rName = pQRrResult->getRRelationName();
+                if (evalPostProcessing)
+                {
+                    m_pDatabase->persistRelation(rName);
+                }
+                //MICRO_BENCH_STOP(rSecondPassComp)
+                //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(rSecondPassComp));
+            }
+            else
+            {
+                delete pResult;
+            }
+            MICRO_BENCH_STOP(rComp)
+            FIGARO_LOG_BENCH("Figaro", "Computation of R",  MICRO_BENCH_GET_TIMER_LAP(rComp));
 
-        MICRO_BENCH_STOP(rComp)
-        FIGARO_LOG_BENCH("Figaro", "Computation of R",  MICRO_BENCH_GET_TIMER_LAP(rComp));
+            /************* R COMPUTATION END ***********/
 
-        /************* R COMPUTATION END ***********/
+            if (m_saveMemory)
+            {
+                m_pDatabase->destroyAuxRelations();
+            }
 
-        m_pDatabase->destroyAuxRelations();
-
-        delete pQRrResult;
+            delete pQRrResult;
+        }
 
         /************* Q COMPUTATION START ***********/
         if (pElement->isComputeQ())
@@ -202,7 +222,10 @@ namespace Figaro
 
         /************* U COMPUTATION END ***********/
 
-        m_pDatabase->destroyAuxRelations();
+        if (m_saveMemory)
+        {
+            m_pDatabase->destroyAuxRelations();
+        }
 
         delete pQRrResult;
 

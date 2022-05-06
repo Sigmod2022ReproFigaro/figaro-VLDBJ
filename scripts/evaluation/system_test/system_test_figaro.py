@@ -39,7 +39,6 @@ class SystemTestFigaro(SystemTest):
                 "--postprocess={}".format(postprocess_str),
                 "--compute_all={}".format(compute_all),
                 "--memory_layout={}".format(memory_layout),
-                "--implementation={}".format("figaro"),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

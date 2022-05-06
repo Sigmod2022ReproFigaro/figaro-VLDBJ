@@ -610,6 +610,14 @@ namespace Figaro
             bool computeQ,
             bool saveResult);
 
+        /*********************** Naming patterns ***************/
+        const std::string getHeadName(void) const;
+
+        const std::string getTailName(void) const;
+
+        const std::string getGeneralizedHeadName(void) const;
+
+        const std::string getGeneralizedTailName(void) const;
 
         /*********************** Testing getters for counts ***************/
         std::map<std::vector<uint32_t>, uint32_t> getDownCounts(void);
@@ -626,11 +634,7 @@ namespace Figaro
          *  Returns computed head for the corresponding relation, without
          *  dividing by square roots.
          */
-        const MatrixDT& getHead(void) const;
-
-        const MatrixDT& getTail(void) const;
-
-        const MatrixDT& getGeneralizedTail(void) const;
+        const MatrixDT& getData(void) const;
 
         const MatrixDT& getScales(void) const;
 

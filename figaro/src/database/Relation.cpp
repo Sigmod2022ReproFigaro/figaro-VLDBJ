@@ -1956,8 +1956,8 @@ namespace Figaro
         m_allScales = std::move(allScales);
 
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
-        Relation relHeads("HEAD_" + m_name, std::move(dataHeads), m_attributes);
-        Relation relTails("TAIL_" + m_name, std::move(dataTails), m_attributes);
+        Relation relHeads(getHeadName(), std::move(dataHeads), m_attributes);
+        Relation relTails(getTailName(), std::move(dataTails), m_attributes);
 
         FIGARO_LOG_INFO("number of rows", relHeads.m_data.getNumRows(), "num cols", relTails.m_data.getNumCols());
 
@@ -2039,8 +2039,8 @@ namespace Figaro
         }
 
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
-        Relation relHeads("HEAD_" + m_name, std::move(dataHeads), m_attributes);
-        Relation relTails("TAIL_" + m_name, std::move(dataTails), m_attributes);
+        Relation relHeads(getHeadName(), std::move(dataHeads), m_attributes);
+        Relation relTails(getTailName(), std::move(dataTails), m_attributes);
 
         FIGARO_LOG_INFO("number of rows", relHeads.m_data.getNumRows(), "num cols", relTails.m_data.getNumCols());
 
@@ -2503,8 +2503,8 @@ namespace Figaro
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
         FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
         return std::make_tuple(
-            Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), attributes),
-            Relation("GEN_TAIL" + m_name, std::move(dataTailsOut), attributes));
+            Relation(getGeneralizedHeadName(), std::move(dataHeadOut), attributes),
+            Relation(getGeneralizedTailName(), std::move(dataTailsOut), attributes));
     }
 
     std::tuple<Relation, Relation>
@@ -2630,8 +2630,8 @@ namespace Figaro
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
         FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
         return std::make_tuple(
-            Relation("GEN_HEAD" + m_name, std::move(dataHeadOut), attributes),
-            Relation("GEN_TAIL" + m_name, std::move(dataTailsOut), attributes));
+            Relation(getGeneralizedHeadName(), std::move(dataHeadOut), attributes),
+            Relation(getGeneralizedTailName(), std::move(dataTailsOut), attributes));
     }
 
 
@@ -3086,21 +3086,30 @@ namespace Figaro
         return std::make_tuple(pR, pQ);
     }
 
-    const Relation::MatrixDT& Relation::getHead(void) const
+    const std::string Relation::getHeadName(void) const
     {
-        return MatrixDT{0, 0};
+        return "HEAD_" + m_name;
     }
 
-    const Relation::MatrixDT& Relation::getTail(void) const
+    const std::string Relation::getTailName(void) const
     {
-        return MatrixDT{0, 0};
+        return "TAIL_" + m_name;
     }
 
-    const Relation::MatrixDT& Relation::getGeneralizedTail(void) const
+     const std::string Relation::getGeneralizedHeadName(void) const
     {
-        return MatrixDT{0, 0};
+        return "GEN_HEAD_" + m_name;
     }
 
+    const std::string Relation::getGeneralizedTailName(void) const
+    {
+        return "GEN_TAIL_" + m_name;
+    }
+
+    const Relation::MatrixDT& Relation::getData(void) const
+    {
+        return m_data;
+    }
 
     const Relation::MatrixDT& Relation::getScales(void) const
     {

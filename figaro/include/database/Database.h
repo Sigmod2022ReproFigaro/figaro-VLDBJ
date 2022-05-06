@@ -257,6 +257,8 @@ namespace Figaro
 
         const Relation::MatrixDT& getTail(const std::string& relationName) const;
 
+        const Relation::MatrixDT& getGeneralizedHead(const std::string& relationName) const;
+
         const Relation::MatrixDT& getGeneralizedTail(const std::string& relationName) const;
 
         const Relation::MatrixDT& getScales(const std::string& relationName) const;

@@ -13,7 +13,6 @@ function init_global_paths()
     FIGARO_POSTPROCESS="THIN1_DIAG"
     FIGARO_COMPUTE_ALL=false
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
-    FIGARO_IMPLEMENTATION="FIGARO"
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
 }
@@ -27,10 +26,6 @@ function get_str_args()
         -r=*|--root_path=*)
             EXTENSION="${option#*=}"
             init_global_paths $EXTENSION
-        ;;
-        -i=*|--implementation=*)
-            EXTENSION="${option#*=}"
-            FIGARO_IMPLEMENTATION="${EXTENSION}"
         ;;
         -l=*|--log_file_path=*)
             EXTENSION="${option#*=}"
@@ -84,14 +79,13 @@ function get_str_args()
         FIGARO_HELP_SHOW=true
         echo $"
 Usage: setup.sh [-h --help]
-[-r|--root=<PATH>] [-i|--implementation=<NAME>][--postprocess=<NAME>]
+[-r|--root=<PATH>][--postprocess=<NAME>]
 [-t|--test_mode=<NAME>]
 [--data_path=<PATH>][-l|--log_file_path=<PATH>][--dump_file_path=<PATH>]
 [--db_config_path=<PATH>][--query_config_path=<PATH>]
 [--precision=<NUMBER>][--num_threads=<NUMBER>]
 Run evaluation of Figaro on the specified database for the specified query.
     -r, --root=<PATH>            set the root path to Figaro system;
-    -i, --implementation=<NAME>  it specifies which system should be used. It can be either postprocess or figaro. postprocess expects join result as an input, while figaro expects database with various relations.
     --postprocess=<NAME> specifies which postprocessing methods should be used: lapack or thin_diag. The lapack corresponds to Intel MKL lapack api. thin_diag corresponds to thin version of our algorithm.
     -t, --test_mode=<NAME> specifies whether it should build dump, performance, debug or info version of the system. performance is used in performance evaluation by omittin all log outputs. dump dumps the R;
     --data_path=<PATH> specifies path to data. It is used only in unit tests;
@@ -143,7 +137,6 @@ function main()
     ARGS+="--num_threads ${FIGARO_NUM_THREADS} "
     ARGS+="--postprocess ${FIGARO_POSTPROCESS} "
     ARGS+="--memory_layout ${FIGARO_MEMORY_LAYOUT} "
-    ARGS+="--implementation ${FIGARO_IMPLEMENTATION} "
     ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
 
     case "${FIGARO_TEST_MODE}" in
@@ -178,7 +171,7 @@ function main()
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         #vtune -collect performance-snapshot
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*computeLULapack* > "${FIGARO_LOG_FILE_PATH}" 2>&1
+        ./figaro_test ${FIGARO_DATA_PATH}  > "${FIGARO_LOG_FILE_PATH}" 2>&1
         #valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         #>   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \

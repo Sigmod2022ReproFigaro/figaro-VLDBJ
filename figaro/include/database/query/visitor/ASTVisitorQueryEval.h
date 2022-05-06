@@ -13,15 +13,31 @@ namespace Figaro
         QRHintType m_qrHintType;
         Database* m_pDatabase;
         bool m_saveResult;
+        bool m_saveMemory;
+        std::map<std::string, bool> m_mFlagPhases;
+
+        bool isFlagOn(const std::string& flagName) const
+        {
+            if (!m_mFlagPhases.contains(flagName))
+            {
+                return false;
+            }
+            return m_mFlagPhases.at(flagName);
+        }
+
     public:
         ASTVisitorQueryEval(
             Database* pDatabase,
             Figaro::MemoryLayout memoryLayout,
             Figaro::QRHintType qrHintType,
-            bool saveResult
+            bool saveResult,
+            bool saveMemory,
+            const std::map<std::string, bool>& mFlagPhases
             ): ASTVisitor(pDatabase), m_memoryLayout(memoryLayout),
                 m_pDatabase(pDatabase), m_qrHintType(qrHintType),
-                m_saveResult(saveResult){}
+                m_saveResult(saveResult),
+                m_saveMemory(saveMemory),
+                m_mFlagPhases(mFlagPhases){}
         ASTVisitorResultJoin* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
         ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;

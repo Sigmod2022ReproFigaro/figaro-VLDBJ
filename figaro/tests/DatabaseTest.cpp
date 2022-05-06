@@ -260,19 +260,19 @@ TEST(Matrix, computeQRGivensThinR)
 TEST(Matrix, computeQRHouseholderRRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
-    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
 
-    matrix[0][0] = 1; matrix[0][1] = 2;
-    matrix[1][0] = 3; matrix[1][1] = 4;
-    matrix[2][0] = 4; matrix[2][1] = 3;
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
 
     matrix.computeQRHouseholder();
 
-    EXPECT_NEAR(std::abs(matrix[0][0]), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
-    EXPECT_NEAR(std::abs(matrix[0][1]), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
 
-    EXPECT_NEAR(std::abs(matrix[1][0]), 0, GIVENS_TEST_PRECISION_ERROR);
-    EXPECT_NEAR(std::abs(matrix[1][1]), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
 }
 
 TEST(Matrix, computeQRHouseholderRColMajor)
@@ -674,7 +674,6 @@ TEST(Matrix, MultiplicationColMajor)
     EXPECT_EQ(B.getNumRows(), K);
     EXPECT_EQ(B.getNumCols(), N);
 
-
     A(0, 0) = 0;
     A(0, 1) = 1;
     A(0, 2) = 2;
@@ -718,7 +717,6 @@ TEST(Matrix, MultiplicationColMajor)
         }
     }
 }
-
 
 
 TEST(Matrix, SelfMatrixMultiplyRowMajor)
@@ -875,7 +873,6 @@ TEST(Matrix, InverseRowMajor)
         }
     }
 }
-
 
 
 TEST(Matrix, InverseColMajor)
@@ -1067,7 +1064,7 @@ TEST(Storage, MatrixIterator)
     EXPECT_EQ(rowIdx, 0);
 }
 
-TEST(DatabaseConfig, DropAttrs) {
+TEST(Database, DropAttrs) {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError = database.getInitializationErrorCode();
@@ -1088,7 +1085,7 @@ TEST(DatabaseConfig, DropAttrs) {
     }
 }
 
-TEST(DatabaseConfig, BasicInput) {
+TEST(Database, BasicInput) {
     static const std::string DB_CONFIG_PATH = getConfigPath(1) + DB_CONFIG_PATH_IN;
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError = database.getInitializationErrorCode();
@@ -1096,7 +1093,7 @@ TEST(DatabaseConfig, BasicInput) {
 }
 
 
-TEST(DatabaseConfig, PathQuery3) {
+TEST(Database, PathQuery3) {
     static const std::string DB_CONFIG_PATH = getConfigPath(2) + DB_CONFIG_PATH_IN;
     Figaro::Database database(DB_CONFIG_PATH);
     Figaro::ErrorCode initError;
@@ -1109,8 +1106,7 @@ TEST(DatabaseConfig, PathQuery3) {
 }
 
 
-
-TEST(DatabaseConfig, BasicQueryParsing)
+TEST(Database, BasicQueryParsing)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
     static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
@@ -1132,7 +1128,7 @@ TEST(DatabaseConfig, BasicQueryParsing)
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
 }
 
-TEST(DatabaseConfig, ComputingCounts)
+TEST(Database, QRFigaroComputingCounts)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
     static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
@@ -1152,7 +1148,7 @@ TEST(DatabaseConfig, ComputingCounts)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, false, false, false);
+    query.evaluateQuery(false, {{"headsAndTails", true}});
 
     /*********************************** R4 ****************/
     downCounts =  database.getDownCounts("R4");
@@ -1270,7 +1266,7 @@ TEST(DatabaseConfig, ComputingCounts)
     EXPECT_EQ(circCounts.at({3, 3}), 21);
 }
 
-TEST(DatabaseConfig, FigaroFirstPass)
+TEST(Database, QRFigaroHeadsAndTails)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
     static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
@@ -1317,7 +1313,7 @@ TEST(DatabaseConfig, FigaroFirstPass)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, true, false, false);
+    query.evaluateQuery(false, {{"headsAndTails", true}});
 
     for (uint32_t idxRel = 0; idxRel < NUM_RELS; idxRel++)
     {
@@ -1325,6 +1321,8 @@ TEST(DatabaseConfig, FigaroFirstPass)
         FIGARO_LOG_INFO("Relation", relName)
         const auto& headDT = database.getHead(relName);
         const auto& tailDT = database.getTail(relName);
+        FIGARO_LOG_DBG("tailDt", tailDT)
+        FIGARO_LOG_DBG("tailDtComp", expTail[idxRel])
         const auto& scaleDT = database.getScales(relName);
         const auto& dataScaleDT = database.getDataScales(relName);
 
@@ -1339,7 +1337,7 @@ TEST(DatabaseConfig, FigaroFirstPass)
     }
 }
 
-TEST(DatabaseConfig, FigaroSecondPass)
+TEST(Database, QRFigaroGeneralizedHeadsAndTails)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
     static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
@@ -1365,18 +1363,19 @@ TEST(DatabaseConfig, FigaroSecondPass)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, true, true, false);
-    const auto& headDT = database.getHead("R2");
+    query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}});
+    const auto& headDT = database.getGeneralizedHead("R2");
     const auto& tailDT = database.getGeneralizedTail("R2");
+    FIGARO_LOG_DBG("tailDT", tailDT)
+    FIGARO_LOG_DBG("expTailGen2", expTailGen2)
     Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);
     Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
     compareMatrices(headGen2, expHeadGen2, true, true);
     compareMatrices(tailGen2, expTailGen2, true, true);
-    // TODO: Add tests for scales, datascales, and allscales
 }
 
 
-TEST(DatabaseConfig, FigaroQR)
+TEST(Database, QRFigaro)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
     static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + QUERY_CONFIG_PATH_IN;
@@ -1395,12 +1394,12 @@ TEST(DatabaseConfig, FigaroQR)
 
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
-    query.evaluateQuery(true, true, true, true);
+    query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}});
 }
 
 
-
-TEST(Relation, Join)
+TEST(Relation, DISABLED_Join)
 {
     static constexpr uint32_t M = 3, N = 3, K= 2;
     Relation::MatrixDT A(M, N), B(K, N), C(K, K);
@@ -1559,7 +1558,7 @@ TEST(Relation, Multiply)
     FIGARO_LOG_DBG("rel", rel)
 }
 
-TEST(Relation, SelfMatrixMultiply)
+TEST(Relation, DISABLED_SelfMatrixMultiply)
 {
     static constexpr uint32_t M = 3, N = 4;
     Relation::MatrixDT A(M, N);
@@ -1693,7 +1692,7 @@ TEST(Relation, AdditionAndSubtraction)
     FIGARO_LOG_DBG("relD", relD)
 }
 
-TEST(Database, Multiply2)
+TEST(Database, DISABLED_Multiply2)
 {
     static constexpr uint32_t M = 3, N = 4, K= 2;
     Relation::MatrixDT A(M, N), B(K, K), R(N, N);

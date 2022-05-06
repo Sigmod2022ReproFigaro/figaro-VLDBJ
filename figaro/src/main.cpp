@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
     Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
     bool computeAll = false;
-    bool pureFigaro = false;
     uint32_t precision;
     uint32_t numThreads = 1;
 
@@ -112,19 +111,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (vm.count("implementation"))
-    {
-        implementation = vm["implementation"].as<std::string>();
-        if (implementation == "figaro")
-        {
-            pureFigaro = true;
-        }
-        else if (implementation == "postprocess")
-        {
-            pureFigaro = false;
-        }
-    }
-
     if (vm.count("compute_all"))
     {
         computeAll = vm["compute_all"].as<bool>();
@@ -142,7 +128,8 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath, computeAll);
-    query.evaluateQuery(true, true, true, true, qrHintType, memoryLayout, dump);
+    query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}}, qrHintType, memoryLayout, dump);
     if (dump)
     {
         Figaro::ASTVisitorResultAbs* pResult = query.getResult();

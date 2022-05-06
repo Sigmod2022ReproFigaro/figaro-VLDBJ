@@ -789,19 +789,29 @@ namespace Figaro
     const Relation::MatrixDT& Database::getHead(const std::string& relationName) const
     {
         const Relation& rel = m_relations.at(relationName);
-        return rel.getHead();
+        const Relation& relHead = m_relations.at(rel.getHeadName());
+        return relHead.getData();
     }
 
     const Relation::MatrixDT& Database::getTail(const std::string& relationName) const
     {
         const Relation& rel = m_relations.at(relationName);
-        return rel.getTail();
+        const Relation& relTail = m_relations.at(rel.getTailName());
+        return relTail.getData();
+    }
+
+     const Relation::MatrixDT& Database::getGeneralizedHead(const std::string& relationName) const
+    {
+        const Relation& rel = m_relations.at(relationName);
+        const Relation& relGenHead = m_relations.at(rel.getGeneralizedHeadName());
+        return relGenHead.getData();
     }
 
     const Relation::MatrixDT& Database::getGeneralizedTail(const std::string& relationName) const
     {
         const Relation& rel = m_relations.at(relationName);
-        return rel.getGeneralizedTail();
+        const Relation& relGenTail = m_relations.at(rel.getGeneralizedTailName());
+        return relGenTail.getData();
     }
 
     const Relation::MatrixDT& Database::getScales(const std::string& relationName) const

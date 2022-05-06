@@ -31,8 +31,8 @@ namespace Figaro
 
         /** Evaluates expressions from abstract syntax tree.
          */
-        void evaluateQuery(bool evalCounts = true, bool evalFirstFigaroPass = true,
-            bool evalSecondFigaroPass = true, bool evalPostProcess = true,
+        void evaluateQuery(bool saveMemory = true,
+            const std::map<std::string, bool>& mFlags = {},
             Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG,
             Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
             bool saveResult = false);

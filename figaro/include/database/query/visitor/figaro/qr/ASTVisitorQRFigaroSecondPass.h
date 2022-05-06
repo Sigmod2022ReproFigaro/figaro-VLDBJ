@@ -18,18 +18,21 @@ namespace Figaro
         std::vector<std::string> m_vSubTreeRelNames;
 
         std::vector<std::string> getChildrenHeadNames(const std::vector<std::string>& vChildrenNames) const;
+        bool m_evalPostProcessing;
 
     public:
         ASTVisitorQRFigaroSecondPass(
             Database* pDatabase, Figaro::QRHintType qrHintType, bool saveResult,
             const std::string& joinRelName,
             const std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames>
-            htTmpRelsNames):
+            htTmpRelsNames,
+            bool evalPostProcessing):
                 ASTVisitorQRFigaroAbs(pDatabase),
                 m_saveResult(saveResult),
                  m_qrHintType(qrHintType),
                  m_joinRelName(joinRelName),
-                 m_htTmpRelsNames(htTmpRelsNames) {
+                 m_htTmpRelsNames(htTmpRelsNames),
+                 m_evalPostProcessing(evalPostProcessing) {
                  }
         ASTVisitorResultSecondPass* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorResultSecondPass* visitNodeJoin(ASTNodeJoin* pElement) override;
