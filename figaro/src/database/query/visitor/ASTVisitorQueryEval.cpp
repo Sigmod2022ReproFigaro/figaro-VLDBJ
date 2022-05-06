@@ -220,7 +220,10 @@ namespace Figaro
                 delete pResult;
                 ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
                 std::string lName = pQRrResult->getRRelationName();
-                m_pDatabase->persistRelation(lName);
+                if (evalPostProcessing)
+                {
+                    m_pDatabase->persistRelation(lName);
+                }
                 //MICRO_BENCH_STOP(lSecondPassComp)
                 //FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(lSecondPassComp));
             }
@@ -256,7 +259,6 @@ namespace Figaro
                 MICRO_BENCH_STOP(lComp)
                 FIGARO_LOG_BENCH("Figaro", "Computation of L",  MICRO_BENCH_GET_TIMER_LAP(lComp));
             }
-
         }
 
 

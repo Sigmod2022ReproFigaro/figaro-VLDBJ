@@ -1452,6 +1452,46 @@ TEST(Database, LUFigaroHeadsAndTails)
 }
 
 
+
+TEST(Database, LUFigaroGeneralizedHeadsAndTails)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "lu/" +QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+    Figaro::MatrixEigenT headGen1, headGen2, tailGen2;
+    Figaro::MatrixEigenT expHeadGen1, expHeadGen2, expTailGen2;
+
+    std::string fileInputExpHead2 = getDataPath(5) + "lu/expectedHeadGen2.csv";
+    std::string fileInputExpTail2 = getDataPath(5) + "lu/expectedTailGen2.csv";
+
+    readMatrixDense(fileInputExpHead2, expHeadGen2);
+    readMatrixDense(fileInputExpTail2, expTailGen2);
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+
+    query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}});
+
+    const auto& headDT = database.getGeneralizedHead("R2");
+    const auto& tailDT = database.getGeneralizedTail("R2");
+    Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);
+    Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
+    compareMatrices(headGen2, expHeadGen2, true, true);
+    compareMatrices(tailGen2, expTailGen2, true, true);
+
+    FIGARO_LOG_DBG("tailGen2", tailGen2)
+    FIGARO_LOG_DBG("expTailGen2", expTailGen2)
+}
+
+
 TEST(Relation, DISABLED_Join)
 {
     static constexpr uint32_t M = 3, N = 3, K= 2;
