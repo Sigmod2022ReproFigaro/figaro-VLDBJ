@@ -28,7 +28,6 @@ def collect_times(ohe: bool, root_path: str, exp_name: str, db_names: list,
 
     for db_name in db_names:
         gather_times_path = os.path.join(perf_path, db_name + XLSX_NAME)
-        print(gather_times_path)
         out_workbook = Workbook()
         out_workbook.remove(out_workbook.active)
         out_sheet = out_workbook.create_sheet("Times")
@@ -41,9 +40,7 @@ def collect_times(ohe: bool, root_path: str, exp_name: str, db_names: list,
                     db_name_pref = "{}100".format(db_name)
                 db_name_full = "{} {} {}".format(db_name_pref, join_order, thread_num)
                 path_xlsx = os.path.join(perf_path, "thread"+str(thread_num), db_name_pref, join_order, XLSX_NAME)
-                print(path_xlsx)
                 if os.path.isfile(path_xlsx):
-                    #print("PATH", path_xlsx)
                     workbook = load_workbook(filename=path_xlsx, data_only=True)
                     sheet = workbook.active
                     row_count = sheet.max_row
@@ -80,14 +77,29 @@ def dump_results_to_dat(ohe: bool, db_names: list, df_measurement_exps: dict,
     exp_dat_name = "exp2cores.dat"
     exp_dat_names = ["#cores", "Retailer", "Favorita", "Yelp"]
     dbs_results = []
+
+    db_name_map = {
+        "DBFavorita": "exp3perf-favorita.dat",
+        "DBRetailer": "exp3perf-retailer.dat",
+        "DBYelp": "exp3perf-yelp.dat"
+    }
+
     for db_name in db_names:
         df_measurement = df_measurement_exps[(exp_name, db_name)]
-        print(df_measurement)
+        # Dumping join order times to a .dat file
+        dir_out_root = "results"
+        dir_out = "ohe" if ohe else "non-ohe"
+        dir_out = os.path.join(dir_out_root, dir_out)
+        os.makedirs(dir_out, exist_ok=True)
+        out_name = os.path.join(dir_out, db_name_map[db_name])
+
+        df_measurement.to_csv(out_name, float_format='%.2f', sep='\t', index=False, quoting=csv.QUOTE_NONE,  escapechar=" ")
+
         min_idx_cols = df_measurement.idxmin(axis="columns")
         max_num_threads = thread_nums_exp[exp_name][-1]
         min_join_order = min_idx_cols[max_num_threads]
         dbs_results.append(df_measurement[min_join_order])
-        print(df_measurement[min_join_order])
+
     df_db_results = pd.concat(dbs_results, axis=1)
     df_db_results = df_db_results.reset_index().rename(columns={df_db_results.index.name:'index'})
     df_db_results.columns = exp_dat_names
@@ -117,12 +129,10 @@ def plot_performance(ohe: bool, db_names: list, df_measurement_exp_dbs: dict, th
     exp_name = "figaro_thin"
     for db_name in db_names:
         df_measurement = df_measurement_exp_dbs[(exp_name, db_name)]
-        print(df_measurement)
         min_idx_cols = df_measurement.idxmin(axis="columns")
         max_num_threads = thread_nums_exp[exp_name][-1]
         min_join_order = min_idx_cols[max_num_threads]
 
-        print(min_idx_cols[thread_nums_exp["figaro_thin"][-1]])
         plt.plot(df_measurement[min_join_order], "-" + db_colour[db_name] + db_marker[db_name], label="{} {} {}".format(exp_name, db_name, min_join_order), markersize=10)
 
     ax = plt.gca()
@@ -181,10 +191,9 @@ def main(args):
                 "DBYelp": ["BusinessRoot", "CategoryRoot", "CheckinRoot", "HoursRoot", "ReviewRoot", "UserRoot"],
                 "DBRetailer": ["CensusRoot", "InventoryRoot", "ItemRoot", "LocationRoot", "WeatherRoot"]}
 
-
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/thin_diag",
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/only_r/thin_diag",
     "mkl": "comparisons/performance/python/mkl",
-    "figaro_lapack": "comparisons/performance/figaro/only_r/lapack/thread48",
+    "figaro_lapack": "comparisons/performance/figaro/only_r/lapack",
     "openblas": "comparisons/performance/python/openblas",
     "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
     "post_proc_mkl": "comparisons/performance/postprocess/lapack"}

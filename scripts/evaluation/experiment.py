@@ -70,7 +70,7 @@ def run_exp1(username: str, password: str, root_path: str,
                "-s", system_tests_path]
     args_real_data = args + ["--test", "_real_data"]
     args_real_data_ohe = args + ["--test", "_real_data_ohe"]
-    args_perf_syn = args + ["--test", "_cartesian_product"]
+    args_perf_syn = args + ["--test", "_syn_perf"]
 
     eval.main(args_real_data)
     eval.main(args_real_data_ohe)
