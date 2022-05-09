@@ -7,7 +7,7 @@ FIGARO_DATA_PATH=/figaroData
 mkdir -p  {$LOCAL_PATH,$LOCAL_PATH/include,$LOCAL_PATH/bin,$LOCAL_PATH/lib,$DOWN_PATH}
 sudo apt install --yes vim
 sudo apt install --yes cmake
-sudo apt install --yes build-essential wget m4 flex bison git unzip rsync
+sudo apt install --yes build-essential wget m4 flex bison git unzip rsync libomp-dev
 
 ########################### gcc-10.1 from source ################
 cd $LOCAL_PATH
@@ -113,3 +113,5 @@ git submodule update --init
 cd ~
 python3.8 /home/zivanovic/numpy-mkl/setup.py build
 python3.8 /home/zivanovic/numpy-openblas/setup.py build
+
+sudo apt install --yes gnuplot
