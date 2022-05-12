@@ -98,8 +98,8 @@ namespace Figaro
         std::vector<std::string> vGenTailRelNames;
         std::vector<std::string> vTailRelNames;
         std::vector<std::string> vRelOrder = pElement->getRelationOrder();
-        std::string rNameOut;
-        std::string qNameOut;
+        std::string rNameOut = "";
+        std::string qNameOut = "";
         FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("LU Figaro");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
@@ -121,8 +121,6 @@ namespace Figaro
         }
         if (m_evalPostProcessing)
         {
-            std::string rNameOut = "";
-            std::string qNameOut = "";
             //MICRO_BENCH_INIT(postprocess)
             //MICRO_BENCH_START(postprocess)
             auto [rName, qName] =
@@ -134,7 +132,7 @@ namespace Figaro
                 m_qrHintType, m_saveResult, m_joinRelName);
             //MICRO_BENCH_STOP(postprocess)
             //FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
-            FIGARO_LOG_INFO("FInished")
+            FIGARO_LOG_INFO("Finished Postprocessing")
             rNameOut = rName;
             qNameOut = qName;
         }

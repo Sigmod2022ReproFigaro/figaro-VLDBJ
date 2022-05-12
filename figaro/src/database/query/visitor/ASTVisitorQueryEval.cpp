@@ -245,7 +245,6 @@ namespace Figaro
 
             if (isFlagOn("computeL"))
             {
-
                 MICRO_BENCH_START(lComp)
                 ASTNodeRelation* astRNOde =
                     new ASTNodeRelation(lName,

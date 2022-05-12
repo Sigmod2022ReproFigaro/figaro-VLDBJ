@@ -56,8 +56,22 @@ namespace Figaro
         {
             return (uint64_t) m_numRows * (uint64_t)m_numCols;
         }
-        const T* getArrPt (void) const { return &((*m_pStorage)[0]); }
-        T* getArrPt (void)  { return &((*m_pStorage)[0]); }
+        const T* getArrPt (void) const
+        {
+            if ((m_numRows == 0) || (m_numCols == 0))
+            {
+                return nullptr;
+            }
+            return &((*m_pStorage)[0]);
+        }
+        T* getArrPt (void)
+        {
+            if ((m_numRows == 0) || (m_numCols == 0))
+            {
+                return nullptr;
+            }
+            return &((*m_pStorage)[0]);
+        }
     public:
 
         Matrix(uint32_t numRows, uint32_t numCols)
@@ -1299,6 +1313,7 @@ namespace Figaro
             MatrixType& matA = *this;
 
             uint32_t rank = std::min(M, N);
+
 
             long long int* pIpivot = new long long int[rank];
             LAPACKE_dgetrf(memLayout, M, N,

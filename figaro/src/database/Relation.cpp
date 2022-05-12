@@ -3015,6 +3015,7 @@ namespace Figaro
             FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
             catGenHeadAndTails = catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
         }
+        FIGARO_LOG_DBG("Final LU", catGenHeadAndTails)
         //MICRO_BENCH_STOP(addingZeros)
         //FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
 
