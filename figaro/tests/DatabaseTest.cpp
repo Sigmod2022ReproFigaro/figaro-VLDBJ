@@ -1491,6 +1491,26 @@ TEST(Database, LUFigaroGeneralizedHeadsAndTails)
     FIGARO_LOG_DBG("expTailGen2", expTailGen2)
 }
 
+TEST(Database, LUFigaro)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "lu/" +QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}});
+}
+
 
 TEST(Relation, DISABLED_Join)
 {
