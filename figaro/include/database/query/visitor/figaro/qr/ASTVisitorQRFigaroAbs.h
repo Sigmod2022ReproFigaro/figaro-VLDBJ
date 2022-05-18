@@ -22,6 +22,10 @@ namespace Figaro
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;}
 
+        virtual ASTVisitorResultAbs* visitNodeLULapack([[maybe_unused]]ASTNodeLULapack* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;}
+
         virtual ASTVisitorResultAbs* visitNodeAssign([[maybe_unused]]ASTNodeAssign* pElement)  override
         {
             FIGARO_LOG_ASSERT(1!=1)

@@ -5,6 +5,7 @@
 #include "./result/ASTVisitorResultJoin.h"
 #include "./result/ASTVisitorResultQR.h"
 
+
 namespace Figaro
 {
     class ASTVisitorQueryEval: public ASTVisitor
@@ -42,6 +43,7 @@ namespace Figaro
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
         ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
         ASTVisitorResultQR* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) override;
+        ASTVisitorResultQR* visitNodeLULapack(ASTNodeLULapack* pElement) override;
         ASTVisitorResultQR* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
         ASTVisitorResultJoin* visitNodeLinReg(ASTNodeLinReg* pElement) override;
         ASTVisitorResultAbs* visitNodeAssign(ASTNodeAssign* pElement) override { return nullptr; }

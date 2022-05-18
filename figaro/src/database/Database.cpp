@@ -754,6 +754,17 @@ namespace Figaro
         return saveQRResult(qrResult);
     }
 
+    std::tuple<std::string, std::string>
+    Database::evalLULapack(
+            const std::string& relName,
+            Figaro::MemoryLayout memoryLayout,
+            bool saveResult)
+    {
+        Relation& rel = m_relations.at(relName);
+        auto qrResult = rel.computeLU(memoryLayout, saveResult);
+        return saveQRResult(qrResult);
+    }
+
     bool Database::destroyTemporaryRelation(const std::string& relationName)
     {
         Relation& rel = m_relations.at(relationName);

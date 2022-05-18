@@ -610,6 +610,10 @@ namespace Figaro
             bool computeQ,
             bool saveResult);
 
+        std::tuple<Relation*, Relation*>
+        computeLU(Figaro::MemoryLayout memoryLayout,
+            bool saveResult);
+
         /*********************** Naming patterns ***************/
         const std::string getHeadName(void) const;
 

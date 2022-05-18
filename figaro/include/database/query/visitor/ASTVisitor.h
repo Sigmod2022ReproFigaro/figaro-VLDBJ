@@ -12,6 +12,7 @@
 #include "database/query/node/ASTNodeInverse.h"
 #include "database/query/node/ASTNodeLinReg.h"
 #include "database/query/node/ASTNodeLUFigaro.h"
+#include "database/query/node/ASTNodeLULapack.h"
 #include "./result/ASTVisitorResultAbs.h"
 #include "database/Database.h"
 
@@ -30,6 +31,7 @@ namespace Figaro
         virtual ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeLULapack(ASTNodeLULapack* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeAssign(ASTNodeAssign* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;

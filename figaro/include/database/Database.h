@@ -223,6 +223,11 @@ namespace Figaro
             bool computeQ,
             bool saveResult);
 
+        std::tuple<std::string, std::string> evalLULapack(
+            const std::string& relName,
+            Figaro::MemoryLayout memoryLayout,
+            bool saveResult);
+
         /**
          * @brief Destroys temporary relation @p relName with its data.
          *

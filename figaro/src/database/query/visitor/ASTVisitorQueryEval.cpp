@@ -265,6 +265,32 @@ namespace Figaro
         return new ASTVisitorResultQR(lName, uName);
      }
 
+
+     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLULapack(ASTNodeLULapack* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING LU LAPACK NODE")
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
+        pElement->accept(&joinAttrVisitor);
+        m_pDatabase->oneHotEncodeRelations();
+        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        {
+            m_pDatabase->changeMemoryLayout();
+        }
+
+        MICRO_BENCH_INIT(luLapackEval)
+        MICRO_BENCH_START(luLapackEval)
+        auto [lName, uName] =
+            m_pDatabase->evalLULapack(pElement->getRelationOrder().at(0),
+             m_memoryLayout, m_saveResult);
+        MICRO_BENCH_STOP(luLapackEval)
+        FIGARO_LOG_BENCH("Figaro", "Postproc eval", MICRO_BENCH_GET_TIMER_LAP(luLapackEval))
+        return new ASTVisitorResultQR(lName, uName);
+    }
+
     ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeLinReg(ASTNodeLinReg* pElement)
     {
         FIGARO_LOG_INFO("VISITING LIN REG NODE")
