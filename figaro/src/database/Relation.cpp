@@ -2998,11 +2998,12 @@ namespace Figaro
 
         //MICRO_BENCH_STOP(copyMatrices)
         //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
-        FIGARO_LOG_INFO("Computing final R")
+        FIGARO_LOG_INFO("Computing final U")
 
+        MatrixDT matU{0, 0}, matL{0, 0};
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
-        catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), nullptr, nullptr);
+        catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), &matL, &matU);
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 
@@ -3013,18 +3014,13 @@ namespace Figaro
         if (totalNumCols > minNumRows)
         {
             FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
-            catGenHeadAndTails = catGenHeadAndTails.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
+            matU = matU.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
         }
-        FIGARO_LOG_DBG("Final LU", catGenHeadAndTails)
+        FIGARO_LOG_DBG("Final LU", matU)
         //MICRO_BENCH_STOP(addingZeros)
         //FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
 
-        if (saveResult)
-        {
-            catGenHeadAndTails.makeDiagonalElementsPositiveInR();
-        }
-
-        pL = createFactorRelation("R", std::move(catGenHeadAndTails), totalNumCols);
+        pL = createFactorRelation("R", std::move(matU), totalNumCols);
         FIGARO_LOG_INFO("R", *pL)
         return std::make_tuple(pL, pQ);
     }
