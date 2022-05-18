@@ -46,13 +46,11 @@ def collect_times(ohe: bool, root_path: str, exp_names: list, db_names: list,
                     offset_idx = row_idx_dst - start_row_idx
                     row_idx_src = row_count - num_measurement  + offset_idx
                     val = sheet.cell(row=row_idx_src, column=2).value
-                    print(exp_name, db_name, db_name_per, val)
                     np_measures[offset_idx] = float(val)
 
                 time_avg = np.mean(np_measures[1:])
                 df_measurement.at[percent, db_name] = time_avg
 
-            print(df_measurement)
             df_measurement.index = df_measurement.index.set_names(['index'])
             df_measurement = df_measurement.astype(float)
         df_measurement_exps[exp_name] = df_measurement
@@ -99,13 +97,9 @@ def plot_performance(ohe: bool, exp_names: list,
     "post_proc_thin": "y", "post_proc_mkl": "c", "figaro_lapack": "m"
     }
 
-    #print(df_measurement_exps)
     for exp_name in exp_names:
-        print(exp_name)
         df_measurement = df_measurement_exps[exp_name]
-        print(df_measurement)
         for db_name in df_measurement:
-            #df_measurement[db_name]
             plt.plot(df_measurement[db_name], "-" + exp_colour[exp_name] + db_marker[db_name], label="{} {}".format(exp_name, db_name), markersize=8)
     plt.legend(loc="upper left")
 

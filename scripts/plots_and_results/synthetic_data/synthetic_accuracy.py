@@ -35,9 +35,6 @@ def arrange_up_triang(n: int):
 def compare_rs(R: np.array, num_rows: int, num_cols: int):
     R_expX = arrange_up_triang(num_cols) * math.sqrt(num_rows)
     diff = R[:num_cols, :num_cols] - R_expX
-    #print(R[:num_cols, :num_cols])
-    #print(R_expX)
-    #print(diff)
     rel_fro = np.linalg.norm(diff, ord='fro') / np.linalg.norm(R_expX, ord='fro')
     return rel_fro
 
@@ -63,7 +60,6 @@ def collect_times(root_path: str, exp_names: list, exp_paths: dict,
             db_name = "DBCartesianProductAccuracy{}".format(db_num)
             path_csv = os.path.join(accur_path, db_name, JOIN_ORDER,
                 CSV_NAME)
-            print(db_name)
 
             # Writng header files
             row_num = row_col_nums[db_idx][0]
@@ -96,7 +92,6 @@ def dump_results_to_latex(exp_names: list, figaro_impls: list,
 
     for exp_name in exp_names:
         df_measurement = exp_rel_errors[exp_name]
-        print(exp_name)
         df_measur_lat = df_to_latex(df_measurement)
         out_file.write("Relative error {}\n".format(exp_name))
         out_file.write(df_measur_lat.to_latex(float_format="%.2g",escape=False, na_rep=" "))
@@ -105,7 +100,6 @@ def dump_results_to_latex(exp_names: list, figaro_impls: list,
     for figaro_impl in figaro_impls:
         df_error = exp_rel_errors["postprocess_lapack"] / exp_rel_errors[figaro_impl]
         df_error_lat = df_to_latex(df_error)
-        print(figaro_impl)
         out_file.write("Relative error comparison {}\n".format(figaro_impl))
         out_file.write(df_error_lat.to_latex(float_format="%.2g",escape=False, na_rep=" "))
         out_file.write("\n")

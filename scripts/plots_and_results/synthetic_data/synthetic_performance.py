@@ -45,7 +45,6 @@ def collect_times(root_path: str, column_nums: list,
             if db_num in skip_dbs[exp_name]:
                 continue
             path_xlsx = os.path.join(perf_path, db_name, XLSX_NAME)
-            print(path_xlsx)
             workbook = load_workbook(filename=path_xlsx)
             sheet = workbook.active
             row_count = sheet.max_row
@@ -64,7 +63,6 @@ def collect_times(root_path: str, column_nums: list,
                 row_idx_src = row_count - num_measurement  + offset_idx
                 val = sheet.cell(row=row_idx_src, column=2).value
                 np_measures[offset_idx] = float(val)
-                #print(idx_shift, db_idx)
                 out_sheet.cell(row=row_idx_dst, column=col_idx).value = val
 
             time_avg = np.mean(np_measures[1:])
