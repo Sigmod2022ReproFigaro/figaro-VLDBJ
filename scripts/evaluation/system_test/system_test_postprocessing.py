@@ -58,10 +58,10 @@ class SystemTestPostprocess(SystemTestCompetitor):
             "query":
             {
                 "name": "FullJoin",
-                "expression": "POSTPROCESS_QR(JoinTable)",
+                "expression": "LU_LAPACK(JoinTable)",
                 "evaluation_hint":
                 {
-                    "operator": "POSTPROCESS_QR",
+                    "operator": "LU_LAPACK",
                     "operands":
                     [
                         {

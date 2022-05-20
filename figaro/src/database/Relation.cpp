@@ -3087,41 +3087,45 @@ namespace Figaro
         Figaro::MemoryLayout memoryLayout,
         bool saveResult)
     {
-        Relation* pR = nullptr;
-        Relation* pQ = nullptr;
+        Relation* pL = nullptr;
+        Relation* pU = nullptr;
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
-            MatrixDT matR = MatrixDT{0, 0};
-            MatrixDT matQ = MatrixDT{0, 0};
+            MatrixDT matL = MatrixDT{0, 0};
+            MatrixDT matU = MatrixDT{0, 0};
 
-            m_data.computeLUDecomposition(getNumberOfThreads(), &matR, &matQ);
+            m_data.computeLUDecomposition(getNumberOfThreads(), &matL, &matU);
 
             if (saveResult)
             {
-                pR = createFactorRelation("R", std::move(matR), m_attributes.size());
-                pQ = createFactorRelation("Q", std::move(matQ), m_attributes.size());
+                pL = createFactorRelation("L", std::move(matL), m_attributes.size());
+                pU = createFactorRelation("U", std::move(matU), m_attributes.size());
             }
         }
         else
         {
-            MatrixDColT matR = MatrixDColT{0, 0};
-            MatrixDColT matQ = MatrixDColT{0, 0};
+            MatrixDColT matL = MatrixDColT{0, 0};
+            MatrixDColT matU = MatrixDColT{0, 0};
 
-            m_dataColumnMajor.computeLUDecomposition(getNumberOfThreads(), &matR, &matQ);
+            m_dataColumnMajor.computeLUDecomposition(getNumberOfThreads(), &matL, &matU);
 
-            //m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
+            //m_dataColumnMajor.computeQRCholesky(computeQ, true, &matL, &matU);
             if (saveResult)
             {
-                MatrixDT matRR{matR.getNumRows(), matR.getNumCols()};
-                MatrixDT matRQ{matQ.getNumRows(), matQ.getNumCols()};
-                matRR.copyBlockToThisMatrixFromCol(
-                    matR, 0, matRR.getNumRows() - 1,
-                    0, matRR.getNumCols() - 1, 0, 0);
-                pR = createFactorRelation("R", std::move(matRR), m_attributes.size());
-                pQ = createFactorRelation("Q", std::move(matRQ), m_attributes.size());
+                FIGARO_LOG_BENCH("matU", matU)
+                MatrixDT matLL{matL.getNumRows(), matL.getNumCols()};
+                MatrixDT matUU{matU.getNumRows(), matU.getNumCols()};
+                matUU.copyBlockToThisMatrixFromCol(
+                    matU, 0, matUU.getNumRows() - 1,
+                    0, matUU.getNumCols() - 1, 0, 0);
+                matLL.copyBlockToThisMatrixFromCol(
+                    matL, 0, matLL.getNumRows() - 1,
+                    0, matLL.getNumCols() - 1, 0, 0);
+                pL = createFactorRelation("L", std::move(matLL), m_attributes.size());
+                pU = createFactorRelation("U", std::move(matUU), m_attributes.size());
             }
         }
-        return std::make_tuple(pR, pQ);
+        return std::make_tuple(pU, pL);
     }
 
     const std::string Relation::getHeadName(void) const

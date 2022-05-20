@@ -65,12 +65,23 @@ class DumpConf:
 
 
 class DecompConf:
+    class Name(IntEnum):
+        QR = 1
+        LU = 2
+
+
+    class Method(IntEnum):
+        LAPACK = 1
+        FIGARO = 2
+
+
     class PostprocessingMode(IntEnum):
         THIN_BOTTOM = 1
         THIN_DIAG = 2
         THICK_BOTTOM = 3
         THICK_DIAG = 4
         LAPACK = 5
+
 
     class SparsityMode(IntEnum):
         SPARSE = 1
@@ -80,6 +91,7 @@ class DecompConf:
     class MemoryLayout(IntEnum):
         ROW_MAJOR = 1
         COL_MAJOR = 2
+
 
     map_postp_mode_to_str = {
         PostprocessingMode.THIN_BOTTOM : "THIN_BOTTOM",
@@ -104,14 +116,25 @@ class DecompConf:
         'lapack': PostprocessingMode.LAPACK,
     }
 
+    map_method_to_enum = {
+        'lapack': Method.LAPACK,
+        'figaro': Method.FIGARO
+    }
+
+    map_name_to_enum  = {
+        'qr': Name.QR,
+        'lu': Name.LU
+    }
+
+
     map_sparsity_to_enum = {
-    'sparse': SparsityMode.SPARSE,
-    'dense': SparsityMode.DENSE
+        'sparse': SparsityMode.SPARSE,
+        'dense': SparsityMode.DENSE
     }
 
     map_memory_layout_to_enum = {
-    'row_major': MemoryLayout.ROW_MAJOR,
-    'col_major': MemoryLayout.COL_MAJOR
+        'row_major': MemoryLayout.ROW_MAJOR,
+        'col_major': MemoryLayout.COL_MAJOR
     }
 
     @staticmethod
@@ -125,11 +148,14 @@ class DecompConf:
 
 
     def __init__(self, postprocessing: str, sparsity: str,
-        memory_layout: str, compute_all: bool):
+        memory_layout: str, compute_all: bool,
+        name: str, method: str):
         self.postprocessing = DecompConf.map_postprocessing_to_enum[postprocessing]
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
         self.memory_layout = DecompConf.map_memory_layout_to_enum[memory_layout]
         self.compute_all = compute_all
+        self.method  = DecompConf.map_method_to_enum[method]
+        self.name = DecompConf.map_name_to_enum[name]
 
 
 
@@ -239,6 +265,8 @@ class SystemTest(ABC):
 
         decomp_json = system_json["system"]["decomposition"]
         postprocessing = decomp_json.get("postprocessing", "thin_diag")
+        name = decomp_json.get("name", "qr")
+        method = decomp_json.get("method", "lapack")
         memory_layout = decomp_json.get("memory_layout", "row_major")
         sparsity = decomp_json.get("sparsity", "dense")
         compute_all = bool(decomp_json.get("compute_all", False))
@@ -255,7 +283,7 @@ class SystemTest(ABC):
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
             DecompConf(postprocessing, sparsity,
-                memory_layout, compute_all),
+                memory_layout, compute_all, name, method),
             ExcecutableConf(interpreter),
             database, query, test_mode,
             *args, **kwargs)
