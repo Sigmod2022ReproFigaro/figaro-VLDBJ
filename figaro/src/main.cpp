@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath, computeAll);
     query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}}, qrHintType, memoryLayout, dump);
+                                {"postProcessing", true}, {"computeL", true}}, qrHintType, memoryLayout, dump);
     if (dump)
     {
         Figaro::ASTVisitorResultAbs* pResult = query.getResult();
@@ -140,6 +140,9 @@ int main(int argc, char *argv[])
             std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
             database.outputRelationToFile(fileDumpR,
                 pQrResult->getRRelationName(), ',', precision);
+            std::ofstream fileDumpQ(dumpFilePath+"L.csv", std::ofstream::out);
+            database.outputRelationToFile(fileDumpQ,
+                pQrResult->getQRelationName(), ',', precision);
             if (computeAll)
             {
                 double ortMeasure = database.checkOrthogonality(pQrResult->getQRelationName(), {});

@@ -2658,7 +2658,9 @@ namespace Figaro
             numNonJoinAttrs += pRel->m_data.getNumCols();
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
-        m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, nullptr);
+        MatrixDT matU{0, 0};
+        m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
+        m_data = std::move(matU);
     }
 
 
@@ -2670,7 +2672,9 @@ namespace Figaro
 
     void Relation::computeLUInPlace(Figaro::QRHintType qrHintType)
     {
-        m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, nullptr);
+        MatrixDT matU{0, 0};
+        m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
+        m_data = std::move(matU);
     }
 
     std::tuple<Relation*, Relation*>
@@ -2903,7 +2907,6 @@ namespace Figaro
         {
             vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
                 + vpGenTailRels[idx - vpTailRels.size() - 1]->m_data.getNumRows();;
-                FIGARO_LOG_INFO("vpGenTailRels[idx - vpTailRels.size() - 1]->m_data.getNumRows()", vpGenTailRels[idx - vpTailRels.size() - 1]->m_data.getNumRows())
         }
         totalNumRows = vCumNumRowsUp.back();
 
@@ -3000,10 +3003,10 @@ namespace Figaro
         //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
         FIGARO_LOG_INFO("Computing final U")
 
-        MatrixDT matU{0, 0}, matL{0, 0};
+        MatrixDT matU{0, 0};
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
-        catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), &matL, &matU);
+        catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 

@@ -1314,16 +1314,22 @@ namespace Figaro
 
             uint32_t rank = std::min(M, N);
 
-
             long long int* pIpivot = new long long int[rank];
             LAPACKE_dgetrf(memLayout, M, N,
                 pA, ldA, pIpivot);
-            if (pMatL != nullptr)
+            if ((pMatL != nullptr) || (pMatU != nullptr))
             {
-                MatrixType& matL = *pMatL;
-                MatrixType& matU = *pMatU;
-                matL = std::move(MatrixType{M, N});
-                matU = std::move(MatrixType{rank, N});
+                if (pMatL != nullptr)
+                {
+                    MatrixType& matL = *pMatL;
+                    matL = std::move(MatrixType{M, N});
+                }
+                if (pMatU != nullptr)
+                {
+                    MatrixType& matU = *pMatU;
+                    matU = std::move(MatrixType{rank, N});
+                }
+
                 if constexpr (L == MemoryLayout::ROW_MAJOR)
                 {
                     for (uint32_t rowIdx = 0; rowIdx < M; rowIdx++)
@@ -1332,22 +1338,28 @@ namespace Figaro
                         {
                             double lVal = 0;
                             double uVal = 0;
-                            if (rowIdx > colIdx)
+                            if (pMatL != nullptr)
                             {
-                                lVal = matA(rowIdx, colIdx);
+                                if (rowIdx > colIdx)
+                                {
+                                    lVal = matA(rowIdx, colIdx);
+                                }
+                                else if (rowIdx == colIdx)
+                                {
+                                    lVal = 1;
+                                }
+                                (*pMatL)(rowIdx, colIdx) = lVal;
                             }
-                            else if (rowIdx == colIdx)
+                            if (pMatU != nullptr)
                             {
-                                lVal = 1;
-                            }
-                            if (rowIdx <= colIdx)
-                            {
-                                uVal = matA(rowIdx, colIdx);
-                            }
-                            matL(rowIdx, colIdx) = lVal;
-                            if (rowIdx < rank)
-                            {
-                                matU(rowIdx, colIdx) = uVal;
+                                if (rowIdx <= colIdx)
+                                {
+                                    uVal = matA(rowIdx, colIdx);
+                                }
+                                if (rowIdx < rank)
+                                {
+                                    (*pMatU)(rowIdx, colIdx) = uVal;
+                                }
                             }
                         }
                     }
@@ -1360,22 +1372,28 @@ namespace Figaro
                         {
                             double lVal = 0;
                             double uVal = 0;
-                            if (rowIdx > colIdx)
+                            if (pMatL != nullptr)
                             {
-                                lVal = matA(rowIdx, colIdx);
+                                if (rowIdx > colIdx)
+                                {
+                                    lVal = matA(rowIdx, colIdx);
+                                }
+                                else if (rowIdx == colIdx)
+                                {
+                                    lVal = 1;
+                                }
+                                (*pMatL)(rowIdx, colIdx) = lVal;
                             }
-                            else if (rowIdx == colIdx)
+                            if (pMatU != nullptr)
                             {
-                                lVal = 1;
-                            }
-                            if (rowIdx <= colIdx)
-                            {
-                                uVal = matA(rowIdx, colIdx);
-                            }
-                            matL(rowIdx, colIdx) = lVal;
-                             if (rowIdx < rank)
-                            {
-                                matU(rowIdx, colIdx) = uVal;
+                                if (rowIdx <= colIdx)
+                                {
+                                    uVal = matA(rowIdx, colIdx);
+                                }
+                                if (rowIdx < rank)
+                                {
+                                    (*pMatU)(rowIdx, colIdx) = uVal;
+                                }
                             }
                         }
                     }

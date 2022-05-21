@@ -219,7 +219,7 @@ namespace Figaro
                 ASTVisitorLUFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels(), evalPostProcessing);
                 delete pResult;
                 ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
-                std::string lName = pQRrResult->getRRelationName();
+                lName = pQRrResult->getRRelationName();
                 if (evalPostProcessing)
                 {
                     m_pDatabase->persistRelation(lName);

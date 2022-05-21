@@ -79,4 +79,6 @@ struct std::hash<std::tuple<TupleArgs...> >
 
 std::ostream& operator<<(std::ostream& out, const Figaro::MatrixEigenT& matrix);
 
+void processMemUsage(double& vmUsage, double& residentSet);
+
 #endif
