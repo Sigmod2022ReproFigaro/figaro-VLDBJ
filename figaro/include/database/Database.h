@@ -119,6 +119,9 @@ namespace Figaro
         double checkOrthogonality(const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames) const;
 
+        double checkResidualErrorOfQR(const std::string& relationName,
+            const std::string& qName, const std::string& rName);
+
         std::string inverse(const std::string& relationName1,
             const std::vector<std::string>& vJoinAttrNames);
 

@@ -48,6 +48,7 @@ namespace Figaro
         typedef std::map<std::vector<double>, double> GroupByT;
         typedef Figaro::Matrix<double> MatrixDT;
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> MatrixDColT;
+        typedef Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> MatrixDRowT;
         typedef Figaro::Matrix<uint32_t> MatrixUI32T;
         typedef std::tuple<uint32_t, tbb::atomic<uint32_t> > DownUpCntT;
 
@@ -492,6 +493,8 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames) const;
 
         double checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const;
+
+        double checkResidualErrorOfQR(const Relation& qRel, const Relation& rRel);
 
         Relation inverse(
             const std::vector<std::string>& vJoinAttrNames) const;

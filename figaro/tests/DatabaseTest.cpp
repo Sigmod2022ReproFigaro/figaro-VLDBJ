@@ -1508,11 +1508,11 @@ TEST(Database, LUFigaro)
     Figaro::Query query(&database);
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}});
+                                {"postProcessing", true}, {"computeL", true}});
 }
 
 
-TEST(Relation, DISABLED_Join)
+TEST(Relation, Join)
 {
     static constexpr uint32_t M = 3, N = 3, K= 2;
     Relation::MatrixDT A(M, N), B(K, N), C(K, K);

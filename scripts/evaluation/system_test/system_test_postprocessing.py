@@ -53,28 +53,56 @@ class SystemTestPostprocess(SystemTestCompetitor):
 
 
     def get_query_json(self):
-        query_json_s = """
-        {
-            "query":
+
+        if self.query.get_root_operator() == "GIV_QR":
+            query_json_s = """
             {
-                "name": "FullJoin",
-                "expression": "LU_LAPACK(JoinTable)",
-                "evaluation_hint":
+                "query":
                 {
-                    "operator": "LU_LAPACK",
-                    "operands":
-                    [
-                        {
-                            "operator": "relation",
-                            "relation": "JoinTable"
-                        }
-                    ],
-                    "relation_order": ["JoinTable"],
-                    "num_threads": 48
+                    "name": "FullJoin",
+                    "expression": "POSTPROCESS_QR(JoinTable)",
+                    "evaluation_hint":
+                    {
+                        "operator": "POSTPROCESS_QR",
+                        "operands":
+                        [
+                            {
+                                "operator": "relation",
+                                "relation": "JoinTable"
+                            }
+                        ],
+                        "relation_order": ["JoinTable"],
+                        "num_threads": 48
+                    }
                 }
             }
-        }
-        """
+            """
+        elif self.query.get_root_operator() == "LU_FIGARO":
+            query_json_s = """
+            {
+                "query":
+                {
+                    "name": "FullJoin",
+                    "expression": "LU_LAPACK(JoinTable)",
+                    "evaluation_hint":
+                    {
+                        "operator": "LU_LAPACK",
+                        "operands":
+                        [
+                            {
+                                "operator": "relation",
+                                "relation": "JoinTable"
+                            }
+                        ],
+                        "relation_order": ["JoinTable"],
+                        "num_threads": 48
+                    }
+                }
+            }
+            """
+        else:
+            pass
+
         query_json = json.loads(query_json_s)
         query_json["query"]["evaluation_hint"]["compute_all"] = \
             self.conf_decomp.compute_all

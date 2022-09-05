@@ -9,6 +9,7 @@ class Query:
     def __init__(self, query_config_path, database: Database):
         self.query_config_path = query_config_path
         self.database = database
+        self.root_operator = None
 
         #TODO: Change order to allow other order than preorder.
 
@@ -30,6 +31,7 @@ class Query:
         self.rel_join_attrs = {rel: [] for rel in self.relation_order}
         self.rel_non_join_attrs = {rel: [] for rel in self.relation_order}
         self.eval_hint = json_eval_hint
+        self.root_operator = json_eval_hint["operator"]
         self.visit_node_join_tree(json_eval_hint["operands"][0], None)
 
 
@@ -165,6 +167,7 @@ class Query:
         return join_attr_names + non_join_attr_names
 
 
-
+    def get_root_operator(self):
+        return self.root_operator
 
 

@@ -73,6 +73,7 @@ namespace Figaro
         ASTVisitorResultAbs* pResult;
         if (m_useLFTJoin)
         {
+            FIGARO_LOG_INFO("USING LFT JOIN")
             pResult = pElement->getLeftOperand()->accept(this);
             std::unordered_map<std::string, uint32_t> htNameIdx;
             for (uint32_t idxRel = 0; idxRel < m_vPreOrderRelNames.size(); idxRel++)

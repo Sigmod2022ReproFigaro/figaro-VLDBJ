@@ -377,6 +377,18 @@ namespace Figaro
         return ortMeasure;
     }
 
+    double Database::checkResidualErrorOfQR(const std::string& relationName,
+        const std::string& qName, const std::string& rName)
+    {
+        Relation& rel = m_relations.at(relationName);
+        const Relation& relQ = m_relations.at(qName);
+        const Relation& relR = m_relations.at(rName);
+
+        double resError = rel.checkResidualErrorOfQR(relQ, relR);
+
+        return resError;
+    }
+
     void Database::buildIndices(
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames,
@@ -705,14 +717,14 @@ namespace Figaro
 
         for (const auto relName: vGenTailRels)
         {
-            //MICRO_BENCH_INIT(measureGenTail)
-            //MICRO_BENCH_START(measureGenTail)
+            MICRO_BENCH_INIT(measureGenTail)
+            MICRO_BENCH_START(measureGenTail)
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
             pRel->computeQRInPlace(qrHintType);
-            //MICRO_BENCH_STOP(measureGenTail)
-            //FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
+            MICRO_BENCH_STOP(measureGenTail)
+            FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
             FIGARO_LOG_INFO("Gen Tail name", relName)
         }
 
@@ -724,11 +736,14 @@ namespace Figaro
         {
             pJoinRel = &m_relations.at(joinRelName);
         }
+        MICRO_BENCH_INIT(measureHead)
+            MICRO_BENCH_START(measureHead)
         auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(
             vpRels,
             pRootRel,
             vpRelTails, vpRelGenTails,
             qrHintType, saveResult, pJoinRel);
+        FIGARO_LOG_BENCH("Gen head time", MICRO_BENCH_GET_TIMER_LAP(measureHead))
         return saveQRResult(qrResult);
     }
 

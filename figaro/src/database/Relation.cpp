@@ -693,7 +693,7 @@ namespace Figaro
             }
         }
 
-        MatrixDT dataOutput {130'000'000, (uint32_t)attributes.size()};
+        MatrixDT dataOutput {1000, (uint32_t)attributes.size()};
         //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
@@ -1076,7 +1076,7 @@ namespace Figaro
             newRelName += vpChildRels[idxRel]->m_name;
         }
 
-        MatrixDT dataOutput {130'000'000, (uint32_t)attributes.size()};
+        MatrixDT dataOutput {1000, (uint32_t)attributes.size()};
         //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
@@ -1132,7 +1132,7 @@ namespace Figaro
                         dataOutput[rowIdxOut][colIdxOut] += childRowPt[nonJoinAttrIdx];
                         if (rowIdx == 0)
                         {
-                            FIGARO_LOG_INFO("colIdxOut", colIdxOut, "nonJoinAttrIdx", nonJoinAttrIdx, "val", dataOutput[rowIdxOut][colIdxOut])
+                            FIGARO_LOG_DBG("colIdxOut", colIdxOut, "nonJoinAttrIdx", nonJoinAttrIdx, "val", dataOutput[rowIdxOut][colIdxOut])
 
                         }
                     }
@@ -1155,13 +1155,13 @@ namespace Figaro
                 FIGARO_LOG_DBG("glCnt", glCnt)
 
             }
-            FIGARO_LOG_DBG("rowIdx", rowIdx, dataOutput)
         }
         for (uint32_t idxRel = 0; idxRel < vpChildRels.size(); idxRel++)
         {
             destroyHashTableMNJoin(vvCurJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
         }
         dataOutput.resize(rowIdxOutAt + 1);
+        FIGARO_LOG_DBG("matrix L", dataOutput)
         FIGARO_LOG_DBG("rowIdxOutAt", rowIdxOutAt)
         FIGARO_LOG_INFO("outputSize", dataOutput.getNumRows(), dataOutput.getNumCols())
         FIGARO_LOG_INFO(newRelName, dataOutput.getNumRows(), dataOutput.getNumCols())
@@ -1317,6 +1317,7 @@ namespace Figaro
             curRowIdx ++;
         }
 
+
         FIGARO_LOG_INFO("APrimeA", APrimeA);
 
         // linear regression
@@ -1344,10 +1345,26 @@ namespace Figaro
         auto diff = eye.subtract(result, 0, vJoinAttrNames.size());
         FIGARO_LOG_INFO("diff norm", eye.norm(0))
         FIGARO_LOG_INFO("diff norm", result)
+        FIGARO_LOG_BENCH("Dimensions Result", result.getNumRows(), result.getNumCols())
+        FIGARO_LOG_BENCH("Dimensions Diff", diff.getNumRows(), diff.getNumCols())
+        FIGARO_LOG_BENCH("Norm diff",  diff.norm(vJoinAttrNames.size()))
+        FIGARO_LOG_BENCH("Norm eye",  eye.norm(0))
         FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
         FIGARO_LOG_BENCH("Dimensions", m_data.getNumRows(), m_data.getNumCols())
         return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
+    }
 
+    double Relation::checkResidualErrorOfQR(const Relation& qRel, const Relation& rRel)
+    {
+        FIGARO_LOG_BENCH("qRelName", qRel.m_name, "rRelName", rRel.m_name, "joinName", m_name)
+        changeMemoryLayout(Figaro::MemoryLayout::ROW_MAJOR);
+        auto AComp = qRel.m_data.multiply(rRel.m_data, 0, 0);
+        auto diff = AComp.subtract(m_data, 0, 0);
+        FIGARO_LOG_BENCH("Comp dim", AComp.getNumRows(), AComp.getNumCols())
+        FIGARO_LOG_BENCH("Or dim", m_data.getNumRows(), m_data.getNumCols())
+        FIGARO_LOG_BENCH("Norm diff", diff.norm(0))
+        FIGARO_LOG_BENCH("Norm original", m_data.norm(0))
+        return diff.norm(0) / m_data.norm(0);
     }
 
     Relation Relation::inverse(
@@ -1355,6 +1372,7 @@ namespace Figaro
     ) const
     {
         auto result = m_data.computeInverse(vJoinAttrNames.size(), true);
+        FIGARO_LOG_DBG("Inverse", result)
         return Relation("INV_" + getName(), std::move(result), m_attributes);
     }
 
@@ -2555,22 +2573,8 @@ namespace Figaro
         for (uint32_t distParCnt = 0; distParCnt < numParDistVals; distParCnt++)
         {
             uint32_t startIdx;
-            std::vector<double> vCurScaleSum(numNonJoinAttrs);
-
             startIdx = m_vParBlockStartIdxsAfterFirstPass[distParCnt];
-            //FIGARO_LOG_DBG("Getting counts")
 
-            //FIGARO_LOG_INFO("Scaling data by data_scale")
-            // Scaling data by data_scale
-            for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
-            {
-                for (uint32_t attrIdx = m_vSubTreeDataOffsets[idxRel];
-                            attrIdx < m_vSubTreeDataOffsets[idxRel + 1];
-                            attrIdx++)
-                {
-                    vCurScaleSum[attrIdx - numJoinAttrs] = pAggAwayRel->m_data[startIdx][attrIdx];
-                }
-            }
             //FIGARO_LOG_INFO("Generalized tail computation")
             // Generalized head and tail computation.
             for (uint32_t rowIdx = startIdx + 1;
@@ -2587,7 +2591,7 @@ namespace Figaro
                         uint32_t shiftIdx = attrIdx - numJoinAttrs;
                         // A_i
                         dataTailsOut[tailRowIdx][shiftIdx] =
-                            (pAggAwayRel->m_data[rowIdx][attrIdx] - vCurScaleSum[shiftIdx]);
+                            pAggAwayRel->m_data[rowIdx][attrIdx] - pAggAwayRel->m_data[startIdx][attrIdx];
                     }
                 }
             }
@@ -2606,7 +2610,7 @@ namespace Figaro
                     attrIdx++)
                 {
                     dataHeadOut[distParCnt][attrIdx - numOmittedAttrs] =
-                        vCurScaleSum[attrIdx - numJoinAttrs];
+                        pAggAwayRel->m_data[startIdx][attrIdx];
                 }
 
             }
@@ -2620,8 +2624,6 @@ namespace Figaro
 
         schemaRemoveNonParJoinAttrs(attributes, vJoinAttrIdxs, vParJoinAttrIdxs);
 
-        m_dataScales = std::move(dataScales);
-        m_scales = std::move(scales);
         //MICRO_BENCH_STOP(genHT)
         //MICRO_BENCH_STOP(genHTMainLoop)
         //FIGARO_LOG_BENCH("Figaro", "computeAndScaleQRGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
@@ -2673,7 +2675,9 @@ namespace Figaro
     void Relation::computeLUInPlace(Figaro::QRHintType qrHintType)
     {
         MatrixDT matU{0, 0};
+        FIGARO_LOG_DBG("matU Before" + m_name, m_data)
         m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
+        FIGARO_LOG_DBG("matU After" + m_name, matU)
         m_data = std::move(matU);
     }
 
@@ -2880,7 +2884,7 @@ namespace Figaro
         uint32_t numRels;
         uint32_t minNumRows;
         Relation* pL = nullptr;
-        Relation* pQ = nullptr;
+        Relation* pU = nullptr;
         MatrixDT qData{0, 0};
 
 
@@ -2907,6 +2911,7 @@ namespace Figaro
         {
             vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
                 + vpGenTailRels[idx - vpTailRels.size() - 1]->m_data.getNumRows();;
+            FIGARO_LOG_INFO(idx, vpGenTailRels[idx - vpTailRels.size() - 1]->m_data.getNumRows())
         }
         totalNumRows = vCumNumRowsUp.back();
 
@@ -3023,9 +3028,9 @@ namespace Figaro
         //MICRO_BENCH_STOP(addingZeros)
         //FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
 
-        pL = createFactorRelation("R", std::move(matU), totalNumCols);
-        FIGARO_LOG_INFO("R", *pL)
-        return std::make_tuple(pL, pQ);
+        pU = createFactorRelation("U", std::move(matU), totalNumCols);
+        FIGARO_LOG_INFO("U", *pU)
+        return std::make_tuple(pU, pL);
     }
 
     std::tuple<Relation*, Relation*> Relation::computeQR(
@@ -3048,7 +3053,7 @@ namespace Figaro
             if (saveResult)
             {
                 FIGARO_LOG_INFO("R before positive diagonal", matR)
-                matR.makeDiagonalElementsPositiveInR();
+                //matR.makeDiagonalElementsPositiveInR();
                 FIGARO_LOG_INFO("R after positive diagonal", m_data)
                 pR = createFactorRelation("R", std::move(matR), m_attributes.size());
                 pQ = createFactorRelation("Q", std::move(matQ), m_attributes.size());
@@ -3065,7 +3070,7 @@ namespace Figaro
             //m_dataColumnMajor.computeQRCholesky(computeQ, true, &matR, &matQ);
             if (saveResult)
             {
-                matR.makeDiagonalElementsPositiveInR();
+                //matR.makeDiagonalElementsPositiveInR();
                 MatrixDT matRR{matR.getNumRows(), matR.getNumCols()};
                 MatrixDT matRQ{matQ.getNumRows(), matQ.getNumCols()};
                 matRR.copyBlockToThisMatrixFromCol(
@@ -3168,9 +3173,9 @@ namespace Figaro
 
     void Relation::changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout)
     {
-        MatrixDColT tmpOut{m_data.getNumRows(), m_data.getNumCols()};
         if (memoryLayout == MemoryLayout::COL_MAJOR)
         {
+            MatrixDColT tmpOut{m_data.getNumRows(), m_data.getNumCols()};
             for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_data.getNumCols(); colIdx++)
@@ -3181,9 +3186,20 @@ namespace Figaro
             m_dataColumnMajor = std::move(tmpOut);
             m_data = std::move(MatrixDT{0, 0});
         }
-        else if (memoryLayout == MemoryLayout::COL_MAJOR)
+        else if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
-            // TODO: if needed.
+            MatrixDRowT tmpOut{m_dataColumnMajor.getNumRows(), m_dataColumnMajor.getNumCols()};
+            for (uint32_t colIdx = 0; colIdx < m_dataColumnMajor.getNumCols(); colIdx++)
+            {
+
+                for (uint32_t rowIdx = 0; rowIdx < m_dataColumnMajor.getNumRows(); rowIdx++)
+                {
+
+                    tmpOut(rowIdx, colIdx) = m_dataColumnMajor(rowIdx, colIdx);
+                }
+            }
+            m_dataColumnMajor = std::move(MatrixDColT{0, 0});
+            m_data = std::move(tmpOut);
         }
     }
 
@@ -3329,7 +3345,8 @@ namespace Figaro
     void Relation::outputToFile(std::ostream& out, char sep,
         uint32_t precision, bool header) const
     {
-         for (uint32_t row = 0; row < m_data.getNumRows(); row ++)
+        //for (uint32_t row = 0; row < m_data.getNumRows(); row ++)
+        for (uint32_t row = 0; row < m_data.getNumCols(); row ++)
         {
             for (uint32_t col = 0; col < m_data.getNumCols(); col++)
             {
