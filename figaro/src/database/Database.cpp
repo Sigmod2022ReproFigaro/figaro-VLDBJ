@@ -767,6 +767,16 @@ namespace Figaro
         return saveQRResult(qrResult);
     }
 
+    std::string Database::extractLUPermutationMatrix(const std::string& relName)
+    {
+        Relation& rel = m_relations.at(relName);
+        Relation* pRel = rel.extractLUPermutationMatrix();
+        Relation& matPerm = *pRel;
+        std::string permName = pRel->getName();
+        m_relations.emplace(pRel->getName(), std::move(matPerm));
+        return permName;
+    }
+
     void Database::changeMemoryLayout(void)
     {
         for (auto& [relName, relation]: m_relations)

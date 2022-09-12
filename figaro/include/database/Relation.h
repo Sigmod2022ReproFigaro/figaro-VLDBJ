@@ -622,6 +622,8 @@ namespace Figaro
         computeLU(Figaro::MemoryLayout memoryLayout,
             bool saveResult);
 
+        Relation* extractLUPermutationMatrix(void);
+
         /*********************** Naming patterns ***************/
         const std::string getHeadName(void) const;
 

@@ -196,45 +196,45 @@ namespace Figaro
         pElement->accept(&joinAttrVisitor);
 
 
-        MICRO_BENCH_INIT(lIndicesComp)
-        MICRO_BENCH_INIT(lFirstPassComp)
-        MICRO_BENCH_INIT(lSecondPassComp)
-        MICRO_BENCH_INIT(lComp)
+        MICRO_BENCH_INIT(uIndicesComp)
+        MICRO_BENCH_INIT(uFirstPassComp)
+        MICRO_BENCH_INIT(uSecondPassComp)
+        MICRO_BENCH_INIT(uComp)
 
         FIGARO_LOG_INFO("JOIN EVALUATION")
         FIGARO_LOG_INFO("ONE HOT ENCODING")
         m_pDatabase->oneHotEncodeRelations();
+        MICRO_BENCH_INIT(lComp)
 
         /************* U COMPUTATION START ***********/
-        MICRO_BENCH_INIT(uComp)
         MICRO_BENCH_START(uComp)
 
-        MICRO_BENCH_START(lIndicesComp)
+        MICRO_BENCH_START(uIndicesComp)
         pElement->accept(&buildIndicesVisitor);
-        MICRO_BENCH_STOP(lIndicesComp)
+        MICRO_BENCH_STOP(uIndicesComp)
 
         if (isFlagOn("headsAndTails"))
         {
-            MICRO_BENCH_START(lFirstPassComp)
+            MICRO_BENCH_START(uFirstPassComp)
             ASTVisitorResultFirstPass* pResult =
             (ASTVisitorResultFirstPass*)pElement->accept(&figaroFirstPassVisitor);
-            MICRO_BENCH_STOP(lFirstPassComp)
-            FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(lFirstPassComp));
+            MICRO_BENCH_STOP(uFirstPassComp)
+            FIGARO_LOG_BENCH("Figaro", "first pass",  MICRO_BENCH_GET_TIMER_LAP(uFirstPassComp));
             ASTVisitorResultQR* pQRrResult = nullptr;
             if (isFlagOn("generalizedHeadsAndTails"))
             {
                 bool evalPostProcessing = isFlagOn("postProcessing");
-                MICRO_BENCH_START(lSecondPassComp)
+                MICRO_BENCH_START(uSecondPassComp)
                 ASTVisitorLUFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels(), evalPostProcessing);
                 delete pResult;
                 ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
-                lName = pQRrResult->getRRelationName();
+                uName = pQRrResult->getRRelationName();
                 if (evalPostProcessing)
                 {
-                    m_pDatabase->persistRelation(lName);
+                    m_pDatabase->persistRelation(uName);
                 }
-                MICRO_BENCH_STOP(lSecondPassComp)
-                FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(lSecondPassComp));
+                MICRO_BENCH_STOP(uSecondPassComp)
+                FIGARO_LOG_BENCH("Figaro", "second pass",  MICRO_BENCH_GET_TIMER_LAP(uSecondPassComp));
             }
             else
             {
@@ -256,14 +256,18 @@ namespace Figaro
             {
                 MICRO_BENCH_START(lComp)
                 ASTNodeRelation* astRNOde =
-                    new ASTNodeRelation(lName,
-                    m_pDatabase->getRelationAttributeNames(lName));
+                    new ASTNodeRelation(uName,
+                    m_pDatabase->getRelationAttributeNames(uName));
                 ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
                 ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode, false);
                 // Add relation.
-                ASTVisitorResultJoin* pQResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
-                uName = pQResult->getJoinRelName();
-                delete pQResult;
+                ASTVisitorResultJoin* pLUResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
+                lName = pLUResult->getJoinRelName();
+                delete pLUResult;
+                std::string permName = m_pDatabase->extractLUPermutationMatrix(lName);
+                //m_pDatabase->applyPermutationInPlace(uName, permName);
+
+
                 MICRO_BENCH_STOP(lComp)
                 FIGARO_LOG_BENCH("Figaro", "Computation of L",  MICRO_BENCH_GET_TIMER_LAP(lComp));
             }

@@ -223,6 +223,8 @@ namespace Figaro
             bool saveResult,
             const std::string& joinRelName);
 
+        std::string extractLUPermutationMatrix(const std::string& relName);
+
         void changeMemoryLayout(void);
 
         std::tuple<std::string, std::string> evalQRPostprocessing(

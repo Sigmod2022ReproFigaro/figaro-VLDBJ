@@ -3152,6 +3152,15 @@ namespace Figaro
         return std::make_tuple(pU, pL);
     }
 
+    Relation* Relation::extractLUPermutationMatrix(void)
+    {
+        MatrixDRowT matPerm = MatrixDRowT{m_data.getNumRows(), 1};
+        m_data.extractLUPermutationMatrix(matPerm);
+        FIGARO_LOG_DBG("Permutation matrix", matPerm)
+        Relation* pPerm = createFactorRelation("L", std::move(matPerm), 1);
+        return pPerm;
+    }
+
     const std::string Relation::getHeadName(void) const
     {
         return "HEAD_" + m_name;
