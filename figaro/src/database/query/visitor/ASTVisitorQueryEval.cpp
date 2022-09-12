@@ -127,7 +127,8 @@ namespace Figaro
                 new ASTNodeRelation(rName,
                 m_pDatabase->getRelationAttributeNames(rName));
             ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
-            ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode);
+            ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode,
+                true);
             // Add relation.
             ASTVisitorResultJoin* pQResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
             qName = pQResult->getJoinRelName();
@@ -258,7 +259,7 @@ namespace Figaro
                     new ASTNodeRelation(lName,
                     m_pDatabase->getRelationAttributeNames(lName));
                 ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
-                ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode);
+                ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode, false);
                 // Add relation.
                 ASTVisitorResultJoin* pQResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
                 uName = pQResult->getJoinRelName();
@@ -392,10 +393,16 @@ namespace Figaro
         ASTVisitorResultJoin* pMatrix =
             (ASTVisitorResultJoin*)pElement->getRightOperand()->accept(this);
 
-        uint32_t joinSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0]);
+        uint32_t joinSize = 0;
+        if (pElement->isLFTJoin())
+        {
+            joinSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0]);
+        }
         ASTVisitorRightMultiply astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
-            true, joinAttrVisitor.getPreOrderRelNames(), joinAttrVisitor.getPreOrderParRelNames(),
-            joinAttrVisitor.getPreOrderVVJoinAttrNames(), joinAttrVisitor.getPreOrderVVParJoinAttrNames(), joinSize);
+            pElement->isLFTJoin(), joinAttrVisitor.getPreOrderRelNames(),
+            joinAttrVisitor.getPreOrderParRelNames(),
+            joinAttrVisitor.getPreOrderVVJoinAttrNames(),
+            joinAttrVisitor.getPreOrderVVParJoinAttrNames(), joinSize);
 
         ASTVisitorResultJoin* pMatMulResult = (ASTVisitorResultJoin*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();
