@@ -1444,11 +1444,11 @@ namespace Figaro
         void extractLUPermutationMatrix(MatrixType& perm)
         {
             auto& matA = *this;
-            int nonZeroRowIdx  = m_numCols;
-            FIGARO_LOG_DBG(perm.getNumRows(), perm.getNumCols());
+            uint32_t cntZeros = 0;
+            uint32_t nonZeroRowIdx  = m_numCols;
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
-                int numZeros = 0;
+                uint32_t numZeros = 0;
                 for (int32_t colIdx = m_numCols - 1; colIdx >= 0; colIdx--)
                 {
                     if (matA[rowIdx][colIdx] == 0)
@@ -1460,14 +1460,13 @@ namespace Figaro
                         break;
                     }
                 }
-                FIGARO_LOG_DBG("rowIdx", rowIdx, numZeros);
                 if (numZeros > 0)
                 {
                     perm[m_numCols - numZeros - 1][0] = rowIdx;
+                    cntZeros++;
                 }
                 else
                 {
-                    FIGARO_LOG_DBG("Here", rowIdx, numZeros);
                     if (nonZeroRowIdx < m_numRows)
                     {
                         perm[nonZeroRowIdx][0] = rowIdx;
@@ -1475,7 +1474,7 @@ namespace Figaro
                     }
                 }
             }
-            FIGARO_LOG_DBG("MMM")
+            FIGARO_LOG_INFO("Counter zeros", cntZeros)
         }
 
         void makeDiagonalElementsPositiveInR(void)
