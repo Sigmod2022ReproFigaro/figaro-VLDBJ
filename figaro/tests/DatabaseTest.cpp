@@ -1764,6 +1764,44 @@ TEST(Relation, Norm)
     FIGARO_LOG_DBG("norm", norm)
 }
 
+TEST(Relation, CondNumber)
+{
+    static constexpr uint32_t M = 4, N = 3;
+    Relation::MatrixDT A(M, N);
+
+    A[0][0] = 1;
+    A[0][1] = 7;
+    A[0][2] = 2;
+    //A[0][3] = 3;
+
+    A[1][0] = 27;
+    A[1][1] = 13;
+    A[1][2] = 4;
+    //A[1][3] = 6;
+
+    A[2][0] = 22;
+    A[2][1] = 21;
+    A[2][2] = 6;
+    //A[2][3] = 7;
+
+    A[3][0] = 13;
+    A[3][1] = 25;
+    A[3][2] = 21;
+    //A[3][3] = 23;
+
+
+    Relation relA("A", std::move(A),
+        {Relation::Attribute("A", Relation::AttributeType::FLOAT),
+         Relation::Attribute("AA", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A1", Relation::AttributeType::FLOAT),
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
+
+    FIGARO_LOG_DBG("relA", relA)
+    double estCondNumber = relA.estimateConditionNumber({});
+    EXPECT_NEAR(estCondNumber, 10.189359555015979, QR_TEST_PRECISION_ERROR);
+    FIGARO_LOG_DBG("estCondNumber", estCondNumber)
+}
+
 TEST(Relation, AdditionAndSubtraction)
 {
     static constexpr uint32_t M = 2, N = 3;

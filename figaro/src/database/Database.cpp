@@ -377,6 +377,26 @@ namespace Figaro
         return ortMeasure;
     }
 
+    double Database::getNorm(const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames) const
+    {
+        const Relation& rel = m_relations.at(relationName);
+
+        double norm = rel.getNorm(vJoinAttrNames);
+
+        return norm;
+    }
+
+    double Database::estimateConditionNumber(const std::string& relationName,
+            const std::vector<std::string>& vJoinAttrNames) const
+    {
+        const Relation& rel = m_relations.at(relationName);
+
+        double norm = rel.estimateConditionNumber(vJoinAttrNames);
+
+        return norm;
+    }
+
     double Database::checkResidualErrorOfQR(const std::string& relationName,
         const std::string& qName, const std::string& rName)
     {

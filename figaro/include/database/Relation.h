@@ -492,7 +492,12 @@ namespace Figaro
         double norm(
             const std::vector<std::string>& vJoinAttrNames) const;
 
+        double estimateConditionNumber(
+            const std::vector<std::string>& vJoinAttrNames) const;
+
         double checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const;
+
+        double getNorm(const std::vector<std::string>& vJoinAttrNames) const;
 
         double checkResidualErrorOfQR(const Relation& qRel, const Relation& rRel);
 

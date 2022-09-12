@@ -293,6 +293,34 @@ namespace Figaro
             return normVal;
         }
 
+        double estCondNumber(uint32_t numJoinAttr) const
+        {
+            uint32_t m = getNumRows();
+            uint32_t n = getNumCols() - numJoinAttr;
+            uint32_t rank = std::min(m, n);
+            uint32_t ldA = getNumCols();
+            const double* pA = getArrPt() + numJoinAttr;
+            double condR;
+            MatrixType matrixU(0, 0);
+            MatrixType matrixS(0, 0);
+            MatrixType matrixVT(0, 0);
+            /*
+            MatrixType tmpMat {m_numRows, m_numCols};
+
+            tmpMat.copyBlockToThisMatrix(*this,
+                0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
+            */
+            (const_cast<MatrixType*>(this))->computeSingularValueDecomposition(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
+            double maxSingValue = matrixS(0, 0);
+            double minSingValue = matrixS(rank - 1, 0);
+            FIGARO_LOG_BENCH("Dimensions", m, n)
+            FIGARO_LOG_BENCH("maxSingValue", maxSingValue)
+            FIGARO_LOG_BENCH("minSingValue", minSingValue)
+            double condition2  = maxSingValue / minSingValue;
+
+            return condition2;
+        }
+
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
         {

@@ -966,6 +966,7 @@ namespace Figaro
         outIdx = -1;
         MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
+        uint32_t oldThreadNum = getNumberOfThreads();
         omp_set_num_threads(4);
         //MICRO_BENCH_INIT(iterateOverRootRelTimer)
         //MICRO_BENCH_START(iterateOverRootRelTimer)
@@ -978,6 +979,7 @@ namespace Figaro
                 vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
                 vpHashTabQueueOffsets, addColumns);
         }
+        omp_set_num_threads(oldThreadNum);
         //MICRO_BENCH_STOP(iterateOverRootRelTimer)
         //FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
 
@@ -1337,6 +1339,13 @@ namespace Figaro
         return result;
     }
 
+    double Relation::estimateConditionNumber(
+            const std::vector<std::string>& vJoinAttrNames) const
+    {
+        double result = m_data.estCondNumber(vJoinAttrNames.size());
+        return result;
+    }
+
     double Relation::checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const
     {
         FIGARO_LOG_INFO("m_attributes", m_attributes)
@@ -1351,7 +1360,14 @@ namespace Figaro
         FIGARO_LOG_BENCH("Norm eye",  eye.norm(0))
         FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
         FIGARO_LOG_BENCH("Dimensions", m_data.getNumRows(), m_data.getNumCols())
+
         return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
+    }
+
+    double Relation::getNorm(const std::vector<std::string>& vJoinAttrNames) const
+    {
+        double norm = m_data.norm(vJoinAttrNames.size());
+        return norm;
     }
 
     double Relation::checkResidualErrorOfQR(const Relation& qRel, const Relation& rRel)
@@ -2853,7 +2869,7 @@ namespace Figaro
 
         if (saveResult)
         {
-            catGenHeadAndTails.makeDiagonalElementsPositiveInR();
+            //catGenHeadAndTails.makeDiagonalElementsPositiveInR();
         }
 
         pR = createFactorRelation("R", std::move(catGenHeadAndTails), totalNumCols);
