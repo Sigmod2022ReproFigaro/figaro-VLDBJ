@@ -25,6 +25,12 @@ namespace Figaro
         HOUSEHOLDER_LAPACK = 4
     };
 
+    enum class LUHintType
+    {
+        THIN_DIAG = 0,
+        PART_PIVOT_LAPACK = 1
+    };
+
     // Row-major order of storing elements of matrix is assumed.
     template <typename T, MemoryLayout L = MemoryLayout::ROW_MAJOR>
     class Matrix
@@ -693,6 +699,27 @@ namespace Figaro
         }
 
 
+        void applyGaussian(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx)
+        {
+            auto& matA = *this;
+            T tmpUpperVal;
+            T tmpLowerVal;
+            double ratio;
+
+            tmpUpperVal = matA[rowIdxUpper][startColIdx];
+            tmpLowerVal = matA[rowIdxLower][startColIdx];
+            matA[rowIdxLower][startColIdx] = 0;
+            ratio = -tmpLowerVal / tmpUpperVal;
+
+            for (uint32_t colIdx = startColIdx + 1; colIdx < matA.m_numCols; colIdx++)
+            {
+                tmpUpperVal = matA[rowIdxUpper][colIdx];
+                tmpLowerVal = matA[rowIdxLower][colIdx];
+                matA[rowIdxLower][colIdx] = ratio * tmpUpperVal  + tmpLowerVal;
+            }
+        }
+
+
         void computeQRGivensSequentialBlockBottom(
             uint32_t rowBeginIdx,
             uint32_t rowEndIdx,
@@ -748,6 +775,33 @@ namespace Figaro
                     {
                         applyGivens(colIdx + rowBeginIdx, rowIdx, colIdx, sin, cos);
                     }
+                }
+            }
+        }
+
+
+        void computeLUGaussianSequentialBlockDiag(
+            uint32_t rowBeginIdx,
+            uint32_t rowEndIdx,
+            uint32_t colBeginIdx,
+            uint32_t colEndIdx)
+        {
+            auto& matA = *this;
+            for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
+            {
+                // TODO: BE CAREFUL
+                uint32_t colIdxShift = colIdx - colBeginIdx;
+                for (uint32_t rowIdx = colIdxShift + rowBeginIdx + 1;
+                    rowIdx <= rowEndIdx; rowIdx++)
+                {
+                    T upperVal = matA[colIdxShift + rowBeginIdx][colIdx];
+                    //T lowerVal = matA[rowIdx][colIdx];
+                    if (upperVal == 0.0)
+                    {
+                        FIGARO_LOG_INFO("FUCK, FUCK");
+                    }
+                    double val = 1;
+                    applyGaussian(colIdxShift + rowBeginIdx, rowIdx, colIdx);
                 }
             }
         }
@@ -1011,6 +1065,103 @@ namespace Figaro
         }
 
 
+        void computeLUGivensParallelizedThinMatrix(uint32_t numThreads,
+            Figaro::LUHintType qrType)
+        {
+            uint32_t blockSize;
+            uint32_t numBlocks;
+            uint32_t numRedRows;
+            uint32_t rowTotalEndIdx;
+            uint32_t numRedEndRows;
+            uint32_t pivotIdx;
+
+            std::vector<uint32_t> vRowBlockBeginIdx;
+            std::vector<uint32_t> vRowRedBlockBeginIdx;
+            std::vector<uint32_t> vRowBlockEndIdx;
+            std::vector<uint32_t> vRowRedBlockEndIdx;
+            std::vector<uint32_t> vRowRedSrcBlockEndIdx;
+
+            auto& matA = *this;
+
+            numBlocks = std::min(m_numRows, numThreads);
+            // ceil(m_numRows / numBlocks)
+            blockSize =  (m_numRows + numBlocks - 1) / numBlocks;
+            numRedRows = std::min(blockSize, m_numCols);
+            omp_set_num_threads(numThreads);
+
+            for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
+            {
+                uint32_t beginBlockIdx = blockIdx * blockSize;
+                uint32_t rowRedSrcEndIdx;
+                // This is needed for dummy threads case.
+                if (beginBlockIdx >= m_numRows)
+                {
+                    break;
+                }
+                vRowBlockBeginIdx.push_back(beginBlockIdx);
+                vRowRedBlockBeginIdx.push_back(blockIdx * numRedRows);
+                vRowBlockEndIdx.push_back(std::min((blockIdx + 1) * blockSize - 1,
+                                        m_numRows - 1));
+                rowRedSrcEndIdx = std::min(beginBlockIdx + numRedRows - 1,
+                                m_numRows - 1);
+                vRowRedSrcBlockEndIdx.push_back(rowRedSrcEndIdx);
+                vRowRedBlockEndIdx.push_back(vRowRedBlockBeginIdx[blockIdx] +
+                    rowRedSrcEndIdx - beginBlockIdx);
+            }
+            numBlocks = vRowBlockBeginIdx.size();
+
+            pivotIdx = vRowBlockBeginIdx[0];
+            FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
+            MICRO_BENCH_INIT(qrGivensPar)
+            MICRO_BENCH_START(qrGivensPar)
+            #pragma omp parallel for schedule(static)
+            for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
+            {
+                uint32_t rowBlockBeginIdx;
+                uint32_t rowBlockEndIdx;
+                rowBlockBeginIdx = vRowBlockBeginIdx[blockIdx];
+                rowBlockEndIdx = vRowBlockEndIdx[blockIdx];
+                if (qrType == LUHintType::THIN_DIAG)
+                {
+                    computeLUGaussianSequentialBlockDiag(rowBlockBeginIdx,
+                        rowBlockEndIdx, 0, m_numCols - 1, pivotIdx);
+                }
+            }
+            MICRO_BENCH_STOP(qrGivensPar)
+            FIGARO_LOG_BENCH("Time Parallel", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar))
+            FIGARO_LOG_INFO("Number of blocks", numBlocks)
+            FIGARO_LOG_DBG("After parallel", matA)
+            MICRO_BENCH_INIT(qrGivensPar2)
+            MICRO_BENCH_START(qrGivensPar2)
+
+            for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
+            {
+                uint32_t rowRedSrcBeginIdx;
+                uint32_t rowRedSrcEndIdx;
+                uint32_t rowRedBeginIdx;
+
+                rowRedSrcBeginIdx = vRowBlockBeginIdx[blockIdx];
+                rowRedSrcEndIdx = vRowRedSrcBlockEndIdx[blockIdx];
+                rowRedBeginIdx = vRowRedBlockBeginIdx[blockIdx];
+
+                copyBlockToThisMatrix(matA, rowRedSrcBeginIdx, rowRedSrcEndIdx,
+                    0, m_numCols - 1, rowRedBeginIdx, 0);
+            }
+
+            rowTotalEndIdx = vRowRedBlockEndIdx.back();
+            computeLUGaussianSequentialBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads, 0);
+
+            numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
+            //FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
+            this->resize(numRedEndRows);
+            //FIGARO_LOG_INFO("After processing", matA)
+            MICRO_BENCH_STOP(qrGivensPar2)
+            FIGARO_LOG_BENCH("Time Second", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
+        }
+
+
+
+
         void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, Figaro::QRHintType qrType)
         {
             if (qrType == QRHintType::THICK_DIAG)
@@ -1262,6 +1413,28 @@ namespace Figaro
             }
         }
 
+
+        void computeLU(uint32_t numThreads = 1, Figaro::LUHintType qrTypeHint = LUHintType::THIN_DIAG, bool computeL = false, bool saveResult = false,
+        MatrixType* pMatL = nullptr, MatrixType* pMatU = nullptr)
+        {
+            if ((0 == m_numRows) || (0 == m_numCols))
+            {
+                return;
+            }
+            if (qrTypeHint == LUHintType::THIN_DIAG)
+            {
+                FIGARO_LOG_INFO("Thin version")
+                computeLUGaussianSequentialBlockDiag(0, m_numRows - 1, 0, m_numCols - 1);
+                //computeLUGivensParallelizedThinMatrix(numThreads, qrType);
+            }
+            else if (qrTypeHint == LUHintType::PART_PIVOT_LAPACK)
+            {
+                FIGARO_LOG_INFO("PP_LAPACK")
+                computeLULapack(numThreads, saveResult, pMatL, pMatU);
+            }
+
+        }
+
         void computeQRHouseholder(
             bool computeQ = false, bool saveResult = false,
             MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
@@ -1341,8 +1514,8 @@ namespace Figaro
                 pMatV->getArrPt(), ldvT);
         }
 
-        void computeLUDecomposition(uint32_t numThreads,
-            MatrixType* pMatL, MatrixType* pMatU)
+        void computeLULapack(uint32_t numThreads,
+            bool saveResult, MatrixType* pMatL, MatrixType* pMatU)
         {
             uint32_t ldA = getLeadingDimension();
             uint32_t memLayout = getLapackMajorOrder();
@@ -1356,7 +1529,7 @@ namespace Figaro
             long long int* pIpivot = new long long int[rank];
             LAPACKE_dgetrf(memLayout, M, N,
                 pA, ldA, pIpivot);
-            if ((pMatL != nullptr) || (pMatU != nullptr))
+            if (saveResult)
             {
                 if (pMatL != nullptr)
                 {

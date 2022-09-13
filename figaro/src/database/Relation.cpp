@@ -2677,7 +2677,8 @@ namespace Figaro
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
         MatrixDT matU{0, 0};
-        m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
+        m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+             false, true,  nullptr, &matU);
         m_data = std::move(matU);
     }
 
@@ -2692,8 +2693,8 @@ namespace Figaro
     {
         MatrixDT matU{0, 0};
         FIGARO_LOG_DBG("matU Before" + m_name, m_data)
-        m_data.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
-        FIGARO_LOG_DBG("matU After" + m_name, matU)
+        m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+             false, true, nullptr, &matU);
         m_data = std::move(matU);
     }
 
@@ -3027,7 +3028,9 @@ namespace Figaro
         MatrixDT matU{0, 0};
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
-        catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
+         m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+             false, true, nullptr, &matU);
+        //catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 
@@ -3118,7 +3121,8 @@ namespace Figaro
             MatrixDT matL = MatrixDT{0, 0};
             MatrixDT matU = MatrixDT{0, 0};
 
-            m_data.computeLUDecomposition(getNumberOfThreads(), &matL, &matU);
+            m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
+             true, &matL, &matU);
 
             if (saveResult)
             {
@@ -3131,9 +3135,9 @@ namespace Figaro
             MatrixDColT matL = MatrixDColT{0, 0};
             MatrixDColT matU = MatrixDColT{0, 0};
 
-            m_dataColumnMajor.computeLUDecomposition(getNumberOfThreads(), &matL, &matU);
+             m_dataColumnMajor.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
+             true, &matL, &matU);
 
-            //m_dataColumnMajor.computeQRCholesky(computeQ, true, &matL, &matU);
             if (saveResult)
             {
                 FIGARO_LOG_BENCH("matU", matU)

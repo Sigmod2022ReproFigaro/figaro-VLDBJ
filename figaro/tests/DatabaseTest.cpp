@@ -560,7 +560,7 @@ TEST(Matrix, computeLULapackRowMajor)
     matrix(0, 0) = 1; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 5; matrix(2, 1) = 6;
-    matrix.computeLUDecomposition(1, &matrixL, &matrixU);
+    matrix.computeLULapack(1, true, &matrixL, &matrixU);
 
     EXPECT_NEAR(matrixL(0, 0), 1.0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixL(1, 0), 0.2, GIVENS_TEST_PRECISION_ERROR);
@@ -588,7 +588,7 @@ TEST(Matrix, computeLULapackColMajor)
     matrix(0, 0) = 1; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 5; matrix(2, 1) = 6;
-    matrix.computeLUDecomposition(1, &matrixL, &matrixU);
+    matrix.computeLULapack(1, true, &matrixL, &matrixU);
 
     EXPECT_NEAR(matrixL(0, 0), 1.0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixL(1, 0), 0.2, GIVENS_TEST_PRECISION_ERROR);
