@@ -265,7 +265,7 @@ class SystemTest(ABC):
 
         decomp_json = system_json["system"]["decomposition"]
         postprocessing = decomp_json.get("postprocessing", "thin_diag")
-        name = decomp_json.get("name", "qr")
+        decomp_name = decomp_json.get("name", "qr")
         method = decomp_json.get("method", "lapack")
         memory_layout = decomp_json.get("memory_layout", "row_major")
         sparsity = decomp_json.get("sparsity", "dense")
@@ -283,7 +283,7 @@ class SystemTest(ABC):
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
             DecompConf(postprocessing, sparsity,
-                memory_layout, compute_all, name, method),
+                memory_layout, compute_all, decomp_name, method),
             ExcecutableConf(interpreter),
             database, query, test_mode,
             *args, **kwargs)
@@ -291,8 +291,11 @@ class SystemTest(ABC):
         return system_test
 
     def run(self):
-        q_str = "Q and R" if (self.conf_decomp.compute_all) else "R"
-        decomp_str = q_str + " in a qr decomposition"
+        if (self.conf_decomp.name == DecompConf.Name.QR):
+            q_str = "Q and R" if (self.conf_decomp.compute_all) else "R"
+            decomp_str = q_str + " in a QR decomposition"
+        else:
+            decomp_str = "L and U in an LU decomposition"
         info_str = "Run {{mode}} for database {db_name} and query {query_name} and {decomp_str}".format(
             db_name=self.database.get_name(), query_name=self.query.get_name(),
             decomp_str=decomp_str)

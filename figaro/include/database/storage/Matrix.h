@@ -780,6 +780,36 @@ namespace Figaro
         }
 
 
+        void swapRows(uint32_t rowIdx1, uint32_t rowIdx2,
+            uint32_t colBeginIdx, uint32_t colEndIdx)
+        {
+            auto& matA = *this;
+            for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
+            {
+                std::swap(matA[rowIdx1][colIdx], matA[rowIdx2][colIdx]);
+            }
+        }
+
+        void partialPivot(uint32_t rowCurIdx, uint32_t rowEndIdx,
+            uint32_t colBeginIdx, uint32_t colEndIdx, uint32_t colIdx)
+        {
+            auto& matA = *this;
+            double absMax = 0.0;
+            uint32_t rowIdxSwap = UINT32_MAX;
+            for (uint32_t rowPotIdx = rowCurIdx + 1; rowPotIdx <= rowEndIdx; rowPotIdx++)
+            {
+                if (std::abs(matA[rowPotIdx][colIdx]) > absMax)
+                {
+                    rowIdxSwap = rowPotIdx;
+                }
+            }
+            if (rowIdxSwap != UINT32_MAX)
+            {
+                swapRows(rowCurIdx, rowIdxSwap, colBeginIdx, colEndIdx);
+            }
+            FIGARO_LOG_DBG("Swapping rows", rowCurIdx, rowIdxSwap);
+        }
+
         void computeLUGaussianSequentialBlockDiag(
             uint32_t rowBeginIdx,
             uint32_t rowEndIdx,
@@ -789,20 +819,28 @@ namespace Figaro
             auto& matA = *this;
             for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
             {
-                // TODO: BE CAREFUL
                 uint32_t colIdxShift = colIdx - colBeginIdx;
-                for (uint32_t rowIdx = colIdxShift + rowBeginIdx + 1;
-                    rowIdx <= rowEndIdx; rowIdx++)
+                uint32_t rowCurIdx = colIdxShift + rowBeginIdx;
+                if (rowCurIdx >= rowEndIdx)
                 {
-                    T upperVal = matA[colIdxShift + rowBeginIdx][colIdx];
-                    //T lowerVal = matA[rowIdx][colIdx];
+                    break;
+                }
+                T upperVal = matA[rowCurIdx][colIdx];
+
+                if (upperVal == 0.0)
+                {
+                    partialPivot(rowCurIdx, rowEndIdx, colBeginIdx, colEndIdx, colIdx);
+                    upperVal = matA[rowCurIdx][colIdx];
                     if (upperVal == 0.0)
                     {
-                        FIGARO_LOG_INFO("FUCK, FUCK");
+                        continue;
                     }
-                    double val = 1;
-                    applyGaussian(colIdxShift + rowBeginIdx, rowIdx, colIdx);
                 }
+                for (uint32_t rowIdx = rowCurIdx + 1; rowIdx <= rowEndIdx; rowIdx++)
+                {
+                    applyGaussian(rowCurIdx, rowIdx, colIdx);
+                }
+                FIGARO_LOG_DBG("colIdx", colIdx, matA)
             }
         }
 
@@ -1152,9 +1190,7 @@ namespace Figaro
             computeLUGaussianSequentialBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads, 0);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
-            //FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
             this->resize(numRedEndRows);
-            //FIGARO_LOG_INFO("After processing", matA)
             MICRO_BENCH_STOP(qrGivensPar2)
             FIGARO_LOG_BENCH("Time Second", MICRO_BENCH_GET_TIMER_LAP(qrGivensPar2))
         }
@@ -1424,7 +1460,17 @@ namespace Figaro
             if (qrTypeHint == LUHintType::THIN_DIAG)
             {
                 FIGARO_LOG_INFO("Thin version")
-                computeLUGaussianSequentialBlockDiag(0, m_numRows - 1, 0, m_numCols - 1);
+                *pMatU = MatrixType{m_numRows, m_numCols};
+                pMatU->copyBlockToThisMatrix(*this,
+                    0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
+                FIGARO_LOG_INFO("WTF", pMatU->getNumRows(), pMatU->getNumCols())
+                pMatU->computeLUGaussianSequentialBlockDiag(0, m_numRows - 1,
+                    0, m_numCols - 1);
+                FIGARO_LOG_INFO("WTF1", pMatU->getNumRows(), pMatU->getNumCols())
+                uint32_t numRedEndRows = std::min(m_numRows, m_numCols);
+                FIGARO_LOG_INFO("WTF2", pMatU->getNumRows(), pMatU->getNumCols())
+                pMatU->resize(numRedEndRows);
+                FIGARO_LOG_INFO("WTF3", pMatU->getNumRows(), pMatU->getNumCols())
                 //computeLUGivensParallelizedThinMatrix(numThreads, qrType);
             }
             else if (qrTypeHint == LUHintType::PART_PIVOT_LAPACK)
@@ -1523,6 +1569,8 @@ namespace Figaro
             uint32_t N = m_numCols;
             double* pA = getArrPt();
             MatrixType& matA = *this;
+
+            FIGARO_LOG_DBG("Dimensions", M, N)
 
             uint32_t rank = std::min(M, N);
 
