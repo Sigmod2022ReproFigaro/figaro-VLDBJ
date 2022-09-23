@@ -25,7 +25,7 @@ namespace Figaro
         // TODO: Rename GIV_QR with FIGARO_QR
         if ((operatorName == "GIV_QR") || (operatorName == "POSTPROCESS_QR")
         || (operatorName == "eval_join") || (operatorName == "LIN_REG")
-        || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") )
+        || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN") )
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -95,11 +95,17 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
             }
-             else if (operatorName == "LU_LAPACK")
+            else if (operatorName == "LU_LAPACK")
             {
                 pCreatedNode = new ASTNodeLULapack(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
-                FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
+                FIGARO_LOG_INFO("CREATE LU_LAPACK NODE")
+            }
+            else if (operatorName == "LU_THIN")
+            {
+                pCreatedNode = new ASTNodeLUThin(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                FIGARO_LOG_INFO("CREATE LU_THIN NODE")
             }
             else if (operatorName == "LIN_REG")
             {

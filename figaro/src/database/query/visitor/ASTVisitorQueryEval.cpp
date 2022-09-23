@@ -278,7 +278,7 @@ namespace Figaro
      }
 
 
-     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLULapack(ASTNodeLULapack* pElement)
+    ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLULapack(ASTNodeLULapack* pElement)
     {
         FIGARO_LOG_INFO("VISITING LU LAPACK NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
@@ -299,7 +299,28 @@ namespace Figaro
             m_pDatabase->evalLULapack(pElement->getRelationOrder().at(0),
              m_memoryLayout, m_saveResult);
         MICRO_BENCH_STOP(luLapackEval)
-        FIGARO_LOG_BENCH("Figaro", "LU Postproc eval", MICRO_BENCH_GET_TIMER_LAP(luLapackEval))
+        FIGARO_LOG_BENCH("Figaro", "LU LAPACK eval", MICRO_BENCH_GET_TIMER_LAP(luLapackEval))
+        return new ASTVisitorResultQR(lName, uName);
+    }
+
+    ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLUThin(ASTNodeLUThin* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING LU THIN NODE")
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
+        pElement->accept(&joinAttrVisitor);
+        m_pDatabase->oneHotEncodeRelations();
+
+        MICRO_BENCH_INIT(luThinEval)
+        MICRO_BENCH_START(luThinEval)
+        auto [lName, uName] =
+            m_pDatabase->evalLULapack(pElement->getRelationOrder().at(0),
+             m_memoryLayout, m_saveResult);
+        MICRO_BENCH_STOP(luThinEval)
+        FIGARO_LOG_BENCH("Figaro", "LU Thin eval", MICRO_BENCH_GET_TIMER_LAP(luThinEval))
         return new ASTVisitorResultQR(lName, uName);
     }
 
