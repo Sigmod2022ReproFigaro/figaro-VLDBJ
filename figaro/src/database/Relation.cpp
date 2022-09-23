@@ -1053,7 +1053,6 @@ namespace Figaro
         }
         for (uint32_t idxRel = 0; idxRel < vvJoinAttributeNames.size(); idxRel++)
         {
-            FIGARO_LOG_DBG("Building hash indices for child", idxRel)
             FIGARO_LOG_INFO("Relation name", vpChildRels[idxRel]->m_name,
             vpChildRels[idxRel]->m_attributes)
             vpChildRels[idxRel]->getAttributesIdxs(vvJoinAttributeNames[idxRel],
@@ -1078,7 +1077,7 @@ namespace Figaro
             newRelName += vpChildRels[idxRel]->m_name;
         }
 
-        MatrixDT dataOutput {1000, (uint32_t)attributes.size()};
+        MatrixDT dataOutput {150'000'000, (uint32_t)attributes.size()};
         //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
@@ -1088,7 +1087,6 @@ namespace Figaro
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
-            FIGARO_LOG_DBG("rowIdx", rowIdx, m_data.getNumRows());
             std::vector<uint32_t> naryCartesianProduct(vpChildRels.size());
             std::vector<uint32_t> nCartProdSize(vpChildRels.size());
             std::vector<std::vector<uint32_t> > vChildrenRowIdxs;
@@ -1108,7 +1106,6 @@ namespace Figaro
                 nCartProdSize[idxRel] = vChildRowIdxs.size();
                 cnt *= nCartProdSize[idxRel];
             }
-            FIGARO_LOG_DBG("cnt", cnt)
             for (uint32_t cntIdx = 0; cntIdx < cnt; cntIdx ++)
             {
                 uint32_t rowIdxOut = rowIdxOutAt.fetch_and_increment() + 1;
@@ -1132,11 +1129,6 @@ namespace Figaro
                     {
                         uint32_t colIdxOut = numParJoinAttrsCurRel + nonJoinAttrIdx - vNumJoinAttrs[idxRel];
                         dataOutput[rowIdxOut][colIdxOut] += childRowPt[nonJoinAttrIdx];
-                        if (rowIdx == 0)
-                        {
-                            FIGARO_LOG_DBG("colIdxOut", colIdxOut, "nonJoinAttrIdx", nonJoinAttrIdx, "val", dataOutput[rowIdxOut][colIdxOut])
-
-                        }
                     }
                 }
                  // Moving to next combination of tuples in a join result.
@@ -1146,15 +1138,11 @@ namespace Figaro
                     idxRel --)
                 {
                    writeNum = (naryCartesianProduct[idxRel] + carry) % nCartProdSize[idxRel];
-                   FIGARO_LOG_DBG("writeNum", writeNum, "carry", carry)
                     carry =
                     (naryCartesianProduct[idxRel] + carry) / nCartProdSize[idxRel];
                     naryCartesianProduct[idxRel] = writeNum;
                 }
-                FIGARO_LOG_DBG("naryCartesianProduct", naryCartesianProduct)
-                FIGARO_LOG_DBG("nCartProdSize", nCartProdSize)
                 glCnt ++;
-                FIGARO_LOG_DBG("glCnt", glCnt)
 
             }
         }
@@ -1163,8 +1151,6 @@ namespace Figaro
             destroyHashTableMNJoin(vvCurJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
         }
         dataOutput.resize(rowIdxOutAt + 1);
-        FIGARO_LOG_DBG("matrix L", dataOutput)
-        FIGARO_LOG_DBG("rowIdxOutAt", rowIdxOutAt)
         FIGARO_LOG_INFO("outputSize", dataOutput.getNumRows(), dataOutput.getNumCols())
         FIGARO_LOG_INFO(newRelName, dataOutput.getNumRows(), dataOutput.getNumCols())
         Relation joinRel = Relation("JOIN_" + newRelName, std::move(dataOutput), attributes);
@@ -2029,6 +2015,8 @@ namespace Figaro
         //MatrixDT scale{numDistinctValues, 1};
         //std::vector<double> allScales(numDistinctValues);
 
+        //FIGARO_LOG_INFO("Entering ", m_name, m_data)
+
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
         // project away these attributes.
         #pragma omp parallel for schedule(static)
@@ -2048,24 +2036,42 @@ namespace Figaro
                 dataHeads[distCnt][joinAttrIdx] = m_data[headRowIdx][joinAttrIdx];
             }
 
-            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
-            {
-                dataHeads[distCnt][nonJoinAttrIdx] = m_data[headRowIdx][nonJoinAttrIdx];
-            }
-            for (uint32_t rowIdx = headRowIdx + 1;
+            uint32_t tmpHeadRowIdx = -1;
+            double maxVal = std::numeric_limits<double>::lowest();
+            uint32_t nonJoinAttrIdxPP = vNonJoinAttrIdxs[0];
+            for (uint32_t rowIdx = headRowIdx;
                 rowIdx < nextHeadRowIdx;
                 rowIdx++)
             {
-                uint32_t tailRowIdx = rowIdx - distCnt - 1;
-                // Double needed due to casts.
-                double i = rowIdx - headRowIdx + 1;
+                if (std::abs(m_data[rowIdx][nonJoinAttrIdxPP]) > maxVal)
+                {
+                    tmpHeadRowIdx = rowIdx;
+                    maxVal = std::abs(m_data[rowIdx][nonJoinAttrIdxPP]);
+                }
+            }
+            //tmpHeadRowIdx = headRowIdx;
+
+            for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
+            {
+                dataHeads[distCnt][nonJoinAttrIdx] = m_data[tmpHeadRowIdx][nonJoinAttrIdx];
+            }
+            uint32_t tailRowIdx = headRowIdx - distCnt;
+            for (uint32_t rowIdx = headRowIdx;
+                rowIdx < nextHeadRowIdx;
+                rowIdx++)
+            {
+                if (tmpHeadRowIdx == rowIdx)
+                {
+                    continue;
+                }
                 for (const uint32_t nonJoinAttrIdx: vNonJoinAttrIdxs)
                 {
                     double tailVal;
-                    tailVal = m_data[rowIdx][nonJoinAttrIdx] - dataHeads[distCnt][nonJoinAttrIdx];
+                    tailVal = m_data[rowIdx][nonJoinAttrIdx] - dataHeads[distCnt][nonJoinAttrIdx] ;
                     dataTails[tailRowIdx][nonJoinAttrIdx - numJoinAttrs] =
                         tailVal;
                 }
+                ++tailRowIdx;
             }
 
         }
@@ -2591,13 +2597,34 @@ namespace Figaro
             uint32_t startIdx;
             startIdx = m_vParBlockStartIdxsAfterFirstPass[distParCnt];
 
+            uint32_t tmpHeadRowIdx = -1;
+            double maxVal = std::numeric_limits<double>::lowest();
+            uint32_t nonJoinAttrIdxPP = m_vSubTreeDataOffsets[0];
+
+            for (uint32_t rowIdx = startIdx;
+                rowIdx <  m_vParBlockStartIdxsAfterFirstPass[distParCnt+1];
+                rowIdx++)
+            {
+                if (std::abs(pAggAwayRel->m_data[rowIdx][nonJoinAttrIdxPP]) > maxVal)
+                {
+                    tmpHeadRowIdx = rowIdx;
+                    maxVal = std::abs(pAggAwayRel->m_data[rowIdx][nonJoinAttrIdxPP]);
+                }
+            }
+            //tmpHeadRowIdx = startIdx;
+
             //FIGARO_LOG_INFO("Generalized tail computation")
+            uint32_t tailRowIdx = startIdx - distParCnt;
             // Generalized head and tail computation.
-            for (uint32_t rowIdx = startIdx + 1;
+            for (uint32_t rowIdx = startIdx;
                 rowIdx < m_vParBlockStartIdxsAfterFirstPass[distParCnt+1];
                 rowIdx++)
             {
-                uint32_t tailRowIdx = rowIdx - distParCnt - 1;
+                //uint32_t tailRowIdx = rowIdx - distParCnt - 1;
+                if (tmpHeadRowIdx == rowIdx)
+                {
+                    continue;
+                }
                 for (uint32_t idxRel = 0; idxRel < numRelsSubTree; idxRel++)
                 {
                     for (uint32_t attrIdx = m_vSubTreeDataOffsets[idxRel];
@@ -2607,15 +2634,16 @@ namespace Figaro
                         uint32_t shiftIdx = attrIdx - numJoinAttrs;
                         // A_i
                         dataTailsOut[tailRowIdx][shiftIdx] =
-                            pAggAwayRel->m_data[rowIdx][attrIdx] - pAggAwayRel->m_data[startIdx][attrIdx];
+                            pAggAwayRel->m_data[rowIdx][attrIdx] - pAggAwayRel->m_data[tmpHeadRowIdx][attrIdx];
                     }
                 }
+                ++tailRowIdx;
             }
 
             // Copies join parent attributes to generalized head.
             for (const auto& parJoinAttrIdx: vParJoinAttrIdxs)
             {
-                dataHeadOut[distParCnt][parJoinAttrIdx] = pAggAwayRel->m_data[startIdx][parJoinAttrIdx];
+                dataHeadOut[distParCnt][parJoinAttrIdx] = pAggAwayRel->m_data[tmpHeadRowIdx][parJoinAttrIdx];
             }
 
             //  Generalized Head computation.
@@ -2626,7 +2654,7 @@ namespace Figaro
                     attrIdx++)
                 {
                     dataHeadOut[distParCnt][attrIdx - numOmittedAttrs] =
-                        pAggAwayRel->m_data[startIdx][attrIdx];
+                        pAggAwayRel->m_data[tmpHeadRowIdx][attrIdx];
                 }
 
             }
@@ -2692,10 +2720,13 @@ namespace Figaro
     void Relation::computeLUInPlace(Figaro::QRHintType qrHintType)
     {
         MatrixDT matU{0, 0};
-        FIGARO_LOG_DBG("matU Before" + m_name, m_data)
-        m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
-             false, true, nullptr, &matU);
-        m_data = std::move(matU);
+        if ((m_data.getNumRows() != 0) && (m_data.getNumCols() != 0))
+        {
+            m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+                false, true, nullptr, &matU);
+            m_data = std::move(matU);
+        }
+
     }
 
     std::tuple<Relation*, Relation*>
@@ -3019,7 +3050,7 @@ namespace Figaro
                 }
             }
         }
-        FIGARO_LOG_INFO("After", catGenHeadAndTails)
+        //FIGARO_LOG_INFO("After", catGenHeadAndTails)
 
         //MICRO_BENCH_STOP(copyMatrices)
         //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
@@ -3028,8 +3059,16 @@ namespace Figaro
         MatrixDT matU{0, 0};
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
-         m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+        catGenHeadAndTails.computeLU(getNumberOfThreads(),
+            Figaro::LUHintType::THIN_DIAG,
+             false, true, nullptr, &matU, false);
+        //FIGARO_LOG_INFO("Final U", catGenHeadAndTails)
+        /*
+        */
+       /*
+        catGenHeadAndTails.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
              false, true, nullptr, &matU);
+        */
         //catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
@@ -3122,7 +3161,7 @@ namespace Figaro
             MatrixDT matU = MatrixDT{0, 0};
 
             m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
-             true, &matL, &matU);
+             true, true, &matL, &matU);
 
             if (saveResult)
             {
@@ -3136,8 +3175,9 @@ namespace Figaro
             MatrixDColT matU = MatrixDColT{0, 0};
 
              m_dataColumnMajor.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
-             true, &matL, &matU);
+             true, true, &matL, &matU);
 
+            FIGARO_LOG_BENCH("matU", matU)
             if (saveResult)
             {
                 FIGARO_LOG_BENCH("matU", matU)
@@ -3213,7 +3253,7 @@ namespace Figaro
                 }
             }
             m_dataColumnMajor = std::move(tmpOut);
-            m_data = std::move(MatrixDT{0, 0});
+            //m_data = std::move(MatrixDT{0, 0});
         }
         else if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {

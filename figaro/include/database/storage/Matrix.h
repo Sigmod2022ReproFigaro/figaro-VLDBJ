@@ -699,7 +699,7 @@ namespace Figaro
         }
 
 
-        void applyGaussian(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx)
+        void applyGaussian(uint32_t rowIdxUpper, uint32_t rowIdxLower, uint32_t startColIdx, uint32_t colEndIdx)
         {
             auto& matA = *this;
             T tmpUpperVal;
@@ -710,8 +710,9 @@ namespace Figaro
             tmpLowerVal = matA[rowIdxLower][startColIdx];
             matA[rowIdxLower][startColIdx] = 0;
             ratio = -tmpLowerVal / tmpUpperVal;
+            //FIGARO_LOG_INFO("applyGaussian", tmpUpperVal, tmpLowerVal, ratio)
 
-            for (uint32_t colIdx = startColIdx + 1; colIdx < matA.m_numCols; colIdx++)
+            for (uint32_t colIdx = startColIdx + 1; colIdx <= colEndIdx; colIdx++)
             {
                 tmpUpperVal = matA[rowIdxUpper][colIdx];
                 tmpLowerVal = matA[rowIdxLower][colIdx];
@@ -799,8 +800,11 @@ namespace Figaro
             for (uint32_t rowPotIdx = rowCurIdx + 1; rowPotIdx <= rowEndIdx; rowPotIdx++)
             {
                 if (std::abs(matA[rowPotIdx][colIdx]) > absMax)
+                //if (matA[rowPotIdx][colIdx] != 0.0)
                 {
                     rowIdxSwap = rowPotIdx;
+                    absMax = std::abs(matA[rowPotIdx][colIdx]);
+                    //break;
                 }
             }
             if (rowIdxSwap != UINT32_MAX)
@@ -814,7 +818,8 @@ namespace Figaro
             uint32_t rowBeginIdx,
             uint32_t rowEndIdx,
             uint32_t colBeginIdx,
-            uint32_t colEndIdx)
+            uint32_t colEndIdx,
+            bool allowPerm)
         {
             auto& matA = *this;
             for (uint32_t colIdx = colBeginIdx; colIdx <= colEndIdx; colIdx++)
@@ -826,19 +831,28 @@ namespace Figaro
                     break;
                 }
                 T upperVal = matA[rowCurIdx][colIdx];
-
                 if (upperVal == 0.0)
                 {
-                    partialPivot(rowCurIdx, rowEndIdx, colBeginIdx, colEndIdx, colIdx);
-                    upperVal = matA[rowCurIdx][colIdx];
-                    if (upperVal == 0.0)
+                    if (allowPerm)
                     {
-                        continue;
+                        FIGARO_LOG_INFO("Partial pivoting")
+                        partialPivot(rowCurIdx, rowEndIdx, colBeginIdx, colEndIdx, colIdx);
+                        upperVal = matA[rowCurIdx][colIdx];
+                        if (upperVal == 0.0)
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        FIGARO_LOG_INFO("It doesn't work")
+
                     }
                 }
+                //FIGARO_LOG_INFO("Matrix", colIdx, matA)
                 for (uint32_t rowIdx = rowCurIdx + 1; rowIdx <= rowEndIdx; rowIdx++)
                 {
-                    applyGaussian(rowCurIdx, rowIdx, colIdx);
+                    applyGaussian(rowCurIdx, rowIdx, colIdx, colEndIdx);
                 }
                 FIGARO_LOG_DBG("colIdx", colIdx, matA)
             }
@@ -1162,7 +1176,7 @@ namespace Figaro
                 if (qrType == LUHintType::THIN_DIAG)
                 {
                     computeLUGaussianSequentialBlockDiag(rowBlockBeginIdx,
-                        rowBlockEndIdx, 0, m_numCols - 1, pivotIdx);
+                        rowBlockEndIdx, 0, m_numCols - 1, pivotIdx, true);
                 }
             }
             MICRO_BENCH_STOP(qrGivensPar)
@@ -1187,7 +1201,7 @@ namespace Figaro
             }
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
-            computeLUGaussianSequentialBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads, 0);
+            computeLUGaussianSequentialBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads, 0, true);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
             this->resize(numRedEndRows);
@@ -1451,7 +1465,7 @@ namespace Figaro
 
 
         void computeLU(uint32_t numThreads = 1, Figaro::LUHintType qrTypeHint = LUHintType::THIN_DIAG, bool computeL = false, bool saveResult = false,
-        MatrixType* pMatL = nullptr, MatrixType* pMatU = nullptr)
+        MatrixType* pMatL = nullptr, MatrixType* pMatU = nullptr, bool allowPerm = true)
         {
             if ((0 == m_numRows) || (0 == m_numCols))
             {
@@ -1465,7 +1479,7 @@ namespace Figaro
                     0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
                 FIGARO_LOG_INFO("WTF", pMatU->getNumRows(), pMatU->getNumCols())
                 pMatU->computeLUGaussianSequentialBlockDiag(0, m_numRows - 1,
-                    0, m_numCols - 1);
+                    0, m_numCols - 1, allowPerm);
                 FIGARO_LOG_INFO("WTF1", pMatU->getNumRows(), pMatU->getNumCols())
                 uint32_t numRedEndRows = std::min(m_numRows, m_numCols);
                 FIGARO_LOG_INFO("WTF2", pMatU->getNumRows(), pMatU->getNumCols())
@@ -1666,13 +1680,19 @@ namespace Figaro
         {
             auto& matA = *this;
             uint32_t cntZeros = 0;
-            uint32_t nonZeroRowIdx  = m_numCols;
+            constexpr double ZERO = 1e-11;
+            uint32_t nonZeroRowIdx  = m_numCols - 1;
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                perm[rowIdx][0] = -1;
+            }
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 uint32_t numZeros = 0;
+                bool setValue = false;
                 for (int32_t colIdx = m_numCols - 1; colIdx >= 0; colIdx--)
                 {
-                    if (matA[rowIdx][colIdx] == 0)
+                    if (std::abs(matA[rowIdx][colIdx]) < ZERO)
                     {
                         numZeros++;
                     }
@@ -1681,21 +1701,24 @@ namespace Figaro
                         break;
                     }
                 }
-                if (numZeros > 0)
+
+                for (int32_t zeroIdx = numZeros - 1; zeroIdx >= 0; zeroIdx--)
                 {
-                    perm[m_numCols - numZeros - 1][0] = rowIdx;
-                    cntZeros++;
-                }
-                else
-                {
-                    if (nonZeroRowIdx < m_numRows)
+                    if (perm[zeroIdx][0] == -1)
                     {
-                        perm[nonZeroRowIdx][0] = rowIdx;
-                        nonZeroRowIdx ++;
+                        perm[zeroIdx][0] = rowIdx;
+                        cntZeros++;
+                        setValue = true;
+                        break;
                     }
                 }
+                if ((!setValue) && (nonZeroRowIdx < m_numRows))
+                {
+                    perm[nonZeroRowIdx][0] = rowIdx;
+                    nonZeroRowIdx ++;
+                }
             }
-            FIGARO_LOG_INFO("Counter zeros", cntZeros)
+            FIGARO_LOG_INFO("Counter zeros", cntZeros, m_numCols - 1)
         }
 
         void makeDiagonalElementsPositiveInR(void)
