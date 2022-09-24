@@ -1680,7 +1680,8 @@ namespace Figaro
         {
             auto& matA = *this;
             uint32_t cntZeros = 0;
-            constexpr double ZERO = 1e-11;
+            uint32_t glCntZeros = 0;
+            constexpr double ZERO = 1e-13;
             uint32_t nonZeroRowIdx  = m_numCols - 1;
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
@@ -1704,6 +1705,10 @@ namespace Figaro
 
                 for (int32_t zeroIdx = numZeros - 1; zeroIdx >= 0; zeroIdx--)
                 {
+                    if (zeroIdx == numZeros - 1)
+                    {
+                        glCntZeros++;
+                    }
                     if (perm[zeroIdx][0] == -1)
                     {
                         perm[zeroIdx][0] = rowIdx;
@@ -1718,7 +1723,7 @@ namespace Figaro
                     nonZeroRowIdx ++;
                 }
             }
-            FIGARO_LOG_INFO("Counter zeros", cntZeros, m_numCols - 1)
+            FIGARO_LOG_INFO("Counter zeros", glCntZeros, cntZeros, m_numCols - 1)
         }
 
         void makeDiagonalElementsPositiveInR(void)
