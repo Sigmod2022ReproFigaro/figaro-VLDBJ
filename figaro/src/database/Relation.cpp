@@ -1077,7 +1077,7 @@ namespace Figaro
             newRelName += vpChildRels[idxRel]->m_name;
         }
 
-        MatrixDT dataOutput {150'000'000, (uint32_t)attributes.size()};
+        MatrixDT dataOutput {151'000'000, (uint32_t)attributes.size()};
         //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
@@ -2705,7 +2705,7 @@ namespace Figaro
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
         MatrixDT matU{0, 0};
-        m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+        m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
              false, true,  nullptr, &matU);
         m_data = std::move(matU);
     }
@@ -2722,7 +2722,7 @@ namespace Figaro
         MatrixDT matU{0, 0};
         if ((m_data.getNumRows() != 0) && (m_data.getNumCols() != 0))
         {
-            m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
+            m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
                 false, true, nullptr, &matU);
             m_data = std::move(matU);
         }
@@ -3063,13 +3063,7 @@ namespace Figaro
             Figaro::LUHintType::THIN_DIAG,
              false, true, nullptr, &matU, false);
         //FIGARO_LOG_INFO("Final U", catGenHeadAndTails)
-        /*
-        */
-       /*
-        catGenHeadAndTails.computeLU(getNumberOfThreads(), Figaro::LUHintType::THIN_DIAG,
-             false, true, nullptr, &matU);
-        */
-        //catGenHeadAndTails.computeLUDecomposition(getNumberOfThreads(), nullptr, &matU);
+
         //MICRO_BENCH_STOP(finalQR)
         //FIGARO_LOG_BENCH("Figaro", "Final QR",  MICRO_BENCH_GET_TIMER_LAP(finalQR));
 
