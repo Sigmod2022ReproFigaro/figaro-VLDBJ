@@ -9,7 +9,8 @@ namespace Figaro
         FIGARO_LOG_INFO("Finished visiting relation", relationName)
         std::string relHeadsName =
         m_htTmpRelsNames.at(relationName).m_headsName;
-        std::string relGenTailsName = m_pDatabase->createDummyGenTailRelation(relationName);return new ASTVisitorResultSecondPass(relHeadsName,
+        std::string relGenTailsName = m_pDatabase->createDummyGenTailRelation(relationName);
+        return new ASTVisitorResultSecondPass(relHeadsName,
             {{relationName, relGenTailsName}},
             {relationName});
     }

@@ -2705,8 +2705,9 @@ namespace Figaro
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
         MatrixDT matU{0, 0};
+        FIGARO_LOG_INFO("GenHead", m_data)
         m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
-             false, true,  nullptr, &matU);
+             false, true,  nullptr, &matU, nullptr, true);
         m_data = std::move(matU);
     }
 
@@ -2723,10 +2724,9 @@ namespace Figaro
         if ((m_data.getNumRows() != 0) && (m_data.getNumCols() != 0))
         {
             m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
-                false, true, nullptr, &matU);
+                false, true, nullptr, &matU, nullptr, true);
             m_data = std::move(matU);
         }
-
     }
 
     std::tuple<Relation*, Relation*>
@@ -3061,7 +3061,7 @@ namespace Figaro
         //MICRO_BENCH_START(finalQR)
         catGenHeadAndTails.computeLU(getNumberOfThreads(),
             Figaro::LUHintType::THIN_DIAG,
-             false, true, nullptr, &matU, false);
+             false, true, nullptr, &matU, nullptr, true);
         //FIGARO_LOG_INFO("Final U", catGenHeadAndTails)
 
         //MICRO_BENCH_STOP(finalQR)
@@ -3155,7 +3155,7 @@ namespace Figaro
             MatrixDT matU = MatrixDT{0, 0};
 
             m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
-             true, true, &matL, &matU);
+             true, true, &matL, &matU, nullptr, true);
 
             if (saveResult)
             {
@@ -3169,7 +3169,7 @@ namespace Figaro
             MatrixDColT matU = MatrixDColT{0, 0};
 
              m_dataColumnMajor.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
-             true, true, &matL, &matU);
+             true, true, &matL, &matU, nullptr, true);
 
             FIGARO_LOG_BENCH("matU", matU)
             if (saveResult)

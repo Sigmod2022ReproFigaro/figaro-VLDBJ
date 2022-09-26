@@ -116,7 +116,7 @@ namespace Figaro
                 {
                     m_name = other.m_name;
                     m_type = other.m_type;
-                    m_isPrimaryKey = m_isPrimaryKey;
+                    m_isPrimaryKey = other.m_isPrimaryKey;
                 }
                 return *this;
             }

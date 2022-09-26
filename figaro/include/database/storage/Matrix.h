@@ -41,6 +41,7 @@ namespace Figaro
         ArrayStorage<T>* m_pStorage = nullptr;
 
         using MatrixType = Matrix<T, L>;
+        using MatrixUInt32Type = Matrix<uint32_t, L>;
         using MatrixTypeCol = Matrix<T, MemoryLayout::COL_MAJOR>;
         using MatrixTypeRow = Matrix<T, MemoryLayout::ROW_MAJOR>;
 
@@ -1464,8 +1465,11 @@ namespace Figaro
         }
 
 
-        void computeLU(uint32_t numThreads = 1, Figaro::LUHintType qrTypeHint = LUHintType::THIN_DIAG, bool computeL = false, bool saveResult = false,
-        MatrixType* pMatL = nullptr, MatrixType* pMatU = nullptr, bool allowPerm = true)
+        void computeLU(uint32_t numThreads = 1,
+            Figaro::LUHintType qrTypeHint = LUHintType::THIN_DIAG,
+            bool computeL = false, bool saveResult = false,
+            MatrixType* pMatL = nullptr, MatrixType* pMatU = nullptr,
+            MatrixUInt32Type* pMatP = nullptr, bool allowPerm = true)
         {
             if ((0 == m_numRows) || (0 == m_numCols))
             {
@@ -1490,7 +1494,7 @@ namespace Figaro
             else if (qrTypeHint == LUHintType::PART_PIVOT_LAPACK)
             {
                 FIGARO_LOG_INFO("PP_LAPACK")
-                computeLULapack(numThreads, saveResult, pMatL, pMatU);
+                computeLULapack(numThreads, saveResult, pMatL, pMatU, pMatP);
             }
 
         }
@@ -1575,7 +1579,8 @@ namespace Figaro
         }
 
         void computeLULapack(uint32_t numThreads,
-            bool saveResult, MatrixType* pMatL, MatrixType* pMatU)
+            bool saveResult, MatrixType* pMatL, MatrixType* pMatU,
+            MatrixUInt32Type* pMatP)
         {
             uint32_t ldA = getLeadingDimension();
             uint32_t memLayout = getLapackMajorOrder();
@@ -1671,6 +1676,20 @@ namespace Figaro
                             }
                         }
                     }
+                }
+            }
+
+            if (pMatP != nullptr)
+            {
+                MatrixUInt32Type& matP = *pMatP;
+                matP = std::move(MatrixUInt32Type{M, 1});
+                for (uint32_t idx = 0; idx < M; idx++)
+                {
+                    matP[idx][0] = idx;
+                }
+                for (uint32_t idx = 0; idx < rank; idx++)
+                {
+                    std::swap(matP[idx][0], matP[pIpivot[idx]-1][0]);
                 }
             }
             delete [] pIpivot;

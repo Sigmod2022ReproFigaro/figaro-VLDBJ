@@ -556,11 +556,13 @@ TEST(Matrix, computeLULapackRowMajor)
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixL(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<uint32_t, Figaro::MemoryLayout::ROW_MAJOR> matrixP(0, 0);
 
     matrix(0, 0) = 1; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 5; matrix(2, 1) = 6;
-    matrix.computeLULapack(1, true, &matrixL, &matrixU);
+    matrix.computeLU(1, LUHintType::PART_PIVOT_LAPACK, true, true,
+            &matrixL, &matrixU, &matrixP, true);
 
     EXPECT_NEAR(matrixL(0, 0), 1.0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixL(1, 0), 0.2, GIVENS_TEST_PRECISION_ERROR);
@@ -574,8 +576,14 @@ TEST(Matrix, computeLULapackRowMajor)
     EXPECT_NEAR(matrixU(1, 0), 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixU(1, 1), 0.8, GIVENS_TEST_PRECISION_ERROR);
 
+    EXPECT_EQ(matrixP(0, 0), 2);
+    EXPECT_EQ(matrixP(1, 0), 0);
+    EXPECT_EQ(matrixP(2, 0), 1);
+
+
     FIGARO_LOG_DBG("matrixL", matrixL)
     FIGARO_LOG_DBG("matrixU", matrixU)
+    FIGARO_LOG_DBG("matrixP", matrixP)
 }
 
 
@@ -585,11 +593,13 @@ TEST(Matrix, computeLULapackColMajor)
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixL(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<uint32_t, Figaro::MemoryLayout::COL_MAJOR> matrixP(0, 0);
 
     matrix(0, 0) = 1; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 5; matrix(2, 1) = 6;
-    matrix.computeLULapack(1, true, &matrixL, &matrixU);
+    matrix.computeLU(1, LUHintType::PART_PIVOT_LAPACK, true, true,
+            &matrixL, &matrixU, &matrixP, true);
 
     EXPECT_NEAR(matrixL(0, 0), 1.0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixL(1, 0), 0.2, GIVENS_TEST_PRECISION_ERROR);
@@ -603,8 +613,14 @@ TEST(Matrix, computeLULapackColMajor)
     EXPECT_NEAR(matrixU(1, 0), 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixU(1, 1), 0.8, GIVENS_TEST_PRECISION_ERROR);
 
+    EXPECT_EQ(matrixP(0, 0), 2);
+    EXPECT_EQ(matrixP(1, 0), 0);
+    EXPECT_EQ(matrixP(2, 0), 1);
+
+
     FIGARO_LOG_DBG("matrixL", matrixL)
     FIGARO_LOG_DBG("matrixU", matrixU)
+    FIGARO_LOG_DBG("matrixP", matrixP)
 }
 
 TEST(Matrix, computeLUThinDiagRowMajor)
@@ -617,7 +633,8 @@ TEST(Matrix, computeLUThinDiagRowMajor)
     matrix(0, 0) = 0; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 5; matrix(2, 1) = 6;
-    matrix.computeLU(1, Figaro::LUHintType::THIN_DIAG, false, true, &matrixL, &matrixU);
+    matrix.computeLU(1, Figaro::LUHintType::THIN_DIAG, false, true, &matrixL, &matrixU,
+        nullptr, true);
 /*
     EXPECT_NEAR(matrixL(0, 0), 1.0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixL(1, 0), 0.2, GIVENS_TEST_PRECISION_ERROR);
