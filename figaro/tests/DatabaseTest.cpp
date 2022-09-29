@@ -1749,26 +1749,25 @@ TEST(Relation, DISABLED_SelfMatrixMultiply)
 
 TEST(Relation, CheckOrthogonality)
 {
-    static constexpr uint32_t M = 3, N = 3;
+    static constexpr uint32_t M = 4, N = 2;
     Relation::MatrixDT A(M, N);
 
-    A[0][0] = 1 + GIVENS_TEST_PRECISION_ERROR;
-    A[0][1] = 0;
-    A[0][2] = 0;
+    A[0][0] = -0.109108945117996;
+    A[0][1] = -0.829515062006254;
 
-    A[1][0] = 0;
-    A[1][1] = 1 + GIVENS_TEST_PRECISION_ERROR;
-    A[1][2] = 0;
+    A[1][0] = -0.327326835353989;
+    A[1][1] = -0.439155032826839;
 
-    A[2][0] = 0;
-    A[2][1] = 0;
-    A[2][2] = 1 + GIVENS_TEST_PRECISION_ERROR;
+    A[2][0] = -0.545544725589981;
+    A[2][1] = -0.048795003647426;
+
+    A[3][0] = -0.763762615825974;
+    A[3][1] = 0.341565025531986;
 
 
     Relation relA("A", std::move(A),
         {Relation::Attribute("A1", Relation::AttributeType::FLOAT),
-         Relation::Attribute("A2", Relation::AttributeType::FLOAT),
-         Relation::Attribute("A3", Relation::AttributeType::FLOAT)});
+         Relation::Attribute("A2", Relation::AttributeType::FLOAT)});
 
     FIGARO_LOG_DBG("relA", relA)
     double orth = relA.checkOrthogonality({});

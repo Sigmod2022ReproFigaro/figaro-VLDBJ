@@ -800,12 +800,12 @@ namespace Figaro
             uint32_t rowIdxSwap = UINT32_MAX;
             for (uint32_t rowPotIdx = rowCurIdx + 1; rowPotIdx <= rowEndIdx; rowPotIdx++)
             {
-                if (std::abs(matA[rowPotIdx][colIdx]) > absMax)
-                //if (matA[rowPotIdx][colIdx] != 0.0)
+                //if (std::abs(matA[rowPotIdx][colIdx]) > absMax)
+                if (matA[rowPotIdx][colIdx] != 0.0)
                 {
                     rowIdxSwap = rowPotIdx;
                     absMax = std::abs(matA[rowPotIdx][colIdx]);
-                    //break;
+                    break;
                 }
             }
             if (rowIdxSwap != UINT32_MAX)
@@ -1700,7 +1700,7 @@ namespace Figaro
             auto& matA = *this;
             uint32_t cntZeros = 0;
             uint32_t glCntZeros = 0;
-            constexpr double ZERO = 1e-13;
+            constexpr double ZERO = 1e-10;
             uint32_t nonZeroRowIdx  = m_numCols - 1;
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
