@@ -721,6 +721,9 @@ namespace Figaro
         std::vector<Relation*> vpRelGenTails;
         Relation* pRootRel;
         Relation* pJoinRel = nullptr;
+        uint32_t numNonJoinAttrs = 0;
+        uint64_t sumRedSize1 = 0;
+        uint64_t sumRedSize2 = 0;
         for (const auto relName: vRelationOrder)
         {
             Relation* pRel = &m_relations.at(relName);
@@ -731,8 +734,11 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelTails.push_back(pRel);
+            sumRedSize1 += pRel->sumRedSize(0, 1);
+            sumRedSize2 += pRel->sumRedSize(0, 2);
             pRel->computeQRInPlace(qrHintType);
             FIGARO_LOG_INFO("Tail name", relName)
+            numNonJoinAttrs += pRel->getNumberOfAttributes();
         }
 
         for (const auto relName: vGenTailRels)
@@ -742,6 +748,8 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
+            sumRedSize1 += pRel->sumRedSize(0, 1);
+            sumRedSize2 += pRel->sumRedSize(0, 2);
             pRel->computeQRInPlace(qrHintType);
             MICRO_BENCH_STOP(measureGenTail)
             FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
@@ -749,7 +757,11 @@ namespace Figaro
         }
 
         pRootRel = &m_relations.at(genHeadRoot);
+
         FIGARO_LOG_INFO("Root Rel name", pRootRel->getName())
+        uint32_t numJoinAttrs = pRootRel->getNumberOfAttributes() - numNonJoinAttrs;
+        sumRedSize1  += pRootRel->sumRedSize(numJoinAttrs, 1);
+        sumRedSize2  += pRootRel->sumRedSize(numJoinAttrs, 2);
         pRootRel->computeQROfGeneralizedHead(vpRelTails, qrHintType);
 
         if (joinRelName != "")
@@ -763,6 +775,8 @@ namespace Figaro
             pRootRel,
             vpRelTails, vpRelGenTails,
             qrHintType, saveResult, pJoinRel);
+        FIGARO_LOG_BENCH("Sum-Red-Size-1", sumRedSize1);
+        FIGARO_LOG_BENCH("Sum-Red-Size-2", sumRedSize2);
         FIGARO_LOG_BENCH("Gen head time", MICRO_BENCH_GET_TIMER_LAP(measureHead))
         return saveQRResult(qrResult);
     }

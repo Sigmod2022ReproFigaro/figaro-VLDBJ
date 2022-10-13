@@ -192,7 +192,7 @@ namespace Figaro
         FIGARO_LOG_INFO("Loading data for relation", m_name, "from path", m_dataPath)
 
         cntLines = getNumberOfLines(m_dataPath);
-        numAttributes = numberOfAttributes();
+        numAttributes = getNumberOfAttributes();
 
         FIGARO_LOG_INFO("Number of loaded rows", cntLines, "number attributes", numAttributes)
 
@@ -1164,16 +1164,8 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             uint32_t joinSize)
     {
-        //uint32_t oldThreads = getNumberOfThreads();
-        //omp_set_num_threads(4);
-        //MICRO_BENCH_INIT(computeJoinRelationsAndAddColumns)
-        //MICRO_BENCH_START(computeJoinRelationsAndAddColumns)
         return internalJoinRelations(vpRels, vpParRels,
             vvJoinAttrNames, vvParJoinAttrNames, joinSize, true);
-        //omp_set_num_threads(oldThreads);
-        //MICRO_BENCH_STOP(computeJoinRelationsAndAddColumns)
-        //FIGARO_LOG_BENCH("Compute joinRelationsAndAddColumns", MICRO_BENCH_GET_TIMER_LAP(computeJoinRelationsAndAddColumns))
-        //return r;
     }
 
 
@@ -2678,6 +2670,15 @@ namespace Figaro
             Relation(getGeneralizedTailName(), std::move(dataTailsOut), attributes));
     }
 
+    uint64_t Relation::sumRedSize(uint32_t numJoinAttrs, uint32_t power) const
+    {
+        uint64_t tmp = m_data.getNumRows();
+        for (uint32_t idx = 0; idx < power; idx++)
+        {
+            tmp *=  (m_attributes.size() - numJoinAttrs);
+        }
+        return tmp;
+    }
 
     void Relation::computeQROfGeneralizedHead(
          const std::vector<Relation*>& vpTailRels,

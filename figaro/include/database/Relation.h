@@ -152,6 +152,7 @@ namespace Figaro
         MatrixDT m_scales;
         MatrixDT m_dataScales;
         std::vector<double> m_allScales;
+
         /**
          * Contains the data ofsets of all relations in the subtree rooted
          * at the node with this relation including this relation. The order of relations
@@ -212,10 +213,12 @@ namespace Figaro
 
         uint32_t getNumberOfNonPKAttributes(void) const;
 
+        /*
         uint32_t getNumberOfAttributes(void) const
         {
             return m_attributes.size();
         }
+        */
 
         /**
          * For each part of a composite PK compute the corresponding column index. The
@@ -407,7 +410,7 @@ namespace Figaro
         const std::string& getName(void) const { return m_name; }
 
 
-        uint32_t numberOfAttributes() const
+        uint32_t getNumberOfAttributes() const
         {
             return m_attributes.size();
         }
@@ -623,6 +626,8 @@ namespace Figaro
             bool saveResult);
 
         Relation* extractLUPermutationMatrix(void);
+
+        uint64_t sumRedSize(uint32_t numJoinAttrs, uint32_t power) const;
 
         /*********************** Naming patterns ***************/
         const std::string getHeadName(void) const;

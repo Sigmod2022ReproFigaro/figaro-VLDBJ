@@ -158,6 +158,11 @@ namespace Figaro
             m_pDatabase->changeMemoryLayout();
         }
 
+        //double condA = m_pDatabase->estimateConditionNumber(pElement->getRelationOrder().at(0), {});
+        //double normA = m_pDatabase->getNorm(pElement->getRelationOrder().at(0), {});
+        //FIGARO_LOG_BENCH("Norm A", normA);
+        //FIGARO_LOG_BENCH("Condition number A", condA);
+
         MICRO_BENCH_INIT(qrPostprocEval)
         MICRO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =
@@ -166,13 +171,20 @@ namespace Figaro
         MICRO_BENCH_STOP(qrPostprocEval)
         FIGARO_LOG_BENCH("Figaro", "QR Postproc eval", MICRO_BENCH_GET_TIMER_LAP(qrPostprocEval))
 
+
+        //double condNumberQ = m_pDatabase->estimateConditionNumber(qName, {});
+        //double condNumberR = m_pDatabase->estimateConditionNumber(rName, {});
+        //FIGARO_LOG_BENCH("Condition number Q", condNumberQ);
+        //FIGARO_LOG_BENCH("Condition number R", condNumberR);
         if (pElement->isComputeQ())
         {
-            double resError = m_pDatabase->checkResidualErrorOfQR(
-            pElement->getRelationOrder().at(0), qName, rName);
-            FIGARO_LOG_BENCH("resError", resError)
+            // changeMemoryLayout update by keeping the old data in order for this to work
+            //double resError = m_pDatabase->checkResidualErrorOfQR(
+            //pElement->getRelationOrder().at(0), qName, rName);
+            //FIGARO_LOG_BENCH("resError", resError)
         }
         return new ASTVisitorResultQR(rName, qName);
+        //return new ASTVisitorResultQR("", "");
     }
 
 

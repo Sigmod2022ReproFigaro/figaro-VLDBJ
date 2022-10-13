@@ -1,4 +1,5 @@
 #ifndef _FIGARO_PERFORMANCE_H_
+#define _FIGARO_PERFORMANCE_H_
 
 #include "utils/Utils.h"
 #include <chrono>
