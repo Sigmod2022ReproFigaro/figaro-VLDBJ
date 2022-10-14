@@ -26,6 +26,10 @@ class SystemTestPostprocess(SystemTestCompetitor):
         pass
 
 
+    def run_microbenchmark(self):
+        pass
+
+
     def get_database_json(self):
         non_join_attr_names = self.query.get_non_join_attr_names_ordered()
         non_join_cat_attr_names = self.query.get_non_join_cat_attr_names_ordered()

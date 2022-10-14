@@ -3,9 +3,10 @@
 
 #define FIGARO_LOG_LEVEL_DEBUG 0
 #define FIGARO_LOG_LEVEL_INFO  1
-#define FIGARO_LOG_LEVEL_BENCH 2
-#define FIGARO_LOG_LEVEL_WARNING 3
-#define FIGARO_LOG_LEVEL_ERROR 4
+#define FIGARO_LOG_LEVEL_MICRO_BENCH 2
+#define FIGARO_LOG_LEVEL_BENCH 3
+#define FIGARO_LOG_LEVEL_WARNING 4
+#define FIGARO_LOG_LEVEL_ERROR 5
 
 // In the case if log level is defined by CmakeLists.txt we do not want
 // want to redefine it. Default
@@ -159,6 +160,7 @@ do                                        \
 
 #define FIGARO_LOG_DBG(...)
 #define FIGARO_LOG_INFO(...)
+#define FIGARO_LOG_MIC_BEN(...)
 #define FIGARO_LOG_BENCH(...)
 #define FIGARO_LOG_WARNING(...)
 #define FIGARO_LOG_ERROR(...)
@@ -175,6 +177,11 @@ do                                        \
 #define FIGARO_LOG_INFO(...) FIGARO_LOG_INTERNAL(INFO, __VA_ARGS__)
 #endif
 
+#if FIGARO_LOG_LEVEL <= FIGARO_LOG_LEVEL_MICRO_BENCH
+#undef FIGARO_LOG_MIC_BEN
+#define FIGARO_LOG_MIC_BEN(...) FIGARO_LOG_BENCH_INTERNAL(__VA_ARGS__)
+#endif
+
 #if FIGARO_LOG_LEVEL <= FIGARO_LOG_LEVEL_BENCH
 #undef FIGARO_LOG_BENCH
 #define FIGARO_LOG_BENCH(...) FIGARO_LOG_BENCH_INTERNAL(__VA_ARGS__)
@@ -189,5 +196,24 @@ do                                        \
 #undef FIGARO_LOG_ERROR
 #define FIGARO_LOG_ERROR(...) FIGARO_LOG_INTERNAL(ERROR, __VA_ARGS__)
 #endif
+
+
+
+#include "utils/Performance.h"
+
+#if FIGARO_LOG_LEVEL <= FIGARO_LOG_LEVEL_MICRO_BENCH
+#define FIGARO_MIC_BEN_INIT(timer) FIGARO_BENCH_INIT(timer)
+#define FIGARO_MIC_BEN_START(timer) FIGARO_BENCH_START(timer)
+#define FIGARO_MIC_BEN_STOP(timer) FIGARO_BENCH_STOP(timer)
+#define FIGARO_MIC_BEN_GET_TIMER(timer) FIGARO_BENCH_GET_TIMER(timer)
+#define FIGARO_MIC_BEN_GET_TIMER_LAP(timer) FIGARO_BENCH_GET_TIMER_LAP(timer)
+#else
+#define FIGARO_MIC_BEN_INIT(timer)
+#define FIGARO_MIC_BEN_START(timer)
+#define FIGARO_MIC_BEN_STOP(timer)
+#define FIGARO_MIC_BEN_GET_TIMER(timer) ""
+#define FIGARO_MIC_BEN_GET_TIMER_LAP(timer) ""
+#endif
+
 
 #endif

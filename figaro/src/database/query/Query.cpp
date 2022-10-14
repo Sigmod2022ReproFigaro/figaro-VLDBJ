@@ -216,12 +216,12 @@ namespace Figaro
         Figaro::MemoryLayout memoryLayout, bool saveResult
         )
     {
-        MICRO_BENCH_INIT(joinEval)
-        MICRO_BENCH_START(joinEval)
+        FIGARO_BENCH_INIT(joinEval)
+        FIGARO_BENCH_START(joinEval)
         ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, qrHintType, saveResult,
             saveMemory, mFlags);
         m_pResult = m_pASTRoot->accept(&queryEvalVisitor);
-        MICRO_BENCH_STOP(joinEval)
-        FIGARO_LOG_BENCH("Query eval", MICRO_BENCH_GET_TIMER_LAP(joinEval))
+        FIGARO_BENCH_STOP(joinEval)
+        FIGARO_LOG_BENCH("Query eval", FIGARO_BENCH_GET_TIMER_LAP(joinEval))
      }
 }

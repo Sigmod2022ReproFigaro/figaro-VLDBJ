@@ -491,6 +491,7 @@ namespace Figaro
 
         FIGARO_LOG_INFO("OHE dimensions ", oneHotEncData.getNumRows(), oneHotEncData.getNumCols())
 
+        #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
             for (const auto& attrIdx: vAttrIdxs)
@@ -1893,6 +1894,7 @@ namespace Figaro
         uint32_t numJoinAttrs;
         uint32_t numNonJoinAttrs;
         uint32_t numTailRows;
+        std::vector<Attribute> vNonJoinAttrs;
 
         getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
         getAttributesIdxsComplement(vJoinAttrIdxs, vNonJoinAttrIdxs);
@@ -1906,6 +1908,7 @@ namespace Figaro
         numNonJoinAttrs = vNonJoinAttrIdxs.size();
         numTailRows = m_data.getNumRows() - numDistinctValues;
 
+        vNonJoinAttrs = std::vector<Attribute>(m_attributes.end() - numNonJoinAttrs, m_attributes.end());
         // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
         MatrixDT dataHeads{numDistinctValues, getNumberOfAttributes()};
         MatrixDT dataTails{numTailRows, numNonJoinAttrs};
@@ -1969,7 +1972,7 @@ namespace Figaro
 
         m_vSubTreeDataOffsets.push_back(vJoinAttrNames.size());
         Relation relHeads(getHeadName(), std::move(dataHeads), m_attributes);
-        Relation relTails(getTailName(), std::move(dataTails), m_attributes);
+        Relation relTails(getTailName(), std::move(dataTails), vNonJoinAttrs);
 
         FIGARO_LOG_INFO("number of rows", relHeads.m_data.getNumRows(), "num cols", relTails.m_data.getNumCols());
 
@@ -2072,7 +2075,8 @@ namespace Figaro
         Relation relHeads(getHeadName(), std::move(dataHeads), m_attributes);
         Relation relTails(getTailName(), std::move(dataTails), m_attributes);
 
-        FIGARO_LOG_INFO("number of rows", relHeads.m_data.getNumRows(), "num cols", relTails.m_data.getNumCols());
+        FIGARO_LOG_INFO("number of rows heads", relHeads.m_data.getNumRows(), "num of rows tails", relTails.m_data.getNumRows());
+        FIGARO_LOG_INFO("Tail", relTails.m_data)
 
         return std::make_tuple(std::move(relHeads), std::move(relTails));
     }
@@ -2383,6 +2387,7 @@ namespace Figaro
         uint32_t numNonJoinAttrs;
 
         std::vector<Attribute> attributes;
+        std::vector<Attribute> vNonJoinAttributes;
 
         //MICRO_BENCH_INIT(genHT)
         //MICRO_BENCH_START(genHT)
@@ -2396,6 +2401,9 @@ namespace Figaro
         numOmittedAttrs = numJoinAttrs - numParJoinAttrs;
 
         attributes = pAggAwayRel->m_attributes;
+        FIGARO_LOG_DBG(m_name, numNonJoinAttrs, attributes.size())
+        vNonJoinAttributes = std::vector<Attribute>(attributes.end() - numNonJoinAttrs,
+            attributes.end());
 
         MatrixDT dataHeadOut { numParDistVals,
             pAggAwayRel->getNumberOfAttributes() - numOmittedAttrs};
@@ -2531,10 +2539,10 @@ namespace Figaro
         //MICRO_BENCH_STOP(genHTMainLoop)
         //FIGARO_LOG_BENCH("Figaro", "computeAndScaleQRGeneralizedHeadAndTail " + m_name,  MICRO_BENCH_GET_TIMER_LAP(genHT));
         ////FIGARO_LOG_BENCH("Figaro",  "Generalized head and tail main loop",  MICRO_BENCH_GET_TIMER_LAP(genHTMainLoop));
-        FIGARO_LOG_INFO("Before moving out", dataHeadOut.getNumRows(), dataHeadOut.getNumCols())
+        FIGARO_LOG_DBG("HOHO", m_name)
         return std::make_tuple(
             Relation(getGeneralizedHeadName(), std::move(dataHeadOut), attributes),
-            Relation(getGeneralizedTailName(), std::move(dataTailsOut), attributes));
+            Relation(getGeneralizedTailName(), std::move(dataTailsOut), vNonJoinAttributes));
     }
 
     std::tuple<Relation, Relation>
@@ -2573,12 +2581,9 @@ namespace Figaro
             pAggAwayRel->getNumberOfAttributes() - numOmittedAttrs};
         MatrixDT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
             numNonJoinAttrs};
-        MatrixDT scales{numParDistVals, 1};
-        MatrixDT dataScales{numParDistVals, m_dataScales.getNumCols()};
 
         FIGARO_LOG_INFO("Compute Generalized Head and Tail for relation", m_name)
 
-        FIGARO_LOG_DBG("vJoinAttributeNames", vJoinAttributeNames)
         // temporary adds an element to denote the end limit.
         m_vSubTreeDataOffsets.push_back(pAggAwayRel->m_attributes.size());
         //MICRO_BENCH_INIT(genHTMainLoop)
@@ -2694,6 +2699,7 @@ namespace Figaro
             getNumberOfThreads(), true, qrTypeHint,
                 false /* computeQ*/, false /* saveResult*/);
     }
+
 
      void Relation::computeLUOfGeneralizedHead(
          const std::vector<Relation*>& vpTailRels,
@@ -3248,7 +3254,7 @@ namespace Figaro
                 }
             }
             m_dataColumnMajor = std::move(tmpOut);
-            //m_data = std::move(MatrixDT{0, 0});
+            m_data = std::move(MatrixDT{0, 0});
         }
         else if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {

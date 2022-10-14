@@ -12,6 +12,7 @@ function init_global_paths()
     FIGARO_NUM_THREADS=1
     FIGARO_POSTPROCESS="THIN1_DIAG"
     FIGARO_COMPUTE_ALL=false
+    FIGARO_MICRO_BENCHMARK=false
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
@@ -121,6 +122,8 @@ function main()
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_DEBUG=ON
     elif [[ $FIGARO_TEST_MODE == INFO ]]; then
         cmake ../. -D FIGARO_RUN=ON -D FIGARO_INFO=ON
+    elif [[ $FIGARO_TEST_MODE == MICRO_BENCHMARK ]]; then
+        cmake ../. -D FIGARO_RUN=ON -D FIGARO_MICRO_BENCHMARK=ON
     elif [[ $FIGARO_TEST_MODE == UNIT_TEST ]]; then
         cmake ../. -D FIGARO_TEST=ON -D FIGARO_DEBUG=ON
     else
@@ -147,9 +150,13 @@ function main()
     "DUMP")
         ./figaro $(echo $ARGS) \
         --dump_file_path "${FIGARO_DUMP_FILE_PATH}" \
-        > "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        >> "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
     "PERFORMANCE")
+        ./figaro $(echo $ARGS) \
+        >> "${FIGARO_LOG_FILE_PATH}" 2>&1;
+        ;;
+    "MICRO_BENCHMARK")
         ./figaro $(echo $ARGS) \
         >> "${FIGARO_LOG_FILE_PATH}" 2>&1;
         ;;
@@ -171,7 +178,7 @@ function main()
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         #vtune -collect performance-snapshot
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*LUFigaro* > "${FIGARO_LOG_FILE_PATH}" 2>&1
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=** > "${FIGARO_LOG_FILE_PATH}" 2>&1
         #valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         #>   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \

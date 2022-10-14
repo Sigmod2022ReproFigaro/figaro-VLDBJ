@@ -30,6 +30,10 @@ class SystemTestPython(SystemTestCompetitor):
         pass
 
 
+    def run_microbenchmark(self):
+        pass
+
+
     def eval(self, dump: bool, performance: bool):
 
         script_path = os.path.join(self.root_path, "competitors/python/qr.py")

@@ -178,9 +178,11 @@ class SystemTest(ABC):
         ACCURACY = 5
         PERFORMANCE_ANALYSIS = 6
         CLEAN = 7
-        PROFILER_MEMORY = 8
-        PROFILER_THREADS = 9
-        PROFILER_HOTSPOTS = 10
+        MICRO_BENCHMARK = 8
+        PROFILER_MEMORY = 9
+        PROFILER_THREADS = 10
+        PROFILER_HOTSPOTS = 11
+
 
     map_mode_to_str = {TestMode.DEBUG : "DEBUG",
                     TestMode.INFO : "INFO",
@@ -189,6 +191,7 @@ class SystemTest(ABC):
                     TestMode.PERFORMANCE_ANALYSIS: "PERFORMANCE_ANALYSIS",
                     TestMode.ACCURACY: "ACCURACY",
                     TestMode.CLEAN: "CLEAN",
+                    TestMode.MICRO_BENCHMARK: "MICRO_BENCHMARK",
                     TestMode.PROFILER_MEMORY: "PROFILER_MEMORY",
                     TestMode.PROFILER_THREADS: "PROFILER_THREADS",
                     TestMode.PROFILER_HOTSPOTS: "PROFILER_HOTSPOTS"}
@@ -327,6 +330,9 @@ class SystemTest(ABC):
         elif self.test_mode == SystemTest.TestMode.CLEAN:
             logging.info(info_str.format(mode="cleaning"))
             self.clean_data(SystemTest.TestMode.DUMP)
+        elif self.test_mode == SystemTest.TestMode.MICRO_BENCHMARK:
+            logging.info(info_str.format(mode="micro benchmarks"))
+            self.run_microbenchmark()
         elif self.test_mode == SystemTest.TestMode.PROFILER_MEMORY:
             logging.info(info_str.format(mode="profiler memory"))
             self.run_profiler()
@@ -358,6 +364,11 @@ class SystemTest(ABC):
 
     @abstractmethod
     def run_accuracy(self):
+        pass
+
+
+    @abstractmethod
+    def run_microbenchmark(self):
         pass
 
 
@@ -417,7 +428,8 @@ class SystemTest(ABC):
             self.delete_content_of_dir(self.conf_perf.path)
 
         if (test_mode == SystemTest.TestMode.PERFORMANCE) or\
-            (test_mode == SystemTest.TestMode.DUMP):
+            (test_mode == SystemTest.TestMode.DUMP) or \
+                (test_mode == SystemTest.TestMode.MICRO_BENCHMARK):
             self.delete_content_of_dir(self.conf_log.path)
 
 

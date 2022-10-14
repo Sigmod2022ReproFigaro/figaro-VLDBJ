@@ -1,20 +1,14 @@
 import evaluation.evaluator as eval
-import numpy as np
-import pandas as pd
 import argparse
 import os
-from openpyxl.utils.cell import get_column_letter
 import plots_and_results.real_data.performance_percent as perf_percent
 import plots_and_results.real_data.performance_threads_join_orders as perf_join_ord
 import plots_and_results.synthetic_data.synthetic_accuracy as syn_accur
 import plots_and_results.synthetic_data.synthetic_performance as syn_perf
 import logging
-from data_management.query import Query
 import argparse
 import sys
-import numpy as np
 from evaluation.custom_logging import init_logging, set_logging_level
-import matplotlib.pyplot as plt
 import json
 
 def test_set_all_to_true(tests_path: str):

@@ -62,6 +62,8 @@ if (FIGARO_DEBUG OR FIGARO_TEST)
   add_compile_definitions(FIGARO_LOG_LEVEL=0)
 elseif(FIGARO_INFO)
   add_compile_definitions(FIGARO_LOG_LEVEL=1)
+elseif(FIGARO_MICRO_BENCHMARK)
+  add_compile_definitions(FIGARO_LOG_LEVEL=2)
 endif()
 
 

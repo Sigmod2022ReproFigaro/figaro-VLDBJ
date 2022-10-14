@@ -603,14 +603,14 @@ namespace Figaro
 
         for (const auto relName: vGenTailRels)
         {
-            //MICRO_BENCH_INIT(measureGenTail)
-            //MICRO_BENCH_START(measureGenTail)
+            //FIGARO_MIC_BEN_INIT(measureGenTail)
+            //FIGARO_MIC_BEN_START(measureGenTail)
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
             pRel->computeLUInPlace(qrHintType);
-            //MICRO_BENCH_STOP(measureGenTail)
-            //FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
+            //FIGARO_MIC_BEN_STOP(measureGenTail)
+            //FIGARO_LOG_BENCH("Gen tail time" + relName, FIGARO_MIC_BEN_GET_TIMER_LAP(measureGenTail))
             FIGARO_LOG_INFO("Gen Tail name", relName)
         }
 
@@ -743,16 +743,16 @@ namespace Figaro
 
         for (const auto relName: vGenTailRels)
         {
-            MICRO_BENCH_INIT(measureGenTail)
-            MICRO_BENCH_START(measureGenTail)
+            FIGARO_MIC_BEN_INIT(measureGenTail)
+            FIGARO_MIC_BEN_START(measureGenTail)
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
             sumRedSize1 += pRel->sumRedSize(0, 1);
             sumRedSize2 += pRel->sumRedSize(0, 2);
             pRel->computeQRInPlace(qrHintType);
-            MICRO_BENCH_STOP(measureGenTail)
-            FIGARO_LOG_BENCH("Gen tail time" + relName, MICRO_BENCH_GET_TIMER_LAP(measureGenTail))
+            FIGARO_MIC_BEN_STOP(measureGenTail)
+            FIGARO_LOG_MIC_BEN("Gen tail time" + relName, FIGARO_MIC_BEN_GET_TIMER_LAP(measureGenTail))
             FIGARO_LOG_INFO("Gen Tail name", relName)
         }
 
@@ -768,16 +768,16 @@ namespace Figaro
         {
             pJoinRel = &m_relations.at(joinRelName);
         }
-        MICRO_BENCH_INIT(measureHead)
-            MICRO_BENCH_START(measureHead)
+        FIGARO_MIC_BEN_INIT(measureHead)
+            FIGARO_MIC_BEN_START(measureHead)
         auto qrResult = pRootRel->computeQROfConcatenatedGeneralizedHeadAndTails(
             vpRels,
             pRootRel,
             vpRelTails, vpRelGenTails,
             qrHintType, saveResult, pJoinRel);
-        FIGARO_LOG_BENCH("Sum-Red-Size-1", sumRedSize1);
-        FIGARO_LOG_BENCH("Sum-Red-Size-2", sumRedSize2);
-        FIGARO_LOG_BENCH("Gen head time", MICRO_BENCH_GET_TIMER_LAP(measureHead))
+        FIGARO_LOG_MIC_BEN("Sum-Red-Size-1", sumRedSize1);
+        FIGARO_LOG_MIC_BEN("Sum-Red-Size-2", sumRedSize2);
+        FIGARO_LOG_MIC_BEN("Gen head time", FIGARO_MIC_BEN_GET_TIMER_LAP(measureHead))
         return saveQRResult(qrResult);
     }
 

@@ -15,6 +15,9 @@ class SystemTestDBMS(SystemTest):
     def run_accuracy(self):
         pass
 
+    def run_microbenchmark(self):
+        pass
+
 
     def is_dbms(self):
         return True

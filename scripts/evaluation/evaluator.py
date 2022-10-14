@@ -23,6 +23,7 @@ class SystemTestsEvaluator:
         'debug': SystemTest.TestMode.DEBUG,
         'info': SystemTest.TestMode.INFO,
         'dump': SystemTest.TestMode.DUMP,
+        'micro_benchmark': SystemTest.TestMode.MICRO_BENCHMARK,
         'accuracy': SystemTest.TestMode.ACCURACY,
         'performance': SystemTest.TestMode.PERFORMANCE,
         'performance_analysis': SystemTest.TestMode.PERFORMANCE_ANALYSIS,

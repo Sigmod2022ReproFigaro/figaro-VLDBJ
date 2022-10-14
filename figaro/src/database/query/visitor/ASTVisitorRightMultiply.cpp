@@ -10,8 +10,8 @@ namespace Figaro
         numNonJoinAttrs = m_pDatabase->
             getRelationAttributeNames(pElement->getRelationName()).size()
             - pElement->getJoinAttributeNames().size();
-        //MICRO_BENCH_INIT(rightMultiply)
-        //MICRO_BENCH_START(rightMultiply)
+        //FIGARO_MIC_BEN_INIT(rightMultiply)
+        //FIGARO_MIC_BEN_START(rightMultiply)
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
         pElement->getJoinAttributeNames(), {}, startRowIdx);
         if (m_useLFTJoin)
@@ -22,8 +22,8 @@ namespace Figaro
         startRowIdx += numNonJoinAttrs;
         FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
         FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
-        //MICRO_BENCH_STOP(rightMultiply)
-        //FIGARO_LOG_BENCH("rightMultiplyRelation", MICRO_BENCH_GET_TIMER_LAP(rightMultiply))
+        //FIGARO_MIC_BEN_STOP(rightMultiply)
+        //FIGARO_LOG_BENCH("rightMultiplyRelation", FIGARO_MIC_BEN_GET_TIMER_LAP(rightMultiply))
         return new ASTVisitorResultJoin(mulRelName);
     }
 
@@ -52,16 +52,16 @@ namespace Figaro
             FIGARO_LOG_INFO("central rel name", pElement->getJoinAttributeNames())
             FIGARO_LOG_INFO("central rel name", pElement->getChildrenParentJoinAttributeNames())
 
-            MICRO_BENCH_INIT(joinRelationsAndAddColumns)
-            MICRO_BENCH_START(joinRelationsAndAddColumns)
+            FIGARO_MIC_BEN_INIT(joinRelationsAndAddColumns)
+            FIGARO_MIC_BEN_START(joinRelationsAndAddColumns)
             joinRelName = m_pDatabase->joinRelationsAndAddColumns(
                 centralRelName,
                 vRelNames,
                 pElement->getJoinAttributeNames(),
                 pElement->getParJoinAttributeNames(),
                 pElement->getChildrenParentJoinAttributeNames(), false);
-            MICRO_BENCH_STOP(joinRelationsAndAddColumns)
-            FIGARO_LOG_BENCH("Value" + centralRelName, MICRO_BENCH_GET_TIMER_LAP(joinRelationsAndAddColumns))
+            FIGARO_MIC_BEN_STOP(joinRelationsAndAddColumns)
+            FIGARO_LOG_BENCH("Value" + centralRelName, FIGARO_MIC_BEN_GET_TIMER_LAP(joinRelationsAndAddColumns))
         }
         return new ASTVisitorResultJoin(joinRelName);
     }
