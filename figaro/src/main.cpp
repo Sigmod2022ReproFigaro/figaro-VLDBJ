@@ -133,16 +133,16 @@ int main(int argc, char *argv[])
     if (dump)
     {
         Figaro::ASTVisitorResultAbs* pResult = query.getResult();
-        FIGARO_LOG_INFO("Dumping R to the path", dumpFilePath);
+        FIGARO_LOG_BENCH("Dumping R to the path", dumpFilePath);
         if (pResult->getResultType() == Figaro::ASTVisitorResultAbs::ResultType::QR_RESULT)
         {
             Figaro::ASTVisitorResultQR* pQrResult = (Figaro::ASTVisitorResultQR*)pResult;
             std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
             database.outputRelationToFile(fileDumpR,
-                pQrResult->getRRelationName(), ',', precision);
-            std::ofstream fileDumpQ(dumpFilePath+"L.csv", std::ofstream::out);
-            database.outputRelationToFile(fileDumpQ,
-                pQrResult->getQRelationName(), ',', precision);
+            pQrResult->getRRelationName(), ',', precision);
+            //std::ofstream fileDumpQ(dumpFilePath+"L.csv", std::ofstream::out);
+            //database.outputRelationToFile(fileDumpQ,
+            //    pQrResult->getQRelationName(), ',', precision);
             if (computeAll)
             {
                 double ortMeasure = database.checkOrthogonality(pQrResult->getQRelationName(), {});

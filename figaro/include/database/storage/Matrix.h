@@ -320,9 +320,9 @@ namespace Figaro
             (const_cast<MatrixType*>(this))->computeSingularValueDecomposition(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
             double maxSingValue = matrixS(0, 0);
             double minSingValue = matrixS(rank - 1, 0);
-            FIGARO_LOG_MIC_BEN("Dimensions", m, n)
-            FIGARO_LOG_MIC_BEN("maxSingValue", maxSingValue)
-            FIGARO_LOG_MIC_BEN("minSingValue", minSingValue)
+            //FIGARO_LOG_MIC_BEN("Dimensions", m, n)
+            //FIGARO_LOG_MIC_BEN("maxSingValue", maxSingValue)
+            //FIGARO_LOG_MIC_BEN("minSingValue", minSingValue)
             double condition2  = maxSingValue / minSingValue;
 
             return condition2;
@@ -473,7 +473,7 @@ namespace Figaro
             MatrixType tmp(m_numRows, m_numCols + m.m_numCols);
             auto& thisRef = *this;
 
-            FIGARO_LOG_DBG("Entered concatenateHorizontally")
+            //FIGARO_LOG_DBG("Entered concatenateHorizontally")
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
@@ -485,7 +485,7 @@ namespace Figaro
                     tmp[rowIdx][m_numCols + colIdx] = m[rowIdx][colIdx];
                 }
             }
-            FIGARO_LOG_DBG("Exited concatenateHorizontally")
+            //FIGARO_LOG_DBG("Exited concatenateHorizontally")
             return tmp;
         }
 
@@ -518,7 +518,7 @@ namespace Figaro
             MatrixType tmp(m_numRows, m_numCols + numCols);
             auto& thisRef = *this;
 
-            FIGARO_LOG_DBG("Entered concatenateHorizontallyScalar")
+            //FIGARO_LOG_DBG("Entered concatenateHorizontallyScalar")
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
@@ -530,7 +530,7 @@ namespace Figaro
                     tmp[rowIdx][m_numCols + colIdx] = scalar;
                 }
             }
-            FIGARO_LOG_DBG("FInished concatenateHorizontallyScalar")
+            //FIGARO_LOG_DBG("FInished concatenateHorizontallyScalar")
             return tmp;
         }
 
@@ -812,7 +812,7 @@ namespace Figaro
             {
                 swapRows(rowCurIdx, rowIdxSwap, colBeginIdx, colEndIdx);
             }
-            FIGARO_LOG_DBG("Swapping rows", rowCurIdx, rowIdxSwap);
+            //FIGARO_LOG_DBG("Swapping rows", rowCurIdx, rowIdxSwap);
         }
 
         void computeLUGaussianSequentialBlockDiag(
@@ -836,7 +836,7 @@ namespace Figaro
                 {
                     if (allowPerm)
                     {
-                        FIGARO_LOG_INFO("Partial pivoting")
+                        //FIGARO_LOG_INFO("Partial pivoting")
                         partialPivot(rowCurIdx, rowEndIdx, colBeginIdx, colEndIdx, colIdx);
                         upperVal = matA[rowCurIdx][colIdx];
                         if (upperVal == 0.0)
@@ -846,7 +846,7 @@ namespace Figaro
                     }
                     else
                     {
-                        FIGARO_LOG_INFO("It doesn't work")
+                        //FIGARO_LOG_INFO("It doesn't work")
 
                     }
                 }
@@ -855,7 +855,7 @@ namespace Figaro
                 {
                     applyGaussian(rowCurIdx, rowIdx, colIdx, colEndIdx);
                 }
-                FIGARO_LOG_DBG("colIdx", colIdx, matA)
+                //FIGARO_LOG_DBG("colIdx", colIdx, matA)
             }
         }
 
@@ -961,8 +961,8 @@ namespace Figaro
 
             for (uint32_t batchIdx = 0; batchIdx < numBatches; batchIdx++)
             {
-                FIGARO_MIC_BEN_INIT(batchTimer)
-                FIGARO_MIC_BEN_START(batchTimer)
+                //FIGARO_MIC_BEN_INIT(batchTimer)
+                //FIGARO_MIC_BEN_START(batchTimer)
                 #pragma omp parallel
                 {
                     uint32_t threadId;
@@ -1000,8 +1000,8 @@ namespace Figaro
                         #pragma omp barrier
                     }
                 }
-                FIGARO_MIC_BEN_STOP(batchTimer)
-                FIGARO_LOG_MIC_BEN("BatchTimer", batchIdx,  FIGARO_MIC_BEN_GET_TIMER_LAP(batchTimer));
+                //FIGARO_MIC_BEN_STOP(batchTimer)
+                //FIGARO_LOG_MIC_BEN("BatchTimer", batchIdx,  //FIGARO_MIC_BEN_GET_TIMER_LAP(batchTimer));
             }
         }
 
@@ -1055,9 +1055,9 @@ namespace Figaro
             }
             numBlocks = vRowBlockBeginIdx.size();
 
-            FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
-            FIGARO_MIC_BEN_INIT(qrGivensPar)
-            FIGARO_MIC_BEN_START(qrGivensPar)
+            //FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
+            //FIGARO_MIC_BEN_INIT(qrGivensPar)
+            //FIGARO_MIC_BEN_START(qrGivensPar)
             #pragma omp parallel for schedule(static)
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
@@ -1076,12 +1076,12 @@ namespace Figaro
                         rowBlockEndIdx, 0, m_numCols - 1);
                 }
             }
-            FIGARO_MIC_BEN_STOP(qrGivensPar)
-            FIGARO_LOG_MIC_BEN("Time Parallel", FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar))
-            FIGARO_LOG_INFO("Number of blocks", numBlocks)
-            FIGARO_LOG_DBG("After parallel", matA)
-            FIGARO_MIC_BEN_INIT(qrGivensPar2)
-            FIGARO_MIC_BEN_START(qrGivensPar2)
+            //FIGARO_MIC_BEN_STOP(qrGivensPar)
+            //FIGARO_LOG_MIC_BEN("Time Parallel", //FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar))
+            //FIGARO_LOG_INFO("Number of blocks", numBlocks)
+            //FIGARO_LOG_DBG("After parallel", matA)
+            //FIGARO_MIC_BEN_INIT(qrGivensPar2)
+            //FIGARO_MIC_BEN_START(qrGivensPar2)
 
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
@@ -1113,8 +1113,8 @@ namespace Figaro
             //FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
             this->resize(numRedEndRows);
             //FIGARO_LOG_INFO("After processing", matA)
-            FIGARO_MIC_BEN_STOP(qrGivensPar2)
-            FIGARO_LOG_MIC_BEN("Time Second", FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar2))
+            //FIGARO_MIC_BEN_STOP(qrGivensPar2)
+            //FIGARO_LOG_MIC_BEN("Time Second", //FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar2))
         }
 
 
@@ -1164,9 +1164,9 @@ namespace Figaro
             numBlocks = vRowBlockBeginIdx.size();
 
             pivotIdx = vRowBlockBeginIdx[0];
-            FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
-            FIGARO_MIC_BEN_INIT(qrGivensPar)
-            FIGARO_MIC_BEN_START(qrGivensPar)
+            //FIGARO_LOG_DBG("m_numRows, blockSize", m_numRows, blockSize, numRedRows)
+            //FIGARO_MIC_BEN_INIT(qrGivensPar)
+            //FIGARO_MIC_BEN_START(qrGivensPar)
             #pragma omp parallel for schedule(static)
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
@@ -1180,12 +1180,12 @@ namespace Figaro
                         rowBlockEndIdx, 0, m_numCols - 1, pivotIdx, true);
                 }
             }
-            FIGARO_MIC_BEN_STOP(qrGivensPar)
-            FIGARO_LOG_MIC_BEN("Time Parallel", FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar))
-            FIGARO_LOG_INFO("Number of blocks", numBlocks)
-            FIGARO_LOG_DBG("After parallel", matA)
-            FIGARO_MIC_BEN_INIT(qrGivensPar2)
-            FIGARO_MIC_BEN_START(qrGivensPar2)
+            //FIGARO_MIC_BEN_STOP(qrGivensPar)
+            //FIGARO_LOG_MIC_BEN("Time Parallel", //FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar))
+            //FIGARO_LOG_INFO("Number of blocks", numBlocks)
+            //FIGARO_LOG_DBG("After parallel", matA)
+            //FIGARO_MIC_BEN_INIT(qrGivensPar2)
+            //FIGARO_MIC_BEN_START(qrGivensPar2)
 
             for (uint32_t blockIdx = 0; blockIdx < numBlocks; blockIdx++)
             {
@@ -1206,8 +1206,8 @@ namespace Figaro
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
             this->resize(numRedEndRows);
-            FIGARO_MIC_BEN_STOP(qrGivensPar2)
-            FIGARO_LOG_MIC_BEN("Time Second", FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar2))
+            //FIGARO_MIC_BEN_STOP(qrGivensPar2)
+            //FIGARO_LOG_MIC_BEN("Time Second", //FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar2))
         }
 
 
@@ -1320,12 +1320,12 @@ namespace Figaro
             {
                 ldA = m_numRows;
             }
-            FIGARO_MIC_BEN_INIT(computeRLapack)
-            FIGARO_MIC_BEN_START(computeRLapack)
+            //FIGARO_MIC_BEN_INIT(computeRLapack)
+            //FIGARO_MIC_BEN_START(computeRLapack)
             LAPACKE_dgeqrf(memLayout, m_numRows, m_numCols,
                 pMat /* *a */, ldA,/*lda*/ tau/* tau */);
-            FIGARO_MIC_BEN_STOP(computeRLapack)
-            FIGARO_LOG_MIC_BEN("Compute R",  FIGARO_MIC_BEN_GET_TIMER_LAP(computeRLapack));
+            //FIGARO_MIC_BEN_STOP(computeRLapack)
+            //FIGARO_LOG_MIC_BEN("Compute R",  //FIGARO_MIC_BEN_GET_TIMER_LAP(computeRLapack));
 
             if (!computeQ)
             {
@@ -1377,14 +1377,14 @@ namespace Figaro
             // Copying Q
             if (computeQ)
             {
-                FIGARO_MIC_BEN_INIT(computeQLapack)
-                FIGARO_MIC_BEN_START(computeQLapack)
+                //FIGARO_MIC_BEN_INIT(computeQLapack)
+                //FIGARO_MIC_BEN_START(computeQLapack)
                 LAPACKE_dorgqr(memLayout, m_numRows, rank, rank,
                     pMat, ldA, tau);
-                FIGARO_MIC_BEN_STOP(computeQLapack)
-                FIGARO_LOG_MIC_BEN("Compute Q", m_numRows, rank, ldA);
-                FIGARO_LOG_MIC_BEN("Compute Q",  FIGARO_MIC_BEN_GET_TIMER_LAP(computeQLapack));
-                FIGARO_LOG_DBG("matQ", *this);
+                //FIGARO_MIC_BEN_STOP(computeQLapack)
+                //FIGARO_LOG_MIC_BEN("Compute Q", m_numRows, rank, ldA);
+                //FIGARO_LOG_MIC_BEN("Compute Q",  //FIGARO_MIC_BEN_GET_TIMER_LAP(computeQLapack));
+                //FIGARO_LOG_DBG("matQ", *this);
                 if (saveResult)
                 {
                     MatrixType& matQ = *pMatQ;
@@ -1449,18 +1449,18 @@ namespace Figaro
             if ((qrType == QRHintType::THICK_DIAG) ||
                 (qrType == QRHintType::THICK_BOTTOM))
             {
-                FIGARO_LOG_INFO("Thick version")
+                //FIGARO_LOG_INFO("Thick version")
                 computeQRGivensParallelizedThickMatrix(numThreads, qrType);
             }
             else if ((qrType == QRHintType::THIN_DIAG) ||
                 (qrType == QRHintType::THIN_BOTTOM))
             {
-                FIGARO_LOG_INFO("Thin version")
+                //FIGARO_LOG_INFO("Thin version")
                 computeQRGivensParallelizedThinMatrix(numThreads, qrType);
             }
             else if (qrType == QRHintType::HOUSEHOLDER_LAPACK)
             {
-                FIGARO_LOG_INFO("HOUSEHOLDER_LAPACK")
+                //FIGARO_LOG_INFO("HOUSEHOLDER_LAPACK")
                 computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
             }
         }
@@ -1478,23 +1478,23 @@ namespace Figaro
             }
             if (qrTypeHint == LUHintType::THIN_DIAG)
             {
-                FIGARO_LOG_INFO("Thin version")
+                //FIGARO_LOG_INFO("Thin version")
                 *pMatU = MatrixType{m_numRows, m_numCols};
                 pMatU->copyBlockToThisMatrix(*this,
                     0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
-                FIGARO_LOG_INFO("WTF", pMatU->getNumRows(), pMatU->getNumCols())
+                //FIGARO_LOG_INFO("WTF", pMatU->getNumRows(), pMatU->getNumCols())
                 pMatU->computeLUGaussianSequentialBlockDiag(0, m_numRows - 1,
                     0, m_numCols - 1, allowPerm);
-                FIGARO_LOG_INFO("WTF1", pMatU->getNumRows(), pMatU->getNumCols())
+                //FIGARO_LOG_INFO("WTF1", pMatU->getNumRows(), pMatU->getNumCols())
                 uint32_t numRedEndRows = std::min(m_numRows, m_numCols);
-                FIGARO_LOG_INFO("WTF2", pMatU->getNumRows(), pMatU->getNumCols())
+                //FIGARO_LOG_INFO("WTF2", pMatU->getNumRows(), pMatU->getNumCols())
                 pMatU->resize(numRedEndRows);
-                FIGARO_LOG_INFO("WTF3", pMatU->getNumRows(), pMatU->getNumCols())
+                //FIGARO_LOG_INFO("WTF3", pMatU->getNumRows(), pMatU->getNumCols())
                 //computeLUGivensParallelizedThinMatrix(numThreads, qrType);
             }
             else if (qrTypeHint == LUHintType::PART_PIVOT_LAPACK)
             {
-                FIGARO_LOG_INFO("PP_LAPACK")
+                //FIGARO_LOG_INFO("PP_LAPACK")
                 computeLULapack(numThreads, saveResult, pMatL, pMatU, pMatP);
             }
 
@@ -1590,7 +1590,7 @@ namespace Figaro
             double* pA = getArrPt();
             MatrixType& matA = *this;
 
-            FIGARO_LOG_DBG("Dimensions", M, N)
+            //FIGARO_LOG_DBG("Dimensions", M, N)
 
             uint32_t rank = std::min(M, N);
 
@@ -1743,7 +1743,7 @@ namespace Figaro
                     nonZeroRowIdx ++;
                 }
             }
-            FIGARO_LOG_INFO("Counter zeros", glCntZeros, cntZeros, m_numCols - 1)
+            //FIGARO_LOG_INFO("Counter zeros", glCntZeros, cntZeros, m_numCols - 1)
         }
 
         void makeDiagonalElementsPositiveInR(void)

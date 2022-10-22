@@ -751,8 +751,8 @@ namespace Figaro
             sumRedSize1 += pRel->sumRedSize(0, 1);
             sumRedSize2 += pRel->sumRedSize(0, 2);
             pRel->computeQRInPlace(qrHintType);
-            FIGARO_MIC_BEN_STOP(measureGenTail)
-            FIGARO_LOG_MIC_BEN("Gen tail time" + relName, FIGARO_MIC_BEN_GET_TIMER_LAP(measureGenTail))
+            //FIGARO_MIC_BEN_STOP(measureGenTail)
+            //FIGARO_LOG_MIC_BEN("Gen tail time" + relName, FIGARO_MIC_BEN_GET_TIMER_LAP(measureGenTail))
             FIGARO_LOG_INFO("Gen Tail name", relName)
         }
 

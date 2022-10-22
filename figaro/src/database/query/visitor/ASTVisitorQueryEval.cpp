@@ -40,7 +40,7 @@ namespace Figaro
         FIGARO_MIC_BEN_INIT(rDownCntComp)
         FIGARO_MIC_BEN_INIT(rUpCntCompt)
         FIGARO_MIC_BEN_INIT(rFirstPassComp)
-        FIGARO_MIC_BEN_INIT(rSecondPassComp)
+        //FIGARO_MIC_BEN_INIT(rSecondPassComp)
         FIGARO_BENCH_INIT(qComp)
 
         FIGARO_LOG_INFO("JOIN EVALUATION")
@@ -88,7 +88,7 @@ namespace Figaro
             if (isFlagOn("generalizedHeadsAndTails"))
             {
                 bool evalPostProcessing = isFlagOn("postProcessing");
-                FIGARO_MIC_BEN_START(rSecondPassComp)
+                //FIGARO_MIC_BEN_START(rSecondPassComp)
                 ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType,
                     m_saveResult, joinRelName, pResult->getHtNamesTmpRels(),
                     evalPostProcessing);
@@ -99,8 +99,8 @@ namespace Figaro
                 {
                     m_pDatabase->persistRelation(rName);
                 }
-                FIGARO_MIC_BEN_STOP(rSecondPassComp)
-                FIGARO_LOG_MIC_BEN("Figaro", "second pass",  FIGARO_MIC_BEN_GET_TIMER_LAP(rSecondPassComp));
+                //FIGARO_MIC_BEN_STOP(rSecondPassComp)
+                //FIGARO_LOG_MIC_BEN("Figaro", "second pass",  FIGARO_MIC_BEN_GET_TIMER_LAP(rSecondPassComp));
             }
             else
             {

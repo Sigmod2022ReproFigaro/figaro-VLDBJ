@@ -103,12 +103,10 @@ namespace Figaro
         FIGARO_LOG_INFO("********************");
         FIGARO_LOG_INFO("QR Givens");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())
-        //MICRO_BENCH_INIT(mainAlgorithm)
-        //MICRO_BENCH_START(mainAlgorithm)
+        FIGARO_MIC_BEN_INIT(mainAlgorithm)
+        FIGARO_MIC_BEN_START(mainAlgorithm)
          ASTVisitorResultSecondPass* pResult =
             (ASTVisitorResultSecondPass*)pElement->getOperand()->accept(this);
-        //MICRO_BENCH_STOP(mainAlgorithm)
-        //FIGARO_LOG_BENCH("Figaro", "Main second pass algorithm",  MICRO_BENCH_GET_TIMER_LAP(mainAlgorithm));
 
         for (const auto& relName: vRelOrder)
         {
@@ -119,11 +117,14 @@ namespace Figaro
         {
             vGenTailRelNames.push_back(pResult->getHtNamesTmpRels().at(relName).m_genTailsName);
         }
+        FIGARO_MIC_BEN_STOP(mainAlgorithm)
+        FIGARO_LOG_MIC_BEN("Figaro", "Main second pass algorithm",  FIGARO_MIC_BEN_GET_TIMER_LAP(mainAlgorithm));
 
+
+        FIGARO_MIC_BEN_INIT(postprocess)
+        FIGARO_MIC_BEN_START(postprocess)
         if (m_evalPostProcessing)
         {
-            //MICRO_BENCH_INIT(postprocess)
-            //MICRO_BENCH_START(postprocess)
             auto [rName, qName] =
                 m_pDatabase->computeQRPostprocessing
                 (pElement->getRelationOrder(),
@@ -131,12 +132,12 @@ namespace Figaro
                 vTailRelNames,
                 vGenTailRelNames,
                 m_qrHintType, m_saveResult, m_joinRelName);
-            //MICRO_BENCH_STOP(postprocess)
-            //FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
             FIGARO_LOG_INFO("Finished")
             rNameOut = rName;
             qNameOut = qName;
         }
+        FIGARO_MIC_BEN_STOP(postprocess)
+        FIGARO_LOG_MIC_BEN("Figaro", "Post processing",FIGARO_MIC_BEN_GET_TIMER_LAP(postprocess));
         delete pResult;
         return new ASTVisitorResultQR(rNameOut, qNameOut);
     }
