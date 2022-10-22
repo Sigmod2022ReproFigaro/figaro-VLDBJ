@@ -143,9 +143,13 @@ class DatabasePsql:
         ord_attr_names = query.get_attr_names_ordered()
 
         if order_by == DumpConf.OrderRelation.JOIN_ATTRIBUTE:
-            join_attr_names = query.get_join_attr_names_ordered()
+            #join_attr_names = query.get_join_attr_names_ordered()
+            # Needed for stable sort under assumption there are no two
+            # tuples with the same elements. If there are, then no problems.
+            attr_names_ordered = query.get_attr_names_ordered()
             sql_order_by = ""
-            for attribute_name in join_attr_names:
+            #for attribute_name in join_attr_names:
+            for attribute_name in attr_names_ordered:
                 if attribute_name not in query.get_skip_attrs():
                     sql_order_by += attribute_name + ","
 
@@ -179,14 +183,17 @@ class DatabasePsql:
 
     def limit_join(self, query: Query, percent: float):
         join_table_name = DatabasePsql.get_join_table_name(query)
-        join_attr_names = query.get_join_attr_names_ordered()
+        #join_attr_names = query.get_join_attr_names_ordered()
+        attr_names_ordered = query.get_attr_names_ordered()
         sql_order_by = ""
-        for attribute_name in join_attr_names:
+        #for attribute_name in join_attr_names:
+        for attribute_name in attr_names_ordered:
             if attribute_name not in query.get_skip_attrs():
                 sql_order_by += attribute_name + ","
 
         sql_order_by = sql_order_by[:-1]
 
+        # More here: https://community.snowflake.com/s/article/SELECT-query-with-LIMIT-clause-returns-non-deterministic-result-if-ORDER-BY-clause-exists-in-different-level
         join_table_name_per = join_table_name + "_percent"
         sql_join_per = """SELECT * INTO {}
             FROM {}

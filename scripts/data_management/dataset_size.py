@@ -187,32 +187,32 @@ def ohe_and_dump_join_and_databases(real_dataset_path: str, system_tests_path: s
         "retailer":
         {
             "db_config_path" : "test_real_data/databases/usretailer/database_specs_usretailer_100.conf",
-            "query_config_path": "test_real_data/queries/usretailer/query_specs_location_root.conf"
+            "query_config_path": "test_real_data/queries/qr/usretailer/query_specs_location_root.conf"
         },
         "favorita":
         {
             "db_config_path" : "test_real_data/databases/favorita/database_specs_favorita_100.conf",
-            "query_config_path": "test_real_data/queries/favorita/query_specs_stores_root.conf"
+            "query_config_path": "test_real_data/queries/qr/favorita/query_specs_stores_root.conf"
         },
         "yelp":
         {
             "db_config_path" : "test_real_data/databases/yelp/database_specs_yelp_100.conf",
-            "query_config_path": "test_real_data/queries/yelp/query_specs_business_root.conf"
+            "query_config_path": "test_real_data/queries/qr/yelp/query_specs_business_root.conf"
         },
         "retailer_ohe":
         {
             "db_config_path" : "test_real_data_ohe/databases/usretailer/database_specs_usretailer_1_100.conf",
-            "query_config_path": "test_real_data_ohe/queries/usretailer/query_specs_item_root.conf"
+            "query_config_path": "test_real_data_ohe/queries/qr/usretailer/query_specs_item_root.conf"
         },
         "favorita_ohe":
         {
             "db_config_path" : "test_real_data_ohe/databases/favorita/database_specs_favorita_1_100.conf",
-            "query_config_path": "test_real_data_ohe/queries/favorita/query_specs_items_root.conf"
+            "query_config_path": "test_real_data_ohe/queries/qr/favorita/query_specs_items_root.conf"
         },
         "yelp_ohe":
         {
             "db_config_path" : "test_real_data_ohe/databases/yelp/database_specs_yelp_1_100.conf",
-            "query_config_path": "test_real_data_ohe/queries/yelp/query_specs_user_root.conf"
+            "query_config_path": "test_real_data_ohe/queries/qr/yelp/query_specs_user_root.conf"
         }
     }
 

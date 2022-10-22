@@ -12,6 +12,8 @@
 #include "utils/Performance.h"
 #include <omp.h>
 #include <tbb/parallel_sort.h>
+//#include <parallel/algorithm>
+
 
 namespace Figaro
 {
@@ -270,10 +272,12 @@ namespace Figaro
         {
             vRowPts[rowIdx] = m_data[rowIdx];
         }
-        tbb::parallel_sort(
-                  vRowPts.begin(),
-                  vRowPts.end(),
-                  [&vAttributesIdxs]
+        //std::sort(std::execution::par_unseq,
+        //tbb::parallel_sort(
+        std::stable_sort
+        (std::execution::par_unseq,
+            vRowPts.begin(), vRowPts.end(),
+            [&vAttributesIdxs]
                   (const double* row1, const double* row2)
                   {
                       for (const auto& vAttributesIdx: vAttributesIdxs)
@@ -284,7 +288,8 @@ namespace Figaro
                         }
                       }
                       return false;
-                  });
+        });
+
         for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
         {
             for (uint32_t colIdx = 0; colIdx < numCols; colIdx++)
@@ -2958,8 +2963,9 @@ namespace Figaro
 
         for (uint32_t idx = 1; idx < vpTailRels.size() + 1; idx++)
         {
-            vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
-            vpTailRels[idx-1]->m_data.getNumRows();
+            //vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1] +
+            //vpTailRels[idx-1]->m_data.getNumRows();
+            vCumNumRowsUp[idx] = vCumNumRowsUp[idx-1];
         }
 
         for (uint32_t idx = vpTailRels.size() + 1; idx < vCumNumRowsUp.size(); idx++)
@@ -2988,10 +2994,13 @@ namespace Figaro
             }
         }
 
+        FIGARO_LOG_INFO("Head", pGenHeadRoot->m_data)
+
 
         // Vertically concatenating tails and generalized tail to the head.
         for (uint32_t idxRel = 0; idxRel < vpTailRels.size(); idxRel ++)
         {
+            FIGARO_LOG_INFO("Tail", vpTailRels[idxRel]->m_data)
             uint32_t startTailIdx = vCumNumRowsUp[idxRel];
             uint32_t nextStartIdx = vCumNumRowsUp[idxRel + 1];
             for (uint32_t rowIdx = startTailIdx; rowIdx < nextStartIdx; rowIdx ++)
@@ -3024,7 +3033,7 @@ namespace Figaro
 
         for (uint32_t idxRel = 0; idxRel < vpGenTailRels.size(); idxRel ++)
         {
-            //FIGARO_LOG_INFO("genTail", vpGenTailRels[idxRel]->m_data)
+            FIGARO_LOG_INFO("genTail", vpGenTailRels[idxRel]->m_data)
             uint32_t startGenTailIdx = vCumNumRowsUp[idxRel + vpTailRels.size()];
             uint32_t endGenTailIdx = vCumNumRowsUp[idxRel + 1 + vpTailRels.size()];
             for (uint32_t rowIdx = startGenTailIdx;
@@ -3061,7 +3070,7 @@ namespace Figaro
 
         //MICRO_BENCH_STOP(copyMatrices)
         //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
-        FIGARO_LOG_INFO("Computing final U")
+        FIGARO_LOG_INFO("Computing final U", catGenHeadAndTails)
 
         MatrixDT matU{0, 0};
         //MICRO_BENCH_INIT(finalQR)
@@ -3083,7 +3092,6 @@ namespace Figaro
             FIGARO_LOG_INFO("Number of apended rows", totalNumCols - minNumRows);
             matU = matU.concatenateVerticallyScalar(0.0, totalNumCols - minNumRows);
         }
-        FIGARO_LOG_DBG("Final LU", matU)
         //MICRO_BENCH_STOP(addingZeros)
         //FIGARO_LOG_BENCH("Figaro", "Adding zeros",  MICRO_BENCH_GET_TIMER_LAP(addingZeros));
 

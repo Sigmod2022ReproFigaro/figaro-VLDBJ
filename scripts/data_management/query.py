@@ -161,6 +161,9 @@ class Query:
         return join_attr_names_unique
 
 
+    """
+        First are ordered join attributes and then non-join attributes.
+    """
     def get_attr_names_ordered(self):
         join_attr_names = self.get_join_attr_names_ordered()
         non_join_attr_names = self.get_non_join_attr_names_ordered()
