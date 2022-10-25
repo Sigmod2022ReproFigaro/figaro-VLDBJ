@@ -40,7 +40,6 @@ namespace Figaro
         FIGARO_MIC_BEN_INIT(rDownCntComp)
         FIGARO_MIC_BEN_INIT(rUpCntCompt)
         FIGARO_MIC_BEN_INIT(rFirstPassComp)
-        //FIGARO_MIC_BEN_INIT(rSecondPassComp)
         FIGARO_BENCH_INIT(qComp)
 
         FIGARO_LOG_INFO("JOIN EVALUATION")
@@ -88,7 +87,6 @@ namespace Figaro
             if (isFlagOn("generalizedHeadsAndTails"))
             {
                 bool evalPostProcessing = isFlagOn("postProcessing");
-                //FIGARO_MIC_BEN_START(rSecondPassComp)
                 ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType,
                     m_saveResult, joinRelName, pResult->getHtNamesTmpRels(),
                     evalPostProcessing);
@@ -99,8 +97,6 @@ namespace Figaro
                 {
                     m_pDatabase->persistRelation(rName);
                 }
-                //FIGARO_MIC_BEN_STOP(rSecondPassComp)
-                //FIGARO_LOG_MIC_BEN("Figaro", "second pass",  FIGARO_MIC_BEN_GET_TIMER_LAP(rSecondPassComp));
             }
             else
             {
@@ -430,16 +426,16 @@ namespace Figaro
         ASTVisitorResultJoin* pMatrix =
             (ASTVisitorResultJoin*)pElement->getRightOperand()->accept(this);
 
-        uint32_t joinSize = 0;
+        std::vector<uint32_t> vDownCountsSize;
         if (pElement->isLFTJoin())
         {
-            joinSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0]);
+            vDownCountsSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0], getNumberOfThreads());
         }
         ASTVisitorRightMultiply astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
             pElement->isLFTJoin(), joinAttrVisitor.getPreOrderRelNames(),
             joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(),
-            joinAttrVisitor.getPreOrderVVParJoinAttrNames(), joinSize);
+            joinAttrVisitor.getPreOrderVVParJoinAttrNames(), vDownCountsSize);
 
         ASTVisitorResultJoin* pMatMulResult = (ASTVisitorResultJoin*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();

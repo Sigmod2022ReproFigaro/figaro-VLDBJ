@@ -6,8 +6,7 @@ import data_management.database_full_reducer as dfr
 from evaluation.custom_logging import init_logging
 
 def percent_generator(data_path: str, system_tests_path: str, username: str, password: str):
-    #real_data_sets = ["retailer", "favorita", "yelp"]
-    real_data_sets = ["yelp"]
+    real_data_sets = ["retailer", "favorita", "yelp"]
     config_paths = {
         "retailer":
         {

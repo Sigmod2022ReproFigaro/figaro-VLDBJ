@@ -97,9 +97,13 @@ namespace Figaro
                 }
                 m_vParRelNames.push_back(parRelNameAd);
             }
+            for (const auto& out: m_vDownCountsSize)
+            {
+                FIGARO_LOG_INFO("Down count size", out)
+            }
             std::string qRelName = m_pDatabase->joinRelationsAndAddColumns(
                 m_vRelNames, m_vParRelNames,
-                m_vvJoinAttrNames, m_vvParJoinAttrNames, m_joinSize);
+                m_vvJoinAttrNames, m_vvParJoinAttrNames, m_vDownCountsSize);
             pResult = new ASTVisitorResultJoin(qRelName);
         }
         else

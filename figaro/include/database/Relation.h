@@ -350,14 +350,14 @@ namespace Figaro
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             std::vector<Relation::IteratorJoin>& vIts,
-            tbb::atomic<uint32_t>& atOutIdx,
+            uint32_t& outIdx,
             bool addColumns);
 
         static void iterateOverRootRel(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             uint32_t rowIdx,
-            tbb::atomic<uint32_t>& atOutIdx,
+            uint32_t& outIdx,
             MatrixDT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
@@ -373,7 +373,7 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            uint32_t joinSize,
+            const std::vector<uint32_t>& vDownCountsSizes,
             bool addColumns = false);
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
@@ -471,7 +471,7 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            uint32_t joinSize);
+            const std::vector<uint32_t>& vDownCountsSizes);
 
         Relation addRelation(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
@@ -519,7 +519,7 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-        uint32_t getDownCountSum(void) const;
+        std::vector<uint32_t> getDownCountSum(uint32_t numThreads) const;
 
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
@@ -875,12 +875,14 @@ namespace Figaro
         const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
         const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
         std::vector<Relation::IteratorJoin>& vIts,
-        tbb::atomic<uint32_t>& atOutIdx,
+        //tbb::atomic<uint32_t>& atOutIdx,
+        uint32_t& outIdx,
         bool addColumns
     )
     {
-        uint32_t outIdx;
-        outIdx = atOutIdx.fetch_and_increment() + 1;
+        //uint32_t outIdx;
+        //outIdx = atOutIdx.fetch_and_increment() + 1;
+        outIdx++;
         if (!addColumns)
         {
             for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)

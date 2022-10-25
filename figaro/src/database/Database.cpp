@@ -273,7 +273,7 @@ namespace Figaro
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            uint32_t joinSize)
+            const std::vector<uint32_t>& vDownCountsSizes)
     {
         std::vector<Relation*> vpRels;
         std::vector<Relation*> vpParRels;
@@ -298,7 +298,7 @@ namespace Figaro
 
         Relation relJoin = Relation::joinRelationsAndAddColumns(
             vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames, joinSize);
+            vvJoinAttrNames, vvParJoinAttrNames, vDownCountsSizes);
         std::string relJoinName = relJoin.getName();
         m_relations.emplace(relJoin.getName(), std::move(relJoin));;
         FIGARO_LOG_INFO("New rel name", relJoin.getName())
@@ -440,10 +440,10 @@ namespace Figaro
             vvJoinAttributeNames, isRootNode);
     }
 
-    uint32_t Database::getDownCountSum(const std::string& relationName) const
+    std::vector<uint32_t> Database::getDownCountSum(const std::string& relationName, uint32_t numThreads) const
     {
         const Relation& rel = m_relations.at(relationName);
-        return rel.getDownCountSum();
+        return rel.getDownCountSum(numThreads);
     }
 
 
@@ -736,6 +736,7 @@ namespace Figaro
             vpRelTails.push_back(pRel);
             sumRedSize1 += pRel->sumRedSize(0, 1);
             sumRedSize2 += pRel->sumRedSize(0, 2);
+            FIGARO_LOG_MIC_BEN("Tail name", relName, pRel->sumRedSize(0, 2))
             pRel->computeQRInPlace(qrHintType);
             FIGARO_LOG_INFO("Tail name", relName)
             numNonJoinAttrs += pRel->getNumberOfAttributes();
@@ -750,6 +751,7 @@ namespace Figaro
             vpRelGenTails.push_back(pRel);
             sumRedSize1 += pRel->sumRedSize(0, 1);
             sumRedSize2 += pRel->sumRedSize(0, 2);
+            FIGARO_LOG_MIC_BEN("Gen Tail name", relName, pRel->sumRedSize(0, 2))
             pRel->computeQRInPlace(qrHintType);
             //FIGARO_MIC_BEN_STOP(measureGenTail)
             //FIGARO_LOG_MIC_BEN("Gen tail time" + relName, FIGARO_MIC_BEN_GET_TIMER_LAP(measureGenTail))
@@ -762,6 +764,7 @@ namespace Figaro
         uint32_t numJoinAttrs = pRootRel->getNumberOfAttributes() - numNonJoinAttrs;
         sumRedSize1  += pRootRel->sumRedSize(numJoinAttrs, 1);
         sumRedSize2  += pRootRel->sumRedSize(numJoinAttrs, 2);
+        FIGARO_LOG_MIC_BEN("Gen head name", pRootRel->getName(), pRootRel->sumRedSize(numJoinAttrs, 2));
         pRootRel->computeQROfGeneralizedHead(vpRelTails, qrHintType);
 
         if (joinRelName != "")

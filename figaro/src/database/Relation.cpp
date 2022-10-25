@@ -805,7 +805,7 @@ namespace Figaro
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
             uint32_t rowIdx,
-            tbb::atomic<uint32_t>& atOutIdx,
+            uint32_t& outIdx,
             MatrixDT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
@@ -835,7 +835,7 @@ namespace Figaro
                 vpHashTabQueueOffsets[idxRel], vpParRels[idxRel]->m_data[rowIdxPar]);
         }
         internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs,
-            vCumNonJoinAttrIdxs, vIts, atOutIdx, addColumns);
+            vCumNonJoinAttrIdxs, vIts, outIdx, addColumns);
 
         for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
         {
@@ -859,7 +859,7 @@ namespace Figaro
         while (thereIsNext)
         {
             internalOutputTuple(vpRels, dataOut, vvJoinAttrIdxs, vvNonJoinAttrIdxs,
-                vCumNonJoinAttrIdxs, vIts, atOutIdx, addColumns);
+                vCumNonJoinAttrIdxs, vIts, outIdx, addColumns);
             thereIsNext = false;
             for (int32_t idxRel = vIts.size() - 1; idxRel >= 0; idxRel--)
             {
@@ -887,7 +887,7 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            uint32_t joinSize,
+            const std::vector<uint32_t>& vDownCountsSizes,
             bool addColumns)
     {
         // Iterate over
@@ -904,7 +904,16 @@ namespace Figaro
         std::string newName;
         std::vector<Attribute> newAttributes;
 
-        tbb::atomic<uint32_t> outIdx;
+        std::vector<uint32_t> vOutIdxs;
+        //tbb::atomic<uint32_t> outIdx;
+        uint32_t joinSize = 0;
+
+        vOutIdxs.resize(vDownCountsSizes.size());
+        for (uint32_t idx = 0; idx < vDownCountsSizes.size(); idx++)
+        {
+            vOutIdxs[idx] = joinSize - 1;
+            joinSize += vDownCountsSizes[idx];
+        }
 
         vvJoinAttrIdxs.resize(vpRels.size());
         vvParJoinAttrIdxs.resize(vpRels.size());
@@ -969,17 +978,18 @@ namespace Figaro
             vParRelIdxs[idxRel] = mParRelNameIdx[vpParRels[idxRel]->m_name];
         }
 
-        outIdx = -1;
+        //outIdx = -1;
         MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
         uint32_t oldThreadNum = getNumberOfThreads();
-        omp_set_num_threads(4);
+        omp_set_num_threads(vDownCountsSizes.size());
         //MICRO_BENCH_INIT(iterateOverRootRelTimer)
         //MICRO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < vpRels[0]->m_data.getNumRows(); rowIdx++)
         {
-            iterateOverRootRel(vpRels, vpParRels, rowIdx, outIdx,
+            uint32_t threadId = omp_get_thread_num();
+            iterateOverRootRel(vpRels, vpParRels, rowIdx, vOutIdxs[threadId],
                 dataOutput, vvJoinAttrIdxs, vvParJoinAttrIdxs,
                 vvvChildJoinAttrIdxs,
                 vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
@@ -1004,8 +1014,10 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             uint32_t joinSize)
     {
+        /*
         return internalJoinRelations(vpRels, vpParRels,
             vvJoinAttrNames, vvParJoinAttrNames, joinSize, false);
+        */
     }
 
 
@@ -1168,10 +1180,10 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            uint32_t joinSize)
+            const std::vector<uint32_t>& vDownCountsSizes)
     {
         return internalJoinRelations(vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames, joinSize, true);
+            vvJoinAttrNames, vvParJoinAttrNames, vDownCountsSizes, true);
     }
 
 
@@ -1790,14 +1802,27 @@ namespace Figaro
         //FIGARO_LOG_BENCH("Figaro down count" + m_name, MICRO_BENCH_GET_TIMER_LAP(pureDownCnt))
     }
 
-    uint32_t Relation::getDownCountSum(void) const
+    std::vector<uint32_t> Relation::getDownCountSum(uint32_t numThreads) const
     {
-        uint32_t downCountSum = 0;
+        //uint32_t downCountSum = 0;
+        std::vector<uint32_t> vDownCountSum;
+        vDownCountSum.resize(numThreads);
+        for (auto& elem: vDownCountSum)
+        {
+            elem = 0;
+        }
+
+        uint32_t oldNumThreads = getNumberOfThreads();
+        omp_set_num_threads(numThreads);
+
+        #pragma omp parallel for schedule(static)
         for (uint32_t distCnt = 0; distCnt < m_countsJoinAttrs.getNumRows(); distCnt++)
         {
-            downCountSum += m_countsJoinAttrs[distCnt][m_cntsJoinIdxD];
+            uint32_t threadId = omp_get_thread_num();
+            vDownCountSum[threadId] += m_countsJoinAttrs[distCnt][m_cntsJoinIdxD];
         }
-        return downCountSum;
+        omp_set_num_threads(oldNumThreads);
+        return vDownCountSum;
     }
 
     void Relation::computeUpAndCircleCounts(
