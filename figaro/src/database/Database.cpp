@@ -273,7 +273,8 @@ namespace Figaro
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            const std::vector<uint32_t>& vDownCountsSizes)
+            const std::vector<uint32_t>& vDownCountsSizes,
+            const std::vector<uint32_t>& vBlockSizes)
     {
         std::vector<Relation*> vpRels;
         std::vector<Relation*> vpParRels;
@@ -298,7 +299,7 @@ namespace Figaro
 
         Relation relJoin = Relation::joinRelationsAndAddColumns(
             vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames, vDownCountsSizes);
+            vvJoinAttrNames, vvParJoinAttrNames, vDownCountsSizes, vBlockSizes);
         std::string relJoinName = relJoin.getName();
         m_relations.emplace(relJoin.getName(), std::move(relJoin));;
         FIGARO_LOG_INFO("New rel name", relJoin.getName())
@@ -440,10 +441,12 @@ namespace Figaro
             vvJoinAttributeNames, isRootNode);
     }
 
-    std::vector<uint32_t> Database::getDownCountSum(const std::string& relationName, uint32_t numThreads) const
+    void Database::getDownCountSum(const std::string& relationName,
+        std::vector<uint32_t>& vDownCountSum,
+        std::vector<uint32_t>& vBlockSize) const
     {
         const Relation& rel = m_relations.at(relationName);
-        return rel.getDownCountSum(numThreads);
+        rel.getDownCountSum(vDownCountSum, vBlockSize);
     }
 
 

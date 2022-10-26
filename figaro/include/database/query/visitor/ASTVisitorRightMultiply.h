@@ -12,6 +12,7 @@ namespace Figaro
         uint32_t startRowIdx = 0;
         bool m_useLFTJoin;
         std::vector<uint32_t> m_vDownCountsSize;
+        std::vector<uint32_t> m_vBlockSizes;
         std::vector<std::string> m_vRelNames;
         std::vector<std::string> m_vParRelNames;
         std::vector<std::string> m_vPreOrderRelNames;
@@ -27,12 +28,14 @@ namespace Figaro
             const std::vector<std::string>& vPreOrderParRelNames = {},
             const std::vector<std::vector<std::string> >& vvJoinAttrNames = {},
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames = {},
-            const std::vector<uint32_t>& vDownCountsSize = {}): ASTVisitor(pDatabase), m_relName(relName),
+            const std::vector<uint32_t>& vDownCountsSize = {},
+            const std::vector<uint32_t>& vBlockSizes = {}): ASTVisitor(pDatabase), m_relName(relName),
                 m_useLFTJoin(useLFTJoin), m_vPreOrderRelNames(vPreOrderRelNames),
                 m_vPreOrderParRelNames(vPreOrderParRelNames),
                 m_vvJoinAttrNames(vvJoinAttrNames),
                 m_vvParJoinAttrNames(vvParJoinAttrNames),
-                m_vDownCountsSize(vDownCountsSize) {}
+                m_vDownCountsSize(vDownCountsSize),
+                m_vBlockSizes(vBlockSizes){}
         virtual ASTVisitorResultJoin* visitNodeRelation(ASTNodeRelation* pElement) override;
         virtual ASTVisitorResultJoin* visitNodeJoin(ASTNodeJoin* pElement) override;
         virtual  ASTVisitorResultAbs* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;

@@ -374,6 +374,7 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             const std::vector<uint32_t>& vDownCountsSizes,
+            const std::vector<uint32_t>& vBlockSizes,
             bool addColumns = false);
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
@@ -471,7 +472,8 @@ namespace Figaro
             const std::vector<Relation*>& vpParRels,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            const std::vector<uint32_t>& vDownCountsSizes);
+            const std::vector<uint32_t>& vDownCountsSizes,
+            const std::vector<uint32_t>& vBlockSizes);
 
         Relation addRelation(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
@@ -519,7 +521,8 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-        std::vector<uint32_t> getDownCountSum(uint32_t numThreads) const;
+        void getDownCountSum(std::vector<uint32_t>& vDownCountSum,
+            std::vector<uint32_t>& vBlockSizes) const;
 
         void computeUpAndCircleCounts(
             const std::vector<Relation*>& vpChildRels,
@@ -875,13 +878,10 @@ namespace Figaro
         const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
         const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
         std::vector<Relation::IteratorJoin>& vIts,
-        //tbb::atomic<uint32_t>& atOutIdx,
         uint32_t& outIdx,
         bool addColumns
     )
     {
-        //uint32_t outIdx;
-        //outIdx = atOutIdx.fetch_and_increment() + 1;
         outIdx++;
         if (!addColumns)
         {

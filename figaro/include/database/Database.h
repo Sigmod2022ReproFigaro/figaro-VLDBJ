@@ -98,7 +98,8 @@ namespace Figaro
             const std::vector<std::string>& vParRelNames,
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
-            const std::vector<uint32_t>& vDownCountsSizes);
+            const std::vector<uint32_t>& vDownCountsSizes,
+            const std::vector<uint32_t>& vBlockSizes);
 
 
         std::string multiply(const std::string& relationName1,
@@ -145,7 +146,9 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
             bool isRootNode);
 
-        std::vector<uint32_t> getDownCountSum(const std::string& relationName, uint32_t numThreads) const;
+        void getDownCountSum(const std::string& relationName,
+            std::vector<uint32_t>& vDownCountSum,
+            std::vector<uint32_t>& vBlockSize) const;
 
         void computeUpAndCircleCounts(
             const std::string& relationName,

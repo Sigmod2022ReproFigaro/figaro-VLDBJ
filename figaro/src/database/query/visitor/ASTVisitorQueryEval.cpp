@@ -427,15 +427,16 @@ namespace Figaro
             (ASTVisitorResultJoin*)pElement->getRightOperand()->accept(this);
 
         std::vector<uint32_t> vDownCountsSize;
+        std::vector<uint32_t> vBlockSizes;
         if (pElement->isLFTJoin())
         {
-            vDownCountsSize = m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0], getNumberOfThreads());
+            m_pDatabase->getDownCountSum(joinAttrVisitor.getPreOrderRelNames()[0], vDownCountsSize, vBlockSizes);
         }
         ASTVisitorRightMultiply astRMVisitor(m_pDatabase, pMatrix->getJoinRelName(),
             pElement->isLFTJoin(), joinAttrVisitor.getPreOrderRelNames(),
             joinAttrVisitor.getPreOrderParRelNames(),
             joinAttrVisitor.getPreOrderVVJoinAttrNames(),
-            joinAttrVisitor.getPreOrderVVParJoinAttrNames(), vDownCountsSize);
+            joinAttrVisitor.getPreOrderVVParJoinAttrNames(), vDownCountsSize, vBlockSizes);
 
         ASTVisitorResultJoin* pMatMulResult = (ASTVisitorResultJoin*)pElement->accept(&astRMVisitor);
         std::string newRelName = pMatMulResult->getJoinRelName();
