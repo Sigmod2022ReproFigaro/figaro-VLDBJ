@@ -11,14 +11,14 @@ namespace Figaro
         std::string m_relName;
         uint32_t startRowIdx = 0;
         bool m_useLFTJoin;
-        std::vector<uint32_t> m_vDownCountsSize;
-        std::vector<uint32_t> m_vBlockSizes;
         std::vector<std::string> m_vRelNames;
         std::vector<std::string> m_vParRelNames;
         std::vector<std::string> m_vPreOrderRelNames;
         std::vector<std::string> m_vPreOrderParRelNames;
         std::vector<std::vector<std::string> > m_vvJoinAttrNames;
         std::vector<std::vector<std::string> > m_vvParJoinAttrNames;
+        std::vector<uint32_t> m_vDownCountsSize;
+        std::vector<uint32_t> m_vBlockSizes;
     public:
         ASTVisitorRightMultiply(
             Database* pDatabase,

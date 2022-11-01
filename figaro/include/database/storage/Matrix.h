@@ -1765,7 +1765,7 @@ namespace Figaro
 
                 for (int32_t zeroIdx = numZeros - 1; zeroIdx >= 0; zeroIdx--)
                 {
-                    if (zeroIdx == numZeros - 1)
+                    if ((uint32_t)zeroIdx == numZeros - 1)
                     {
                         glCntZeros++;
                     }

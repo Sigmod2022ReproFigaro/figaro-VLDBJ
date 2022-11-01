@@ -119,7 +119,7 @@ namespace Figaro
 
 
     Relation::Relation(const std::string& name,
-        MatrixDT&& data, const std::vector<Attribute>& attributes):
+        MatrixDRowT&& data, const std::vector<Attribute>& attributes):
         m_name(name), m_data(std::move(data)),
         m_attributes(attributes), m_dataColumnMajor(0, 0),
          m_dataScales(0, 0),
@@ -130,9 +130,9 @@ namespace Figaro
     }
 
     Relation::Relation(json jsonRelationSchema):
-        m_data(0, 0), m_dataColumnMajor(0, 0),
-         m_dataScales(0, 0),
+        m_dataColumnMajor(0, 0), m_data(0, 0),
         m_scales(0, 0),
+         m_dataScales(0, 0),
         m_countsJoinAttrs(0, 0)
     {
         m_name = jsonRelationSchema["name"];
@@ -156,7 +156,7 @@ namespace Figaro
 
     Relation* Relation::createFactorRelation(
             const std::string& extension,
-            MatrixDT&& data,
+            MatrixDRowT&& data,
             uint32_t numRightAttrs)
     {
         uint32_t offset = m_attributes.size() - numRightAttrs;
@@ -166,8 +166,8 @@ namespace Figaro
 
     void Relation::resetComputations(void)
     {
-        m_scales = std::move(MatrixDT{0, 0});
-        m_dataScales = std::move(MatrixDT{0, 0});
+        m_scales = std::move(MatrixDRowT{0, 0});
+        m_dataScales = std::move(MatrixDRowT{0, 0});
         m_allScales.clear();
         m_vSubTreeDataOffsets.clear();
 
@@ -198,7 +198,7 @@ namespace Figaro
 
         FIGARO_LOG_INFO("Number of loaded rows", cntLines, "number attributes", numAttributes)
 
-        m_data = std::move(MatrixDT(cntLines, numAttributes));
+        m_data = std::move(MatrixDRowT(cntLines, numAttributes));
 
 
         // TODO: If there is time, write regex that will parse files based on the attributes type.
@@ -264,7 +264,7 @@ namespace Figaro
         uint32_t numCols = m_data.getNumCols();
         //MICRO_BENCH_INIT(sortData)
         //MICRO_BENCH_START(sortData)
-        MatrixDT tmpMatrix(numRows, numCols);
+        MatrixDRowT tmpMatrix(numRows, numCols);
         getAttributesIdxs(vAttributeNames, vAttributesIdxs);
 
         std::vector<double*> vRowPts(numRows);
@@ -383,7 +383,7 @@ namespace Figaro
         FIGARO_LOG_DBG("m_attributes", m_attributes)
         getAttributesIdxs(getAttributeNames(), vAfterDropAttrIdxs);
 
-        MatrixDT tmpData {m_data.getNumRows(), vAfterDropAttrIdxs.size()};
+        MatrixDRowT tmpData {m_data.getNumRows(), (uint32_t)vAfterDropAttrIdxs.size()};
 
         FIGARO_LOG_DBG("vDropAttrIdxs", vDropAttrIdxs)
         FIGARO_LOG_DBG("vNonDropAttrIdxs", vNonDropAttrIdxs)
@@ -420,7 +420,7 @@ namespace Figaro
         FIGARO_LOG_DBG("vBeforeNewAttrIdxs", vBeforeNewAttrIdxs)
         FIGARO_LOG_DBG("vAfterNewAttrIdxs", vAfterNewAttrIdxs)
 
-        MatrixDT tmpData {m_data.getNumRows(), vAfterNewAttrIdxs.size()};
+        MatrixDRowT tmpData {m_data.getNumRows(), (uint32_t)vAfterNewAttrIdxs.size()};
 
         for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
         {
@@ -490,8 +490,8 @@ namespace Figaro
         }
         FIGARO_LOG_DBG("vShiftIdxs", vShiftIdxs)
 
-        MatrixDT oneHotEncData{0, 1};
-        oneHotEncData = std::move(MatrixDT::zeros(m_data.getNumRows(), m_data.getNumCols() + curShift));
+        MatrixDRowT oneHotEncData{0, 1};
+        oneHotEncData = std::move(MatrixDRowT::zeros(m_data.getNumRows(), m_data.getNumCols() + curShift));
         FIGARO_LOG_INFO("Pre-ohe dimensions ", m_data.getNumRows(), m_data.getNumCols())
 
         FIGARO_LOG_INFO("OHE dimensions ", oneHotEncData.getNumRows(), oneHotEncData.getNumCols())
@@ -548,14 +548,14 @@ namespace Figaro
 
     Relation Relation::createDummyGenTailRelation(void) const
     {
-        MatrixDT data{0, m_attributes.size()};
+        MatrixDRowT data{0, (uint32_t)m_attributes.size()};
         return Relation("GEN_TAIL" + m_name, std::move(data), m_attributes);
     }
 
 
     void Relation::initHashTableMNJoin(
         const std::vector<uint32_t>& vParAttrIdx,
-        void*&  pHashTablePt, Figaro::Relation::MatrixDT& dataRef)
+        void*&  pHashTablePt, Figaro::Relation::MatrixDRowT& dataRef)
     {
         if (vParAttrIdx.size() == 0)
         {
@@ -567,7 +567,7 @@ namespace Figaro
             tpHashTablePt->reserve(dataRef.getNumRows());
             for (uint32_t rowIdx = 0; rowIdx < dataRef.getNumRows(); rowIdx++)
             {
-                double curAttrVal = dataRef[rowIdx][vParAttrIdx[0]];
+                //double curAttrVal = dataRef[rowIdx][vParAttrIdx[0]];
                 const auto& insRes =  tpHashTablePt->try_emplace(
                 (uint32_t)dataRef[rowIdx][vParAttrIdx[0]], std::vector<uint32_t>());
                 auto& inserted = *(insRes.first);
@@ -699,8 +699,8 @@ namespace Figaro
             }
         }
 
-        MatrixDT dataOutput {1000, (uint32_t)attributes.size()};
-        //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
+        MatrixDRowT dataOutput {1000, (uint32_t)attributes.size()};
+        //MatrixDRowT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
         uint32_t glCnt = 0;
@@ -804,9 +804,10 @@ namespace Figaro
     void Relation::iterateOverRootRel(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
+            std::vector<Relation::IteratorJoin>& vIts,
             uint32_t rowIdx,
             uint32_t& outIdx,
-            MatrixDT& dataOut,
+            MatrixDRowT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
             const std::vector<std::vector<std::vector<uint32_t> > >& vvvChildJoinAttrIdxs,
@@ -818,11 +819,12 @@ namespace Figaro
     )
     {
         // Iterate over
-        std::vector<Relation::IteratorJoin> vIts;
-
         bool thereIsNext = false;
         // initIterators
-        vIts.resize(vpRels.size());
+        for (uint32_t idxRel = 0; idxRel < vIts.size(); idxRel++)
+        {
+            vIts[idxRel].reset();
+        }
          // fillOutIterators(int)
         vIts[0].m_vRowIdxs = {rowIdx};
         for (uint32_t idxRel = 1; idxRel < vIts.size(); idxRel++)
@@ -908,20 +910,25 @@ namespace Figaro
         uint32_t joinSize = 0;
         std::vector<uint32_t> vStartRowIdxs;
         std::vector<uint32_t> vEndRowIdxs;
-        std::vector<uint32_t> vTmpJoinSize;
+        std::vector<uint32_t> vJoinEndOutIdx;
+        std::vector<std::vector<Relation::IteratorJoin>> vvIts;
+
+        uint32_t numThreads = getNumberOfThreads();
 
 
-        vOutIdxs.resize(getNumberOfThreads());
-        vStartRowIdxs.resize(getNumberOfThreads());
-        vEndRowIdxs.resize(getNumberOfThreads());
-        vTmpJoinSize.resize(getNumberOfThreads());
+        vOutIdxs.resize(numThreads);
+        vStartRowIdxs.resize(numThreads);
+        vEndRowIdxs.resize(numThreads);
+        vJoinEndOutIdx.resize(numThreads);
+        vvIts.resize(numThreads);
         vStartRowIdxs[0] = 0;
 
-        for (uint32_t idx = 0; idx < vDownCountsSizes.size(); idx++)
+        for (uint32_t idx = 0; idx < numThreads; idx++)
         {
+            vvIts[idx].resize(vpRels.size());
             vOutIdxs[idx] = joinSize - 1;
             joinSize += vDownCountsSizes[idx];
-            vTmpJoinSize[idx] = joinSize;
+            vJoinEndOutIdx[idx] = joinSize;
             vEndRowIdxs[idx] = vBlockSizes[idx];
             if (idx != 0)
             {
@@ -996,12 +1003,12 @@ namespace Figaro
             vParRelIdxs[idxRel] = mParRelNameIdx[vpParRels[idxRel]->m_name];
         }
 
-        MatrixDT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
+        MatrixDRowT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
         //MICRO_BENCH_INIT(iterateOverRootRelTimer)
         //MICRO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
-        for (uint32_t threadIdx = 0; threadIdx < getNumberOfThreads(); threadIdx++)
+        for (uint32_t threadIdx = 0; threadIdx < numThreads; threadIdx++)
         {
             uint32_t rowStartIdx;
             uint32_t rowEndIdx;
@@ -1010,9 +1017,9 @@ namespace Figaro
 
             for (uint32_t rowIdx = rowStartIdx; rowIdx < rowEndIdx; rowIdx++)
             {
-                iterateOverRootRel(vpRels, vpParRels, rowIdx, vOutIdxs[threadIdx],
-                    dataOutput, vvJoinAttrIdxs, vvParJoinAttrIdxs,
-                    vvvChildJoinAttrIdxs,
+                iterateOverRootRel(vpRels, vpParRels, vvIts[threadIdx], rowIdx,
+                    vOutIdxs[threadIdx], dataOutput, vvJoinAttrIdxs,
+                    vvParJoinAttrIdxs, vvvChildJoinAttrIdxs,
                     vvNonJoinAttrIdxs, vCumNonJoinAttrIdxs, vParRelIdxs,
                     vpHashTabQueueOffsets, addColumns);
             }
@@ -1117,8 +1124,8 @@ namespace Figaro
             newRelName += vpChildRels[idxRel]->m_name;
         }
 
-        MatrixDT dataOutput {151'000'000, (uint32_t)attributes.size()};
-        //MatrixDT dataOutput {15, (uint32_t)attributes.size()};
+        MatrixDRowT dataOutput {151'000'000, (uint32_t)attributes.size()};
+        //MatrixDRowT dataOutput {15, (uint32_t)attributes.size()};
         FIGARO_LOG_INFO("attributes", attributes)
         uint32_t offPar = vJoinAttrIdxs.size() - vParJoinAttrIdxs.size();
         uint32_t glCnt = 0;
@@ -1300,8 +1307,8 @@ namespace Figaro
 
         // multiply R by itself.
         auto smmMat = m_data.selfMatrixMultiply(0);
-        MatrixDT APrimeB{numAttrs - 1, 1};
-        MatrixDT APrimeA{numAttrs - 1, numAttrs - 1};
+        MatrixDRowT APrimeB{numAttrs - 1, 1};
+        MatrixDRowT APrimeA{numAttrs - 1, numAttrs - 1};
 
         FIGARO_LOG_INFO("smmMat", smmMat);
         FIGARO_LOG_INFO("labelIdx", labelIdx);
@@ -1369,7 +1376,7 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("m_attributes", m_attributes)
         auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
-        auto eye = MatrixDT::identity(result.getNumRows());
+        auto eye = MatrixDRowT::identity(result.getNumRows());
         auto diff = eye.subtract(result, 0, vJoinAttrNames.size());
         FIGARO_LOG_INFO("diff norm", eye.norm(0))
         FIGARO_LOG_INFO("diff norm", result)
@@ -1556,8 +1563,7 @@ namespace Figaro
                 //FIGARO_LOG_BENCH("General loop", MICRO_BENCH_GET_TIMER_LAP(generalLoops))
                 distCnt = m_data.getNumRows();
                 vParBlockStartIdxsAfterFirstPass.back() = distCnt;
-                //cntJoinVals.resize(distCnt);
-                FIGARO_LOG_DBG("cntJoinVals", m_name, cntJoinVals)
+                //FIGARO_LOG_DBG("cntJoinVals", m_name, cntJoinVals)
             }
             else
             {
@@ -1633,7 +1639,7 @@ namespace Figaro
     // TODO: Convert this to a template.
     void Relation::initHashTableRowIdxs(
         const std::vector<uint32_t>& vParAttrIdx,
-        const MatrixDT& data,
+        const MatrixDRowT& data,
         void*& pHashTablePt
         )
     {
@@ -1703,7 +1709,7 @@ namespace Figaro
         getAttributesIdxs(vJoinAttrNames, vJoinAttrIdxs);
         getAttributesIdxs(vParJoinAttrNames, vParJoinAttrIdxs);
 
-        MatrixUI32T cntsJoin {m_data.getNumRows(), vJoinAttrNames.size() + 4};
+        MatrixUI32T cntsJoin {m_data.getNumRows(), (uint32_t)vJoinAttrNames.size() + 4};
         vParBlockStartIdxs.reserve(m_data.getNumRows());
         vParBlockStartIdxsAfterFirstPass.reserve(m_data.getNumRows());
 
@@ -1772,7 +1778,7 @@ namespace Figaro
                 uint32_t curDownCnt = m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
                 for (uint32_t idxChild = 0; idxChild < vpChildRels.size(); idxChild++)
                 {
-                    FIGARO_LOG_DBG("CHILD", vpChildRels[idxChild]->m_name)
+                    //FIGARO_LOG_DBG("CHILD", vpChildRels[idxChild]->m_name)
                     Figaro::Relation::DownUpCntT& cnts =
                         getParCntFromHashTable(
                             vvCurJoinAttrIdxs[idxChild],
@@ -1829,9 +1835,10 @@ namespace Figaro
         std::vector<uint32_t>& vDownCountSum,
         std::vector<uint32_t>& vBlockSizes) const
     {
-        vDownCountSum.resize(getNumberOfThreads());
-        vBlockSizes.resize(getNumberOfThreads());
-        for (int idx = 0; idx < vDownCountSum.size(); idx++)
+        uint32_t numThreads = getNumberOfThreads();
+        vDownCountSum.resize(numThreads);
+        vBlockSizes.resize(numThreads);
+        for (uint32_t idx = 0; idx < vDownCountSum.size(); idx++)
         {
             vDownCountSum[idx] = 0;
             vBlockSizes[idx] = 0;
@@ -1961,10 +1968,10 @@ namespace Figaro
 
         vNonJoinAttrs = std::vector<Attribute>(m_attributes.end() - numNonJoinAttrs, m_attributes.end());
         // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
-        MatrixDT dataHeads{numDistinctValues, getNumberOfAttributes()};
-        MatrixDT dataTails{numTailRows, numNonJoinAttrs};
-        MatrixDT dataScale{numDistinctValues, 1};
-        MatrixDT scale{numDistinctValues, 1};
+        MatrixDRowT dataHeads{numDistinctValues, getNumberOfAttributes()};
+        MatrixDRowT dataTails{numTailRows, numNonJoinAttrs};
+        MatrixDRowT dataScale{numDistinctValues, 1};
+        MatrixDRowT scale{numDistinctValues, 1};
         std::vector<double> allScales(numDistinctValues);
 
         // 2) Iterate over join attributes and compute Heads and Tails of relation that
@@ -2055,10 +2062,10 @@ namespace Figaro
         numTailRows = m_data.getNumRows() - numDistinctValues;
 
         // 1) Preallocate memory for heads and tails, scales, dataScales, allScales.
-        MatrixDT dataHeads{numDistinctValues, getNumberOfAttributes()};
-        MatrixDT dataTails{numTailRows, numNonJoinAttrs};
-        //MatrixDT dataScale{numDistinctValues, 1};
-        //MatrixDT scale{numDistinctValues, 1};
+        MatrixDRowT dataHeads{numDistinctValues, getNumberOfAttributes()};
+        MatrixDRowT dataTails{numTailRows, numNonJoinAttrs};
+        //MatrixDRowT dataScale{numDistinctValues, 1};
+        //MatrixDRowT scale{numDistinctValues, 1};
         //std::vector<double> allScales(numDistinctValues);
 
         //FIGARO_LOG_INFO("Entering ", m_name, m_data)
@@ -2070,11 +2077,11 @@ namespace Figaro
         {
             uint32_t headRowIdx;
             uint32_t nextHeadRowIdx;
-            uint32_t numDistVals;
+            //uint32_t numDistVals;
 
             headRowIdx = (distCnt == 0) ? 0 : m_countsJoinAttrs[distCnt - 1][m_cntsJoinIdxE];
             nextHeadRowIdx = m_countsJoinAttrs[distCnt][m_cntsJoinIdxE];
-            numDistVals =  m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
+            //numDistVals =  m_countsJoinAttrs[distCnt][m_cntsJoinIdxV];
 
              // Copy join attributes to be used as indices.
             for (const uint32_t joinAttrIdx: vJoinAttrIdxs)
@@ -2236,9 +2243,9 @@ namespace Figaro
              vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
 
-        MatrixDT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)vAttrsAggAway.size()};
-        MatrixDT scales{pHeadRel->m_data.getNumRows(), vpChildRels.size() + 1};
-        MatrixDT dataScales{pHeadRel->m_data.getNumRows(), vSubTreeRelNames.size()};
+        MatrixDRowT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)vAttrsAggAway.size()};
+        MatrixDRowT scales{pHeadRel->m_data.getNumRows(), (uint32_t)vpChildRels.size() + 1};
+        MatrixDRowT dataScales{pHeadRel->m_data.getNumRows(), (uint32_t)vSubTreeRelNames.size()};
 
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < pHeadRel->m_data.getNumRows(); rowIdx++)
@@ -2377,9 +2384,9 @@ namespace Figaro
              vvJoinAttrIdxs, vvNonJoinAttrIdxs);
 
 
-        MatrixDT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)vAttrsAggAway.size()};
-        MatrixDT scales{pHeadRel->m_data.getNumRows(), vpChildRels.size() + 1};
-        MatrixDT dataScales{pHeadRel->m_data.getNumRows(), vSubTreeRelNames.size()};
+        MatrixDRowT dataOutput {pHeadRel->m_data.getNumRows(), (uint32_t)vAttrsAggAway.size()};
+        MatrixDRowT scales{pHeadRel->m_data.getNumRows(), (uint32_t)vpChildRels.size() + 1};
+        MatrixDRowT dataScales{pHeadRel->m_data.getNumRows(), (uint32_t)vSubTreeRelNames.size()};
 
         #pragma omp parallel for schedule(static)
         for (uint32_t rowIdx = 0; rowIdx < pHeadRel->m_data.getNumRows(); rowIdx++)
@@ -2456,12 +2463,12 @@ namespace Figaro
         vNonJoinAttributes = std::vector<Attribute>(attributes.end() - numNonJoinAttrs,
             attributes.end());
 
-        MatrixDT dataHeadOut { numParDistVals,
+        MatrixDRowT dataHeadOut { numParDistVals,
             pAggAwayRel->getNumberOfAttributes() - numOmittedAttrs};
-        MatrixDT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
+        MatrixDRowT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
             numNonJoinAttrs};
-        MatrixDT scales{numParDistVals, 1};
-        MatrixDT dataScales{numParDistVals, m_dataScales.getNumCols()};
+        MatrixDRowT scales{numParDistVals, 1};
+        MatrixDRowT dataScales{numParDistVals, m_dataScales.getNumCols()};
 
         FIGARO_LOG_INFO("Compute Generalized Head and Tail for relation", m_name)
 
@@ -2628,9 +2635,9 @@ namespace Figaro
 
         attributes = pAggAwayRel->m_attributes;
 
-        MatrixDT dataHeadOut { numParDistVals,
+        MatrixDRowT dataHeadOut { numParDistVals,
             pAggAwayRel->getNumberOfAttributes() - numOmittedAttrs};
-        MatrixDT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
+        MatrixDRowT dataTailsOut{ pAggAwayRel->m_data.getNumRows() - numParDistVals,
             numNonJoinAttrs};
 
         FIGARO_LOG_INFO("Compute Generalized Head and Tail for relation", m_name)
@@ -2762,7 +2769,7 @@ namespace Figaro
             numNonJoinAttrs += pRel->m_data.getNumCols();
         }
         m_data = m_data.getRightCols(numNonJoinAttrs);
-        MatrixDT matU{0, 0};
+        MatrixDRowT matU{0, 0};
         FIGARO_LOG_INFO("GenHead", m_data)
         m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
              false, true,  nullptr, &matU, nullptr, true);
@@ -2778,7 +2785,7 @@ namespace Figaro
 
     void Relation::computeLUInPlace(Figaro::QRHintType qrHintType)
     {
-        MatrixDT matU{0, 0};
+        MatrixDRowT matU{0, 0};
         if ((m_data.getNumRows() != 0) && (m_data.getNumCols() != 0))
         {
             m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
@@ -2807,7 +2814,7 @@ namespace Figaro
         Relation* pR = nullptr;
         Relation* pQ = nullptr;
         bool computeQ = pJoinRel != nullptr;
-        MatrixDT qData{0, 0};
+        MatrixDRowT qData{0, 0};
 
 
         numRels = vpRels.size();
@@ -2841,7 +2848,7 @@ namespace Figaro
         //MICRO_BENCH_INIT(copyMatrices)
         //MICRO_BENCH_START(copyMatrices)
 
-        MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
+        MatrixDRowT catGenHeadAndTails{totalNumRows, totalNumCols};
         FIGARO_LOG_INFO("totalNumRows", totalNumRows)
         FIGARO_LOG_INFO("totalNumCols", totalNumCols)
         FIGARO_LOG_INFO("Number of rows in generalized head", pGenHeadRoot->m_data.getNumRows())
@@ -2991,7 +2998,7 @@ namespace Figaro
         uint32_t minNumRows;
         Relation* pL = nullptr;
         Relation* pU = nullptr;
-        MatrixDT qData{0, 0};
+        MatrixDRowT qData{0, 0};
 
 
         numRels = vpRels.size();
@@ -3026,7 +3033,7 @@ namespace Figaro
         //MICRO_BENCH_INIT(copyMatrices)
         //MICRO_BENCH_START(copyMatrices)
 
-        MatrixDT catGenHeadAndTails{totalNumRows, totalNumCols};
+        MatrixDRowT catGenHeadAndTails{totalNumRows, totalNumCols};
         FIGARO_LOG_INFO("totalNumRows", totalNumRows)
         FIGARO_LOG_INFO("totalNumCols", totalNumCols)
         FIGARO_LOG_INFO("Number of rows in generalized head", pGenHeadRoot->m_data.getNumRows())
@@ -3118,7 +3125,7 @@ namespace Figaro
         //FIGARO_LOG_BENCH("Figaro", "Copying matrices",  MICRO_BENCH_GET_TIMER_LAP(copyMatrices));
         FIGARO_LOG_INFO("Computing final U", catGenHeadAndTails)
 
-        MatrixDT matU{0, 0};
+        MatrixDRowT matU{0, 0};
         //MICRO_BENCH_INIT(finalQR)
         //MICRO_BENCH_START(finalQR)
         catGenHeadAndTails.computeLU(getNumberOfThreads(),
@@ -3156,8 +3163,8 @@ namespace Figaro
         Relation* pQ = nullptr;
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
-            MatrixDT matR = MatrixDT{0, 0};
-            MatrixDT matQ = MatrixDT{0, 0};
+            MatrixDRowT matR = MatrixDRowT{0, 0};
+            MatrixDRowT matQ = MatrixDRowT{0, 0};
 
             m_data.computeQR(getNumberOfThreads(), true,
                 qrHintType, computeQ, saveResult, &matR, &matQ);
@@ -3184,8 +3191,8 @@ namespace Figaro
             if (saveResult)
             {
                 //matR.makeDiagonalElementsPositiveInR();
-                MatrixDT matRR{matR.getNumRows(), matR.getNumCols()};
-                MatrixDT matRQ{matQ.getNumRows(), matQ.getNumCols()};
+                MatrixDRowT matRR{matR.getNumRows(), matR.getNumCols()};
+                MatrixDRowT matRQ{matQ.getNumRows(), matQ.getNumCols()};
                 matRR.copyBlockToThisMatrixFromCol(
                     matR, 0, matRR.getNumRows() - 1,
                     0, matRR.getNumCols() - 1, 0, 0);
@@ -3212,8 +3219,8 @@ namespace Figaro
         Relation* pU = nullptr;
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
-            MatrixDT matL = MatrixDT{0, 0};
-            MatrixDT matU = MatrixDT{0, 0};
+            MatrixDRowT matL = MatrixDRowT{0, 0};
+            MatrixDRowT matU = MatrixDRowT{0, 0};
 
             m_data.computeLU(getNumberOfThreads(), Figaro::LUHintType::PART_PIVOT_LAPACK,
              true, true, &matL, &matU, nullptr, true);
@@ -3236,8 +3243,8 @@ namespace Figaro
             if (saveResult)
             {
                 FIGARO_LOG_BENCH("matU", matU)
-                MatrixDT matLL{matL.getNumRows(), matL.getNumCols()};
-                MatrixDT matUU{matU.getNumRows(), matU.getNumCols()};
+                MatrixDRowT matLL{matL.getNumRows(), matL.getNumCols()};
+                MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
                 matUU.copyBlockToThisMatrixFromCol(
                     matU, 0, matUU.getNumRows() - 1,
                     0, matUU.getNumCols() - 1, 0, 0);
@@ -3280,17 +3287,17 @@ namespace Figaro
         return "GEN_TAIL_" + m_name;
     }
 
-    const Relation::MatrixDT& Relation::getData(void) const
+    const Relation::MatrixDRowT& Relation::getData(void) const
     {
         return m_data;
     }
 
-    const Relation::MatrixDT& Relation::getScales(void) const
+    const Relation::MatrixDRowT& Relation::getScales(void) const
     {
         return m_scales;
     }
 
-    const Relation::MatrixDT& Relation::getDataScales(void) const
+    const Relation::MatrixDRowT& Relation::getDataScales(void) const
     {
         return m_dataScales;
     }
@@ -3308,7 +3315,7 @@ namespace Figaro
                 }
             }
             m_dataColumnMajor = std::move(tmpOut);
-            m_data = std::move(MatrixDT{0, 0});
+            m_data = std::move(MatrixDRowT{0, 0});
         }
         else if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {

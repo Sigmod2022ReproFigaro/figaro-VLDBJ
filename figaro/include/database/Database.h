@@ -272,17 +272,17 @@ namespace Figaro
 
         void outputRelation(const std::string& relName) const;
 
-        const Relation::MatrixDT& getHead(const std::string& relationName) const;
+        const Relation::MatrixDRowT& getHead(const std::string& relationName) const;
 
-        const Relation::MatrixDT& getTail(const std::string& relationName) const;
+        const Relation::MatrixDRowT& getTail(const std::string& relationName) const;
 
-        const Relation::MatrixDT& getGeneralizedHead(const std::string& relationName) const;
+        const Relation::MatrixDRowT& getGeneralizedHead(const std::string& relationName) const;
 
-        const Relation::MatrixDT& getGeneralizedTail(const std::string& relationName) const;
+        const Relation::MatrixDRowT& getGeneralizedTail(const std::string& relationName) const;
 
-        const Relation::MatrixDT& getScales(const std::string& relationName) const;
+        const Relation::MatrixDRowT& getScales(const std::string& relationName) const;
 
-        const Relation::MatrixDT& getDataScales(const std::string& relationName) const;
+        const Relation::MatrixDRowT& getDataScales(const std::string& relationName) const;
     };
 }
 #endif

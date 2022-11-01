@@ -46,7 +46,7 @@ namespace Figaro
         /*
         std::ofstream fileDumpR("/local/scratch/Figaro/tests_path/figaro-code/dumps/postprocess/lapack/row_major/only_r/DBRetailer10/JoinLocationRoot48/join.csv", std::ofstream::out);
         MatrixEigenT mOut;
-        Relation::copyMatrixDTToMatrixEigen(m_pDatabase->m_relations.at(newRelName).m_data, mOut);
+        Relation::copyMatrixDRowTToMatrixEigen(m_pDatabase->m_relations.at(newRelName).m_data, mOut);
         Figaro::outputMatrixTToCSV(fileDumpR, mOut, ',', 2);
         ASTNodeJoin* pJoin = (ASTNodeJoin*)pElement->getOperand();
         */

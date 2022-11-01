@@ -1369,10 +1369,10 @@ TEST(Database, QRFigaroHeadsAndTails)
         const auto& scaleDT = database.getScales(relName);
         const auto& dataScaleDT = database.getDataScales(relName);
 
-        Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, head[idxRel]);
-        Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tail[idxRel]);
-        Figaro::Relation::copyMatrixDTToMatrixEigen(scaleDT, scales[idxRel]);
-        Figaro::Relation::copyMatrixDTToMatrixEigen(dataScaleDT, dataScales[idxRel]);
+        Figaro::Relation::copyMatrixDRowTToMatrixEigen(headDT, head[idxRel]);
+        Figaro::Relation::copyMatrixDRowTToMatrixEigen(tailDT, tail[idxRel]);
+        Figaro::Relation::copyMatrixDRowTToMatrixEigen(scaleDT, scales[idxRel]);
+        Figaro::Relation::copyMatrixDRowTToMatrixEigen(dataScaleDT, dataScales[idxRel]);
         compareMatrices(head[idxRel], expHead[idxRel], true, true);
         compareMatrices(tail[idxRel], expTail[idxRel], true, true);
         compareMatrices(scales[idxRel], expScales[idxRel], true, true);
@@ -1409,8 +1409,8 @@ TEST(Database, QRFigaroGeneralizedHeadsAndTails)
     query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}});
     const auto& headDT = database.getGeneralizedHead("R2");
     const auto& tailDT = database.getGeneralizedTail("R2");
-    Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);
-    Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
+    Figaro::Relation::copyMatrixDRowTToMatrixEigen(headDT, headGen2);
+    Figaro::Relation::copyMatrixDRowTToMatrixEigen(tailDT, tailGen2);
     compareMatrices(headGen2, expHeadGen2, true, true);
     compareMatrices(tailGen2, expTailGen2, true, true);
 }
@@ -1490,8 +1490,8 @@ TEST(Database, LUFigaroHeadsAndTails)
         const auto& headDT = database.getHead(relName);
         const auto& tailDT = database.getTail(relName);
 
-        Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, head[idxRel]);
-        Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tail[idxRel]);
+        Figaro::Relation::copyMatrixDRowTToMatrixEigen(headDT, head[idxRel]);
+        Figaro::Relation::copyMatrixDRowTToMatrixEigen(tailDT, tail[idxRel]);
         compareMatrices(head[idxRel], expHead[idxRel], true, true);
         compareMatrices(tail[idxRel], expTail[idxRel], true, true);
     }
@@ -1528,8 +1528,8 @@ TEST(Database, LUFigaroGeneralizedHeadsAndTails)
 
     const auto& headDT = database.getGeneralizedHead("R2");
     const auto& tailDT = database.getGeneralizedTail("R2");
-    Figaro::Relation::copyMatrixDTToMatrixEigen(headDT, headGen2);
-    Figaro::Relation::copyMatrixDTToMatrixEigen(tailDT, tailGen2);
+    Figaro::Relation::copyMatrixDRowTToMatrixEigen(headDT, headGen2);
+    Figaro::Relation::copyMatrixDRowTToMatrixEigen(tailDT, tailGen2);
     compareMatrices(headGen2, expHeadGen2, true, true);
     compareMatrices(tailGen2, expTailGen2, true, true);
 
@@ -1561,7 +1561,7 @@ TEST(Database, LUFigaro)
 TEST(Relation, Join)
 {
     static constexpr uint32_t M = 3, N = 3, K= 2;
-    Relation::MatrixDT A(M, N), B(K, N), C(K, K);
+    Relation::MatrixDRowT A(M, N), B(K, N), C(K, K);
 
     A[0][0] = 1;
     A[0][1] = 2;
@@ -1619,7 +1619,7 @@ TEST(Relation, Join)
 TEST(Relation, JoinLeapFrog)
 {
     static constexpr uint32_t M = 3, N = 3, K= 2;
-    Relation::MatrixDT A(M, N), B(K, N), C(K, K);
+    Relation::MatrixDRowT A(M, N), B(K, N), C(K, K);
 
     A[0][0] = 1;
     A[0][1] = 2;
@@ -1677,7 +1677,7 @@ TEST(Relation, JoinLeapFrog)
 TEST(Relation, Multiply)
 {
     static constexpr uint32_t M = 3, N = 4, K= 2;
-    Relation::MatrixDT A(M, N), B(K, K);
+    Relation::MatrixDRowT A(M, N), B(K, K);
 
     A[0][0] = 1;
     A[0][1] = 2;
@@ -1717,7 +1717,7 @@ TEST(Relation, Multiply)
 TEST(Relation, DISABLED_SelfMatrixMultiply)
 {
     static constexpr uint32_t M = 3, N = 4;
-    Relation::MatrixDT A(M, N);
+    Relation::MatrixDRowT A(M, N);
 
     A[0][0] = 1;
     A[0][1] = 2;
@@ -1750,7 +1750,7 @@ TEST(Relation, DISABLED_SelfMatrixMultiply)
 TEST(Relation, CheckOrthogonality)
 {
     static constexpr uint32_t M = 4, N = 2;
-    Relation::MatrixDT A(M, N);
+    Relation::MatrixDRowT A(M, N);
 
     A[0][0] = -0.109108945117996;
     A[0][1] = -0.829515062006254;
@@ -1779,7 +1779,7 @@ TEST(Relation, CheckOrthogonality)
 TEST(Relation, Norm)
 {
     static constexpr uint32_t M = 3, N = 4;
-    Relation::MatrixDT A(M, N);
+    Relation::MatrixDRowT A(M, N);
 
     A[0][0] = 1;
     A[0][1] = 2;
@@ -1812,7 +1812,7 @@ TEST(Relation, Norm)
 TEST(Relation, CondNumber)
 {
     static constexpr uint32_t M = 4, N = 3;
-    Relation::MatrixDT A(M, N);
+    Relation::MatrixDRowT A(M, N);
 
     A[0][0] = 1;
     A[0][1] = 7;
@@ -1850,7 +1850,7 @@ TEST(Relation, CondNumber)
 TEST(Relation, AdditionAndSubtraction)
 {
     static constexpr uint32_t M = 2, N = 3;
-    Relation::MatrixDT A(M, N), B(M, N);
+    Relation::MatrixDRowT A(M, N), B(M, N);
     A[0][0] = 1;
     A[0][1] = 2;
     A[0][2] = 3;
@@ -1888,7 +1888,7 @@ TEST(Relation, AdditionAndSubtraction)
 TEST(Database, DISABLED_Multiply2)
 {
     static constexpr uint32_t M = 3, N = 4, K= 2;
-    Relation::MatrixDT A(M, N), B(K, K), R(N, N);
+    Relation::MatrixDRowT A(M, N), B(K, K), R(N, N);
 
     A[0][0] = 1;
     A[0][1] = 2;

@@ -45,8 +45,6 @@ namespace Figaro
             FLOAT, INTEGER, CATEGORY
         };
         // key: PK values -> value: corresponding aggregate
-        typedef std::map<std::vector<double>, double> GroupByT;
-        typedef Figaro::Matrix<double> MatrixDT;
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> MatrixDColT;
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> MatrixDRowT;
         typedef Figaro::Matrix<uint32_t> MatrixUI32T;
@@ -57,7 +55,7 @@ namespace Figaro
          * 2) Copies the content of @p matDT to @p matEig.
          */
         template <typename T, MemoryLayout L>
-        static void copyMatrixDTToMatrixEigen(const Figaro::Matrix<T, L>& matDT, MatrixEigenT& matEig)
+        static void copyMatrixDRowTToMatrixEigen(const Figaro::Matrix<T, L>& matDT, MatrixEigenT& matEig)
         {
             matEig.resize(matDT.getNumRows(), matDT.getNumCols());
             for (uint32_t rowIdx = 0; rowIdx < matDT.getNumRows(); rowIdx++)
@@ -139,6 +137,10 @@ namespace Figaro
 
             void next(void) { m_idx++; }
             uint32_t getRowIdx(void) const { return m_vRowIdxs[m_idx]; }
+            void reset(void)
+            {
+                m_idx = 0;
+            }
         };
     private:
         std::string m_name;
@@ -147,10 +149,10 @@ namespace Figaro
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
         MatrixDColT m_dataColumnMajor;
-        MatrixDT m_data;
+        MatrixDRowT m_data;
 
-        MatrixDT m_scales;
-        MatrixDT m_dataScales;
+        MatrixDRowT m_scales;
+        MatrixDRowT m_dataScales;
         std::vector<double> m_allScales;
 
         /**
@@ -250,7 +252,7 @@ namespace Figaro
          */
         Relation* createFactorRelation(
             const std::string& extension,
-            MatrixDT&& data,
+            MatrixDRowT&& data,
             uint32_t numRightAttrs);
 
         /**
@@ -292,7 +294,7 @@ namespace Figaro
          */
         static void initHashTableRowIdxs(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
-            const MatrixDT& data,
+            const MatrixDRowT& data,
             void*& pHashTablePt);
 
         /**
@@ -301,7 +303,7 @@ namespace Figaro
          */
         static uint32_t getChildRowIdx(uint32_t rowIdx,
             const std::vector<uint32_t>& vParJoinAttrIdxs,
-            const MatrixDT& dataParent,
+            const MatrixDRowT& dataParent,
             void*  hashTabRowPt);
 
         static void destroyHashTableRowIdxs(
@@ -331,7 +333,7 @@ namespace Figaro
         static void initHashTableMNJoin(
             const std::vector<uint32_t>& vParAttrIdx,
             void*& pHashTablePt,
-            MatrixDT& dataRef);
+            MatrixDRowT& dataRef);
 
         static const std::vector<uint32_t>& getHashTableMNJoin(
             const std::vector<uint32_t>& vParJoinAttrIdxs,
@@ -345,20 +347,21 @@ namespace Figaro
 
         static void internalOutputTuple(
             const std::vector<Relation*>& vpRels,
-            Relation::MatrixDT& dataOut,
+            Relation::MatrixDRowT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
-            std::vector<Relation::IteratorJoin>& vIts,
+            const std::vector<Relation::IteratorJoin>& vIts,
             uint32_t& outIdx,
             bool addColumns);
 
         static void iterateOverRootRel(
             const std::vector<Relation*>& vpRels,
             const std::vector<Relation*>& vpParRels,
+            std::vector<Relation::IteratorJoin>& vIts,
             uint32_t rowIdx,
             uint32_t& outIdx,
-            MatrixDT& dataOut,
+            MatrixDRowT& dataOut,
             const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
             const std::vector<std::vector<uint32_t> >& vvParJoinAttrIdxs,
             const std::vector<std::vector<std::vector<uint32_t> > >& vvvChildJoinAttrIdxs,
@@ -392,7 +395,7 @@ namespace Figaro
         Relation& operator= (Relation&& relation) = default;
         Relation(json jsonRelationSchema);
         Relation(const std::string& name,
-            MatrixDT&& data, const std::vector<Attribute>& attributes);
+            MatrixDRowT&& data, const std::vector<Attribute>& attributes);
 
         void resetComputations(void);
 
@@ -451,7 +454,7 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames,
             const std::vector<std::string>& vParJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvJoinAttributeNames,
-            bool trackProvenance);
+            [[maybe_unused]] bool trackProvenance);
 
 
         static Relation joinRelations(
@@ -539,11 +542,11 @@ namespace Figaro
          * GROUP BY attrNames.
          */
         std::tuple<Relation, Relation> computeQRHeadsAndTails(
-            const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
+            const std::vector<std::string>& vJoinAttrNames, [[maybe_unused]] bool isLeafNode);
 
 
          std::tuple<Relation, Relation> computeLUHeadsAndTails(
-            const std::vector<std::string>& vJoinAttrNames, bool isLeafNode);
+            const std::vector<std::string>& vJoinAttrNames, [[maybe_unused]] bool isLeafNode);
 
         /**
          *  It will join relations by copying data from the children relations @p vpChildRels
@@ -584,7 +587,7 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttributeNames,
             const std::vector<std::string>& vParJoinAttributeNames,
             bool isRootNode,
-            uint32_t numRelsSubTree);
+            [[maybe_unused]] uint32_t numRelsSubTree);
 
         void computeQROfGeneralizedHead(
             const std::vector<Relation*>& vpTailRels,
@@ -592,11 +595,11 @@ namespace Figaro
 
         void computeLUOfGeneralizedHead(
             const std::vector<Relation*>& vpTailRels,
-            Figaro::QRHintType qrHintType);
+            [[maybe_unused]] Figaro::QRHintType qrHintType);
 
         void computeQRInPlace(Figaro::QRHintType qrHintType);
 
-        void computeLUInPlace(Figaro::QRHintType qrHintType);
+        void computeLUInPlace([[maybe_unused]] Figaro::QRHintType qrHintType);
 
         // Should be called for a root relation.
         std::tuple<Relation*, Relation*> computeQROfConcatenatedGeneralizedHeadAndTails(
@@ -656,11 +659,11 @@ namespace Figaro
          *  Returns computed head for the corresponding relation, without
          *  dividing by square roots.
          */
-        const MatrixDT& getData(void) const;
+        const MatrixDRowT& getData(void) const;
 
-        const MatrixDT& getScales(void) const;
+        const MatrixDRowT& getScales(void) const;
 
-        const MatrixDT& getDataScales(void) const;
+        const MatrixDRowT& getDataScales(void) const;
 
         friend std::ostream& operator<<(
             std::ostream& out,
@@ -672,7 +675,7 @@ namespace Figaro
     inline uint32_t Relation::getChildRowIdx(
         uint32_t rowIdx,
         const std::vector<uint32_t>& vParJoinAttrIdxs,
-        const MatrixDT& dataParent,
+        const MatrixDRowT& dataParent,
         void*  htChildRowIdx)
     {
         uint32_t rowChildIdx = UINT32_MAX;
@@ -826,7 +829,7 @@ namespace Figaro
         {
             // TODO: Consider how to handle this case.
             //const std::vector<double> t =
-            FIGARO_LOG_DBG("Damn")
+            FIGARO_LOG_DBG("This is not supported")
         }
 
     }
@@ -847,7 +850,7 @@ namespace Figaro
             }
             catch (...)
             {
-                FIGARO_LOG_INFO("WTF", vParJoinAttrIdxs.size(), joinAttrVal, *phtChildOneParAttrs)
+                FIGARO_LOG_ERROR("There is no element", vParJoinAttrIdxs.size(), joinAttrVal, *phtChildOneParAttrs)
             }
         }
         else if (vParJoinAttrIdxs.size() == 2)
@@ -862,22 +865,22 @@ namespace Figaro
 
             }
             catch (...) {
-                FIGARO_LOG_INFO("WTF")
+                FIGARO_LOG_ERROR("There is no element")
             }
         }
         else
         {
-            FIGARO_LOG_DBG("Damn")
+            FIGARO_LOG_ERROR("This is not supported")
         }
     }
 
     inline void Relation::internalOutputTuple(
         const std::vector<Relation*>& vpRels,
-        Relation::MatrixDT& dataOut,
+        Relation::MatrixDRowT& dataOut,
         const std::vector<std::vector<uint32_t> >& vvJoinAttrIdxs,
         const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
         const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
-        std::vector<Relation::IteratorJoin>& vIts,
+        const std::vector<Relation::IteratorJoin>& vIts,
         uint32_t& outIdx,
         bool addColumns
     )
@@ -893,7 +896,6 @@ namespace Figaro
                 {
                     dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
                         = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-
                 }
             }
         }
@@ -906,13 +908,26 @@ namespace Figaro
                 {
                     if (idxRel == 0)
                     {
-                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
-                            = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+
+                        //double d = 0;
+                        //d = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()] =  vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                        //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()] = 1;
+                        //d = d +1;
+                        //dataOut[outIdx][0] = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                        //dataOut[outIdx][0] = vpRels[idxRel]->m_data[relRowIdx][0];
+                        //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
                     }
                     else
                     {
-                         dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                        //double d = 0;
+                        //d = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
                             += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
+                        //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()] = 1;
+                        //d = d +1;
+                         //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                         //   += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
                     }
                 }
             }
