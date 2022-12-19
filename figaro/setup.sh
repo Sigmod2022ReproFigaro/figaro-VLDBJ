@@ -12,7 +12,6 @@ function init_global_paths()
     FIGARO_NUM_THREADS=1
     FIGARO_POSTPROCESS="THIN1_DIAG"
     FIGARO_COMPUTE_ALL=false
-    FIGARO_MICRO_BENCHMARK=false
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
@@ -141,6 +140,7 @@ function main()
     ARGS+="--postprocess ${FIGARO_POSTPROCESS} "
     ARGS+="--memory_layout ${FIGARO_MEMORY_LAYOUT} "
     ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
+    echo $ARGS
 
     case "${FIGARO_TEST_MODE}" in
     "DEBUG"|"INFO")
