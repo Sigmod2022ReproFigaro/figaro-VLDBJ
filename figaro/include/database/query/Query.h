@@ -11,16 +11,25 @@ namespace Figaro
 {
     class Query
     {
+    public:
+        enum class OpType
+        {
+            DECOMP_QR, DECOMP_LU, DECOMP_SVD
+        };
+    private:
         ASTNode* m_pASTRoot = nullptr;
         Database* m_pDatabase = nullptr;
-        ASTVisitorResultAbs* m_pResult;
-        bool m_computeAll;
+        ASTVisitorResultAbs* m_pResult = nullptr;
+        bool m_computeAll = false;
+        OpType m_opType;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
+
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
         ErrorCode createAST(const json& jsonQueryConfig);
-
     public:
+
+
         Query(Database* pDatabase): m_pDatabase(pDatabase){}
         ~Query() { destroyAST(m_pASTRoot); }
 
@@ -50,6 +59,11 @@ namespace Figaro
         ASTVisitorResultAbs* getResult(void)
         {
             return m_pResult;
+        }
+
+        Query::OpType getOpType(void) const
+        {
+            return m_opType;
         }
     };
 }

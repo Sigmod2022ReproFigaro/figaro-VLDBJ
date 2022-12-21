@@ -127,32 +127,57 @@ int main(int argc, char *argv[])
     database.loadData();
 
     Figaro::Query query(&database);
-    query.loadQuery(queryConfigPath, computeAll);
+    query.loadQuery(queryConfigPath);
+    Figaro::Query::OpType opType = query.getOpType();
     query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
                                 {"postProcessing", true}, {"computeL", true}}, qrHintType, memoryLayout, dump);
-    if (dump)
+    Figaro::ASTVisitorResultAbs* pResult = query.getResult();
+
+    switch (opType)
     {
-        Figaro::ASTVisitorResultAbs* pResult = query.getResult();
-        FIGARO_LOG_BENCH("Dumping R to the path", dumpFilePath);
-        if (pResult->getResultType() == Figaro::ASTVisitorResultAbs::ResultType::QR_RESULT)
+        case Figaro::Query::OpType::DECOMP_QR:
         {
             Figaro::ASTVisitorResultQR* pQrResult = (Figaro::ASTVisitorResultQR*)pResult;
             std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
             database.outputRelationToFile(fileDumpR,
             pQrResult->getRRelationName(), ',', precision);
-            //std::ofstream fileDumpQ(dumpFilePath+"L.csv", std::ofstream::out);
-            //database.outputRelationToFile(fileDumpQ,
-            //    pQrResult->getQRelationName(), ',', precision);
-            if (computeAll)
-            {
-                double ortMeasure = database.checkOrthogonality(pQrResult->getQRelationName(), {});
-                FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
-            }
+            break;
         }
-        else if (pResult->getResultType() == Figaro::ASTVisitorResultAbs::ResultType::JOIN_RESULT)
+        case Figaro::Query::OpType::DECOMP_LU:
         {
-            FIGARO_LOG_BENCH("dumping", "JOIN")
-
+            break;
+        }
+        case Figaro::Query::OpType::DECOMP_SVD:
+        {
+            break;
+        }
+    }
+    if (dump)
+    {
+        Figaro::ASTVisitorResultAbs* pResult = query.getResult();
+        FIGARO_LOG_BENCH("Dumping R to the path", dumpFilePath);
+        switch (opType)
+        {
+            case Figaro::Query::OpType::DECOMP_QR:
+            {
+                Figaro::ASTVisitorResultQR* pQrResult = (Figaro::ASTVisitorResultQR*)pResult;
+                std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
+                database.outputRelationToFile(fileDumpR,
+                pQrResult->getRRelationName(), ',', precision);
+                if (computeAll)
+                {
+                    double ortMeasure = database.checkOrthogonality(pQrResult->getQRelationName(), {});
+                    FIGARO_LOG_BENCH("Orthogonality of Q",  ortMeasure);
+                }
+            }
+            case Figaro::Query::OpType::DECOMP_LU:
+            {
+                break;
+            }
+            case Figaro::Query::OpType::DECOMP_SVD:
+            {
+                break;
+            }
         }
     }
 

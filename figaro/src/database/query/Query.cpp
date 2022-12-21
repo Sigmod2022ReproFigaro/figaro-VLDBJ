@@ -79,30 +79,35 @@ namespace Figaro
             ASTNode* pCreatedOperandNode = createASTFromJson(operand);
             if (operatorName == "LU_FIGARO")
             {
+                m_opType = Query::OpType::DECOMP_LU;
                 pCreatedNode = new ASTNodeLUFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE LU_FIGARO NODE")
             }
             else if (operatorName == "GIV_QR")
             {
+                m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
             else if (operatorName == "POSTPROCESS_QR")
             {
+                m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRPostProc(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
             }
             else if (operatorName == "LU_LAPACK")
             {
+                m_opType = Query::OpType::DECOMP_LU;
                 pCreatedNode = new ASTNodeLULapack(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
                 FIGARO_LOG_INFO("CREATE LU_LAPACK NODE")
             }
             else if (operatorName == "LU_THIN")
             {
+                m_opType = Query::OpType::DECOMP_LU;
                 pCreatedNode = new ASTNodeLUThin(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
                 FIGARO_LOG_INFO("CREATE LU_THIN NODE")
