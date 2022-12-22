@@ -177,8 +177,8 @@ namespace Figaro
         {
             uint32_t M = m_numRows;
             uint32_t N = second.getNumRows();
-            double* pX = getArrPt();
-            double* pY = second.getArrPt();
+            const double* pX = getArrPt();
+            const double* pY = second.getArrPt();
             MatrixType outMat {M, N};
             outMat.setToZeros();
             uint32_t ldOut = outMat.getLeadingDimension();
@@ -186,24 +186,22 @@ namespace Figaro
             CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
 
             cblas_dger(cBlasMemLayout, M, N, 1.0, pX, 1, pY, 1, pOut, ldOut);
-            return prod;
+            return outMat;
         }
 
         double normVec(void) const
         {
-            uint32_t numRows = getNumRows();
             const double* pX = getArrPt();
-            double normVal = cblas_dnrm2(numRows, pX, 1);
+            double normVal = cblas_dnrm2(m_numRows, pX, 1);
             return normVal;
         }
 
-        double normalizeVector(void)
+        void normalizeVector(void)
         {
             double l2Norm = normVec();
             double* pX = getArrPt();
-            int N = getNumRows();
             MatrixType & matA = *this;
-            for (uint32_t rowIdx = 0; rowIdx < N; rowIdx ++)
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx ++)
             {
                 matA(rowIdx, 0) =  matA(rowIdx, 0) / l2Norm;
             }
@@ -234,7 +232,7 @@ namespace Figaro
         {
             MatrixType& matA = *this;
             uint32_t M = m_numRows;
-            uint32_t M = m_numCols;
+            uint32_t N = m_numCols;
             double* pA = getArrPt();
             cblas_dscal(M * N, val, pA, 1);
         }
@@ -1687,24 +1685,22 @@ namespace Figaro
 
         void powerIteration(MatrixType& vectV, double& sigma)
         {
+            constexpr uint32_t NUM_ITERATIONS = 10;
             std::random_device randDev{};
             std::mt19937 intGen{randDev()};
             std::normal_distribution<double> normDistr{0, 1};
-            int N = getNumCols();
+            int N = m_numCols;
             double normVector;
             MatrixType& matA = *this;
-            double sigma;
-
             vectV = std::move(MatrixType{N, 1});
 
             for (uint32_t rowIdx = 0; rowIdx < N; rowIdx++)
             {
-                vectV(rowIdx, 1) = normDistr(intGen);
+                vectV(rowIdx, 0) = normDistr(intGen);
             }
 
             vectV.normalizeVector();
-
-            for (int numIt = 0; numIt < 3; numIt++)
+            for (int numIt = 0; numIt < NUM_ITERATIONS; numIt++)
             {
                 vectV = matA * vectV;
                 vectV.normalizeVector();
@@ -1722,8 +1718,7 @@ namespace Figaro
             MatrixType& matU = *pMatU;
             MatrixType& matS = *pMatS;
             MatrixType& matA = *this;
-            uint32_t rank;
-            int N = getNumCols();
+            uint32_t rank = std::min(m_numRows, m_numCols);
 
             matU = std::move(MatrixType{m_numRows, rank});
             matS = std::move(MatrixType{rank, 1});
@@ -1731,23 +1726,35 @@ namespace Figaro
             MatrixType v = std::move(MatrixType{rank, 1});
             double sigma;
 
-            rank = std::min(m_numRows, m_numCols);
-
-            for (int diagIdx = 0; diagIdx < N; diagIdx++)
+            for (int diagIdx = 0; diagIdx < m_numCols; diagIdx++)
             {
                 MatrixType matT = selfMatrixMultiply(0);
 
                 matT.powerIteration(v, sigma);
                 MatrixType u = matA * v;
-
                 u.scale(1 / sigma);
-                MatrixType matOut = outerProduct(u, v);
-                matOut.scale(1 / sigma);
-                matA = matA - matOut;
-                // Copy u and v, sigma to respective entries
+                FIGARO_LOG_DBG("v", v, "sigma", sigma, "u", u)
+                MatrixType matOut = u.outerProduct(v);
+                FIGARO_LOG_DBG("matOut", matOut)
+                matOut.scale(sigma);
+
+                matA = matA.subtract(matOut, 0, 0);
                 matS(diagIdx, 0) = sigma;
+
+                for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+                {
+                    matU(rowIdx, diagIdx) = u(rowIdx, 0);
+
+                }
+                for (uint32_t rowIdx = 0; rowIdx < m_numCols; rowIdx++)
+                {
+                    matV(diagIdx, rowIdx) = v(rowIdx, 0);
+
+                }
             }
+            FIGARO_LOG_DBG("matU", matU, "matS", matS, "matV",matV)
         }
+
 
          void computeSVDEigenDec(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
