@@ -492,7 +492,7 @@ TEST(Matrix, computeSVDLapackRowMajor)
     matrix(0, 0) = 1; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 4; matrix(2, 1) = 3;
-    matrix.computeSingularValueDecomposition(1,
+    matrix.computeSVDLapack(1,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixU(0, 0), -0.292567560669349, GIVENS_TEST_PRECISION_ERROR);
@@ -526,7 +526,7 @@ TEST(Matrix, computeSVDLapackColMajor)
     matrix(0, 0) = 1; matrix(0, 1) = 2;
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 4; matrix(2, 1) = 3;
-    matrix.computeSingularValueDecomposition(1,
+    matrix.computeSVDLapack(1,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixU(0, 0), -0.292567560669349, GIVENS_TEST_PRECISION_ERROR);
