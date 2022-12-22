@@ -7,6 +7,7 @@
 #include <boost/math/special_functions/sign.hpp>
 #include <cmath>
 #include <mkl.h>
+#include <random>
 
 namespace Figaro
 {
@@ -163,6 +164,53 @@ namespace Figaro
             }
         }
 
+        double dotProd(const MatrixType& second) const
+        {
+            uint32_t numRows = m_numRows;
+            const double* pX = getArrPt();
+            const double* pY = second.getArrPt();
+            double prod = cblas_ddot(numRows, pX, 1, pY, 1);
+            return prod;
+        }
+
+        MatrixType outerProduct(const MatrixType& second) const
+        {
+            uint32_t M = m_numRows;
+            uint32_t N = second.getNumRows();
+            double* pX = getArrPt();
+            double* pY = second.getArrPt();
+            MatrixType outMat {M, N};
+            outMat.setToZeros();
+            uint32_t ldOut = outMat.getLeadingDimension();
+            double* pOut = outMat.getArrPt();
+            CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
+
+            cblas_dger(cBlasMemLayout, M, N, 1.0, pX, 1, pY, 1, pOut, ldOut);
+            return prod;
+        }
+
+        double normVec(void) const
+        {
+            uint32_t numRows = getNumRows();
+            const double* pX = getArrPt();
+            double normVal = cblas_dnrm2(numRows, pX, 1);
+            return normVal;
+        }
+
+        double normalizeVector(void)
+        {
+            double l2Norm = normVec();
+            double* pX = getArrPt();
+            int N = getNumRows();
+            MatrixType & matA = *this;
+            for (uint32_t rowIdx = 0; rowIdx < N; rowIdx ++)
+            {
+                matA(rowIdx, 0) =  matA(rowIdx, 0) / l2Norm;
+            }
+        }
+
+
+
         MatrixType operator*(const MatrixType& second) const
         {
             CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
@@ -181,6 +229,17 @@ namespace Figaro
                 m, n, k, 1.0, pA, ldA, pB, ldB, 0.0, pC, ldC);
             return matC;
         }
+
+        void scale(double val)
+        {
+            MatrixType& matA = *this;
+            uint32_t M = m_numRows;
+            uint32_t M = m_numCols;
+            double* pA = getArrPt();
+            cblas_dscal(M * N, val, pA, 1);
+        }
+
+
 
         MatrixType add(const MatrixType& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2) const
@@ -317,7 +376,7 @@ namespace Figaro
             tmpMat.copyBlockToThisMatrix(*this,
                 0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
             */
-            (const_cast<MatrixType*>(this))->computeSingularValueDecomposition(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
+            (const_cast<MatrixType*>(this))->computeSVDLapack(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
             double maxSingValue = matrixS(0, 0);
             double minSingValue = matrixS(rank - 1, 0);
             //FIGARO_LOG_MIC_BEN("Dimensions", m, n)
@@ -629,7 +688,7 @@ namespace Figaro
             MatrixType mS{0, 0};
             MatrixType mV{0, 0};
 
-            inverse.computeSingularValueDecomposition(1, &mU, &mS, &mV);
+            inverse.computeSVDLapack(1, &mU, &mS, &mV);
             FIGARO_LOG_BENCH("Dimensions ms", mS.getNumRows(), mS.getNumCols());
             for (uint32_t rowIdx = 0; rowIdx < mS.getNumRows(); rowIdx++)
             {
@@ -1584,8 +1643,7 @@ namespace Figaro
             }
         }
 
-
-        void computeSingularValueDecomposition(uint32_t numThreads,
+        void computeSVDLapack(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatV)
         {
@@ -1618,6 +1676,93 @@ namespace Figaro
                 pMatS->getArrPt(), pMatU->getArrPt(), ldU,
                 pMatV->getArrPt(), ldvT);
         }
+
+
+        void computeSVDJacobi(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatV)
+        {
+            computeSVDLapack(numThreads, pMatU, pMatS, pMatV);
+        }
+
+        void powerIteration(MatrixType& vectV, double& sigma)
+        {
+            std::random_device randDev{};
+            std::mt19937 intGen{randDev()};
+            std::normal_distribution<double> normDistr{0, 1};
+            int N = getNumCols();
+            double normVector;
+            MatrixType& matA = *this;
+            double sigma;
+
+            vectV = std::move(MatrixType{N, 1});
+
+            for (uint32_t rowIdx = 0; rowIdx < N; rowIdx++)
+            {
+                vectV(rowIdx, 1) = normDistr(intGen);
+            }
+
+            vectV.normalizeVector();
+
+            for (int numIt = 0; numIt < 3; numIt++)
+            {
+                vectV = matA * vectV;
+                vectV.normalizeVector();
+            }
+            MatrixType vectW = matA * vectV;
+            sigma = vectW.dotProd(vectV);
+            sigma = std::sqrt(sigma);
+        }
+
+        void computeSVDPowerIter(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatV)
+        {
+            MatrixType& matV = *pMatV;
+            MatrixType& matU = *pMatU;
+            MatrixType& matS = *pMatS;
+            MatrixType& matA = *this;
+            uint32_t rank;
+            int N = getNumCols();
+
+            matU = std::move(MatrixType{m_numRows, rank});
+            matS = std::move(MatrixType{rank, 1});
+            matV = std::move(MatrixType{rank, m_numCols});
+            MatrixType v = std::move(MatrixType{rank, 1});
+            double sigma;
+
+            rank = std::min(m_numRows, m_numCols);
+
+            for (int diagIdx = 0; diagIdx < N; diagIdx++)
+            {
+                MatrixType matT = selfMatrixMultiply(0);
+
+                matT.powerIteration(v, sigma);
+                MatrixType u = matA * v;
+
+                u.scale(1 / sigma);
+                MatrixType matOut = outerProduct(u, v);
+                matOut.scale(1 / sigma);
+                matA = matA - matOut;
+                // Copy u and v, sigma to respective entries
+                matS(diagIdx, 0) = sigma;
+            }
+        }
+
+         void computeSVDEigenDec(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatV)
+        {
+
+        }
+
+        void computeSVDR(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatV)
+        {
+
+        }
+
 
         void computeLULapack(uint32_t numThreads,
             bool saveResult, MatrixType* pMatL, MatrixType* pMatU,
