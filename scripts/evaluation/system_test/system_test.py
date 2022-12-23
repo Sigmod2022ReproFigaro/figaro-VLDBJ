@@ -74,6 +74,10 @@ class DecompConf:
     class Method(IntEnum):
         GIV_THIN_DIAG = 1
         HOUSEHOLDER = 2
+        JACOBI = 3
+        POWER_ITER = 4
+        EIGEND_DECOMP = 5
+        QR = 6
 
 
     class SparsityMode(IntEnum):
@@ -93,12 +97,20 @@ class DecompConf:
 
     map_method_to_enum = {
         'giv_thin_diag': Method.GIV_THIN_DIAG,
-        'householder': Method.HOUSEHOLDER
+        'householder': Method.HOUSEHOLDER,
+        'jacobi': Method.JACOBI,
+        'power_iter': Method.POWER_ITER,
+        'eigen_decomp': Method.EIGEND_DECOMP,
+        'qr': Method.QR
     }
 
     map_method_to_str = {
         Method.GIV_THIN_DIAG: 'giv_thin_diag',
-        Method.HOUSEHOLDER: 'householder'
+        Method.HOUSEHOLDER: 'householder',
+        Method.JACOBI: 'jacobi',
+        Method.POWER_ITER: 'power_iter',
+        Method.EIGEND_DECOMP: 'eigen_decomp',
+        Method.QR: 'qr'
     }
 
     map_name_to_enum  = {

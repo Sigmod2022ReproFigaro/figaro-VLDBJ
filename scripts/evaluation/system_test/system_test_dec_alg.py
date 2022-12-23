@@ -21,9 +21,6 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             accur_conf, decomp_conf, exec_conf, database, query, test_mode)
         self.figaro_path = os.path.join(root_path, "figaro")
 
-    def eval(self):
-        pass
-
 
     def run_microbenchmark(self):
         pass
@@ -108,28 +105,39 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             }
             """
         elif self.query.get_root_operator() == "SVD_FIGARO":
+            if self.conf_decomp.method == DecompConf.Method.JACOBI:
+                logging.info(self.conf_decomp.method)
+                command = "SVD_JACOBI"
+            elif self.conf_decomp.method == DecompConf.Method.POWER_ITER:
+                command = "SVD_POWER_ITER"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEND_DECOMP:
+                command = "SVD_EIGEND_DECOMP"
+            elif self.conf_decomp.method == DecompConf.Method.QR:
+                command = "SVD_QR"
+
+            logging.info(command)
             query_json_s = """
-            {
+            {{
                 "query":
-                {
+                {{
                     "name": "FullJoin",
-                    "expression": "SVD_LAPACK(JoinTable)",
+                    "expression": "{command}(JoinTable)",
                     "evaluation_hint":
-                    {
-                        "operator": "SVD_LAPACK",
+                    {{
+                        "operator": "{command}",
                         "operands":
                         [
-                            {
+                            {{
                                 "operator": "relation",
                                 "relation": "JoinTable"
-                            }
+                            }}
                         ],
                         "relation_order": ["JoinTable"],
                         "num_threads": 48
-                    }
-                }
-            }
-            """
+                    }}
+                }}
+            }}
+            """.format(command=command)
 
         query_json = json.loads(query_json_s)
         query_json["query"]["evaluation_hint"]["compute_all"] = \
