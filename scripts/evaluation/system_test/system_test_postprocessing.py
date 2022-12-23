@@ -104,8 +104,29 @@ class SystemTestPostprocess(SystemTestCompetitor):
                 }
             }
             """
-        else:
-            pass
+        elif self.query.get_root_operator() == "SVD_FIGARO":
+            query_json_s = """
+            {
+                "query":
+                {
+                    "name": "FullJoin",
+                    "expression": "SVD_LAPACK(JoinTable)",
+                    "evaluation_hint":
+                    {
+                        "operator": "SVD_LAPACK",
+                        "operands":
+                        [
+                            {
+                                "operator": "relation",
+                                "relation": "JoinTable"
+                            }
+                        ],
+                        "relation_order": ["JoinTable"],
+                        "num_threads": 48
+                    }
+                }
+            }
+            """
 
         query_json = json.loads(query_json_s)
         query_json["query"]["evaluation_hint"]["compute_all"] = \

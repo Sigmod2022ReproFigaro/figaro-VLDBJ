@@ -18,6 +18,11 @@ namespace Figaro
             return nullptr;
         }
 
+        virtual ASTVisitorResultAbs* visitNodeSVDLapack([[maybe_unused]]ASTNodeSVDLapack* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;}
+
+
         virtual ASTVisitorResultAbs* visitNodeLUFigaro([[maybe_unused]]ASTNodeLUFigaro* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;}
