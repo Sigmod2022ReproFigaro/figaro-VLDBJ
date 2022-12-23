@@ -26,17 +26,17 @@ namespace Figaro
             return nullptr;
             }
 
-        virtual ASTVisitorResultAbs* visitNodeQRPostProc([[maybe_unused]] ASTNodeQRAlg* pElement) override {
+        virtual ASTVisitorResultAbs* visitNodeQRDecAlg([[maybe_unused]] ASTNodeQRAlg* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-        virtual ASTVisitorResultAbs* visitNodeSVDLapack([[maybe_unused]] ASTNodeSVDLapack* pElement) override {
+        virtual ASTVisitorResultAbs* visitNodeSVDDecAlg([[maybe_unused]] ASTNodeSVDAlgDec* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-        virtual ASTVisitorResultAbs* visitNodeLULapack([[maybe_unused]] ASTNodeLUAlg* pElement) override {
+        virtual ASTVisitorResultAbs* visitNodeLUDecAlg([[maybe_unused]] ASTNodeLUAlg* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }

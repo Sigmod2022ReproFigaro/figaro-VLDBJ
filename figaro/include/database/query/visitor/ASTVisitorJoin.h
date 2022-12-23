@@ -39,7 +39,7 @@ namespace Figaro
             return nullptr;
         }
 
-        virtual ASTVisitorResultJoin* visitNodeQRPostProc([[maybe_unused]]ASTNodeQRAlg* pElement) override
+        virtual ASTVisitorResultJoin* visitNodeQRDecAlg([[maybe_unused]]ASTNodeQRAlg* pElement) override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
@@ -50,13 +50,13 @@ namespace Figaro
             return nullptr;
         }
 
-         virtual ASTVisitorResultJoin* visitNodeSVDLapack([[maybe_unused]]ASTNodeSVDLapack* pElement) override
+         virtual ASTVisitorResultJoin* visitNodeSVDDecAlg([[maybe_unused]]ASTNodeSVDAlgDec* pElement) override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
 
-        virtual ASTVisitorResultJoin* visitNodeLULapack([[maybe_unused]]ASTNodeLUAlg* pElement) override
+        virtual ASTVisitorResultJoin* visitNodeLUDecAlg([[maybe_unused]]ASTNodeLUAlg* pElement) override
         {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;

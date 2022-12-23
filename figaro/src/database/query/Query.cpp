@@ -27,7 +27,9 @@ namespace Figaro
         || (operatorName == "QR_GIV_THIN_DIAG") || (operatorName == "eval_join")
         || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
-        || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_LAPACK") )
+        || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_JACOBI")
+        || (operatorName == "SVD_POWER_ITER") || (operatorName == "SVD_EIGEN_DECOMP")
+        || (operatorName == "SVD_QR") )
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -147,12 +149,37 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
                 FIGARO_LOG_INFO("CREATE LU_THIN NODE")
             }
-            else if (operatorName == "SVD_LAPACK")
+            else if (operatorName == "SVD_JACOBI")
             {
                 m_opType = Query::OpType::DECOMP_SVD;
-                pCreatedNode = new ASTNodeSVDLapack(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
-                FIGARO_LOG_INFO("CREATE SVD_LAPACK NODE")
+                pCreatedNode = new ASTNodeSVDAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                Figaro::SVDHintType::JACOBI);
+                FIGARO_LOG_INFO("CREATE SVD_JACOBI NODE")
+            }
+            else if (operatorName == "SVD_POWER_ITER")
+            {
+                m_opType = Query::OpType::DECOMP_SVD;
+                pCreatedNode = new ASTNodeSVDAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                Figaro::SVDHintType::POWER_ITER);
+                FIGARO_LOG_INFO("CREATE SVD_POWER_ITER NODE")
+            }
+            else if (operatorName == "SVD_EIGEND_DECOMP")
+            {
+                m_opType = Query::OpType::DECOMP_SVD;
+                pCreatedNode = new ASTNodeSVDAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                Figaro::SVDHintType::EIGEN_DECOMP);
+                FIGARO_LOG_INFO("CREATE SVD_EIGEND_DECOMP NODE")
+            }
+            else if (operatorName == "SVD_QR")
+            {
+                m_opType = Query::OpType::DECOMP_SVD;
+                pCreatedNode = new ASTNodeSVDAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                Figaro::SVDHintType::QR);
+                FIGARO_LOG_INFO("CREATE SVD_QR NODE")
             }
             else if (operatorName == "LIN_REG")
             {

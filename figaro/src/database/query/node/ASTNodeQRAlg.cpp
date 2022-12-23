@@ -7,6 +7,6 @@ namespace Figaro
 
     ASTVisitorResultAbs* ASTNodeQRAlg::accept(ASTVisitor *pVisitor)
     {
-        return pVisitor->visitNodeQRPostProc(this);
+        return pVisitor->visitNodeQRDecAlg(this);
     }
 }

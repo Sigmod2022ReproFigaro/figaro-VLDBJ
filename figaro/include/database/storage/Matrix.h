@@ -1751,6 +1751,44 @@ namespace Figaro
 
         }
 
+        void computeSVD(uint32_t numThreads = 1, bool useHint = false,
+            Figaro::SVDHintType SVDHintType = Figaro::SVDHintType::JACOBI,
+            bool computeU = false, bool saveResult = false,
+            MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
+            MatrixType* pMatV = nullptr)
+        {
+            Figaro::SVDHintType svdType;
+            if ((0 == m_numRows) || (0 == m_numCols))
+            {
+                return;
+            }
+            if (useHint)
+            {
+                svdType = SVDHintType;
+            }
+            else
+            {
+                svdType = Figaro::SVDHintType::JACOBI;
+            }
+
+            if (svdType == Figaro::SVDHintType::JACOBI)
+            {
+                computeSVDJacobi(numThreads, pMatU, pMatS, pMatV);
+            }
+            else if (svdType == Figaro::SVDHintType::POWER_ITER)
+            {
+                computeSVDPowerIter(numThreads,  pMatU, pMatS, pMatV);
+            }
+            else if (svdType == Figaro::SVDHintType::EIGEN_DECOMP)
+            {
+                computeSVDEigenDec(numThreads, pMatU, pMatS, pMatV);
+            }
+            else if (svdType == Figaro::SVDHintType::QR)
+            {
+                computeSVDR(numThreads, pMatU, pMatS, pMatV);
+            }
+        }
+
 
         void computeLULapack(uint32_t numThreads,
             bool saveResult, MatrixType* pMatL, MatrixType* pMatU,

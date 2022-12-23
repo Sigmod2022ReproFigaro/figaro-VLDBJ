@@ -106,7 +106,6 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             """
         elif self.query.get_root_operator() == "SVD_FIGARO":
             if self.conf_decomp.method == DecompConf.Method.JACOBI:
-                logging.info(self.conf_decomp.method)
                 command = "SVD_JACOBI"
             elif self.conf_decomp.method == DecompConf.Method.POWER_ITER:
                 command = "SVD_POWER_ITER"
@@ -115,7 +114,6 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             elif self.conf_decomp.method == DecompConf.Method.QR:
                 command = "SVD_QR"
 
-            logging.info(command)
             query_json_s = """
             {{
                 "query":

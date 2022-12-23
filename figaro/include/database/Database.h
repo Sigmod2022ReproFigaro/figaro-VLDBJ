@@ -233,20 +233,21 @@ namespace Figaro
 
         void changeMemoryLayout(void);
 
-        std::tuple<std::string, std::string> evalQR(
+        std::tuple<std::string, std::string> evalQRDecAlg(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
             bool computeQ,
             bool saveResult);
 
-        std::tuple<std::string, std::string> evalLULapack(
+        std::tuple<std::string, std::string> evalLUDecAlg(
             const std::string& relName,
             Figaro::MemoryLayout memoryLayout,
             bool saveResult);
 
-        std::tuple<std::string, std::string, std::string> evalSVDLapack(
+        std::tuple<std::string, std::string, std::string> evalSVDDecAlg(
             const std::string& relName,
+            Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
             bool saveResult);
 

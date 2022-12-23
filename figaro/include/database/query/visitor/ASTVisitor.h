@@ -13,7 +13,7 @@
 #include "database/query/node/ASTNodeLinReg.h"
 #include "database/query/node/ASTNodeLUFigaro.h"
 #include "database/query/node/ASTNodeLUAlg.h"
-#include "database/query/node/ASTNodeSVDLapack.h"
+#include "database/query/node/ASTNodeSVDAlgDec.h"
 #include "database/query/node/ASTNodeLUThin.h"
 #include "./result/ASTVisitorResultAbs.h"
 #include "database/Database.h"
@@ -31,10 +31,10 @@ namespace Figaro
         virtual ASTVisitorResultAbs* visitNodeRelation(ASTNodeRelation* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) = 0;
-        virtual ASTVisitorResultAbs* visitNodeQRPostProc(ASTNodeQRAlg* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeQRDecAlg(ASTNodeQRAlg* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) = 0;
-        virtual ASTVisitorResultAbs* visitNodeSVDLapack(ASTNodeSVDLapack* pElement) = 0;
-        virtual ASTVisitorResultAbs* visitNodeLULapack(ASTNodeLUAlg* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeSVDDecAlg(ASTNodeSVDAlgDec* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeLUDecAlg(ASTNodeLUAlg* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeLUThin(ASTNodeLUThin* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeAssign(ASTNodeAssign* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;

@@ -3288,7 +3288,8 @@ namespace Figaro
             MatrixDColT matV = MatrixDColT{0, 0};
             FIGARO_LOG_BENCH("Starting computation", 1)
 
-            m_dataColumnMajor.computeSVDLapack(getNumberOfThreads(), &matU, &matS, &matV);
+            m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType, true,
+                saveResult, &matU, &matS, &matV);
 
             FIGARO_LOG_BENCH("End computation", 1)
 

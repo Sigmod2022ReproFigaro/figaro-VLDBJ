@@ -21,11 +21,10 @@ namespace Figaro
 
     enum class SVDHintType
     {
-        GIV_THIN_BOTTOM = 0,
-        GIV_THIN_DIAG = 1,
-        GIV_THICK_BOTTOM = 2,
-        GIV_THICK_DIAG = 3,
-        SVD_R = 4
+        JACOBI = 0,
+        POWER_ITER = 1,
+        EIGEN_DECOMP = 2,
+        QR = 4
     };
 
     enum class LUHintType

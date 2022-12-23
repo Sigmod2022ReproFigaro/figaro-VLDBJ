@@ -54,7 +54,7 @@ namespace Figaro
         return nullptr;
     }
 
-    ASTVisitorResultAbs* ASTVisitorComputeJoinAttributes::visitNodeQRPostProc(ASTNodeQRAlg* pElement)
+    ASTVisitorResultAbs* ASTVisitorComputeJoinAttributes::visitNodeQRDecAlg(ASTNodeQRAlg* pElement)
     {
         FIGARO_LOG_INFO("QR Postprocess");
         FIGARO_LOG_INFO("Relation order", pElement->getRelationOrder())

@@ -840,7 +840,7 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::evalQR(
+    Database::evalQRDecAlg(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
@@ -853,7 +853,7 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::evalLULapack(
+    Database::evalLUDecAlg(
             const std::string& relName,
             Figaro::MemoryLayout memoryLayout,
             bool saveResult)
@@ -864,13 +864,14 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string, std::string>
-    Database::evalSVDLapack(
+    Database::evalSVDDecAlg(
             const std::string& relName,
+            Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
             bool saveResult)
     {
         Relation& rel = m_relations.at(relName);
-        auto svdResult = rel.computeSVD(memoryLayout, saveResult);
+        auto svdResult = rel.computeSVD(svdHintType, memoryLayout, saveResult);
         return saveSVDResult(svdResult);
     }
 

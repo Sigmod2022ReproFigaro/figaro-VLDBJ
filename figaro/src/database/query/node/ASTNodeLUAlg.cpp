@@ -7,6 +7,6 @@ namespace Figaro
 
     ASTVisitorResultAbs* ASTNodeLUAlg::accept(ASTVisitor *pVisitor)
     {
-        return pVisitor->visitNodeLULapack(this);
+        return pVisitor->visitNodeLUDecAlg(this);
     }
 }
