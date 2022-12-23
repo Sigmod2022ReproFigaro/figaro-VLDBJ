@@ -3259,8 +3259,9 @@ namespace Figaro
     }
 
         std::tuple<Relation*, Relation*, Relation*> Relation::computeSVD(
-        Figaro::MemoryLayout memoryLayout,
-        bool saveResult)
+            Figaro::SVDHintType svdHintType,
+            Figaro::MemoryLayout memoryLayout,
+            bool saveResult)
     {
         Relation* pU = nullptr;
         Relation* pS = nullptr;
@@ -3271,7 +3272,8 @@ namespace Figaro
             MatrixDRowT matS = MatrixDRowT{0, 0};
             MatrixDRowT matV = MatrixDRowT{0, 0};
 
-            m_data.computeSVDLapack(getNumberOfThreads(), &matU, &matS, &matV);
+            m_data.computeSVD(getNumberOfThreads(), true, svdHintType, true, saveResult,
+                &matU, &matS, &matV);
 
             if (saveResult)
             {

@@ -32,6 +32,13 @@ namespace Figaro
         THIN_DIAG = 0,
         PART_PIVOT_LAPACK = 1
     };
+
+    enum class EDHintType
+    {
+        QR_ITER = 0,
+        DIV_AND_CONQ = 1,
+        RRR = 2
+    };
 }
 
 #endif
