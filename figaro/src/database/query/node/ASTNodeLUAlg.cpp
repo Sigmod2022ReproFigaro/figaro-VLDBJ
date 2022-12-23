@@ -1,11 +1,11 @@
-#include "database/query/node/ASTNodeLULapack.h"
+#include "database/query/node/ASTNodeLUAlg.h"
 #include "database/query/visitor/ASTVisitor.h"
 #include "database/Database.h"
 
 namespace Figaro
 {
 
-    ASTVisitorResultAbs* ASTNodeLULapack::accept(ASTVisitor *pVisitor)
+    ASTVisitorResultAbs* ASTNodeLUAlg::accept(ASTVisitor *pVisitor)
     {
         return pVisitor->visitNodeLULapack(this);
     }

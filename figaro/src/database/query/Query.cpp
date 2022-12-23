@@ -23,7 +23,7 @@ namespace Figaro
         ASTNode* pCreatedNode = nullptr;
         // TODO: Replace with factory pattern.
         // TODO: Rename QR_FIGARO with QR_FIGARO
-        if ((operatorName == "QR_FIGARO") || (operatorName == "QR_LAPACK")
+        if ((operatorName == "QR_FIGARO") || (operatorName == "QR_HOUSEHOLDER")
         || (operatorName == "eval_join") || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
         || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_LAPACK") )
@@ -83,28 +83,40 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_LU;
                 pCreatedNode = new ASTNodeLUFigaro(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                    Figaro::LUHintType::PART_PIVOT_LAPACK);
                 FIGARO_LOG_INFO("CREATE LU_FIGARO NODE")
             }
             else if (operatorName == "QR_FIGARO")
             {
                 m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRFigaro(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                    Figaro::QRHintType::GIV_THIN_DIAG);
                 FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
-            else if (operatorName == "QR_LAPACK")
+            else if (operatorName == "QR_HOUSEHOLDER")
             {
                 m_opType = Query::OpType::DECOMP_QR;
-                pCreatedNode = new ASTNodeQRPostProc(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
-                FIGARO_LOG_INFO("CREATE QR_LAPACK NODE")
+                pCreatedNode = new ASTNodeQRAlg(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                Figaro::QRHintType::HOUSEHOLDER);
+                FIGARO_LOG_INFO("CREATE QR_HOUSEHOLDER NODE")
+            }
+            else if (operatorName == "QR_GIV_THIN_DIAG")
+            {
+                m_opType = Query::OpType::DECOMP_QR;
+                pCreatedNode = new ASTNodeQRAlg(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                 Figaro::QRHintType::GIV_THIN_DIAG);
+                FIGARO_LOG_INFO("CREATE QR_HOUSEHOLDER NODE")
             }
             else if (operatorName == "LU_LAPACK")
             {
                 m_opType = Query::OpType::DECOMP_LU;
-                pCreatedNode = new ASTNodeLULapack(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
+                pCreatedNode = new ASTNodeLUAlg(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                    LUHintType::PART_PIVOT_LAPACK);
                 FIGARO_LOG_INFO("CREATE LU_LAPACK NODE")
             }
             else if (operatorName == "LU_THIN")
@@ -225,13 +237,13 @@ namespace Figaro
     }
 
      void Query::evaluateQuery(bool saveMemory,
-        const std::map<std::string, bool>& mFlags, Figaro::QRHintType qrHintType,
+        const std::map<std::string, bool>& mFlags,
         Figaro::MemoryLayout memoryLayout, bool saveResult
         )
     {
         FIGARO_BENCH_INIT(joinEval)
         FIGARO_BENCH_START(joinEval)
-        ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, qrHintType, saveResult,
+        ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, saveResult,
             saveMemory, mFlags);
         m_pResult = m_pASTRoot->accept(&queryEvalVisitor);
         FIGARO_BENCH_STOP(joinEval)

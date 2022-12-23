@@ -87,8 +87,9 @@ namespace Figaro
             if (isFlagOn("generalizedHeadsAndTails"))
             {
                 bool evalPostProcessing = isFlagOn("postProcessing");
-                ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType,
-                    m_saveResult, joinRelName, pResult->getHtNamesTmpRels(),
+                ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase,
+                 pElement->getHelpQrAlg(), m_saveResult, joinRelName,
+                 pResult->getHtNamesTmpRels(),
                     evalPostProcessing);
                 delete pResult;
                 pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
@@ -139,7 +140,7 @@ namespace Figaro
         return new ASTVisitorResultQR(rName, qName);
     }
 
-    ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeQRPostProc(ASTNodeQRPostProc* pElement)
+    ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeQRPostProc(ASTNodeQRAlg* pElement)
     {
         FIGARO_LOG_INFO("VISITING POST PROC QR NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
@@ -163,7 +164,7 @@ namespace Figaro
         FIGARO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =
             m_pDatabase->evalQR(pElement->getRelationOrder().at(0),
-            m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
+            pElement->getQrAlgorithm(), m_memoryLayout, pElement->isComputeQ(), m_saveResult);
         FIGARO_BENCH_STOP(qrPostprocEval)
         FIGARO_LOG_BENCH("Figaro", "QR Postproc eval", FIGARO_BENCH_GET_TIMER_LAP(qrPostprocEval))
 
@@ -233,7 +234,9 @@ namespace Figaro
             {
                 bool evalPostProcessing = isFlagOn("postProcessing");
                 FIGARO_MIC_BEN_START(uSecondPassComp)
-                ASTVisitorLUFigaroSecondPass figaroSecondPassVisitor(m_pDatabase, m_qrHintType, m_saveResult, joinRelName, pResult->getHtNamesTmpRels(), evalPostProcessing);
+                ASTVisitorLUFigaroSecondPass figaroSecondPassVisitor(m_pDatabase,
+                 pElement->geHelpLUAlg(), m_saveResult, joinRelName,
+                 pResult->getHtNamesTmpRels(), evalPostProcessing);
                 delete pResult;
                 ASTVisitorResultQR* pQRrResult = (ASTVisitorResultQR*)pElement->accept(&figaroSecondPassVisitor);
                 uName = pQRrResult->getRRelationName();
@@ -287,7 +290,7 @@ namespace Figaro
      }
 
 
-    ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLULapack(ASTNodeLULapack* pElement)
+    ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLULapack(ASTNodeLUAlg* pElement)
     {
         FIGARO_LOG_INFO("VISITING LU LAPACK NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
@@ -375,7 +378,8 @@ namespace Figaro
                 pElement->getOperand()->copy(),
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
-                pElement->getNumThreads(), true);
+                pElement->getNumThreads(), true,
+                QRHintType::GIV_THICK_DIAG);
             ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
             rRelName = pQrResult->getRRelationName();
             qRelName = pQrResult->getQRelationName();
@@ -383,14 +387,15 @@ namespace Figaro
         }
         else
         {
-            ASTNodeQRPostProc astNodePostProc(
+            ASTNodeQRAlg astNodeQRAlg(
                 pElement->getOperand()->copy(),
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
-                pElement->getNumThreads(), false
+                pElement->getNumThreads(), false,
+                QRHintType::HOUSEHOLDER
             );
             m_saveResult = true;
-            ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astNodePostProc.accept(this);
+            ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astNodeQRAlg.accept(this);
             rRelName = pQrResult->getRRelationName();
             delete pQrResult;
         }

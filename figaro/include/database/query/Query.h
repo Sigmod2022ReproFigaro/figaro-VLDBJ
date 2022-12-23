@@ -42,7 +42,7 @@ namespace Figaro
          */
         void evaluateQuery(bool saveMemory = true,
             const std::map<std::string, bool>& mFlags = {},
-            Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG,
+            Figaro::QRHintType qrHintType = Figaro::QRHintType::GIV_THIN_DIAG,
             Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
             bool saveResult = false);
 

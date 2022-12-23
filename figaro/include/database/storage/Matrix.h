@@ -8,30 +8,9 @@
 #include <cmath>
 #include <mkl.h>
 #include <random>
-
+#include "utils/Types.h"
 namespace Figaro
 {
-    enum class  MemoryLayout: uint32_t
-    {
-        ROW_MAJOR = 0,
-        COL_MAJOR = 1
-    };
-
-    enum class QRHintType
-    {
-        THIN_BOTTOM = 0,
-        THIN_DIAG = 1,
-        THICK_BOTTOM = 2,
-        THICK_DIAG = 3,
-        HOUSEHOLDER_LAPACK = 4
-    };
-
-    enum class LUHintType
-    {
-        THIN_DIAG = 0,
-        PART_PIVOT_LAPACK = 1
-    };
-
     // Row-major order of storing elements of matrix is assumed.
     template <typename T, MemoryLayout L = MemoryLayout::ROW_MAJOR>
     class Matrix
@@ -1162,12 +1141,12 @@ namespace Figaro
                 uint32_t rowBlockEndIdx;
                 rowBlockBeginIdx = vRowBlockBeginIdx[blockIdx];
                 rowBlockEndIdx = vRowBlockEndIdx[blockIdx];
-                if (qrType == QRHintType::THIN_BOTTOM)
+                if (qrType == QRHintType::GIV_THIN_BOTTOM)
                 {
                     computeQRGivensSequentialBlockBottom(rowBlockBeginIdx,
                         rowBlockEndIdx, 0, m_numCols - 1);
                 }
-                else if (qrType == QRHintType::THIN_DIAG)
+                else if (qrType == QRHintType::GIV_THIN_DIAG)
                 {
                     computeQRGivensSequentialBlockDiag(rowBlockBeginIdx,
                         rowBlockEndIdx, 0, m_numCols - 1);
@@ -1196,11 +1175,11 @@ namespace Figaro
 
             rowTotalEndIdx = vRowRedBlockEndIdx.back();
 
-            if (qrType == QRHintType::THIN_BOTTOM)
+            if (qrType == QRHintType::GIV_THIN_BOTTOM)
             {
                 computeQRGivensParallelBlockBottom(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
             }
-            else if (qrType == QRHintType::THIN_DIAG)
+            else if (qrType == QRHintType::GIV_THIN_DIAG)
             {
                 computeQRGivensParallelBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads);
             }
@@ -1312,12 +1291,12 @@ namespace Figaro
 
         void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, Figaro::QRHintType qrType)
         {
-            if (qrType == QRHintType::THICK_DIAG)
+            if (qrType == QRHintType::GIV_THICK_DIAG)
             {
                 computeQRGivensParallelBlockDiag(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
 
             }
-            else if (qrType == QRHintType::THICK_BOTTOM)
+            else if (qrType == QRHintType::GIV_THICK_BOTTOM)
             {
                 computeQRGivensParallelBlockBottom(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
             }
@@ -1394,8 +1373,8 @@ namespace Figaro
         }
 
         /**
-         * @brief If computeQ is set to false, computed R in place will be an upper triangular
          * matrix. If compute Q is set to true, computed R in place will not be
+         * @brief If computeQ is set to false, computed R in place will be an upper triangular
          * upper triangular.
          *
          */
@@ -1518,7 +1497,7 @@ namespace Figaro
          * Trailing zero rows are discarded, and the size is adjusted accordingly.
          * @param numThreads denotes number of threads available for the computation in the case of parallelization.
          */
-        void computeQR(uint32_t numThreads = 1, bool useHint = false, Figaro::QRHintType qrTypeHint = QRHintType::THIN_DIAG,
+        void computeQR(uint32_t numThreads = 1, bool useHint = false, Figaro::QRHintType qrTypeHint = QRHintType::GIV_THIN_DIAG,
         bool computeQ = false, bool saveResult = false,
         MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
         {
@@ -1535,29 +1514,31 @@ namespace Figaro
             {
                 if (m_numCols > MIN_COLS_PAR)
                 {
-                    qrType = QRHintType::THICK_DIAG;
+                    qrType = QRHintType::GIV_THICK_DIAG;
                 }
                 else
                 {
-                    qrType = QRHintType::THIN_DIAG;
+                    qrType = QRHintType::GIV_THIN_DIAG;
                 }
             }
 
-            if ((qrType == QRHintType::THICK_DIAG) ||
-                (qrType == QRHintType::THICK_BOTTOM))
+            if ((qrType == QRHintType::GIV_THICK_DIAG) ||
+                (qrType == QRHintType::GIV_THICK_BOTTOM))
             {
                 //FIGARO_LOG_INFO("Thick version")
                 computeQRGivensParallelizedThickMatrix(numThreads, qrType);
             }
-            else if ((qrType == QRHintType::THIN_DIAG) ||
-                (qrType == QRHintType::THIN_BOTTOM))
+            else if ((qrType == QRHintType::GIV_THIN_DIAG) ||
+                (qrType == QRHintType::GIV_THIN_BOTTOM))
             {
                 //FIGARO_LOG_INFO("Thin version")
+                FIGARO_LOG_BENCH("POSTPROCESS", "GIV_THIN_DIAG")
                 computeQRGivensParallelizedThinMatrix(numThreads, qrType);
             }
-            else if (qrType == QRHintType::HOUSEHOLDER_LAPACK)
+            else if (qrType == QRHintType::HOUSEHOLDER)
             {
-                //FIGARO_LOG_INFO("HOUSEHOLDER_LAPACK")
+                //FIGARO_LOG_INFO("HOUSEHOLDER")
+                FIGARO_LOG_BENCH("POSTPROCESS", "HOUSEHOLDER")
                 computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
             }
         }

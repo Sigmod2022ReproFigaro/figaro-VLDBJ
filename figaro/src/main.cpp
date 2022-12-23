@@ -21,13 +21,11 @@ void initGlobalState(uint32_t numThreads = 48)
 
 int main(int argc, char *argv[])
 {
-    std::string implementation;
     std::string dumpFilePath;
     std::string dbConfigPath;
     std::string strMemoryLayout;
     std::string queryConfigPath;
 
-    Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG;
     Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
     uint32_t precision;
@@ -44,7 +42,6 @@ int main(int argc, char *argv[])
     po::options_description desc("figaro - allowed options");
     desc.add_options()
     ("help", "produce help message")
-    ("implementation", po::value<std::string>(&implementation))
     ("dump_file_path", po::value<std::string>(&dumpFilePath))
     ("db_config_path", po::value<std::string>(&dbConfigPath))
     ("query_config_path", po::value<std::string>(&queryConfigPath))
@@ -101,19 +98,19 @@ int main(int argc, char *argv[])
         case Figaro::Query::OpType::DECOMP_QR:
         {
             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}}, qrHintType, memoryLayout, dump);
+                                {"postProcessing", true}}, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_LU:
         {
             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}, {"computeL", true}}, qrHintType, memoryLayout, dump);
+                                {"postProcessing", true}, {"computeL", true}}, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_SVD:
         {
             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}}, qrHintType, memoryLayout, dump);
+                                {"postProcessing", true}}, memoryLayout, dump);
             break;
         }
     }

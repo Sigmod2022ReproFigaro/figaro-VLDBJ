@@ -59,15 +59,19 @@ class SystemTestPostprocess(SystemTestCompetitor):
     def get_query_json(self):
 
         if self.query.get_root_operator() == "QR_FIGARO":
+            if self.conf_decomp.method == DecompConf.Method.GIV_THIN_DIAG:
+                command = "QR_GIV_THIN_DIAG"
+            elif self.conf_decomp.method == DecompConf.Method.HOUSEHOLDER:
+                command = "QR_HOUSEHOLDER"
             query_json_s = """
             {
                 "query":
                 {
                     "name": "FullJoin",
-                    "expression": "QR_LAPACK(JoinTable)",
+                    "expression": "{{command}}(JoinTable)",
                     "evaluation_hint":
                     {
-                        "operator": "QR_LAPACK",
+                        "operator": "{{command}}",
                         "operands":
                         [
                             {
@@ -80,7 +84,7 @@ class SystemTestPostprocess(SystemTestCompetitor):
                     }
                 }
             }
-            """
+            """.format(command=command)
         elif self.query.get_root_operator() == "LU_FIGARO":
             query_json_s = """
             {

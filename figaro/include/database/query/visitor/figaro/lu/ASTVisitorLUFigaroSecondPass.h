@@ -12,7 +12,7 @@ namespace Figaro
     {
         std::string strCountsHeadGeneralized(ASTNodeRelation* pRel);
         bool m_saveResult;
-        Figaro::QRHintType m_qrHintType;
+        Figaro::LUHintType m_luHintType;
         std::string m_joinRelName;
         std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames> m_htTmpRelsNames;
         std::vector<std::string> m_vSubTreeRelNames;
@@ -21,14 +21,14 @@ namespace Figaro
         bool m_evalPostProcessing;
     public:
         ASTVisitorLUFigaroSecondPass(
-            Database* pDatabase, Figaro::QRHintType qrHintType, bool saveResult,
+            Database* pDatabase, Figaro::LUHintType luHintType, bool saveResult,
             const std::string& joinRelName,
             const std::unordered_map<std::string, ASTVisitorResultFirstPass::FirstPassRelNames>
             htTmpRelsNames,
             bool evalPostProcessing):
                 ASTVisitorLUFigaroAbs(pDatabase),
                 m_saveResult(saveResult),
-                 m_qrHintType(qrHintType),
+                 m_luHintType(luHintType),
                  m_joinRelName(joinRelName),
                  m_htTmpRelsNames(htTmpRelsNames),
                  m_evalPostProcessing(evalPostProcessing) {

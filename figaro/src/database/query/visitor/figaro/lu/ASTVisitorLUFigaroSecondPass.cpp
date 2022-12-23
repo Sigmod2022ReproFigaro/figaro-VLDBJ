@@ -130,7 +130,7 @@ namespace Figaro
                 pResult->getGenHeadsName(),
                 vTailRelNames,
                 vGenTailRelNames,
-                m_qrHintType, m_saveResult, m_joinRelName);
+                m_luHintType, m_saveResult, m_joinRelName);
             //MICRO_BENCH_STOP(postprocess)
             //FIGARO_LOG_BENCH("Figaro", "Post processing",  MICRO_BENCH_GET_TIMER_LAP(postprocess));
             FIGARO_LOG_INFO("Finished Postprocessing")

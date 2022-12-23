@@ -26,7 +26,7 @@ namespace Figaro
             return nullptr;
             }
 
-        virtual ASTVisitorResultAbs* visitNodeQRPostProc([[maybe_unused]] ASTNodeQRPostProc* pElement) override {
+        virtual ASTVisitorResultAbs* visitNodeQRPostProc([[maybe_unused]] ASTNodeQRAlg* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }
@@ -36,7 +36,7 @@ namespace Figaro
             return nullptr;
         }
 
-        virtual ASTVisitorResultAbs* visitNodeLULapack([[maybe_unused]] ASTNodeLULapack* pElement) override {
+        virtual ASTVisitorResultAbs* visitNodeLULapack([[maybe_unused]] ASTNodeLUAlg* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;
         }

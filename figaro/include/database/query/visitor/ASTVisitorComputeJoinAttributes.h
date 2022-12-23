@@ -19,7 +19,7 @@ namespace Figaro
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override;
         ASTVisitorResultAbs* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
         virtual ASTVisitorResultAbs* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
-        ASTVisitorResultAbs* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) override;
+        ASTVisitorResultAbs* visitNodeQRPostProc(ASTNodeQRAlg* pElement) override;
         ASTVisitorResultAbs* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
 
         std::vector<std::string> getPreOrderRelNames(void) const

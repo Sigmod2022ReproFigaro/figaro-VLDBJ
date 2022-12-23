@@ -2761,7 +2761,7 @@ namespace Figaro
 
      void Relation::computeLUOfGeneralizedHead(
          const std::vector<Relation*>& vpTailRels,
-        Figaro::QRHintType qrTypeHint)
+        Figaro::LUHintType luTypeHint)
     {
         uint32_t numNonJoinAttrs = 0;
         for (const auto pRel: vpTailRels)
@@ -2783,7 +2783,7 @@ namespace Figaro
             false /* computeQ*/, false /* saveResult*/);
     }
 
-    void Relation::computeLUInPlace(Figaro::QRHintType qrHintType)
+    void Relation::computeLUInPlace(Figaro::LUHintType luHintType)
     {
         MatrixDRowT matU{0, 0};
         if ((m_data.getNumRows() != 0) && (m_data.getNumCols() != 0))
@@ -2985,7 +2985,7 @@ namespace Figaro
         Relation* pGenHeadRoot,
         const std::vector<Relation*>& vpTailRels,
         const std::vector<Relation*>& vpGenTailRels,
-        Figaro::QRHintType qrHintType,
+        Figaro::LUHintType luHintType,
         bool saveResult,
         const Relation* pJoinRel)
     {
@@ -3282,16 +3282,19 @@ namespace Figaro
         }
         else
         {
+
             MatrixDColT matU = MatrixDColT{0, 0};
             MatrixDColT matS = MatrixDColT{0, 0};
             MatrixDColT matV = MatrixDColT{0, 0};
+            FIGARO_LOG_BENCH("Starting computation", 1)
 
             m_dataColumnMajor.computeSVDLapack(getNumberOfThreads(), &matU, &matS, &matV);
 
-            FIGARO_LOG_BENCH("matU", matU)
+            FIGARO_LOG_BENCH("End computation", 1)
+
             if (saveResult)
             {
-                FIGARO_LOG_BENCH("matU", matU)
+                FIGARO_LOG_BENCH("matS", matS)
                 MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
                 MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
                 MatrixDRowT matVV{matV.getNumRows(), matV.getNumCols()};

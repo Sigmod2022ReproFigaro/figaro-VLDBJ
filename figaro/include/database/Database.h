@@ -225,7 +225,7 @@ namespace Figaro
             const std::string& genHeadRoot,
             const std::vector<std::string>& vTailRels,
             const std::vector<std::string>& vGenTailRels,
-            Figaro::QRHintType qrHintType,
+            Figaro::LUHintType luHintType,
             bool saveResult,
             const std::string& joinRelName);
 

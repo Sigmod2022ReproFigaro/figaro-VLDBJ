@@ -614,7 +614,7 @@ namespace Figaro
             const std::string& genHeadRoot,
             const std::vector<std::string>& vTailRels,
             const std::vector<std::string>& vGenTailRels,
-            Figaro::QRHintType qrHintType,
+            Figaro::LUHintType luHintType,
             bool saveResult,
             const std::string& joinRelName)
     {
@@ -633,7 +633,7 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelTails.push_back(pRel);
-            pRel->computeLUInPlace(qrHintType);
+            pRel->computeLUInPlace(luHintType);
             FIGARO_LOG_INFO("Tail name", relName)
         }
 
@@ -644,7 +644,7 @@ namespace Figaro
             Relation* pRel = &m_relations.at(relName);
             FIGARO_LOG_ASSERT(pRel != nullptr)
             vpRelGenTails.push_back(pRel);
-            pRel->computeLUInPlace(qrHintType);
+            pRel->computeLUInPlace(luHintType);
             //FIGARO_MIC_BEN_STOP(measureGenTail)
             //FIGARO_LOG_BENCH("Gen tail time" + relName, FIGARO_MIC_BEN_GET_TIMER_LAP(measureGenTail))
             FIGARO_LOG_INFO("Gen Tail name", relName)
@@ -652,7 +652,7 @@ namespace Figaro
 
         pRootRel = &m_relations.at(genHeadRoot);
         FIGARO_LOG_INFO("Root Rel name", pRootRel->getName())
-        pRootRel->computeLUOfGeneralizedHead(vpRelTails, qrHintType);
+        pRootRel->computeLUOfGeneralizedHead(vpRelTails, luHintType);
 
         if (joinRelName != "")
         {
@@ -662,7 +662,7 @@ namespace Figaro
             vpRels,
             pRootRel,
             vpRelTails, vpRelGenTails,
-            qrHintType, saveResult, pJoinRel);
+            luHintType, saveResult, pJoinRel);
         return saveQRResult(qrResult);
     }
 

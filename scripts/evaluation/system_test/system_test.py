@@ -72,8 +72,8 @@ class DecompConf:
 
 
     class Method(IntEnum):
-        LAPACK = 1
-        FIGARO = 2
+        GIV_THIN_DIAG = 1
+        HOUSEHOLDER = 2
 
 
     class SparsityMode(IntEnum):
@@ -92,8 +92,8 @@ class DecompConf:
     }
 
     map_method_to_enum = {
-        'lapack': Method.LAPACK,
-        'figaro': Method.FIGARO
+        'giv_thin_diag': Method.GIV_THIN_DIAG,
+        'householder': Method.HOUSEHOLDER
     }
 
     map_name_to_enum  = {
