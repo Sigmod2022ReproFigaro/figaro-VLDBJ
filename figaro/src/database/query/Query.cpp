@@ -22,8 +22,8 @@ namespace Figaro
         std::string operatorName = jsonQueryConfig["operator"];
         ASTNode* pCreatedNode = nullptr;
         // TODO: Replace with factory pattern.
-        // TODO: Rename GIV_QR with FIGARO_QR
-        if ((operatorName == "GIV_QR") || (operatorName == "POSTPROCESS_QR")
+        // TODO: Rename QR_FIGARO with QR_FIGARO
+        if ((operatorName == "QR_FIGARO") || (operatorName == "QR_LAPACK")
         || (operatorName == "eval_join") || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
         || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_LAPACK") )
@@ -85,19 +85,19 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE LU_FIGARO NODE")
             }
-            else if (operatorName == "GIV_QR")
+            else if (operatorName == "QR_FIGARO")
             {
                 m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
                 FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
-            else if (operatorName == "POSTPROCESS_QR")
+            else if (operatorName == "QR_LAPACK")
             {
                 m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRPostProc(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ);
-                FIGARO_LOG_INFO("CREATE POSTPROCESS_QR NODE")
+                FIGARO_LOG_INFO("CREATE QR_LAPACK NODE")
             }
             else if (operatorName == "LU_LAPACK")
             {

@@ -58,16 +58,16 @@ class SystemTestPostprocess(SystemTestCompetitor):
 
     def get_query_json(self):
 
-        if self.query.get_root_operator() == "GIV_QR":
+        if self.query.get_root_operator() == "QR_FIGARO":
             query_json_s = """
             {
                 "query":
                 {
                     "name": "FullJoin",
-                    "expression": "POSTPROCESS_QR(JoinTable)",
+                    "expression": "QR_LAPACK(JoinTable)",
                     "evaluation_hint":
                     {
-                        "operator": "POSTPROCESS_QR",
+                        "operator": "QR_LAPACK",
                         "operands":
                         [
                             {
