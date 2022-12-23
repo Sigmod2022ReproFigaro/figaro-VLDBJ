@@ -68,19 +68,12 @@ class DecompConf:
     class Name(IntEnum):
         QR = 1
         LU = 2
+        SVD = 3
 
 
     class Method(IntEnum):
         LAPACK = 1
         FIGARO = 2
-
-
-    class PostprocessingMode(IntEnum):
-        THIN_BOTTOM = 1
-        THIN_DIAG = 2
-        THICK_BOTTOM = 3
-        THICK_DIAG = 4
-        LAPACK = 5
 
 
     class SparsityMode(IntEnum):
@@ -93,27 +86,9 @@ class DecompConf:
         COL_MAJOR = 2
 
 
-    map_postp_mode_to_str = {
-        PostprocessingMode.THIN_BOTTOM : "THIN_BOTTOM",
-        PostprocessingMode.THIN_DIAG : "THIN_DIAG",
-        PostprocessingMode.THICK_BOTTOM: "THICK_BOTTOM",
-        PostprocessingMode.THICK_DIAG: "THICK_DIAG",
-        PostprocessingMode.LAPACK: "LAPACK",
-    }
-
-
     map_memory_layout_to_str = {
         MemoryLayout.ROW_MAJOR : "ROW_MAJOR",
         MemoryLayout.COL_MAJOR : "COL_MAJOR"
-    }
-
-
-    map_postprocessing_to_enum = {
-        'thick_bottom': PostprocessingMode.THICK_BOTTOM,
-        'thick_diag': PostprocessingMode.THICK_DIAG,
-        'thin_bottom': PostprocessingMode.THIN_BOTTOM,
-        'thin_diag': PostprocessingMode.THIN_DIAG,
-        'lapack': PostprocessingMode.LAPACK,
     }
 
     map_method_to_enum = {
@@ -123,7 +98,8 @@ class DecompConf:
 
     map_name_to_enum  = {
         'qr': Name.QR,
-        'lu': Name.LU
+        'lu': Name.LU,
+        'svd': Name.SVD
     }
 
 
@@ -137,20 +113,15 @@ class DecompConf:
         'col_major': MemoryLayout.COL_MAJOR
     }
 
-    @staticmethod
-    def postprocess_mode_to_str(test_mode: PostprocessingMode)->str:
-        return DecompConf.map_postp_mode_to_str[test_mode]
-
 
     @staticmethod
     def memory_layout_to_str(memory_layout: MemoryLayout)->str:
         return DecompConf.map_memory_layout_to_str[memory_layout]
 
 
-    def __init__(self, postprocessing: str, sparsity: str,
+    def __init__(self, sparsity: str,
         memory_layout: str, compute_all: bool,
         name: str, method: str):
-        self.postprocessing = DecompConf.map_postprocessing_to_enum[postprocessing]
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
         self.memory_layout = DecompConf.map_memory_layout_to_enum[memory_layout]
         self.compute_all = compute_all
@@ -267,7 +238,6 @@ class SystemTest(ABC):
         generate_xlsx = accuracy_json.get("generate_xlsx", True)
 
         decomp_json = system_json["system"]["decomposition"]
-        postprocessing = decomp_json.get("postprocessing", "thin_diag")
         decomp_name = decomp_json.get("name", "qr")
         method = decomp_json.get("method", "lapack")
         memory_layout = decomp_json.get("memory_layout", "row_major")
@@ -278,14 +248,13 @@ class SystemTest(ABC):
         interpreter = executable_json.get("interpreter", "")
 
 
-
         system_test = cls(
             name,
             LogConf(log_path, log_file_path),
             DumpConf(path_dump, dump_file_path, order_by),
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
-            DecompConf(postprocessing, sparsity,
+            DecompConf(sparsity,
                 memory_layout, compute_all, decomp_name, method),
             ExcecutableConf(interpreter),
             database, query, test_mode,
@@ -297,8 +266,11 @@ class SystemTest(ABC):
         if (self.conf_decomp.name == DecompConf.Name.QR):
             q_str = "Q and R" if (self.conf_decomp.compute_all) else "R"
             decomp_str = q_str + " in a QR decomposition"
-        else:
+        elif (self.conf_decomp.name == DecompConf.Name.LU):
             decomp_str = "L and U in an LU decomposition"
+        elif (self.conf_decomp.name == DecompConf.Name.SVD):
+            q_str = "U, Sigma and V " if (self.conf_decomp.compute_all) else "Sigma and V"
+            decomp_str = q_str + " in an SVD decomposition"
         info_str = "Run {{mode}} for database {db_name} and query {query_name} and {decomp_str}".format(
             db_name=self.database.get_name(), query_name=self.query.get_name(),
             decomp_str=decomp_str)

@@ -36,7 +36,7 @@ namespace Figaro
         /** Parses query and creates abstract syntax tree from
          * configuration specified at the path @p queryConfigPath.
          */
-        ErrorCode loadQuery(const std::string& queryConfigPath, bool computeAll = false);
+        ErrorCode loadQuery(const std::string& queryConfigPath);
 
         /** Evaluates expressions from abstract syntax tree.
          */
@@ -64,6 +64,11 @@ namespace Figaro
         Query::OpType getOpType(void) const
         {
             return m_opType;
+        }
+
+        bool isComputeAll(void) const
+        {
+            return m_computeAll;
         }
     };
 }

@@ -1506,7 +1506,6 @@ TEST(Database, QRFigaroQOrt)
 }
 
 
-
 TEST(Database, LUFigaroHeadsAndTails)
 {
     static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;

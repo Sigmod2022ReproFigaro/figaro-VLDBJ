@@ -24,14 +24,12 @@ int main(int argc, char *argv[])
     std::string implementation;
     std::string dumpFilePath;
     std::string dbConfigPath;
-    std::string postprocessMode;
     std::string strMemoryLayout;
     std::string queryConfigPath;
 
     Figaro::QRHintType qrHintType = Figaro::QRHintType::THIN_DIAG;
     Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
-    bool computeAll = false;
     uint32_t precision;
     uint32_t numThreads = 1;
 
@@ -52,8 +50,6 @@ int main(int argc, char *argv[])
     ("query_config_path", po::value<std::string>(&queryConfigPath))
     ("precision", po::value<uint32_t>(&precision))
     ("num_threads", po::value<uint32_t>(&numThreads))
-    ("compute_all",  boost::program_options::value<bool>())
-    ("postprocess", po::value<std::string>(&postprocessMode))
     ("memory_layout", po::value<std::string>(&strMemoryLayout))
     ;
 
@@ -73,31 +69,6 @@ int main(int argc, char *argv[])
         numThreads = vm["num_threads"].as<std::uint32_t>();
     }
 
-    if (vm.count("postprocess"))
-    {
-        postprocessMode = vm["postprocess"].as<std::string>();
-        if (postprocessMode == "THIN_BOTTOM")
-        {
-            qrHintType = Figaro::QRHintType::THIN_BOTTOM;
-        }
-        else if (postprocessMode == "THIN_DIAG")
-        {
-            qrHintType = Figaro::QRHintType::THIN_DIAG;
-        }
-        else if (postprocessMode == "THICK_BOTTOM")
-        {
-            qrHintType = Figaro::QRHintType::THICK_BOTTOM;
-        }
-        else if (postprocessMode == "THICK_DIAG")
-        {
-            qrHintType = Figaro::QRHintType::THICK_DIAG;
-        }
-        else if (postprocessMode == "LAPACK")
-        {
-            qrHintType = Figaro::QRHintType::HOUSEHOLDER_LAPACK;
-        }
-        FIGARO_LOG_INFO("postprocessMode", postprocessMode)
-    }
 
     if (vm.count("memory_layout"))
     {
@@ -110,11 +81,6 @@ int main(int argc, char *argv[])
         {
             memoryLayout = Figaro::MemoryLayout::COL_MAJOR;
         }
-    }
-
-    if (vm.count("compute_all"))
-    {
-        computeAll = vm["compute_all"].as<bool>();
     }
 
     dbConfigPath = vm["db_config_path"].as<std::string>();
@@ -147,7 +113,7 @@ int main(int argc, char *argv[])
         case Figaro::Query::OpType::DECOMP_SVD:
         {
             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}, {"computeU", true}}, qrHintType, memoryLayout, dump);
+                                {"postProcessing", true}}, qrHintType, memoryLayout, dump);
             break;
         }
     }
@@ -155,6 +121,7 @@ int main(int argc, char *argv[])
     if (dump)
     {
         Figaro::ASTVisitorResultAbs* pResult = query.getResult();
+        bool computeAll = query.isComputeAll();
         FIGARO_LOG_BENCH("Dumping R to the path", dumpFilePath);
         switch (opType)
         {
@@ -176,6 +143,15 @@ int main(int argc, char *argv[])
             }
             case Figaro::Query::OpType::DECOMP_SVD:
             {
+                Figaro::ASTVisitorResultSVD* pSVDResult = (Figaro::ASTVisitorResultSVD*)pResult;
+                std::ofstream fileDumpV(dumpFilePath, std::ofstream::out);
+                database.outputRelationToFile(fileDumpV,
+                pSVDResult->getURelationName(), ',', precision);
+                if (computeAll)
+                {
+                    double ortMeasure = database.checkOrthogonality(pSVDResult->getURelationName(), {});
+                    FIGARO_LOG_BENCH("Orthogonality of U",  ortMeasure);
+                }
                 break;
             }
         }
