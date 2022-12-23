@@ -56,6 +56,12 @@ namespace Figaro
             return nullptr;
         }
 
+        virtual ASTVisitorResultJoin* visitNodeSVDFigaro([[maybe_unused]]ASTNodeSVDFigaro* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
+
         virtual ASTVisitorResultJoin* visitNodeLUDecAlg([[maybe_unused]]ASTNodeLUAlg* pElement) override
         {
             FIGARO_LOG_ASSERT(1!=1)

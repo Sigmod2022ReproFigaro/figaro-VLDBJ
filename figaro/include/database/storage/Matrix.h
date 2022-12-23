@@ -426,7 +426,7 @@ namespace Figaro
             colNum = m.getNumCols();
             rowNum = m.getNumRows();
 
-            out << "Matrix" << std::endl;
+            out << "Matrix" << std::setprecision(14) << std::endl;
             out <<  "Matrix dimensions: " << rowNum << " " << colNum << std::endl;
 
             for (uint32_t row = 0; row < rowNum; row ++)
@@ -1662,11 +1662,18 @@ namespace Figaro
             MatrixType* pMatV)
         {
             computeSVDLapack(numThreads, pMatU, pMatS, pMatV);
+            for (uint32_t colIdx = 0; colIdx < pMatU->getNumCols(); colIdx++)
+            {
+                for (uint32_t rowIdx = 0; rowIdx < 10; rowIdx++)
+                {
+                    FIGARO_LOG_BENCH("row_idx, col_idx", rowIdx, colIdx, (*pMatU)(rowIdx, colIdx))
+                }
+            }
         }
 
         void powerIteration(MatrixType& vectV, double& sigma)
         {
-            constexpr uint32_t NUM_ITERATIONS = 10;
+            constexpr uint32_t NUM_ITERATIONS = 100;
             std::random_device randDev{};
             std::mt19937 intGen{randDev()};
             std::normal_distribution<double> normDistr{0, 1};
@@ -1691,17 +1698,31 @@ namespace Figaro
             sigma = std::sqrt(sigma);
         }
 
-        void computeEigenValueDecomposition(MatrixType* pMatr)
+        void computeEigenValueDecomposition(MatrixType* pMatr, Figaro::EDHintType edHintType = Figaro::EDHintType::DIV_AND_CONQ)
         {
             uint32_t memLayout = getLapackMajorOrder();
-            uint32_t ldA = getLeadingDimension();
             MatrixType& matE = *pMatr;
             uint32_t N = m_numRows;
             matE = std::move(MatrixType{m_numRows, m_numRows});
+            uint32_t ldA = getLeadingDimension();
+            uint32_t ldZ = matE.getLeadingDimension();
 
             double* pArrPt = getArrPt();
             double *pOut = matE.getArrPt();
-            LAPACKE_dsyev(memLayout, 'V', 'L', N, pArrPt, ldA, pOut);
+            if (edHintType == Figaro::EDHintType::QR_ITER)
+            {
+                FIGARO_LOG_DBG("Qr iteration")
+                LAPACKE_dsyev(memLayout, 'V', 'L', N, pArrPt, ldA, pOut);
+            }
+            else if (edHintType == Figaro::EDHintType::RRR)
+            {
+                //LAPACKE_dsyevr(memLayout, 'V', 'A', 'L', N, pArrPt, ldA, 1.0, 1.0, 1, 1, 0.0, N, eigenValue, pOut, ldZ, outArray);
+            }
+            else if (edHintType == Figaro::EDHintType::DIV_AND_CONQ)
+            {
+                FIGARO_LOG_DBG("DIvide and conquer")
+                LAPACKE_dsyevd(memLayout, 'V', 'L', N, pArrPt, ldA, pOut);
+            }
         }
 
         void computeSVDPowerIter(uint32_t numThreads,
@@ -1722,7 +1743,7 @@ namespace Figaro
 
             for (int diagIdx = 0; diagIdx < m_numCols; diagIdx++)
             {
-                MatrixType matT = selfMatrixMultiply(0);
+                MatrixType matT = matA.selfMatrixMultiply(0);
 
                 matT.powerIteration(v, sigma);
                 MatrixType u = matA * v;
@@ -1730,7 +1751,6 @@ namespace Figaro
                 FIGARO_LOG_DBG("v", v, "sigma", sigma, "u", u)
                 FIGARO_LOG_BENCH("run", diagIdx, sigma)
                 MatrixType matOut = u.outerProduct(v);
-                FIGARO_LOG_DBG("matOut", matOut)
                 matOut.scale(sigma);
 
                 matA = matA.subtract(matOut, 0, 0);
@@ -1739,7 +1759,6 @@ namespace Figaro
                 for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
                 {
                     matU(rowIdx, diagIdx) = u(rowIdx, 0);
-
                 }
                 for (uint32_t rowIdx = 0; rowIdx < m_numCols; rowIdx++)
                 {
@@ -1747,7 +1766,6 @@ namespace Figaro
 
                 }
             }
-            FIGARO_LOG_DBG("matU", matU, "matS", matS, "matV",matV)
         }
 
 

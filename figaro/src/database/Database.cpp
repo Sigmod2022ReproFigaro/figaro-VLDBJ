@@ -387,6 +387,15 @@ namespace Figaro
         return linRegRelName;
     }
 
+    std::tuple<std::string, std::string, std::string>
+        Database::computeSVDFigaro(
+        const std::string& relationRName,
+        Figaro::SVDHintType svdHintType
+    )
+    {
+        // TODO: Add method
+    }
+
     std::string Database::inverse(const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames)
     {

@@ -315,6 +315,28 @@ namespace Figaro
         return new ASTVisitorResultQR(lName, uName);
     }
 
+
+    ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodeSVDFigaro(ASTNodeSVDFigaro* pElement)
+    {
+        std::string rRelName;
+
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTVisitorJoin astVisitorJoin(m_pDatabase);
+        //pElement->getHelpQrAlg();
+        omp_set_num_threads(pElement->getNumThreads());
+        ASTNodeQRFigaro astQRGivens(
+                pElement->getOperand()->copy(),
+                pElement->getRelationOrder(),
+                pElement->getDropAttributes(),
+                pElement->getNumThreads(), false,
+                QRHintType::GIV_THIN_DIAG);
+        ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
+        rRelName = pQrResult->getRRelationName();
+        delete pQrResult;
+        auto [uName, sName, vName] = m_pDatabase->computeSVDFigaro(rRelName, SVDHintType::JACOBI);
+        return new ASTVisitorResultSVD(uName, sName, vName);
+    }
+
     ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodeSVDDecAlg(ASTNodeSVDAlgDec* pElement)
     {
         FIGARO_LOG_INFO("VISITING SVD LAPACK NODE")
@@ -380,7 +402,7 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), true,
-                QRHintType::GIV_THICK_DIAG);
+                QRHintType::GIV_THIN_DIAG);
             ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
             rRelName = pQrResult->getRRelationName();
             qRelName = pQrResult->getQRelationName();

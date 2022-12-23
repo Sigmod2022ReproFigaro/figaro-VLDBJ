@@ -18,10 +18,6 @@ namespace Figaro
             return nullptr;
         }
 
-        virtual ASTVisitorResultAbs* visitNodeSVDDecAlg([[maybe_unused]]ASTNodeSVDAlgDec* pElement) override {
-            FIGARO_LOG_ASSERT(1!=1)
-            return nullptr;}
-
 
         virtual ASTVisitorResultAbs* visitNodeLUFigaro([[maybe_unused]]ASTNodeLUFigaro* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
@@ -30,6 +26,16 @@ namespace Figaro
         virtual ASTVisitorResultAbs* visitNodeLUDecAlg([[maybe_unused]]ASTNodeLUAlg* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)
             return nullptr;}
+
+         virtual ASTVisitorResultAbs* visitNodeSVDFigaro([[maybe_unused]]ASTNodeSVDFigaro* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
+        virtual ASTVisitorResultAbs* visitNodeSVDDecAlg([[maybe_unused]]ASTNodeSVDAlgDec* pElement) override {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;}
+
 
         virtual ASTVisitorResultAbs* visitNodeLUThin([[maybe_unused]]ASTNodeLUThin* pElement) override {
             FIGARO_LOG_ASSERT(1!=1)

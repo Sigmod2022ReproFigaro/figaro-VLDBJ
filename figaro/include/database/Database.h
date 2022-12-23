@@ -120,6 +120,13 @@ namespace Figaro
             const std::string& labelName
         );
 
+        std::tuple<std::string, std::string, std::string>
+         computeSVDFigaro(
+            const std::string& relationRName,
+            Figaro::SVDHintType svdHintType
+        );
+
+
         double checkOrthogonality(const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames) const;
 
