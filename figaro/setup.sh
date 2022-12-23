@@ -11,6 +11,8 @@ function init_global_paths()
     FIGARO_PRECISION=14
     FIGARO_NUM_THREADS=1
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
+    FIGARO_DECOMP_ALG="HOUSEHOLDER"
+    FIGARO_COMPUTE_ALL=false
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
 }
@@ -60,6 +62,14 @@ function get_str_args()
         --memory_layout=*)
             EXTENSION="${option#*=}"
             FIGARO_MEMORY_LAYOUT=$EXTENSION
+        ;;
+        --decomp_alg=*)
+            EXTENSION="${option#*=}"
+            FIGARO_DECOMP_ALG=$EXTENSION
+        ;;
+        --compute_all=*)
+            EXTENSION="${option#*=}"
+            FIGARO_COMPUTE_ALL=$EXTENSION
         ;;
         --profiler_dump_path=*)
             EXTENSION="${option#*=}"
@@ -127,6 +137,9 @@ function main()
     ARGS+="--precision ${FIGARO_PRECISION} "
     ARGS+="--num_threads ${FIGARO_NUM_THREADS} "
     ARGS+="--memory_layout ${FIGARO_MEMORY_LAYOUT} "
+    ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
+    ARGS+="--decomposition_algorithm ${FIGARO_DECOMP_ALG} "
+
     echo $ARGS
 
     case "${FIGARO_TEST_MODE}" in

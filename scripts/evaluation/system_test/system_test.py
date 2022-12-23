@@ -96,6 +96,11 @@ class DecompConf:
         'householder': Method.HOUSEHOLDER
     }
 
+    map_method_to_str = {
+        Method.GIV_THIN_DIAG: 'giv_thin_diag',
+        Method.HOUSEHOLDER: 'householder'
+    }
+
     map_name_to_enum  = {
         'qr': Name.QR,
         'lu': Name.LU,
@@ -117,6 +122,11 @@ class DecompConf:
     @staticmethod
     def memory_layout_to_str(memory_layout: MemoryLayout)->str:
         return DecompConf.map_memory_layout_to_str[memory_layout]
+
+
+    @staticmethod
+    def method_to_str(method: Method)->str:
+        return DecompConf.map_method_to_str[method]
 
 
     def __init__(self, sparsity: str,

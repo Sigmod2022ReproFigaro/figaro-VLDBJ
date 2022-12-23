@@ -23,6 +23,7 @@ namespace Figaro
         bool m_computeAll = false;
         OpType m_opType;
         std::map<std::string, ASTNodeRelation*> m_mRelNameASTNodeRel;
+        std::map<std::string, std::string> m_mOps;
 
         static void destroyAST(ASTNode* pASTRoot);
         ASTNode* createASTFromJson(const json& jsonQueryConfig);
@@ -35,14 +36,15 @@ namespace Figaro
 
         /** Parses query and creates abstract syntax tree from
          * configuration specified at the path @p queryConfigPath.
+         * mOpS is optional and can specify various options in the query.
          */
-        ErrorCode loadQuery(const std::string& queryConfigPath);
+        ErrorCode loadQuery(const std::string& queryConfigPath,
+            std::map<std::string, std::string> mOps = {});
 
         /** Evaluates expressions from abstract syntax tree.
          */
         void evaluateQuery(bool saveMemory = true,
             const std::map<std::string, bool>& mFlags = {},
-            Figaro::QRHintType qrHintType = Figaro::QRHintType::GIV_THIN_DIAG,
             Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
             bool saveResult = false);
 

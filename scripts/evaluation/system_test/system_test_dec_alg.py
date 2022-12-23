@@ -1,5 +1,4 @@
 
-from enum import Enum, auto
 from os import path
 import subprocess
 import os
@@ -13,7 +12,7 @@ from evaluation.system_test.system_test import AccuracyConf
 from evaluation.system_test.system_test import PerformanceConf
 from evaluation.system_test.system_test_competitor import SystemTestCompetitor
 
-class SystemTestPostprocess(SystemTestCompetitor):
+class SystemTestDecompAlg(SystemTestCompetitor):
     def __init__(self, name: str, log_conf: LogConf, dump_conf: DumpConf,
             perf_conf: PerformanceConf, accur_conf: AccuracyConf,
             decomp_conf: DecompConf, exec_conf: ExcecutableConf, database: Database,
@@ -64,26 +63,26 @@ class SystemTestPostprocess(SystemTestCompetitor):
             elif self.conf_decomp.method == DecompConf.Method.HOUSEHOLDER:
                 command = "QR_HOUSEHOLDER"
             query_json_s = """
-            {
+            {{
                 "query":
-                {
+                {{
                     "name": "FullJoin",
-                    "expression": "{{command}}(JoinTable)",
+                    "expression": "{command}(JoinTable)",
                     "evaluation_hint":
-                    {
-                        "operator": "{{command}}",
+                    {{
+                        "operator": "{command}",
                         "operands":
                         [
-                            {
+                            {{
                                 "operator": "relation",
                                 "relation": "JoinTable"
-                            }
+                            }}
                         ],
                         "relation_order": ["JoinTable"],
                         "num_threads": 48
-                    }
-                }
-            }
+                    }}
+                }}
+            }}
             """.format(command=command)
         elif self.query.get_root_operator() == "LU_FIGARO":
             query_json_s = """
@@ -140,7 +139,8 @@ class SystemTestPostprocess(SystemTestCompetitor):
 
     def eval(self, dump = False):
         memory_layout = DecompConf.memory_layout_to_str(self.conf_decomp.memory_layout)
-
+        compute_all = "true" if self.conf_decomp.compute_all else "false"
+        decomp_alg = DecompConf.method_to_str(self.conf_decomp.method)
         # Generate database config
         database_json = self.get_database_json()
         # Generate query config
@@ -162,6 +162,8 @@ class SystemTestPostprocess(SystemTestCompetitor):
                 "--query_config_path={}".format(dump_query_config_path),
                 "--num_threads={}".format(self.conf_perf.num_threads),
                 "--memory_layout={}".format(memory_layout),
+                "--decomp_alg={}".format(decomp_alg),
+                "--compute_all={}".format(compute_all),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

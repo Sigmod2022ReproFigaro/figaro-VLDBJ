@@ -24,7 +24,8 @@ namespace Figaro
         // TODO: Replace with factory pattern.
         // TODO: Rename QR_FIGARO with QR_FIGARO
         if ((operatorName == "QR_FIGARO") || (operatorName == "QR_HOUSEHOLDER")
-        || (operatorName == "eval_join") || (operatorName == "LIN_REG")
+        || (operatorName == "QR_GIV_THIN_DIAG") || (operatorName == "eval_join")
+        || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
         || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_LAPACK") )
         {
@@ -64,7 +65,14 @@ namespace Figaro
             }
             else
             {
-                computeQ = false;
+                if (m_mOps.contains("compute_all") && (m_mOps["compute_all"] == "true"))
+                {
+                    computeQ = true;
+                }
+                else
+                {
+                    computeQ = false;
+                }
             }
             m_computeAll = computeQ;
 
@@ -90,9 +98,22 @@ namespace Figaro
             else if (operatorName == "QR_FIGARO")
             {
                 m_opType = Query::OpType::DECOMP_QR;
+                Figaro::QRHintType decompAlg = Figaro::QRHintType::GIV_THIN_DIAG;
+                if (m_mOps.contains("decomp_alg"))
+                {
+                    std::string strDecAlg = m_mOps["decomp_alg"];
+                    if (strDecAlg == "giv_thin_diag")
+                    {
+                        decompAlg = Figaro::QRHintType::GIV_THIN_DIAG;
+                    }
+                    else if (strDecAlg == "householder")
+                    {
+                        decompAlg = Figaro::QRHintType::HOUSEHOLDER;
+                    }
+                }
                 pCreatedNode = new ASTNodeQRFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
-                    Figaro::QRHintType::GIV_THIN_DIAG);
+                    decompAlg);
                 FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
             else if (operatorName == "QR_HOUSEHOLDER")
@@ -220,11 +241,13 @@ namespace Figaro
         return errorCode;
     }
 
-    ErrorCode Query::loadQuery(const std::string& queryConfigPath)
+    ErrorCode Query::loadQuery(const std::string& queryConfigPath,
+        std::map<std::string, std::string> mOps)
     {
         std::ifstream inputFileStream(queryConfigPath);
         json jsonQueryConfig;
         ErrorCode errorCode;
+        m_mOps = mOps;
         if (inputFileStream.fail())
         {
             FIGARO_LOG_ERROR("Query configuration path incorrect", queryConfigPath);
