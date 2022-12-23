@@ -840,7 +840,7 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::evalQRLapack(
+    Database::evalQR(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,

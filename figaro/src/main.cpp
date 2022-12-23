@@ -1,6 +1,7 @@
 #include "database/Database.h"
 #include "database/query/Query.h"
 #include "database/query/visitor/result/ASTVisitorResultQR.h"
+#include "database/query/visitor/result/ASTVisitorResultSVD.h"
 #include "utils/Performance.h"
 
 #include <boost/program_options.hpp>
@@ -129,29 +130,28 @@ int main(int argc, char *argv[])
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath);
     Figaro::Query::OpType opType = query.getOpType();
-    query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
-                                {"postProcessing", true}, {"computeL", true}}, qrHintType, memoryLayout, dump);
-    Figaro::ASTVisitorResultAbs* pResult = query.getResult();
-
     switch (opType)
     {
         case Figaro::Query::OpType::DECOMP_QR:
         {
-            Figaro::ASTVisitorResultQR* pQrResult = (Figaro::ASTVisitorResultQR*)pResult;
-            std::ofstream fileDumpR(dumpFilePath, std::ofstream::out);
-            database.outputRelationToFile(fileDumpR,
-            pQrResult->getRRelationName(), ',', precision);
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}}, qrHintType, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_LU:
         {
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}, {"computeL", true}}, qrHintType, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_SVD:
         {
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}, {"computeU", true}}, qrHintType, memoryLayout, dump);
             break;
         }
     }
+    Figaro::ASTVisitorResultAbs* pResult = query.getResult();
     if (dump)
     {
         Figaro::ASTVisitorResultAbs* pResult = query.getResult();

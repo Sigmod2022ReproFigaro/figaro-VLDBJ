@@ -115,7 +115,7 @@ namespace Figaro
             delete pQRrResult;
         }
         /************* Q COMPUTATION START ***********/
-        if (pElement->isComputeQ())
+        if (pElement->isComputeQ() || isFlagOn("computeQ"))
         {
             FIGARO_LOG_INFO("COMPUTING Q")
             FIGARO_BENCH_START(qComp)
@@ -162,7 +162,7 @@ namespace Figaro
         FIGARO_BENCH_INIT(qrPostprocEval)
         FIGARO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =
-            m_pDatabase->evalQRLapack(pElement->getRelationOrder().at(0),
+            m_pDatabase->evalQR(pElement->getRelationOrder().at(0),
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
         FIGARO_BENCH_STOP(qrPostprocEval)
         FIGARO_LOG_BENCH("Figaro", "QR Postproc eval", FIGARO_BENCH_GET_TIMER_LAP(qrPostprocEval))

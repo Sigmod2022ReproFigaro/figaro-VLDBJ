@@ -233,7 +233,7 @@ namespace Figaro
 
         void changeMemoryLayout(void);
 
-        std::tuple<std::string, std::string> evalQRLapack(
+        std::tuple<std::string, std::string> evalQR(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,

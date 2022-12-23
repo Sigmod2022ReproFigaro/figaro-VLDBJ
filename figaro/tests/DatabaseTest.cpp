@@ -4,6 +4,8 @@
 #include "database/Database.h"
 #include "database/Relation.h"
 #include "database/query/Query.h"
+#include "database/query/visitor/result/ASTVisitorResultQR.h"
+#include "database/query/visitor/result/ASTVisitorResultSVD.h"
 #include <vector>
 #include <string>
 #include <cmath>
@@ -1473,6 +1475,34 @@ TEST(Database, QRFigaro)
     EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
     query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
                                 {"postProcessing", true}});
+}
+
+
+TEST(Database, QRFigaroQOrt)
+{
+    static const std::string DB_CONFIG_PATH = getConfigPath(5) + DB_CONFIG_PATH_IN;
+    static const std::string QUERY_CONFIG_PATH = getConfigPath(5) + "qr/" +QUERY_CONFIG_PATH_IN;
+
+    Figaro::Database database(DB_CONFIG_PATH);
+    Figaro::ErrorCode initError;
+    Figaro::ErrorCode loadError;
+    Figaro::MatrixEigenT headGen1, headGen2, tailGen2;
+    Figaro::MatrixEigenT expHeadGen1, expHeadGen2, expTailGen2;
+
+
+    initError = database.getInitializationErrorCode();
+    EXPECT_EQ(initError, Figaro::ErrorCode::NO_ERROR);
+    loadError = database.loadData();
+    EXPECT_EQ(loadError, Figaro::ErrorCode::NO_ERROR);
+
+    Figaro::Query query(&database);
+    EXPECT_EQ(query.loadQuery(QUERY_CONFIG_PATH), Figaro::ErrorCode::NO_ERROR);
+    query.evaluateQuery(false, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},
+                                {"postProcessing", true}, {"computeQ", true}});
+    Figaro::ASTVisitorResultAbs* pResult = query.getResult();
+    Figaro::ASTVisitorResultQR* pQrResult = (Figaro::ASTVisitorResultQR*)pResult;
+    double ortMeasure = database.checkOrthogonality(pQrResult->getQRelationName(), {});
+    EXPECT_NEAR(ortMeasure, 0, GIVENS_TEST_PRECISION_ERROR);
 }
 
 
