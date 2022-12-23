@@ -3258,6 +3258,60 @@ namespace Figaro
         return std::make_tuple(pU, pL);
     }
 
+        std::tuple<Relation*, Relation*, Relation*> Relation::computeSVD(
+        Figaro::MemoryLayout memoryLayout,
+        bool saveResult)
+    {
+        Relation* pU = nullptr;
+        Relation* pS = nullptr;
+        Relation* pV = nullptr;
+        if (memoryLayout == MemoryLayout::ROW_MAJOR)
+        {
+            MatrixDRowT matU = MatrixDRowT{0, 0};
+            MatrixDRowT matS = MatrixDRowT{0, 0};
+            MatrixDRowT matV = MatrixDRowT{0, 0};
+
+            m_data.computeSVDLapack(getNumberOfThreads(), &matU, &matS, &matV);
+
+            if (saveResult)
+            {
+                pU = createFactorRelation("U", std::move(matU), m_attributes.size());
+                pS = createFactorRelation("S", std::move(matS), m_attributes.size());
+                pV = createFactorRelation("V", std::move(matV), m_attributes.size());
+            }
+        }
+        else
+        {
+            MatrixDColT matU = MatrixDColT{0, 0};
+            MatrixDColT matS = MatrixDColT{0, 0};
+            MatrixDColT matV = MatrixDColT{0, 0};
+
+            m_dataColumnMajor.computeSVDLapack(getNumberOfThreads(), &matU, &matS, &matV);
+
+            FIGARO_LOG_BENCH("matU", matU)
+            if (saveResult)
+            {
+                FIGARO_LOG_BENCH("matU", matU)
+                MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
+                MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
+                MatrixDRowT matVV{matV.getNumRows(), matV.getNumCols()};
+                matUU.copyBlockToThisMatrixFromCol(
+                    matU, 0, matUU.getNumRows() - 1,
+                    0, matUU.getNumCols() - 1, 0, 0);
+                matSS.copyBlockToThisMatrixFromCol(
+                    matS, 0, matSS.getNumRows() - 1,
+                    0, matSS.getNumCols() - 1, 0, 0);
+                 matVV.copyBlockToThisMatrixFromCol(
+                    matV, 0, matVV.getNumRows() - 1,
+                    0, matVV.getNumCols() - 1, 0, 0);
+                pU = createFactorRelation("U", std::move(matUU), m_attributes.size());
+                pS = createFactorRelation("S", std::move(matSS), m_attributes.size());
+                pV = createFactorRelation("V", std::move(matVV), m_attributes.size());
+            }
+        }
+        return std::make_tuple(pU, pS, pV);
+    }
+
     Relation* Relation::extractLUPermutationMatrix(void)
     {
         MatrixDRowT matPerm = MatrixDRowT{m_data.getNumRows(), 1};

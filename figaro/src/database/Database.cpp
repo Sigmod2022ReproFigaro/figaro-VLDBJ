@@ -57,6 +57,39 @@ namespace Figaro
         return std::make_tuple(rName, qName);
     }
 
+    std::tuple<std::string, std::string, std::string>
+    Database::saveSVDResult(
+            std::tuple<Relation*, Relation*, Relation*> qrResult)
+    {
+        auto [pU, pS, pV] = qrResult;
+        std::string uName = "";
+        std::string sName = "";
+        std::string vName = "";
+        Relation& matU = *pU;
+        Relation& matS = *pS;
+        Relation& matV = *pV;
+        if (pU != nullptr)
+        {
+            uName = pU->getName();
+            m_relations.emplace(uName, std::move(matU));
+        }
+
+        if (pS != nullptr)
+        {
+            sName = pS->getName();
+            m_relations.emplace(sName, std::move(matS));
+        }
+
+        if (pV != nullptr)
+        {
+            vName = pV->getName();
+            m_relations.emplace(vName, std::move(matV));
+        }
+        return std::make_tuple(uName, sName, vName);
+    }
+
+
+
     Database::Database(const std::string& schemaConfigPath)
     {
         initializationErrorCode = loadDatabaseSchema(schemaConfigPath);
@@ -807,7 +840,7 @@ namespace Figaro
     }
 
     std::tuple<std::string, std::string>
-    Database::evalQRPostprocessing(
+    Database::evalQRLapack(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
@@ -828,6 +861,17 @@ namespace Figaro
         Relation& rel = m_relations.at(relName);
         auto qrResult = rel.computeLU(memoryLayout, saveResult);
         return saveQRResult(qrResult);
+    }
+
+    std::tuple<std::string, std::string, std::string>
+    Database::evalSVDLapack(
+            const std::string& relName,
+            Figaro::MemoryLayout memoryLayout,
+            bool saveResult)
+    {
+        Relation& rel = m_relations.at(relName);
+        auto svdResult = rel.computeSVD(memoryLayout, saveResult);
+        return saveSVDResult(svdResult);
     }
 
     bool Database::destroyTemporaryRelation(const std::string& relationName)

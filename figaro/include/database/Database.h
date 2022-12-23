@@ -19,6 +19,9 @@ namespace Figaro
         std::tuple<std::string, std::string> saveQRResult(
             std::tuple<Relation*, Relation*> qrResult);
 
+        std::tuple<std::string, std::string, std::string> saveSVDResult(
+            std::tuple<Relation*, Relation*, Relation*> svdResult);
+
     public:
         Database(const std::string& schemaConfigPath);
 
@@ -230,7 +233,7 @@ namespace Figaro
 
         void changeMemoryLayout(void);
 
-        std::tuple<std::string, std::string> evalQRPostprocessing(
+        std::tuple<std::string, std::string> evalQRLapack(
             const std::string& relName,
             Figaro::QRHintType qrHintType,
             Figaro::MemoryLayout memoryLayout,
@@ -238,6 +241,11 @@ namespace Figaro
             bool saveResult);
 
         std::tuple<std::string, std::string> evalLULapack(
+            const std::string& relName,
+            Figaro::MemoryLayout memoryLayout,
+            bool saveResult);
+
+        std::tuple<std::string, std::string, std::string> evalSVDLapack(
             const std::string& relName,
             Figaro::MemoryLayout memoryLayout,
             bool saveResult);

@@ -162,7 +162,7 @@ namespace Figaro
         FIGARO_BENCH_INIT(qrPostprocEval)
         FIGARO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =
-            m_pDatabase->evalQRPostprocessing(pElement->getRelationOrder().at(0),
+            m_pDatabase->evalQRLapack(pElement->getRelationOrder().at(0),
             m_qrHintType, m_memoryLayout, pElement->isComputeQ(), m_saveResult);
         FIGARO_BENCH_STOP(qrPostprocEval)
         FIGARO_LOG_BENCH("Figaro", "QR Postproc eval", FIGARO_BENCH_GET_TIMER_LAP(qrPostprocEval))
@@ -267,12 +267,13 @@ namespace Figaro
                     new ASTNodeRelation(uName,
                     m_pDatabase->getRelationAttributeNames(uName));
                 ASTNodeInverse* astRInvNode = new ASTNodeInverse(astRNOde);
+                // TODO: replace this with
                 ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astRInvNode, false);
                 // Add relation.
                 ASTVisitorResultJoin* pLUResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
                 lName = pLUResult->getJoinRelName();
                 delete pLUResult;
-                std::string permName = m_pDatabase->extractLUPermutationMatrix(lName);
+                //std::string permName = m_pDatabase->extractLUPermutationMatrix(lName);
                 //m_pDatabase->applyPermutationInPlace(uName, permName);
 
 
@@ -309,6 +310,31 @@ namespace Figaro
         FIGARO_BENCH_STOP(luLapackEval)
         FIGARO_LOG_BENCH("Figaro", "LU LAPACK eval", FIGARO_BENCH_GET_TIMER_LAP(luLapackEval))
         return new ASTVisitorResultQR(lName, uName);
+    }
+
+    ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodeSVDLapack(ASTNodeSVDLapack* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING SVD LAPACK NODE")
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        m_pDatabase->dropAttributesFromRelations(
+            pElement->getDropAttributes());
+        pElement->accept(&joinAttrVisitor);
+        m_pDatabase->oneHotEncodeRelations();
+        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        {
+            m_pDatabase->changeMemoryLayout();
+        }
+
+        FIGARO_BENCH_INIT(svdLapackEval)
+        FIGARO_BENCH_START(svdLapackEval)
+        auto [uName, sName, vName] =
+            m_pDatabase->evalSVDLapack(pElement->getRelationOrder().at(0),
+             m_memoryLayout, m_saveResult);
+        FIGARO_BENCH_STOP(svdLapackEval)
+        FIGARO_LOG_BENCH("Figaro", "SVD LAPACK eval", FIGARO_BENCH_GET_TIMER_LAP(svdLapackEval))
+        return new ASTVisitorResultSVD(uName, sName, vName);
     }
 
     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLUThin(ASTNodeLUThin* pElement)

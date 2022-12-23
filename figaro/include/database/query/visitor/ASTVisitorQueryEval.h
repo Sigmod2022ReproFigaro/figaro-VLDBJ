@@ -1,9 +1,10 @@
 #ifndef _FIGARO_AST_VISITOR_QUERY_EVAL_H_
 #define _FIGARO_AST_VISITOR_QUERY_EVAL_H_
 
-#include "./figaro/qr/ASTVisitorQRFigaroAbs.h"
-#include "./result/ASTVisitorResultJoin.h"
-#include "./result/ASTVisitorResultQR.h"
+#include "database/query/visitor/figaro/qr/ASTVisitorQRFigaroAbs.h"
+#include "database/query/visitor/result/ASTVisitorResultJoin.h"
+#include "database/query/visitor/result/ASTVisitorResultQR.h"
+#include "database/query/visitor/result/ASTVisitorResultSVD.h"
 
 
 namespace Figaro
@@ -43,7 +44,7 @@ namespace Figaro
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
         ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
         ASTVisitorResultQR* visitNodeQRPostProc(ASTNodeQRPostProc* pElement) override;
-        ASTVisitorResultQR* visitNodeSVDLapack(ASTNodeSVDLapack* pElement) override;
+        ASTVisitorResultSVD* visitNodeSVDLapack(ASTNodeSVDLapack* pElement) override;
         ASTVisitorResultQR* visitNodeLULapack(ASTNodeLULapack* pElement) override;
         ASTVisitorResultQR* visitNodeLUThin(ASTNodeLUThin* pElement) override;
         ASTVisitorResultQR* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
