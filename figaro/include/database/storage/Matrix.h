@@ -1691,6 +1691,19 @@ namespace Figaro
             sigma = std::sqrt(sigma);
         }
 
+        void computeEigenValueDecomposition(MatrixType* pMatr)
+        {
+            uint32_t memLayout = getLapackMajorOrder();
+            uint32_t ldA = getLeadingDimension();
+            MatrixType& matE = *pMatr;
+            uint32_t N = m_numRows;
+            matE = std::move(MatrixType{m_numRows, m_numRows});
+
+            double* pArrPt = getArrPt();
+            double *pOut = matE.getArrPt();
+            LAPACKE_dsyev(memLayout, 'V', 'L', N, pArrPt, ldA, pOut);
+        }
+
         void computeSVDPowerIter(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatV)
@@ -1715,6 +1728,7 @@ namespace Figaro
                 MatrixType u = matA * v;
                 u.scale(1 / sigma);
                 FIGARO_LOG_DBG("v", v, "sigma", sigma, "u", u)
+                FIGARO_LOG_BENCH("run", diagIdx, sigma)
                 MatrixType matOut = u.outerProduct(v);
                 FIGARO_LOG_DBG("matOut", matOut)
                 matOut.scale(sigma);

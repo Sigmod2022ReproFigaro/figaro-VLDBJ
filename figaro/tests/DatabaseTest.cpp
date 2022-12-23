@@ -295,6 +295,45 @@ TEST(Matrix, computeQRHouseholderRColMajor)
     EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
 }
 
+
+TEST(Matrix, computeCholeskyRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 2, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+
+    matrix(0, 0) = 26; matrix(0, 1) = 26;
+    matrix(1, 0) = 26; matrix(1, 1) = 29;
+    matrix.computeCholesky();
+
+    FIGARO_LOG_DBG("matrix", matrix)
+
+    EXPECT_NEAR(std::abs(matrix(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrix(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeCholeskyColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 2, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+
+    matrix(0, 0) = 26; matrix(0, 1) = 26;
+    matrix(1, 0) = 26; matrix(1, 1) = 29;
+    matrix.computeCholesky();
+
+    FIGARO_LOG_DBG("matrix", matrix)
+
+    EXPECT_NEAR(std::abs(matrix(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrix(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
 TEST(Matrix, computeQRCholeskyRRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
@@ -442,7 +481,7 @@ TEST(Matrix, computeQRCholeskyQColMajor)
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 4; matrix(2, 1) = 3;
 
-    matrix.computeQRHouseholder(true, true, &matrixR, &matrixQ);
+    matrix.computeQRCholesky(true, true, &matrixR, &matrixQ);
 
     EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
@@ -463,23 +502,49 @@ TEST(Matrix, computeQRCholeskyQColMajor)
 }
 
 
-TEST(Matrix, computeCholeskyRowMajor)
+TEST(Matrix, computeEigenValueDecompositionRowMajor)
 {
-    static constexpr uint32_t NUM_ROWS = 2, NUM_COLS = 2;
-    Figaro::Matrix<double> matrix(NUM_ROWS, NUM_COLS);
+    static constexpr uint32_t NUM_ROWS = 4, NUM_COLS = 4;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixE(0, 0);
 
-    matrix(0, 0) = 26; matrix(0, 1) = 26;
-    matrix(1, 0) = 26; matrix(1, 1) = 29;
-    FIGARO_LOG_DBG("HOHOH")
-    matrix.computeCholesky();
 
-    FIGARO_LOG_DBG("matrix", matrix)
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(0, 2) = 3; matrix(0, 3) = 4;
 
-    EXPECT_NEAR(std::abs(matrix(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
-    EXPECT_NEAR(std::abs(matrix(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+    matrix(1, 0) = 2; matrix(1, 1) = 5;
+    matrix(1, 2) = 6; matrix(1, 3) = 7;
 
-    EXPECT_NEAR(std::abs(matrix(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
-    EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+    matrix(2, 0) = 3; matrix(2, 1) = 6;
+    matrix(2, 2) = 9; matrix(2, 3) = 10;
+
+    matrix(3, 0) = 4; matrix(3, 1) = 7;
+    matrix(3, 2) = 10; matrix(3, 3) = 11;
+
+    matrix.computeEigenValueDecomposition(&matrixE);
+
+    FIGARO_LOG_DBG("matrixE", matrixE)
+    FIGARO_LOG_DBG("matrixOriginal", matrix)
+
+    EXPECT_NEAR(std::abs(matrixE(0, 0)), std::abs(0.551948448869983), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(0, 1)), std::abs(0.432426561344364), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(0, 2)), std::abs(-0.648451457665928), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(0, 3)), std::abs(-0.504404303300050), GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixE(1, 0)), std::abs(0.291731531522893), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(1, 1)), std::abs(-0.699239307273875), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(1, 2)), std::abs(-0.330243829214656), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(1, 3)), std::abs(-0.544068571154380), GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixE(2, 0)), std::abs(0.526866989555185), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(2, 1)), std::abs(0.249192418330564), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(2, 2)), std::abs(0.669569036618122), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(2, 3)), std::abs(0.513743286769497), GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixE(3, 0)), std::abs(0.576764075356973), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(3, 1)), std::abs(-0.511834737834006), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(3, 2)), std::abs(0.148751556357754), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixE(3, 3)), std::abs(0.430852090622404), GIVENS_TEST_PRECISION_ERROR);
 }
 
 
