@@ -118,6 +118,27 @@ namespace Figaro
                     decompAlg);
                 FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
+            else if (operatorName == "SVD_FIGARO")
+            {
+                m_opType = Query::OpType::DECOMP_SVD;
+                Figaro::SVDHintType decompAlg = Figaro::SVDHintType::JACOBI;
+                if (m_mOps.contains("decomp_alg"))
+                {
+                    std::string strDecAlg = m_mOps["decomp_alg"];
+                    if (strDecAlg == "jacobi")
+                    {
+                        decompAlg = Figaro::SVDHintType::JACOBI;
+                    }
+                    else if (strDecAlg == "power_iter")
+                    {
+                        decompAlg = Figaro::SVDHintType::POWER_ITER;
+                    }
+                }
+                pCreatedNode = new ASTNodeSVDFigaro(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                    decompAlg);
+                FIGARO_LOG_INFO("CREATE SVD_FIGARO NODE")
+            }
             else if (operatorName == "QR_HOUSEHOLDER")
             {
                 m_opType = Query::OpType::DECOMP_QR;

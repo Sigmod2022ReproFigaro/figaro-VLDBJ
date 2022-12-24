@@ -44,7 +44,7 @@ namespace Figaro
             return m_vDropAttributes;
         }
 
-        SVDHintType getHelpQrAlg(void) const
+        SVDHintType getHelpSVDAlg(void) const
         {
             return m_svdHelpAlgorithm;
         }

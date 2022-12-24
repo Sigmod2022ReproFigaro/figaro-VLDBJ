@@ -660,46 +660,6 @@ namespace Figaro
             double* pA = inverse.getArrPt();
             uint32_t memLayout = getLapackMajorOrder();
 
-            /*
-            MatrixType mU{0, 0};
-            MatrixType mS{0, 0};
-            MatrixType mV{0, 0};
-
-            inverse.computeSVDLapack(1, &mU, &mS, &mV);
-            FIGARO_LOG_BENCH("Dimensions ms", mS.getNumRows(), mS.getNumCols());
-            for (uint32_t rowIdx = 0; rowIdx < mS.getNumRows(); rowIdx++)
-            {
-                FIGARO_LOG_BENCH("ms", rowIdx, mS(rowIdx, 0))
-                //mS(rowIdx, 0) = 1 / mS(rowIdx, 0);
-                //mS[rowIdx][1] = 1 / mS[rowIdx][];
-                FIGARO_LOG_BENCH("ms", mS(rowIdx, 0))
-            }
-
-            for (uint32_t rowIdx = 0; rowIdx < mV.getNumRows(); rowIdx++)
-            {
-                for (uint32_t colIdx = rowIdx + 1; colIdx < mV.getNumCols(); colIdx++)
-                {
-                    std::swap(mV(rowIdx, colIdx), mV(colIdx, rowIdx));
-                    //mV(rowIdx, colIdx) = mV(rowIdx, colIdx) / mS(colIdx, 0);
-                }
-            }
-
-            FIGARO_LOG_BENCH("THE END", "OHOHO")
-            FIGARO_LOG_BENCH("mv", mV.getNumRows(), mV.getNumCols())
-
-            for (uint32_t rowIdx = 0; rowIdx < mV.getNumRows(); rowIdx++)
-            {
-                for (uint32_t colIdx = 0; colIdx < mV.getNumCols(); colIdx++)
-                {
-                    mV(rowIdx, colIdx) = mV(rowIdx, colIdx) / mS(colIdx, 0);
-                }
-            }
-
-            FIGARO_LOG_BENCH("THE END", "@@@@")
-            return mV;
-            */
-
-
             if (isTriangular)
             {
                 LAPACKE_dtrtri(memLayout, 'U', 'N', N, pA, ldA);
@@ -1661,8 +1621,15 @@ namespace Figaro
         {
             const MatrixType& matS = *this;
             MatrixType mSVInv = MatrixType{matV.getNumRows() , matV.getNumCols()};
-            mSVInv.copyBlockToThisMatrix(matV,
-                0, matV.getNumRows() - 1, 0, matV.getNumCols() - 1, 0, 0);
+
+            // TODO: Faster transpose
+            for (uint32_t rowIdx = 0; rowIdx < matV.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < matV.getNumCols(); colIdx++)
+                {
+                    mSVInv(rowIdx, colIdx) = matV(colIdx, rowIdx);
+                }
+            }
 
             for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
             {
@@ -1681,13 +1648,6 @@ namespace Figaro
             MatrixType* pMatV)
         {
             computeSVDLapack(numThreads, pMatU, pMatS, pMatV);
-            for (uint32_t colIdx = 0; colIdx < pMatU->getNumCols(); colIdx++)
-            {
-                for (uint32_t rowIdx = 0; rowIdx < 10; rowIdx++)
-                {
-                    FIGARO_LOG_BENCH("row_idx, col_idx", rowIdx, colIdx, (*pMatU)(rowIdx, colIdx))
-                }
-            }
         }
 
         void powerIteration(MatrixType& vectV, double& sigma)

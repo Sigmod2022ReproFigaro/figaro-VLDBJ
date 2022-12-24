@@ -321,7 +321,6 @@ namespace Figaro
 
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
         ASTVisitorJoin astVisitorJoin(m_pDatabase);
-        //pElement->getHelpQrAlg();
         omp_set_num_threads(pElement->getNumThreads());
         ASTNodeQRFigaro astQRGivens(
                 pElement->getOperand()->copy(),
@@ -334,7 +333,7 @@ namespace Figaro
         delete pQrResult;
 
         auto [uName, sName, vName] = m_pDatabase->evalSVDDecAlg(rRelName,
-            SVDHintType::JACOBI, Figaro::MemoryLayout::ROW_MAJOR, true);
+            pElement->getHelpSVDAlg(), Figaro::MemoryLayout::ROW_MAJOR, true);
 
         FIGARO_LOG_INFO("COMPUTING U")
         FIGARO_BENCH_INIT(uComp)
