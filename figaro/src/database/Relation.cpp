@@ -157,7 +157,7 @@ namespace Figaro
     Relation* Relation::createFactorRelation(
             const std::string& extension,
             MatrixDRowT&& data,
-            uint32_t numRightAttrs)
+            uint32_t numRightAttrs) const
     {
         uint32_t offset = m_attributes.size() - numRightAttrs;
         return new Relation(m_name + "_" + extension, std::move(data),
@@ -3151,6 +3151,17 @@ namespace Figaro
         pU = createFactorRelation("U", std::move(matU), totalNumCols);
         FIGARO_LOG_INFO("U", *pU)
         return std::make_tuple(pU, pL);
+    }
+
+    Relation Relation::computeSVDSigmaVTranInverse(const Relation& relV) const
+    {
+        const Relation& relSigma = *this;
+
+        MatrixDRowT sigmaVInv = relSigma.m_data.computeSVDSigmaVTranInverse(
+            getNumberOfThreads(), relV.m_data);
+
+        return Relation("SVD_SIGMA_V_T_INVERSE" + getName(), std::move(sigmaVInv),
+            m_attributes);
     }
 
     std::tuple<Relation*, Relation*> Relation::computeQR(

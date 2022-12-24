@@ -13,6 +13,7 @@
 #include "database/query/node/ASTNodeLinReg.h"
 #include "database/query/node/ASTNodeLUFigaro.h"
 #include "database/query/node/ASTNodeLUAlg.h"
+#include "database/query/node/ASTNodeSVDSVTInv.h"
 #include "database/query/node/ASTNodeSVDFigaro.h"
 #include "database/query/node/ASTNodeSVDAlgDec.h"
 #include "database/query/node/ASTNodeLUThin.h"
@@ -42,6 +43,7 @@ namespace Figaro
         virtual ASTVisitorResultAbs* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeInverse(ASTNodeInverse* pElement) = 0;
+        virtual ASTVisitorResultAbs* visitNodeSVDSVTInverse(ASTNodeSVDSVTInverse* pElement) = 0;
         virtual ASTVisitorResultAbs* visitNodeLinReg(ASTNodeLinReg* pElement) = 0;
 
         virtual ~ASTVisitor() {}

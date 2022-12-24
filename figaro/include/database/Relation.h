@@ -253,7 +253,7 @@ namespace Figaro
         Relation* createFactorRelation(
             const std::string& extension,
             MatrixDRowT&& data,
-            uint32_t numRightAttrs);
+            uint32_t numRightAttrs) const;
 
         /**
          *  Updates schema of the current relation such that
@@ -620,6 +620,8 @@ namespace Figaro
             Figaro::LUHintType luHintType,
             bool saveResult,
             const Relation* pJoinRel);
+
+        Relation computeSVDSigmaVTranInverse(const Relation& relV) const;
 
         std::tuple<Relation*, Relation*>
         computeQR(Figaro::QRHintType qrHintType,

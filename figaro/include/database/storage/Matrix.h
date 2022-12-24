@@ -1656,6 +1656,25 @@ namespace Figaro
                 pMatV->getArrPt(), ldvT);
         }
 
+        MatrixType computeSVDSigmaVTranInverse(uint32_t numThreads,
+            const MatrixType& matV) const
+        {
+            const MatrixType& matS = *this;
+            MatrixType mSVInv = MatrixType{matV.getNumRows() , matV.getNumCols()};
+            mSVInv.copyBlockToThisMatrix(matV,
+                0, matV.getNumRows() - 1, 0, matV.getNumCols() - 1, 0, 0);
+
+            for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < mSVInv.getNumCols(); colIdx++)
+                {
+                    mSVInv(rowIdx, colIdx) = mSVInv(rowIdx, colIdx) / matS(colIdx, 0);
+                }
+            }
+
+            return mSVInv;
+        }
+
 
         void computeSVDJacobi(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,

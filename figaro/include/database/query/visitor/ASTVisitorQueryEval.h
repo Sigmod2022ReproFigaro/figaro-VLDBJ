@@ -52,6 +52,7 @@ namespace Figaro
         ASTVisitorResultJoin* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
         ASTVisitorResultJoin* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
         ASTVisitorResultJoin* visitNodeInverse(ASTNodeInverse* pElement) override;
+         ASTVisitorResultJoin* visitNodeSVDSVTInverse(ASTNodeSVDSVTInverse* pElement) override;
 
         virtual ~ASTVisitorQueryEval() override {}
     };

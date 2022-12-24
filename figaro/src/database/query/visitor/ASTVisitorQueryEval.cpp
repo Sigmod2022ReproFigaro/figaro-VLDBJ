@@ -1,5 +1,4 @@
 #include "database/query/visitor/ASTVisitorQueryEval.h"
-
 #include "database/query/visitor/ASTVisitorComputeJoinAttributes.h"
 #include "database/query/visitor/ASTVisitorBuildIndices.h"
 #include "database/query/visitor/figaro/qr/ASTVisitorComputeDownCounts.h"
@@ -333,7 +332,30 @@ namespace Figaro
         ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
         rRelName = pQrResult->getRRelationName();
         delete pQrResult;
-        auto [uName, sName, vName] = m_pDatabase->computeSVDFigaro(rRelName, SVDHintType::JACOBI);
+
+        auto [uName, sName, vName] = m_pDatabase->evalSVDDecAlg(rRelName,
+            SVDHintType::JACOBI, Figaro::MemoryLayout::ROW_MAJOR, true);
+
+        FIGARO_LOG_INFO("COMPUTING U")
+        FIGARO_BENCH_INIT(uComp)
+        FIGARO_BENCH_START(uComp)
+        ASTNodeRelation* astVNOde =
+                    new ASTNodeRelation(vName,
+                    m_pDatabase->getRelationAttributeNames(vName));
+        ASTNodeRelation* astSNOde =
+                    new ASTNodeRelation(sName,
+                    m_pDatabase->getRelationAttributeNames(sName));
+        ASTNodeSVDSVTInverse* astSVDInvNode =
+            new ASTNodeSVDSVTInverse(astSNOde, astVNOde);
+        ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astSVDInvNode,
+            true);
+        // Add relation.
+        ASTVisitorResultJoin* pUResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
+        uName = pUResult->getJoinRelName();
+        delete pUResult;
+        FIGARO_BENCH_STOP(uComp)
+        FIGARO_LOG_BENCH("Figaro", "Computation of U",  FIGARO_BENCH_GET_TIMER_LAP(uComp));
+
         return new ASTVisitorResultSVD(uName, sName, vName);
     }
 
@@ -507,6 +529,21 @@ namespace Figaro
         delete pJoinResult;
 
         return new ASTVisitorResultJoin(invName);
+    }
+
+    ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeSVDSVTInverse(ASTNodeSVDSVTInverse* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING SVD INVERSE (SIGMA * V^T) NODE")
+        ASTVisitorResultJoin* pSigmaRes = (ASTVisitorResultJoin*)pElement->getOpSig()->accept(this);
+         ASTVisitorResultJoin* pVRes = (ASTVisitorResultJoin*)pElement->getOpV()->accept(this);
+
+        std::string svdSVTInvName = m_pDatabase->computeSVDSigmaVTranInverse(
+            pSigmaRes->getJoinRelName(), pVRes->getJoinRelName());
+
+        delete pSigmaRes;
+        delete pVRes;
+
+        return new ASTVisitorResultJoin(svdSVTInvName);
     }
 
     ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeRelation(ASTNodeRelation* pElement)

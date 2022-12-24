@@ -99,6 +99,12 @@ namespace Figaro
             return nullptr;
         }
 
+        virtual ASTVisitorResultAbs* visitNodeSVDSVTInverse([[maybe_unused]] ASTNodeSVDSVTInverse* pElement)  override
+        {
+            FIGARO_LOG_ASSERT(1!=1)
+            return nullptr;
+        }
+
         virtual ~ASTVisitorRightMultiply() override {}
     };
 }
