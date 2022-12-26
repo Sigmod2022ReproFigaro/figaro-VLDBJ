@@ -54,7 +54,7 @@ The "disable" property in each configuration file specifies whether the certain 
 
 ### 5. comparisons
 
-After an experiment is run, this folder contains the results of performance and accuracy analyses for each of the systems inside the corresponding folder. For example: for performance analysis for figaro with the postprocessing method "thin", the database DBFavorita10 and the join order StoresRoot48, the results are stored in path ./comparisons/performance/figaro/thin_diag/DbFavorita10/StoresRoot48/, in particular in the file time.xlsx
+After an experiment is run, this folder contains the results of performance and accuracy analyses for each of the systems inside the corresponding folder. For example: for performance analysis for figaro with the postprocessing method "thin", the database DBFavorita10 and the join order StoresRoot48, the results are stored in path ./comparisons/performance/figaro/GIV_THIN_DIAG/DbFavorita10/StoresRoot48/, in particular in the file time.xlsx
 
 ### 6. logs (only after running experiments)
 
