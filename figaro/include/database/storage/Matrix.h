@@ -383,14 +383,51 @@ namespace Figaro
                 else
                 {
                     ArrayStorage<T>* pNewStorage = new ArrayStorage<T>(newNumEntries);
-                    for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx ++)
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                     {
-                        for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                        for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx ++)
                         {
                             uint64_t oldStorageIdx = (uint64_t)colIdx * (uint64_t)oldNumRows
                                 + (uint64_t)rowIdx;
                             uint64_t newStorageIdx = (uint64_t)colIdx * (uint64_t)m_numRows
                                 + (uint64_t)rowIdx;
+
+                            (*pNewStorage)[newStorageIdx] = (*m_pStorage)[oldStorageIdx];
+                        }
+                    }
+                    delete m_pStorage;
+                    m_pStorage = pNewStorage;
+                }
+            }
+        }
+
+        // Changes the size of matrix while keeping the data.
+        void resizeCols(uint32_t newNumCols)
+        {
+            uint32_t oldNumCols = m_numCols;
+            m_numCols = newNumCols;
+            uint64_t newNumEntries = getNumEntries();
+            if (nullptr == m_pStorage)
+            {
+                m_pStorage = new ArrayStorage<T>(newNumEntries);
+            }
+            else
+            {
+                if constexpr (L == MemoryLayout::COL_MAJOR)
+                {
+                    m_pStorage->resize(newNumEntries);
+                }
+                else
+                {
+                    ArrayStorage<T>* pNewStorage = new ArrayStorage<T>(newNumEntries);
+                    for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx ++)
+                    {
+                        for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                        {
+                            uint64_t oldStorageIdx = (uint64_t)rowIdx * (uint64_t)oldNumCols
+                                + (uint64_t)colIdx;
+                            uint64_t newStorageIdx = (uint64_t)rowIdx * (uint64_t)m_numCols
+                                + (uint64_t)colIdx;
 
                             (*pNewStorage)[newStorageIdx] = (*m_pStorage)[oldStorageIdx];
                         }

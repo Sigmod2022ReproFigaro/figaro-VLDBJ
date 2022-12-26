@@ -352,7 +352,7 @@ namespace Figaro
             const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             const std::vector<Relation::IteratorJoin>& vIts,
-            uint32_t& outIdx,
+            uint32_t& outRowIdx,
             bool addColumns);
 
         static void iterateOverRootRel(
@@ -853,7 +853,7 @@ namespace Figaro
             std::unordered_map<uint32_t, std::vector<uint32_t> >* phtChildOneParAttrs = (std::unordered_map<uint32_t, std::vector<uint32_t> >*)(htChildParAttrs);
             try {
 
-            return phtChildOneParAttrs->at(joinAttrVal);
+                return phtChildOneParAttrs->at(joinAttrVal);
             }
             catch (...)
             {
@@ -888,11 +888,11 @@ namespace Figaro
         const std::vector<std::vector<uint32_t> >& vvNonJoinAttrIdxs,
         const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
         const std::vector<Relation::IteratorJoin>& vIts,
-        uint32_t& outIdx,
+        uint32_t& outRowIdx,
         bool addColumns
     )
     {
-        outIdx++;
+        outRowIdx++;
         if (!addColumns)
         {
             for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
@@ -901,7 +901,7 @@ namespace Figaro
                 uint32_t relRowIdx = vIts[idxRel].getRowIdx();
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
-                    dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
+                    dataOut[outRowIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
                         = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
                 }
             }
@@ -913,28 +913,20 @@ namespace Figaro
                 uint32_t relRowIdx = vIts[idxRel].getRowIdx();
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
+                    uint32_t outColIdx = idxNonJoin - vvJoinAttrIdxs[idxRel].size();
+                    if (outColIdx >= 10)
+                    {
+                        continue;
+                    }
+
                     if (idxRel == 0)
                     {
-
-                        //double d = 0;
-                        //d = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()] =  vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                        //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()] = 1;
-                        //d = d +1;
-                        //dataOut[outIdx][0] = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                        //dataOut[outIdx][0] = vpRels[idxRel]->m_data[relRowIdx][0];
-                        //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                        dataOut[outRowIdx][outColIdx] =  vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
                     }
                     else
                     {
-                        //double d = 0;
-                        //d = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                        dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
+                        dataOut[outRowIdx][outColIdx]
                             += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
-                        //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()] = 1;
-                        //d = d +1;
-                         //dataOut[outIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size()]
-                         //   += vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
                     }
                 }
             }

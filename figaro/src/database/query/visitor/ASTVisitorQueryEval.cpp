@@ -327,7 +327,7 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), false,
-                QRHintType::GIV_THIN_DIAG);
+                QRHintType::HOUSEHOLDER);
         ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
         rRelName = pQrResult->getRRelationName();
         delete pQrResult;
