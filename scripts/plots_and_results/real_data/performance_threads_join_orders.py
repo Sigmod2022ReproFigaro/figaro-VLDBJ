@@ -191,10 +191,10 @@ def main(args):
                 "DBYelp": ["BusinessRoot", "CategoryRoot", "CheckinRoot", "HoursRoot", "ReviewRoot", "UserRoot"],
                 "DBRetailer": ["CensusRoot", "InventoryRoot", "ItemRoot", "LocationRoot", "WeatherRoot"]}
 
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/only_r/thin_diag",
-    "mkl": "comparisons/performance/python/mkl",
-    "figaro_lapack": "comparisons/performance/figaro/only_r/lapack",
-    "openblas": "comparisons/performance/python/openblas",
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/qr/only_r/thin_diag",
+    "mkl": "comparisons/performance/python/qr/mkl",
+    "figaro_lapack": "comparisons/performance/figaro/qr/only_r/lapack",
+    "openblas": "comparisons/performance/python/qr/openblas",
     "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
     "post_proc_mkl": "comparisons/performance/postprocess/lapack"}
 

@@ -130,11 +130,11 @@ def main(args):
     ohe = args.ohe
     #exp_names = ["figaro_thin",  "post_proc_mkl", "post_proc_thin"]
 
-    exp_paths = {"figaro_thin": "comparisons/performance/figaro/only_r/thin_diag/thread48", "mkl": "comparisons/performance/python/mkl",
-    "figaro_lapack": "comparisons/performance/figaro/only_r/lapack/thread48",
-    "openblas": "comparisons/performance/python/openblas",
-    "post_proc_thin": "comparisons/performance/postprocess/thin_diag/thread48",
-    "post_proc_mkl": "comparisons/performance/postprocess/lapack/col_major/only_r/thread48"}
+    exp_paths = {"figaro_thin": "comparisons/performance/figaro/qr/only_r/giv_thin_diag/thread48", "mkl": "comparisons/performance/python/qr/mkl",
+    "figaro_lapack": "comparisons/performance/figaro/qr/only_r/lapack/thread48",
+    "openblas": "comparisons/performance/python/qr/openblas",
+    "post_proc_thin": "comparisons/performance/decomp_alg/qr/giv_thin_diag/thread48",
+    "post_proc_mkl": "comparisons/performance/decomp_alg/qr/house/col_major/only_r/thread48"}
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
     if ohe:
