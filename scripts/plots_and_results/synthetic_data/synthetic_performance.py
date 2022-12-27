@@ -92,7 +92,7 @@ def dump_results_to_latex(figaro_impls: list, df_measurement_exps: dict):
         out_file.write(df_figaro_thin_lat.to_latex(float_format="%.2f",escape=False))
         out_file.write("\n")
 
-        df_measurement_speed_up = df_measurement_exps["postprocess_mkl"] / df_measurement_exps[figaro_impl]
+        df_measurement_speed_up = df_measurement_exps["qr_house"] / df_measurement_exps[figaro_impl]
         out_file.write("Speed up {}\n".format(figaro_impl))
         df_measurement_speed_up_lat = df_measurement_speed_up.rename(index={512:" $2^9$", 1024: "$2^{10}$",
         2048: "$2^{11}$", 4096: "$2^{12}$", 8192: "$2^{13}$"},
@@ -120,17 +120,17 @@ def main(args):
 
 
     figaro_impls = ["figaro_thin", "figaro_lapack"]
-    exp_names = [*figaro_impls, "postprocess_mkl"]
+    exp_names = [*figaro_impls, "qr_house"]
     exp_paths = {"figaro_thin": "comparisons/performance/figaro/qr/only_r/giv_thin_diag/thread48",
                 "figaro_lapack": "comparisons/performance/figaro/qr/only_r/lapack/thread48",
                 "mkl": "comparisons/performance/python/qr/mkl",
-                "postprocess_mkl": "comparisons/performance/decomp_alg/qr/house/col_major/only_r/thread48",}
+                "qr_house": "comparisons/performance/decomp_alg/qr/house/col_major/only_r/thread48",}
 
     column_nums = [64, 256, 1024, 4096]
     row_nums = [512, 1024, 2048, 4096, 8192]
     row_col_nums = []
 
-    skip_dbs = {"mkl": [12, 15, 16, 18, 19, 20], "postprocess_mkl": [12, 15, 16, 18, 19, 20],"figaro_thin": [],  "figaro_lapack":[]}
+    skip_dbs = {"mkl": [12, 15, 16, 18, 19, 20], "qr_house": [12, 15, 16, 18, 19, 20],"figaro_thin": [],  "figaro_lapack":[]}
 
     for row_num in row_nums:
         for col_num in column_nums:

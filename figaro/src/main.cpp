@@ -150,8 +150,8 @@ int main(int argc, char *argv[])
             {
                 Figaro::ASTVisitorResultSVD* pSVDResult = (Figaro::ASTVisitorResultSVD*)pResult;
                 std::ofstream fileDumpV(dumpFilePath, std::ofstream::out);
-                database.outputRelationToFile(fileDumpV,
-                pSVDResult->getURelationName(), ',', precision);
+                //database.outputRelationToFile(fileDumpV,
+                //pSVDResult->getVRelationName, ',', precision);
                 if (computeAll)
                 {
                     double ortMeasure = database.checkOrthogonality(pSVDResult->getURelationName(), {});

@@ -195,8 +195,8 @@ def main(args):
     "mkl": "comparisons/performance/python/qr/mkl",
     "figaro_lapack": "comparisons/performance/figaro/qr/only_r/lapack",
     "openblas": "comparisons/performance/python/qr/openblas",
-    "post_proc_thin": "comparisons/performance/postprocess/thin_diag",
-    "post_proc_mkl": "comparisons/performance/postprocess/lapack"}
+    "post_proc_thin": "comparisons/performance/decomp_alg/qr/giv_thin_diag",
+    "post_proc_mkl": "comparisons/performance/decomp_alg/qr/house"}
 
     db_names = ["DBRetailer", "DBFavorita", "DBYelp"]
 

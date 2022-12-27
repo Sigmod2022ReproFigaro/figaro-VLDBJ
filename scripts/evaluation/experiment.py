@@ -40,7 +40,7 @@ def test_set_to_true(tests_path: str, subtests_to_set: list):
 def set_exp1_real(system_tests_path: str):
     test_real_data_path = os.path.join(system_tests_path, "test_real_data", "tests_specs.conf")
     test_set_all_to_true(test_real_data_path)
-    subtests_to_set = ["percent_psql_dump", "percent_performance", "percent_perf_analysis"]
+    subtests_to_set = ["percent_psql_dump", "percent_performance_qr", "percent_performance_analysis_qr"]
     test_set_to_true(test_real_data_path, subtests_to_set)
 
     test_real_data_ohe_path = os.path.join(system_tests_path, "test_real_data_ohe", "tests_specs.conf")
@@ -85,7 +85,7 @@ def run_exp1(username: str, password: str, root_path: str,
 def set_exp2_thread(system_tests_path: str):
     test_real_data_path = os.path.join(system_tests_path, "test_real_data", "tests_specs.conf")
     test_set_all_to_true(test_real_data_path)
-    subtests_to_set = ["thread_perf", "thread_perf_analysis"]
+    subtests_to_set = ["thread_perf_qr", "thread_perf_analysis_qr"]
     test_set_to_true(test_real_data_path, subtests_to_set)
 
 
@@ -101,7 +101,7 @@ def run_exp2(username: str, password: str, root_path: str,
 def set_exp3_real(system_tests_path: str):
     test_real_data_path = os.path.join(system_tests_path, "test_real_data", "tests_specs.conf")
     test_set_all_to_true(test_real_data_path)
-    subtests_to_set = ["join_order_perf", "join_order_perf_analysis"]
+    subtests_to_set = ["join_order_perf_qr", "join_order_perf_qr_analysis_qr"]
     test_set_to_true(test_real_data_path, subtests_to_set)
 
     test_real_data_ohe_path = os.path.join(system_tests_path, "test_real_data_ohe", "tests_specs.conf")

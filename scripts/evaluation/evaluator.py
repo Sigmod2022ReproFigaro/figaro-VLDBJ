@@ -17,7 +17,7 @@ class SystemTestsEvaluator:
     map_category_to_class = {
         'psql': SystemTestPsql, 'python': SystemTestPython,
         'figaro': SystemTestFigaro, 'pandas': SystemTestPandas,
-        'postprocess': SystemTestDecompAlg}
+        'decomp_alg': SystemTestDecompAlg}
 
     map_mode_to_enum = {
         'debug': SystemTest.TestMode.DEBUG,

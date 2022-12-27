@@ -31,8 +31,8 @@ def test_perf_system_set(test_system_perf_path: str, is_figaro: bool):
         if is_figaro and "thin_diag" in system_conf_path and \
             test_system_perf["category"] == "figaro":
             disabled = False
-        elif not is_figaro and test_system_perf["category"] == "postprocess" and \
-            "lapack/col_major/system_test_only_r" in system_conf_path:
+        elif not is_figaro and test_system_perf["category"] == "decomp_alg" and \
+            "decomp_alg/qr/house/col_major/system_test_only_r" in system_conf_path:
             disabled = False
 
         test_system_perf["disable"] = disabled

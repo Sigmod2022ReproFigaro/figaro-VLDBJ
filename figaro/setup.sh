@@ -79,7 +79,7 @@ function get_str_args()
         FIGARO_HELP_SHOW=true
         echo $"
 Usage: setup.sh [-h --help]
-[-r|--root=<PATH>][--postprocess=<NAME>]
+[-r|--root=<PATH>]
 [-t|--test_mode=<NAME>]
 [--data_path=<PATH>][-l|--log_file_path=<PATH>][--dump_file_path=<PATH>]
 [--db_config_path=<PATH>][--query_config_path=<PATH>]

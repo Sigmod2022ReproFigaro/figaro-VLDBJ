@@ -98,7 +98,7 @@ def dump_results_to_latex(exp_names: list, figaro_impls: list,
         out_file.write("\n")
 
     for figaro_impl in figaro_impls:
-        df_error = exp_rel_errors["postprocess_lapack"] / exp_rel_errors[figaro_impl]
+        df_error = exp_rel_errors["qr_house"] / exp_rel_errors[figaro_impl]
         df_error_lat = df_to_latex(df_error)
         out_file.write("Relative error comparison {}\n".format(figaro_impl))
         out_file.write(df_error_lat.to_latex(float_format="%.2g",escape=False, na_rep=" "))
@@ -119,8 +119,8 @@ def main(args):
     dump_results = args.dump_results
 
     figaro_impls = ["figaro_lapack", "figaro_thin"]
-    exp_names = [ "figaro_lapack", "figaro_thin", "postprocess_lapack"]
-    exp_paths = {"figaro_lapack": "dumps/figaro/qr/only_r/lapack/thread48", "postprocess_lapack": "dumps/decomp_alg/qr/house/col_major/only_r/thread48", "figaro_thin": "dumps/figaro/qr/only_r/giv_thin_diag/thread48"}
+    exp_names = [ "figaro_lapack", "figaro_thin", "qr_house"]
+    exp_paths = {"figaro_lapack": "dumps/figaro/qr/only_r/lapack/thread48", "qr_house": "dumps/decomp_alg/qr/house/col_major/only_r/thread48", "figaro_thin": "dumps/figaro/qr/only_r/giv_thin_diag/thread48"}
 
     row_nums = [512, 1024, 2048, 4096, 8192]
     column_nums = [16, 64, 256, 1024, 4096]
