@@ -1861,13 +1861,13 @@ namespace Figaro
             {
                 edHintType = Figaro::EDHintType::RRR;
             }
-            FIGARO_LOG_DBG("Starting computation")
             matATA.computeEigenValueDecomposition(edHintType, &matED, &matEV);
-            FIGARO_LOG_DBG("Ending computation")
             matS = std::move(matEV);
+            std::vector<uint32_t> vPermIdxs(matS.m_numRows);
             for (uint32_t rowIdx = 0; rowIdx < matS.m_numRows; rowIdx++)
             {
                 matS(rowIdx, 0) = std::sqrt(matS(rowIdx, 0));
+                vPermIdxs[rowIdx] = rowIdx;
             }
 
             for (uint32_t rowIdx1 = 0; rowIdx1 < matS.m_numRows - 1; rowIdx1++)
@@ -1876,12 +1876,18 @@ namespace Figaro
                 if (matS(rowIdx1, 0) < matS(rowIdx2, 0))
                 {
                     std::swap(matS(rowIdx1, 0), matS(rowIdx2, 0));
+                    std::swap(vPermIdxs[rowIdx1], vPermIdxs[rowIdx2]);
                 }
             }
-            // TODO: Add permutation of V
-            FIGARO_LOG_DBG("Passed computation")
-            matV =  std::move(matATA);
-            FIGARO_LOG_DBG("Passed ATA")
+            matATA = matATA.transpose();
+            matV = MatrixType{matATA.m_numRows, matATA.m_numCols};
+            for (uint32_t rowIdx = 0; rowIdx < matV.m_numRows; rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < matV.m_numCols; colIdx++)
+                {
+                    matV(rowIdx, colIdx) = matATA(vPermIdxs[rowIdx], colIdx);
+                }
+            }
             if (computeU)
             {
                 MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matV);
