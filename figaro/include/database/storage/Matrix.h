@@ -216,6 +216,28 @@ namespace Figaro
             cblas_dscal(M * N, val, pA, 1);
         }
 
+        MatrixType transpose(void) const
+        {
+            const MatrixType& matA = *this;
+            MatrixType matB{m_numCols, m_numRows};
+            const double* pA = getArrPt();
+            double* pB = matB.getArrPt();
+            uint32_t ldA = matA.getLeadingDimension();
+            uint32_t ldB = matB.getLeadingDimension();
+            char ordering;
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                ordering = 'R';
+            }
+            else
+            {
+                ordering = 'C';
+            }
+            mkl_domatcopy(ordering, 'T', m_numRows, m_numCols, 1.0, pA, ldA, pB, ldB);
+
+            return matB;
+        }
+
 
 
         MatrixType add(const MatrixType& second,
@@ -1578,23 +1600,17 @@ namespace Figaro
             }
             if (qrTypeHint == LUHintType::THIN_DIAG)
             {
-                //FIGARO_LOG_INFO("Thin version")
                 *pMatU = MatrixType{m_numRows, m_numCols};
                 pMatU->copyBlockToThisMatrix(*this,
                     0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
-                //FIGARO_LOG_INFO("WTF", pMatU->getNumRows(), pMatU->getNumCols())
                 pMatU->computeLUGaussianSequentialBlockDiag(0, m_numRows - 1,
                     0, m_numCols - 1, allowPerm);
-                //FIGARO_LOG_INFO("WTF1", pMatU->getNumRows(), pMatU->getNumCols())
                 uint32_t numRedEndRows = std::min(m_numRows, m_numCols);
-                //FIGARO_LOG_INFO("WTF2", pMatU->getNumRows(), pMatU->getNumCols())
                 pMatU->resize(numRedEndRows);
-                //FIGARO_LOG_INFO("WTF3", pMatU->getNumRows(), pMatU->getNumCols())
                 //computeLUGivensParallelizedThinMatrix(numThreads, qrType);
             }
             else if (qrTypeHint == LUHintType::PART_PIVOT_LAPACK)
             {
-                //FIGARO_LOG_INFO("PP_LAPACK")
                 computeLULapack(numThreads, saveResult, pMatL, pMatU, pMatP);
             }
 
@@ -1686,7 +1702,7 @@ namespace Figaro
             //MatrixType mSVInv = MatrixType{matV.getNumRows() , k};
             MatrixType mSVInv = MatrixType{matVT.getNumRows() , matVT.getNumCols()};
 
-            // TODO: Faster transpose
+            // TODO: Replace with clblas function
             for (uint32_t rowIdx = 0; rowIdx < matVT.getNumRows(); rowIdx++)
             {
                 //for (uint32_t colIdx = 0; colIdx < k; colIdx++)
