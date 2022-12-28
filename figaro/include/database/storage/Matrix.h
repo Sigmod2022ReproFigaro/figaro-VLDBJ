@@ -302,6 +302,7 @@ namespace Figaro
             return matC;
         }
 
+
         MatrixType selfMatrixMultiply(
             uint32_t numJoinAttr) const
         {
@@ -326,6 +327,7 @@ namespace Figaro
             return matC;
         }
 
+
         double norm(uint32_t numJoinAttr) const
         {
             uint32_t m = getNumRows();
@@ -335,6 +337,7 @@ namespace Figaro
             double normVal = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'f', m, n, pA, ldA);
             return normVal;
         }
+
 
         double estCondNumber(uint32_t numJoinAttr) const
         {
@@ -363,6 +366,26 @@ namespace Figaro
 
             return condition2;
         }
+
+
+        double getOrthogonality(uint32_t numJoinAttrs) const
+        {
+            MatrixType result = selfMatrixMultiply(numJoinAttrs);
+            MatrixType eye = MatrixType::identity(result.getNumRows());
+            MatrixType diff = eye.subtract(result, 0, numJoinAttrs);
+            FIGARO_LOG_INFO("diff norm", eye.norm(0))
+            FIGARO_LOG_INFO("diff norm", result)
+            FIGARO_LOG_INFO("diff norm", numJoinAttrs)
+
+            FIGARO_LOG_BENCH("Dimensions Result", result.getNumRows(), result.getNumCols())
+            FIGARO_LOG_BENCH("Dimensions Diff", diff.getNumRows(), diff.getNumCols())
+            FIGARO_LOG_BENCH("Norm diff",  diff.norm(numJoinAttrs))
+            FIGARO_LOG_BENCH("Norm eye",  eye.norm(0))
+            FIGARO_LOG_BENCH("Dimensions", getNumRows(), getNumCols())
+
+            return diff.norm(numJoinAttrs) / eye.norm(0);
+        }
+
 
         // Changes the size of matrix while keeping the data.
         void resize(uint32_t newNumRows)
@@ -401,6 +424,7 @@ namespace Figaro
             }
         }
 
+
         // Changes the size of matrix while keeping the data.
         void resizeCols(uint32_t newNumCols)
         {
@@ -437,6 +461,7 @@ namespace Figaro
                 }
             }
         }
+
 
         uint32_t getNumRows(void) const
         {
@@ -526,11 +551,11 @@ namespace Figaro
 
         static MatrixType identity(uint32_t numRows)
         {
-            MatrixType matEye(numRows, numRows);
+            MatrixType matEye{numRows, numRows};
             matEye.m_pStorage->setToZeros();
             for (uint32_t rowIdx = 0; rowIdx < numRows; rowIdx++)
             {
-                matEye[rowIdx][rowIdx] = 1;
+                matEye(rowIdx, rowIdx) = 1;
             }
             return matEye;
         }
@@ -1654,17 +1679,20 @@ namespace Figaro
         }
 
         MatrixType computeSVDSigmaVTranInverse(uint32_t numThreads,
-            const MatrixType& matV) const
+            const MatrixType& matVT) const
         {
             const MatrixType& matS = *this;
-            MatrixType mSVInv = MatrixType{matV.getNumRows() , matV.getNumCols()};
+            //constexpr uint32_t k = 10;
+            //MatrixType mSVInv = MatrixType{matV.getNumRows() , k};
+            MatrixType mSVInv = MatrixType{matVT.getNumRows() , matVT.getNumCols()};
 
             // TODO: Faster transpose
-            for (uint32_t rowIdx = 0; rowIdx < matV.getNumRows(); rowIdx++)
+            for (uint32_t rowIdx = 0; rowIdx < matVT.getNumRows(); rowIdx++)
             {
-                for (uint32_t colIdx = 0; colIdx < matV.getNumCols(); colIdx++)
+                //for (uint32_t colIdx = 0; colIdx < k; colIdx++)
+                for (uint32_t colIdx = 0; colIdx < matVT.getNumCols(); colIdx++)
                 {
-                    mSVInv(rowIdx, colIdx) = matV(colIdx, rowIdx);
+                    mSVInv(rowIdx, colIdx) = matVT(colIdx, rowIdx);
                 }
             }
 
@@ -1714,17 +1742,21 @@ namespace Figaro
             sigma = std::sqrt(sigma);
         }
 
-        void computeEigenValueDecomposition(MatrixType* pMatr, Figaro::EDHintType edHintType = Figaro::EDHintType::DIV_AND_CONQ)
+        void computeEigenValueDecomposition(
+            Figaro::EDHintType edHintType = Figaro::EDHintType::DIV_AND_CONQ,
+            MatrixType* pED = nullptr, MatrixType* pEV = nullptr)
         {
             uint32_t memLayout = getLapackMajorOrder();
-            MatrixType& matE = *pMatr;
+            MatrixType& matE = *pED;
+            MatrixType& matEV = *pEV;
             uint32_t N = m_numRows;
             matE = std::move(MatrixType{m_numRows, m_numRows});
+            matEV = std::move(MatrixType{m_numRows, 1});
             uint32_t ldA = getLeadingDimension();
             uint32_t ldZ = matE.getLeadingDimension();
 
             double* pArrPt = getArrPt();
-            double *pOut = matE.getArrPt();
+            double *pOut = matEV.getArrPt();
             if (edHintType == Figaro::EDHintType::QR_ITER)
             {
                 FIGARO_LOG_DBG("Qr iteration")
@@ -1786,10 +1818,59 @@ namespace Figaro
 
 
          void computeSVDEigenDec(uint32_t numThreads,
+            Figaro::SVDHintType svdHintType,
+            bool computeU, bool saveResult,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatV)
         {
+            MatrixType& matA = *this;
+            MatrixType matATA{0, 0};
+            Figaro::EDHintType edHintType;
+            MatrixType& matU = *pMatU;
+            MatrixType& matS = *pMatS;
+            MatrixType& matV = *pMatV;
+            MatrixType matED{0, 0};
+            MatrixType matEV{0 ,0};
 
+            matATA = selfMatrixMultiply(0);
+            if (svdHintType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ)
+            {
+                edHintType = Figaro::EDHintType::DIV_AND_CONQ;
+            }
+            else if (svdHintType == Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER)
+            {
+                edHintType = Figaro::EDHintType::QR_ITER;
+            }
+            else if (svdHintType == Figaro::SVDHintType::EIGEN_DECOMP_RRR)
+            {
+                edHintType = Figaro::EDHintType::RRR;
+            }
+            FIGARO_LOG_DBG("Starting computation")
+            matATA.computeEigenValueDecomposition(edHintType, &matED, &matEV);
+            FIGARO_LOG_DBG("Ending computation")
+            matS = std::move(matEV);
+            for (uint32_t rowIdx = 0; rowIdx < matS.m_numRows; rowIdx++)
+            {
+                matS(rowIdx, 0) = std::sqrt(matS(rowIdx, 0));
+            }
+
+            for (uint32_t rowIdx1 = 0; rowIdx1 < matS.m_numRows - 1; rowIdx1++)
+            {
+                for (uint32_t rowIdx2 = rowIdx1 + 1; rowIdx2 < matS.m_numRows; rowIdx2++)
+                if (matS(rowIdx1, 0) < matS(rowIdx2, 0))
+                {
+                    std::swap(matS(rowIdx1, 0), matS(rowIdx2, 0));
+                }
+            }
+            // TODO: Add permutation of V
+            FIGARO_LOG_DBG("Passed computation")
+            matV =  std::move(matATA);
+            FIGARO_LOG_DBG("Passed ATA")
+            if (computeU)
+            {
+                MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matV);
+                matU = matA * compInv;
+            }
         }
 
         void computeSVDR(uint32_t numThreads,
@@ -1800,7 +1881,7 @@ namespace Figaro
         }
 
         void computeSVD(uint32_t numThreads = 1, bool useHint = false,
-            Figaro::SVDHintType SVDHintType = Figaro::SVDHintType::JACOBI,
+            Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::JACOBI,
             bool computeU = false, bool saveResult = false,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatV = nullptr)
@@ -1812,7 +1893,7 @@ namespace Figaro
             }
             if (useHint)
             {
-                svdType = SVDHintType;
+                svdType = sVDHintType;
             }
             else
             {
@@ -1827,9 +1908,12 @@ namespace Figaro
             {
                 computeSVDPowerIter(numThreads,  pMatU, pMatS, pMatV);
             }
-            else if (svdType == Figaro::SVDHintType::EIGEN_DECOMP)
+            else if ((svdType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ) ||
+            (svdType == Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER)
+            || (svdType == Figaro::SVDHintType::EIGEN_DECOMP_RRR))
             {
-                computeSVDEigenDec(numThreads, pMatU, pMatS, pMatV);
+                computeSVDEigenDec(numThreads, svdType, computeU, saveResult,
+                    pMatU, pMatS, pMatV);
             }
             else if (svdType == Figaro::SVDHintType::QR)
             {

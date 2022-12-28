@@ -915,7 +915,6 @@ namespace Figaro
 
         uint32_t numThreads = getNumberOfThreads();
 
-
         vOutIdxs.resize(numThreads);
         vStartRowIdxs.resize(numThreads);
         vEndRowIdxs.resize(numThreads);
@@ -935,10 +934,7 @@ namespace Figaro
                 vEndRowIdxs[idx] += vEndRowIdxs[idx-1];
                 vStartRowIdxs[idx] = vEndRowIdxs[idx-1];
             }
-            FIGARO_LOG_INFO("vStartRowIdxs[idx] ", vStartRowIdxs[idx],vEndRowIdxs[idx] )
         }
-        FIGARO_LOG_INFO("joinSize", joinSize)
-        vTmpJoinSize.back() = joinSize;
 
         vvJoinAttrIdxs.resize(vpRels.size());
         vvParJoinAttrIdxs.resize(vpRels.size());
@@ -968,6 +964,11 @@ namespace Figaro
             }
             else if (idxRel == 0)
             {
+                /*
+                newAttributes.insert(newAttributes.end(),
+                    vpRels[idxRel]->m_attributes.begin(),
+                    vpRels[idxRel]->m_attributes.begin() + 10);
+                */
                 newAttributes.insert(newAttributes.end(),
                     vpRels[idxRel]->m_attributes.begin() + vvNonJoinAttrIdxs[idxRel][0],
                     vpRels[idxRel]->m_attributes.end());
@@ -1005,8 +1006,8 @@ namespace Figaro
 
         MatrixDRowT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
-        //MICRO_BENCH_INIT(iterateOverRootRelTimer)
-        //MICRO_BENCH_START(iterateOverRootRelTimer)
+        FIGARO_BENCH_INIT(iterateOverRootRelTimer)
+        FIGARO_BENCH_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
         for (uint32_t threadIdx = 0; threadIdx < numThreads; threadIdx++)
         {
@@ -1025,8 +1026,8 @@ namespace Figaro
             }
 
         }
-        //MICRO_BENCH_STOP(iterateOverRootRelTimer)
-        //FIGARO_LOG_BENCH("join and add columns", MICRO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
+        FIGARO_BENCH_STOP(iterateOverRootRelTimer)
+        FIGARO_LOG_BENCH("join and add columns", FIGARO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
@@ -1375,19 +1376,13 @@ namespace Figaro
     double Relation::checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const
     {
         FIGARO_LOG_INFO("m_attributes", m_attributes)
-        auto result = m_data.selfMatrixMultiply(vJoinAttrNames.size());
-        auto eye = MatrixDRowT::identity(result.getNumRows());
-        auto diff = eye.subtract(result, 0, vJoinAttrNames.size());
-        FIGARO_LOG_INFO("diff norm", eye.norm(0))
-        FIGARO_LOG_INFO("diff norm", result)
-        FIGARO_LOG_BENCH("Dimensions Result", result.getNumRows(), result.getNumCols())
-        FIGARO_LOG_BENCH("Dimensions Diff", diff.getNumRows(), diff.getNumCols())
-        FIGARO_LOG_BENCH("Norm diff",  diff.norm(vJoinAttrNames.size()))
-        FIGARO_LOG_BENCH("Norm eye",  eye.norm(0))
-        FIGARO_LOG_INFO("diff norm", vJoinAttrNames.size())
-        FIGARO_LOG_BENCH("Dimensions", m_data.getNumRows(), m_data.getNumCols())
+        //auto test = MatrixDRowT{m_data.getNumRows(), m_data.getNumCols()};
+        //test.copyBlockToThisMatrix(m_data, 0, m_data.getNumRows() -1,
+        //0, m_data.getNumCols() -1, 0, 0);
+        //test.resizeCols(10);
+        double ort = m_data.getOrthogonality(vJoinAttrNames.size());
 
-        return diff.norm(vJoinAttrNames.size()) / eye.norm(0);
+        return ort;
     }
 
     double Relation::getNorm(const std::vector<std::string>& vJoinAttrNames) const
@@ -3153,12 +3148,12 @@ namespace Figaro
         return std::make_tuple(pU, pL);
     }
 
-    Relation Relation::computeSVDSigmaVTranInverse(const Relation& relV) const
+    Relation Relation::computeSVDSigmaVTranInverse(const Relation& relVT) const
     {
         const Relation& relSigma = *this;
 
         MatrixDRowT sigmaVInv = relSigma.m_data.computeSVDSigmaVTranInverse(
-            getNumberOfThreads(), relV.m_data);
+            getNumberOfThreads(), relVT.m_data);
 
         return Relation("SVD_SIGMA_V_T_INVERSE" + getName(), std::move(sigmaVInv),
             m_attributes);
@@ -3299,12 +3294,9 @@ namespace Figaro
             MatrixDColT matU = MatrixDColT{0, 0};
             MatrixDColT matS = MatrixDColT{0, 0};
             MatrixDColT matV = MatrixDColT{0, 0};
-            FIGARO_LOG_BENCH("Starting computation", 1)
 
             m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType, true,
                 saveResult, &matU, &matS, &matV);
-
-            FIGARO_LOG_BENCH("End computation", 1)
 
             if (saveResult)
             {
@@ -3547,8 +3539,7 @@ namespace Figaro
     void Relation::outputToFile(std::ostream& out, char sep,
         uint32_t precision, bool header) const
     {
-        //for (uint32_t row = 0; row < m_data.getNumRows(); row ++)
-        for (uint32_t row = 0; row < m_data.getNumCols(); row ++)
+        for (uint32_t row = 0; row < m_data.getNumRows(); row ++)
         {
             for (uint32_t col = 0; col < m_data.getNumCols(); col++)
             {

@@ -389,13 +389,13 @@ namespace Figaro
 
     std::string Database::computeSVDSigmaVTranInverse(
         const std::string& relationSigmaName,
-        const std::string& relationVName
+        const std::string& relationVTName
     )
     {
         Relation& relSigma = m_relations.at(relationSigmaName);
-        Relation& relV = m_relations.at(relationVName);
+        Relation& relVT = m_relations.at(relationVTName);
 
-        auto svdRes = relSigma.computeSVDSigmaVTranInverse(relV);
+        auto svdRes = relSigma.computeSVDSigmaVTranInverse(relVT);
 
         std::string sigmaVInvName = svdRes.getName();
         m_relations.emplace(sigmaVInvName, std::move(svdRes));

@@ -76,8 +76,10 @@ class DecompConf:
         HOUSEHOLDER = 2
         JACOBI = 3
         POWER_ITER = 4
-        EIGEND_DECOMP = 5
-        QR = 6
+        EIGEN_DECOMP_DIV_AND_CONQ = 5
+        EIGEN_DECOMP_QR_ITER = 6
+        EIGEN_DECOMP_RRR = 7
+        QR = 8
 
 
     class SparsityMode(IntEnum):
@@ -100,7 +102,9 @@ class DecompConf:
         'householder': Method.HOUSEHOLDER,
         'jacobi': Method.JACOBI,
         'power_iter': Method.POWER_ITER,
-        'eigen_decomp': Method.EIGEND_DECOMP,
+        'eigen_decomp_div_and_conq': Method.EIGEN_DECOMP_DIV_AND_CONQ,
+        'eigen_decomp_qr_iter': Method.EIGEN_DECOMP_QR_ITER,
+        'eigen_decomp_rrr': Method.EIGEN_DECOMP_RRR,
         'qr': Method.QR
     }
 
@@ -109,7 +113,9 @@ class DecompConf:
         Method.HOUSEHOLDER: 'householder',
         Method.JACOBI: 'jacobi',
         Method.POWER_ITER: 'power_iter',
-        Method.EIGEND_DECOMP: 'eigen_decomp',
+        Method.EIGEN_DECOMP_DIV_AND_CONQ: 'eigen_decomp_div_and_conq',
+        Method.EIGEN_DECOMP_QR_ITER: 'eigen_decomp_qr_iter',
+        Method.EIGEN_DECOMP_RRR: 'eigen_decomp_rrr',
         Method.QR: 'qr'
     }
 

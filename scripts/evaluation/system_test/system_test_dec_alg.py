@@ -109,8 +109,12 @@ class SystemTestDecompAlg(SystemTestCompetitor):
                 command = "SVD_JACOBI"
             elif self.conf_decomp.method == DecompConf.Method.POWER_ITER:
                 command = "SVD_POWER_ITER"
-            elif self.conf_decomp.method == DecompConf.Method.EIGEND_DECOMP:
-                command = "SVD_EIGEND_DECOMP"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_DIV_AND_CONQ:
+                command = "SVD_EIGEND_DECOMP_DIV_AND_CONQ"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_QR_ITER:
+                command = "SVD_EIGEND_DECOMP_QR_ITER"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_RRR:
+                command = "SVD_EIGEND_DECOMP_RRR"
             elif self.conf_decomp.method == DecompConf.Method.QR:
                 command = "SVD_QR"
 

@@ -1,8 +1,6 @@
 
 from evaluation.accuracy.accuracy_workbook import AccuracyWorkbook
 import math
-import csv
-import os
 import pandas as pd
 import numpy as np
 

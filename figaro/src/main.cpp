@@ -149,13 +149,15 @@ int main(int argc, char *argv[])
             case Figaro::Query::OpType::DECOMP_SVD:
             {
                 Figaro::ASTVisitorResultSVD* pSVDResult = (Figaro::ASTVisitorResultSVD*)pResult;
-                std::ofstream fileDumpV(dumpFilePath, std::ofstream::out);
-                //database.outputRelationToFile(fileDumpV,
-                //pSVDResult->getVRelationName, ',', precision);
+                std::ofstream fileDumpS(dumpFilePath, std::ofstream::out);
+                database.outputRelationToFile(fileDumpS,
+                pSVDResult->getSRelationName(), ',', precision);
                 if (computeAll)
                 {
-                    double ortMeasure = database.checkOrthogonality(pSVDResult->getURelationName(), {});
-                    FIGARO_LOG_BENCH("Orthogonality of U",  ortMeasure);
+                    double ortMeasureU = database.checkOrthogonality(pSVDResult->getURelationName(), {});
+                    FIGARO_LOG_BENCH("Orthogonality of U",  ortMeasureU);
+                      double ortMeasureV = database.checkOrthogonality(pSVDResult->getVRelationName(), {});
+                    FIGARO_LOG_BENCH("Orthogonality of V",  ortMeasureV);
                 }
                 break;
             }

@@ -24,7 +24,10 @@ namespace Figaro
         JACOBI = 0,
         POWER_ITER = 1,
         EIGEN_DECOMP = 2,
-        QR = 4
+        EIGEN_DECOMP_DIV_AND_CONQ = 3,
+        EIGEN_DECOMP_QR_ITER = 4,
+        EIGEN_DECOMP_RRR = 5,
+        QR = 6
     };
 
     enum class LUHintType

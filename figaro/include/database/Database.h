@@ -122,7 +122,7 @@ namespace Figaro
 
         std::string computeSVDSigmaVTranInverse(
             const std::string& relationSigmaName,
-            const std::string& relationVName
+            const std::string& relationVTName
         );
 
         double checkOrthogonality(const std::string& relationName,
