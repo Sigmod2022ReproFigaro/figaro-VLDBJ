@@ -28,9 +28,9 @@ namespace Figaro
         || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
         || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_DIV_AND_CONQ")
+        || (operatorName == "SVD_QR_ITER") || (operatorName == "SVD_QR")
         || (operatorName == "SVD_POWER_ITER") || (operatorName == "SVD_EIGEN_DECOMP")
-        || (operatorName == "SVD_POWER_ITER") || (operatorName == "SVD_EIGEN_DECOMP")
-        || (operatorName == "SVD_QR") || (operatorName == ("SVD_EIGEN_DECOMP_DIV_AND_CONQ")
+        || (operatorName == ("SVD_EIGEN_DECOMP_DIV_AND_CONQ")
         || (operatorName == "SVD_EIGEN_DECOMP_QR_ITER") ||
         (operatorName == "SVD_EIGEN_DECOMP_RRR")))
         {

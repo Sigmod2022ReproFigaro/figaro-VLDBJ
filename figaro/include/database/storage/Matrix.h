@@ -378,7 +378,7 @@ namespace Figaro
             tmpMat.copyBlockToThisMatrix(*this,
                 0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
             */
-            (const_cast<MatrixType*>(this))->computeSVDLapack(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
+            (const_cast<MatrixType*>(this))->computeSVDDivAndConq(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
             double maxSingValue = matrixS(0, 0);
             double minSingValue = matrixS(rank - 1, 0);
             //FIGARO_LOG_MIC_BEN("Dimensions", m, n)
@@ -1660,52 +1660,6 @@ namespace Figaro
             }
         }
 
-        void computeSVDLapack(uint32_t numThreads,
-            MatrixType* pMatU, MatrixType* pMatS,
-            MatrixType* pMatVT)
-        {
-            double *pArr = getArrPt();
-            uint32_t memLayout = getLapackMajorOrder();
-            uint32_t ldA, ldU, ldvT;
-            MatrixType& matS = *pMatS;
-            MatrixType& matVT = *pMatVT;
-            double *pArrU = nullptr;
-            double *pArrS = nullptr;
-            double *pArrVT = nullptr;
-
-            uint32_t rank;
-
-            rank = std::min(m_numRows, m_numCols);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
-            {
-                ldA = m_numCols;
-                ldU = rank;
-            }
-            else
-            {
-                ldA = m_numRows;
-                ldU = m_numRows;
-            }
-            ldvT = rank;
-
-            if (pMatU != nullptr)
-            {
-                MatrixType& matU = *pMatU;
-                matU = std::move(MatrixType{m_numRows, rank});
-                pArrU = matU.getArrPt();
-            }
-
-            matS = std::move(MatrixType{rank, 1});
-            matVT = std::move(MatrixType{rank, m_numCols});
-
-            pArrS = matS->getArrPt();
-            pArrVT = MatVT->getArrPt();
-
-            LAPACKE_dgesdd(memLayout, 'S', m_numRows, m_numCols, pArr, ldA,
-                pArrS, pArrU, ldU,
-                pArrVT, ldvT);
-        }
-
         MatrixType computeSVDSigmaVTranInverse(uint32_t numThreads,
             const MatrixType& matVT) const
         {
@@ -1728,13 +1682,6 @@ namespace Figaro
 
         void computeSVDDivAndConq(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
-            MatrixType* pMatV)
-        {
-            computeSVDLapack(numThreads, pMatU, pMatS, pMatV);
-        }
-
-        void computeSVDQRIter(uint32_t numThreads,
-            MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatVT)
         {
             double *pArr = getArrPt();
@@ -1745,12 +1692,11 @@ namespace Figaro
             double *pArrU = nullptr;
             double *pArrS = nullptr;
             double *pArrVT = nullptr;
-
+            char jobType;
 
             uint32_t rank;
-            rank = std::min(m_numRows, m_numCols);
 
-            double* pSuperb = new double [rank];
+            rank = std::min(m_numRows, m_numCols);
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
                 ldA = m_numCols;
@@ -1768,17 +1714,75 @@ namespace Figaro
                 MatrixType& matU = *pMatU;
                 matU = std::move(MatrixType{m_numRows, rank});
                 pArrU = matU.getArrPt();
+                jobType = 'S';
+            }
+            else
+            {
+                jobType = 'N';
             }
 
             matS = std::move(MatrixType{rank, 1});
             matVT = std::move(MatrixType{rank, m_numCols});
 
-            pArrS = matS->getArrPt();
-            pArrVT = MatVT->getArrPt();
+            pArrS = matS.getArrPt();
+            pArrVT = matVT.getArrPt();
 
-            LAPACKE_dgesvd(memLayout, 'S', 'S', m_numRows, m_numCols, pArr, ldA,
-                pArrS, pArrU, ldU, pArrVT, ldVT, pSuperb);
-            delete [] superb;
+            LAPACKE_dgesdd(memLayout, jobType, m_numRows, m_numCols, pArr, ldA,
+                pArrS, pArrU, ldU, pArrVT, ldvT);
+        }
+
+        void computeSVDQRIter(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatVT)
+        {
+            double *pArr = getArrPt();
+            uint32_t memLayout = getLapackMajorOrder();
+            uint32_t ldA, ldU, ldVT;
+            MatrixType& matS = *pMatS;
+            MatrixType& matVT = *pMatVT;
+            double *pArrU = nullptr;
+            double *pArrS = nullptr;
+            double *pArrVT = nullptr;
+            char jobType;
+
+
+            uint32_t rank;
+            rank = std::min(m_numRows, m_numCols);
+
+            double* pSuperb = new double [rank];
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                ldA = m_numCols;
+                ldU = rank;
+            }
+            else
+            {
+                ldA = m_numRows;
+                ldU = m_numRows;
+            }
+            ldVT = rank;
+
+            if (pMatU != nullptr)
+            {
+                MatrixType& matU = *pMatU;
+                matU = std::move(MatrixType{m_numRows, rank});
+                pArrU = matU.getArrPt();
+                jobType = 'S';
+            }
+            else
+            {
+                jobType = 'N';
+            }
+
+            matS = std::move(MatrixType{rank, 1});
+            matVT = std::move(MatrixType{rank, m_numCols});
+
+            pArrS = matS.getArrPt();
+            pArrVT = matVT.getArrPt();
+
+            LAPACKE_dgesvd(memLayout, jobType, jobType, m_numRows, m_numCols, pArr, ldA,
+                pArrS, pArrU, ldU, pArrVT, ldVT , pSuperb);
+            delete [] pSuperb;
         }
 
         void powerIteration(MatrixType& vectV, double& sigma)
