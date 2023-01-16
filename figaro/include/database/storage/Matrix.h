@@ -1688,7 +1688,6 @@ namespace Figaro
             uint32_t memLayout = getLapackMajorOrder();
             uint32_t ldA, ldU, ldvT;
             MatrixType& matS = *pMatS;
-            MatrixType& matVT = *pMatVT;
             double *pArrU = nullptr;
             double *pArrS = nullptr;
             double *pArrVT = nullptr;
@@ -1722,10 +1721,14 @@ namespace Figaro
             }
 
             matS = std::move(MatrixType{rank, 1});
-            matVT = std::move(MatrixType{rank, m_numCols});
+            if (pMatVT != nullptr)
+            {
+                MatrixType& matVT = *pMatVT;
+                matVT = std::move(MatrixType{rank, m_numCols});
+                pArrVT = matVT.getArrPt();
+            }
 
             pArrS = matS.getArrPt();
-            pArrVT = matVT.getArrPt();
 
             LAPACKE_dgesdd(memLayout, jobType, m_numRows, m_numCols, pArr, ldA,
                 pArrS, pArrU, ldU, pArrVT, ldvT);
@@ -1739,7 +1742,7 @@ namespace Figaro
             uint32_t memLayout = getLapackMajorOrder();
             uint32_t ldA, ldU, ldVT;
             MatrixType& matS = *pMatS;
-            MatrixType& matVT = *pMatVT;
+
             double *pArrU = nullptr;
             double *pArrS = nullptr;
             double *pArrVT = nullptr;
@@ -1773,12 +1776,15 @@ namespace Figaro
             {
                 jobType = 'N';
             }
+            if (pMatVT != nullptr)
+            {
+                MatrixType& matVT = *pMatVT;
+                matVT = std::move(MatrixType{rank, m_numCols});
+            }
 
             matS = std::move(MatrixType{rank, 1});
-            matVT = std::move(MatrixType{rank, m_numCols});
 
             pArrS = matS.getArrPt();
-            pArrVT = matVT.getArrPt();
 
             LAPACKE_dgesvd(memLayout, jobType, jobType, m_numRows, m_numCols, pArr, ldA,
                 pArrS, pArrU, ldU, pArrVT, ldVT , pSuperb);
