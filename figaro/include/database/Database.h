@@ -254,6 +254,7 @@ namespace Figaro
             const std::string& relName,
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
+            bool computeUAndV,
             bool saveResult);
 
         /**

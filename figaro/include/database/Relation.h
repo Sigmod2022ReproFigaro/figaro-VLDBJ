@@ -638,6 +638,7 @@ namespace Figaro
         std::tuple<Relation*, Relation*, Relation*>
         computeSVD(Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
+            bool computeUAndV,
             bool saveResult);
 
         uint64_t sumRedSize(uint32_t numJoinAttrs, uint32_t power) const;

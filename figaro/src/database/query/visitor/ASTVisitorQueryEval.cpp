@@ -335,7 +335,8 @@ namespace Figaro
         FIGARO_BENCH_INIT(vComp)
         FIGARO_BENCH_START(vComp)
         auto [uName, sName, vName] = m_pDatabase->evalSVDDecAlg(rRelName,
-            pElement->getHelpSVDAlg(), Figaro::MemoryLayout::ROW_MAJOR, true);
+            pElement->getHelpSVDAlg(), Figaro::MemoryLayout::ROW_MAJOR,
+            pElement->isComputeU(), true);
         FIGARO_BENCH_STOP(vComp)
         FIGARO_LOG_BENCH("Figaro", "Computation of V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
 
@@ -383,7 +384,7 @@ namespace Figaro
         auto [uName, sName, vName] =
             m_pDatabase->evalSVDDecAlg(pElement->getRelationOrder().at(0),
             pElement->getSVDAlgorithm(),
-             m_memoryLayout, m_saveResult);
+             m_memoryLayout, pElement->isComputeUAndV(), m_saveResult);
         FIGARO_BENCH_STOP(svdLapackEval)
         FIGARO_LOG_BENCH("Figaro", "SVD LAPACK eval", FIGARO_BENCH_GET_TIMER_LAP(svdLapackEval))
         return new ASTVisitorResultSVD(uName, sName, vName);

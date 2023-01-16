@@ -96,7 +96,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_LU;
                 pCreatedNode = new ASTNodeLUFigaro(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                     Figaro::LUHintType::PART_PIVOT_LAPACK);
                 FIGARO_LOG_INFO("CREATE LU_FIGARO NODE")
             }
@@ -117,7 +117,7 @@ namespace Figaro
                     }
                 }
                 pCreatedNode = new ASTNodeQRFigaro(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                     decompAlg);
                 FIGARO_LOG_INFO("CREATE QR_FIGARO NODE")
             }
@@ -138,7 +138,7 @@ namespace Figaro
                     }
                 }
                 pCreatedNode = new ASTNodeSVDFigaro(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                     decompAlg);
                 FIGARO_LOG_INFO("CREATE SVD_FIGARO NODE")
             }
@@ -146,7 +146,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRAlg(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::QRHintType::HOUSEHOLDER);
                 FIGARO_LOG_INFO("CREATE QR_HOUSEHOLDER NODE")
             }
@@ -154,7 +154,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_QR;
                 pCreatedNode = new ASTNodeQRAlg(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, computeQ,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                  Figaro::QRHintType::GIV_THIN_DIAG);
                 FIGARO_LOG_INFO("CREATE QR_HOUSEHOLDER NODE")
             }
@@ -177,15 +177,23 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::DIV_AND_CONQ);
                 FIGARO_LOG_INFO("CREATE SVD_DIV_AND_CONQ NODE")
+            }
+            else if (operatorName == "SVD_QR_ITER")
+            {
+                m_opType = Query::OpType::DECOMP_SVD;
+                pCreatedNode = new ASTNodeSVDAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::SVDHintType::QR_ITER);
+                FIGARO_LOG_INFO("CREATE SVD_QR_ITER NODE")
             }
             else if (operatorName == "SVD_POWER_ITER")
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::POWER_ITER);
                 FIGARO_LOG_INFO("CREATE SVD_POWER_ITER NODE")
             }
@@ -193,7 +201,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::EIGEN_DECOMP);
                 FIGARO_LOG_INFO("CREATE SVD_EIGEND_DECOMP NODE")
             }
@@ -201,7 +209,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ);
                 FIGARO_LOG_INFO("CREATE SVD_EIGEND_DECOMP_DIV_AND_CONQ NODE")
             }
@@ -209,7 +217,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER);
                 FIGARO_LOG_INFO("CREATE SVD_EIGEND_DECOMP_QR_ITER NODE")
             }
@@ -217,7 +225,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::EIGEN_DECOMP_RRR);
                 FIGARO_LOG_INFO("CREATE SVD_EIGEND_DECOMP_RRR NODE")
             }
@@ -225,7 +233,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
-                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::SVDHintType::QR);
                 FIGARO_LOG_INFO("CREATE SVD_QR NODE")
             }

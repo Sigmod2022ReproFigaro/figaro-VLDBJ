@@ -884,10 +884,12 @@ namespace Figaro
             const std::string& relName,
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
+            bool computeUAndV,
             bool saveResult)
     {
         Relation& rel = m_relations.at(relName);
-        auto svdResult = rel.computeSVD(svdHintType, memoryLayout, saveResult);
+        auto svdResult = rel.computeSVD(svdHintType,
+            memoryLayout, computeUAndV, saveResult);
         return saveSVDResult(svdResult);
     }
 

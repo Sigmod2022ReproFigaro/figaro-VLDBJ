@@ -16,13 +16,15 @@ namespace Figaro
         std::vector<std::string> m_vRelationOrder;
         std::vector<std::string> m_vDropAttributes;
         uint32_t m_numThreads;
+        bool m_computeUAndV;
         SVDHintType m_SVDAlg;
     public:
         ASTNodeSVDAlgDec(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes,
-        uint32_t numThreads, Figaro::SVDHintType algSvd):
+        uint32_t numThreads, bool computeUAndV, Figaro::SVDHintType algSvd):
             m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
             m_vDropAttributes(vDropAttributes),
-            m_numThreads(numThreads), m_SVDAlg(algSvd) {};
+            m_numThreads(numThreads), m_SVDAlg(algSvd),
+            m_computeUAndV(computeUAndV) {};
         virtual ~ASTNodeSVDAlgDec() override { delete m_pOperand; }
         ASTNode* getOperand(void)
         {
@@ -46,12 +48,17 @@ namespace Figaro
             return m_SVDAlg;
         }
 
+        bool isComputeUAndV(void) const
+        {
+            return m_computeUAndV;
+        }
+
         ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
 
         virtual ASTNodeSVDAlgDec* copy() override
         {
             return new ASTNodeSVDAlgDec(m_pOperand->copy(),
-                m_vRelationOrder, m_vDropAttributes, m_numThreads, m_SVDAlg);
+                m_vRelationOrder, m_vDropAttributes, m_numThreads, m_computeUAndV, m_SVDAlg);
         }
 
     };
