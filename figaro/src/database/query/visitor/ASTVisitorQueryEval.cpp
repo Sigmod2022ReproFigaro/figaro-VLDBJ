@@ -327,13 +327,18 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), false,
-                QRHintType::HOUSEHOLDER);
+                QRHintType::GIV_THIN_DIAG);
         ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
         rRelName = pQrResult->getRRelationName();
         delete pQrResult;
 
+        FIGARO_BENCH_INIT(vComp)
+        FIGARO_BENCH_START(vComp)
         auto [uName, sName, vName] = m_pDatabase->evalSVDDecAlg(rRelName,
             pElement->getHelpSVDAlg(), Figaro::MemoryLayout::ROW_MAJOR, true);
+        FIGARO_BENCH_STOP(vComp)
+        FIGARO_LOG_BENCH("Figaro", "Computation of V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
+
 
         FIGARO_LOG_INFO("COMPUTING U")
         FIGARO_BENCH_INIT(uComp)

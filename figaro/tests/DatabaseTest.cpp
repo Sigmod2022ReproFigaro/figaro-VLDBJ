@@ -646,7 +646,7 @@ TEST(Matrix, computeEigenValueDecompositionDivAndConqRowMajor)
 */
 }
 
-TEST(Matrix, computeSVDJacobiRowMajor)
+TEST(Matrix, computeSVDDivAndConqRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
@@ -703,7 +703,7 @@ TEST(Matrix, computeSVDJacobiRowMajor)
     EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
 }
 
-TEST(Matrix, computeSVDJacobiColMajor)
+TEST(Matrix, computeSVDDivAndConqColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);

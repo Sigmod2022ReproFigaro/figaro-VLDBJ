@@ -1569,20 +1569,20 @@ namespace Figaro
             if ((qrType == QRHintType::GIV_THICK_DIAG) ||
                 (qrType == QRHintType::GIV_THICK_BOTTOM))
             {
-                //FIGARO_LOG_INFO("Thick version")
+                FIGARO_LOG_INFO("Thick version")
                 computeQRGivensParallelizedThickMatrix(numThreads, qrType);
             }
             else if ((qrType == QRHintType::GIV_THIN_DIAG) ||
                 (qrType == QRHintType::GIV_THIN_BOTTOM))
             {
-                //FIGARO_LOG_INFO("Thin version")
-                FIGARO_LOG_BENCH("POSTPROCESS", "GIV_THIN_DIAG")
+                FIGARO_LOG_INFO("Thin version")
+                //FIGARO_LOG_BENCH("POSTPROCESS", "GIV_THIN_DIAG")
                 computeQRGivensParallelizedThinMatrix(numThreads, qrType);
             }
             else if (qrType == QRHintType::HOUSEHOLDER)
             {
-                //FIGARO_LOG_INFO("HOUSEHOLDER")
-                FIGARO_LOG_BENCH("POSTPROCESS", "HOUSEHOLDER")
+                FIGARO_LOG_INFO("HOUSEHOLDER")
+                //FIGARO_LOG_BENCH("POSTPROCESS", "HOUSEHOLDER")
                 computeQRLapack(computeQ, saveResult, pMatR, pMatQ);
             }
         }
@@ -1662,14 +1662,16 @@ namespace Figaro
 
         void computeSVDLapack(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
-            MatrixType* pMatV)
+            MatrixType* pMatVT)
         {
             double *pArr = getArrPt();
             uint32_t memLayout = getLapackMajorOrder();
             uint32_t ldA, ldU, ldvT;
-            MatrixType& matU = *pMatU;
             MatrixType& matS = *pMatS;
-            MatrixType& matV = *pMatV;
+            MatrixType& matVT = *pMatVT;
+            double *pArrU = nullptr;
+            double *pArrS = nullptr;
+            double *pArrVT = nullptr;
 
             uint32_t rank;
 
@@ -1685,13 +1687,23 @@ namespace Figaro
                 ldU = m_numRows;
             }
             ldvT = rank;
-            matU = std::move(MatrixType{m_numRows, rank});
+
+            if (pMatU != nullptr)
+            {
+                MatrixType& matU = *pMatU;
+                matU = std::move(MatrixType{m_numRows, rank});
+                pArrU = matU.getArrPt();
+            }
+
             matS = std::move(MatrixType{rank, 1});
-            matV = std::move(MatrixType{rank, m_numCols});
+            matVT = std::move(MatrixType{rank, m_numCols});
+
+            pArrS = matS->getArrPt();
+            pArrVT = MatVT->getArrPt();
 
             LAPACKE_dgesdd(memLayout, 'S', m_numRows, m_numCols, pArr, ldA,
-                pMatS->getArrPt(), pMatU->getArrPt(), ldU,
-                pMatV->getArrPt(), ldvT);
+                pArrS, pArrU, ldU,
+                pArrVT, ldvT);
         }
 
         MatrixType computeSVDSigmaVTranInverse(uint32_t numThreads,
@@ -1700,17 +1712,7 @@ namespace Figaro
             const MatrixType& matS = *this;
             //constexpr uint32_t k = 10;
             //MatrixType mSVInv = MatrixType{matV.getNumRows() , k};
-            MatrixType mSVInv = MatrixType{matVT.getNumRows() , matVT.getNumCols()};
-
-            // TODO: Replace with clblas function
-            for (uint32_t rowIdx = 0; rowIdx < matVT.getNumRows(); rowIdx++)
-            {
-                //for (uint32_t colIdx = 0; colIdx < k; colIdx++)
-                for (uint32_t colIdx = 0; colIdx < matVT.getNumCols(); colIdx++)
-                {
-                    mSVInv(rowIdx, colIdx) = matVT(colIdx, rowIdx);
-                }
-            }
+            MatrixType mSVInv = matVT.transpose();
 
             for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
             {
@@ -1724,11 +1726,59 @@ namespace Figaro
         }
 
 
-        void computeSVDJacobi(uint32_t numThreads,
+        void computeSVDDivAndConq(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatV)
         {
             computeSVDLapack(numThreads, pMatU, pMatS, pMatV);
+        }
+
+        void computeSVDQRIter(uint32_t numThreads,
+            MatrixType* pMatU, MatrixType* pMatS,
+            MatrixType* pMatVT)
+        {
+            double *pArr = getArrPt();
+            uint32_t memLayout = getLapackMajorOrder();
+            uint32_t ldA, ldU, ldvT;
+            MatrixType& matS = *pMatS;
+            MatrixType& matVT = *pMatVT;
+            double *pArrU = nullptr;
+            double *pArrS = nullptr;
+            double *pArrVT = nullptr;
+
+
+            uint32_t rank;
+            rank = std::min(m_numRows, m_numCols);
+
+            double* pSuperb = new double [rank];
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                ldA = m_numCols;
+                ldU = rank;
+            }
+            else
+            {
+                ldA = m_numRows;
+                ldU = m_numRows;
+            }
+            ldvT = rank;
+
+            if (pMatU != nullptr)
+            {
+                MatrixType& matU = *pMatU;
+                matU = std::move(MatrixType{m_numRows, rank});
+                pArrU = matU.getArrPt();
+            }
+
+            matS = std::move(MatrixType{rank, 1});
+            matVT = std::move(MatrixType{rank, m_numCols});
+
+            pArrS = matS->getArrPt();
+            pArrVT = MatVT->getArrPt();
+
+            LAPACKE_dgesvd(memLayout, 'S', 'S', m_numRows, m_numCols, pArr, ldA,
+                pArrS, pArrU, ldU, pArrVT, ldVT, pSuperb);
+            delete [] superb;
         }
 
         void powerIteration(MatrixType& vectV, double& sigma)
@@ -1737,7 +1787,7 @@ namespace Figaro
             std::random_device randDev{};
             std::mt19937 intGen{randDev()};
             std::normal_distribution<double> normDistr{0, 1};
-            int N = m_numCols;
+            uint32_t N = m_numCols;
             double normVector;
             MatrixType& matA = *this;
             vectV = std::move(MatrixType{N, 1});
@@ -1827,7 +1877,6 @@ namespace Figaro
                 for (uint32_t rowIdx = 0; rowIdx < m_numCols; rowIdx++)
                 {
                     matV(diagIdx, rowIdx) = v(rowIdx, 0);
-
                 }
             }
         }
@@ -1903,7 +1952,7 @@ namespace Figaro
         }
 
         void computeSVD(uint32_t numThreads = 1, bool useHint = false,
-            Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::JACOBI,
+            Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::DIV_AND_CONQ,
             bool computeU = false, bool saveResult = false,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatV = nullptr)
@@ -1919,12 +1968,16 @@ namespace Figaro
             }
             else
             {
-                svdType = Figaro::SVDHintType::JACOBI;
+                svdType = Figaro::SVDHintType::DIV_AND_CONQ;
             }
 
-            if (svdType == Figaro::SVDHintType::JACOBI)
+            if (svdType == Figaro::SVDHintType::DIV_AND_CONQ)
             {
-                computeSVDJacobi(numThreads, pMatU, pMatS, pMatV);
+                computeSVDDivAndConq(numThreads, pMatU, pMatS, pMatV);
+            }
+            else if (svdType == Figaro::SVDHintType::QR_ITER)
+            {
+                computeSVDQRIter(numThreads, pMatU, pMatS, pMatV);
             }
             else if (svdType == Figaro::SVDHintType::POWER_ITER)
             {

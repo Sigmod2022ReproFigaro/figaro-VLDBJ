@@ -27,12 +27,12 @@ namespace Figaro
         || (operatorName == "QR_GIV_THIN_DIAG") || (operatorName == "eval_join")
         || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
-        || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_JACOBI")
+        || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_DIV_AND_CONQ")
         || (operatorName == "SVD_POWER_ITER") || (operatorName == "SVD_EIGEN_DECOMP")
         || (operatorName == "SVD_POWER_ITER") || (operatorName == "SVD_EIGEN_DECOMP")
-        || (operatorName == "SVD_QR") || (operatorName == ("SVD_EIGEND_DECOMP_DIV_AND_CONQ")
-        || (operatorName == "SVD_EIGEND_DECOMP_QR_ITER") ||
-        (operatorName == "SVD_EIGEND_DECOMP_RRR")))
+        || (operatorName == "SVD_QR") || (operatorName == ("SVD_EIGEN_DECOMP_DIV_AND_CONQ")
+        || (operatorName == "SVD_EIGEN_DECOMP_QR_ITER") ||
+        (operatorName == "SVD_EIGEN_DECOMP_RRR")))
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -124,13 +124,13 @@ namespace Figaro
             else if (operatorName == "SVD_FIGARO")
             {
                 m_opType = Query::OpType::DECOMP_SVD;
-                Figaro::SVDHintType decompAlg = Figaro::SVDHintType::JACOBI;
+                Figaro::SVDHintType decompAlg = Figaro::SVDHintType::DIV_AND_CONQ;
                 if (m_mOps.contains("decomp_alg"))
                 {
                     std::string strDecAlg = m_mOps["decomp_alg"];
-                    if (strDecAlg == "jacobi")
+                    if (strDecAlg == "divide_and_conquer")
                     {
-                        decompAlg = Figaro::SVDHintType::JACOBI;
+                        decompAlg = Figaro::SVDHintType::DIV_AND_CONQ;
                     }
                     else if (strDecAlg == "power_iter")
                     {
@@ -173,13 +173,13 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads);
                 FIGARO_LOG_INFO("CREATE LU_THIN NODE")
             }
-            else if (operatorName == "SVD_JACOBI")
+            else if (operatorName == "SVD_DIV_AND_CONQ")
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 pCreatedNode = new ASTNodeSVDAlgDec(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
-                Figaro::SVDHintType::JACOBI);
-                FIGARO_LOG_INFO("CREATE SVD_JACOBI NODE")
+                Figaro::SVDHintType::DIV_AND_CONQ);
+                FIGARO_LOG_INFO("CREATE SVD_DIV_AND_CONQ NODE")
             }
             else if (operatorName == "SVD_POWER_ITER")
             {

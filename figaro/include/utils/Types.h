@@ -21,13 +21,14 @@ namespace Figaro
 
     enum class SVDHintType
     {
-        JACOBI = 0,
-        POWER_ITER = 1,
-        EIGEN_DECOMP = 2,
-        EIGEN_DECOMP_DIV_AND_CONQ = 3,
-        EIGEN_DECOMP_QR_ITER = 4,
-        EIGEN_DECOMP_RRR = 5,
-        QR = 6
+        DIV_AND_CONQ = 0,
+        QR_ITER = 1,
+        POWER_ITER = 2,
+        EIGEN_DECOMP = 3,
+        EIGEN_DECOMP_DIV_AND_CONQ = 4,
+        EIGEN_DECOMP_QR_ITER = 5,
+        EIGEN_DECOMP_RRR = 6,
+        QR = 7
     };
 
     enum class LUHintType
