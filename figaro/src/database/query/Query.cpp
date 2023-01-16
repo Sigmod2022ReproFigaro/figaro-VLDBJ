@@ -32,7 +32,13 @@ namespace Figaro
         || (operatorName == "SVD_POWER_ITER") || (operatorName == "SVD_EIGEN_DECOMP")
         || (operatorName == ("SVD_EIGEN_DECOMP_DIV_AND_CONQ")
         || (operatorName == "SVD_EIGEN_DECOMP_QR_ITER") ||
-        (operatorName == "SVD_EIGEN_DECOMP_RRR")))
+        (operatorName == "SVD_EIGEN_DECOMP_RRR"))
+        || (operatorName == "PCA_FIGARO") || (operatorName == "PCA_DIV_AND_CONQ")
+        || (operatorName == "PCA_QR_ITER") || (operatorName == "PCA_QR")
+        || (operatorName == "PCA_POWER_ITER") || (operatorName == "PCA_EIGEN_DECOMP")
+        || (operatorName == ("PCA_EIGEN_DECOMP_DIV_AND_CONQ")
+        || (operatorName == "PCA_EIGEN_DECOMP_QR_ITER") ||
+        (operatorName == "PCA_EIGEN_DECOMP_RRR")))
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -229,13 +235,69 @@ namespace Figaro
                 Figaro::SVDHintType::EIGEN_DECOMP_RRR);
                 FIGARO_LOG_INFO("CREATE SVD_EIGEND_DECOMP_RRR NODE")
             }
-            else if (operatorName == "SVD_QR")
+            else if (operatorName == "PCA_DIV_AND_CONQ")
             {
-                m_opType = Query::OpType::DECOMP_SVD;
-                pCreatedNode = new ASTNodeSVDAlgDec(
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
-                Figaro::SVDHintType::QR);
-                FIGARO_LOG_INFO("CREATE SVD_QR NODE")
+                Figaro::PCAHintType::DIV_AND_CONQ);
+                FIGARO_LOG_INFO("CREATE PCA_DIV_AND_CONQ NODE")
+            }
+            else if (operatorName == "PCA_QR_ITER")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::QR_ITER);
+                FIGARO_LOG_INFO("CREATE PCA_QR_ITER NODE")
+            }
+            else if (operatorName == "PCA_POWER_ITER")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::POWER_ITER);
+                FIGARO_LOG_INFO("CREATE PCA_POWER_ITER NODE")
+            }
+            else if (operatorName == "PCA_EIGEND_DECOMP")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::EIGEN_DECOMP);
+                FIGARO_LOG_INFO("CREATE PCA_EIGEND_DECOMP NODE")
+            }
+            else if (operatorName == "PCA_EIGEND_DECOMP_DIV_AND_CONQ")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ);
+                FIGARO_LOG_INFO("CREATE PCA_EIGEND_DECOMP_DIV_AND_CONQ NODE")
+            }
+            else if (operatorName == "PCA_EIGEND_DECOMP_QR_ITER")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER);
+                FIGARO_LOG_INFO("CREATE PCA_EIGEND_DECOMP_QR_ITER NODE")
+            }
+            else if (operatorName == "PCA_EIGEND_DECOMP_RRR")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::EIGEN_DECOMP_RRR);
+                FIGARO_LOG_INFO("CREATE PCA_EIGEND_DECOMP_RRR NODE")
+            }
+            else if (operatorName == "PCA_QR")
+            {
+                m_opType = Query::OpType::DECOMP_PCA;
+                pCreatedNode = new ASTNodePCAAlgDec(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::PCAHintType::QR);
+                FIGARO_LOG_INFO("CREATE PCA_QR NODE")
             }
             else if (operatorName == "LIN_REG")
             {

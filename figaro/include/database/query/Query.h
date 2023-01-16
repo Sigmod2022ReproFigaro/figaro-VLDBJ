@@ -14,7 +14,7 @@ namespace Figaro
     public:
         enum class OpType
         {
-            DECOMP_QR, DECOMP_LU, DECOMP_SVD
+            DECOMP_QR, DECOMP_LU, DECOMP_SVD, DECOMP_PCA
         };
     private:
         ASTNode* m_pASTRoot = nullptr;

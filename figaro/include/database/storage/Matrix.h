@@ -360,35 +360,74 @@ namespace Figaro
             return normVal;
         }
 
-
-        double estCondNumber(uint32_t numJoinAttr) const
+        constexpr uint32_t getLapackMajorOrder(void) const
         {
-            uint32_t m = getNumRows();
-            uint32_t n = getNumCols() - numJoinAttr;
-            uint32_t rank = std::min(m, n);
-            uint32_t ldA = getNumCols();
-            const double* pA = getArrPt() + numJoinAttr;
-            double condR;
-            MatrixType matrixU(0, 0);
-            MatrixType matrixS(0, 0);
-            MatrixType matrixVT(0, 0);
-            /*
-            MatrixType tmpMat {m_numRows, m_numCols};
-
-            tmpMat.copyBlockToThisMatrix(*this,
-                0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
-            */
-            (const_cast<MatrixType*>(this))->computeSVDDivAndConq(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
-            double maxSingValue = matrixS(0, 0);
-            double minSingValue = matrixS(rank - 1, 0);
-            //FIGARO_LOG_MIC_BEN("Dimensions", m, n)
-            //FIGARO_LOG_MIC_BEN("maxSingValue", maxSingValue)
-            //FIGARO_LOG_MIC_BEN("minSingValue", minSingValue)
-            double condition2  = maxSingValue / minSingValue;
-
-            return condition2;
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return LAPACK_ROW_MAJOR;
+            }
+            else
+            {
+                return LAPACK_COL_MAJOR;
+            }
         }
 
+        constexpr CBLAS_LAYOUT getCblasMajorOrder(void) const
+        {
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return CBLAS_ORDER::CblasRowMajor;
+            }
+            else
+            {
+                return CBLAS_ORDER::CblasColMajor;
+            }
+        }
+
+        constexpr uint32_t getLeadingDimension(void) const
+        {
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                return m_numCols;
+            }
+            else
+            {
+                return m_numRows;
+            }
+        }
+
+        void setToZeroBelowMainDiagonal(void)
+        {
+            MatrixType& matA = *this;
+            uint32_t rank = std::min(m_numRows, m_numCols);
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                this->resize(rank);
+                for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                    {
+                        if (colIdx < rowIdx)
+                        {
+                            matA(rowIdx, colIdx) = 0;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
+                    {
+                        if (colIdx < rowIdx)
+                        {
+                            matA(rowIdx, colIdx) = 0;
+                        }
+                    }
+                }
+            }
+        }
 
         double getOrthogonality(uint32_t numJoinAttrs) const
         {
@@ -533,12 +572,27 @@ namespace Figaro
         MatrixType getBlock(uint32_t rowIdxBegin, uint32_t rowIdxEnd,
                         uint32_t colIdxBegin, uint32_t colIdxEnd) const
         {
+            const MatrixType& matA = *this;
             MatrixType tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
-            for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
+
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
+                {
+                    for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
+                    {
+                        tmp(rowIdx - rowIdxBegin, colIdx - colIdxBegin) = matA(rowIdx, colIdx);
+                    }
+                }
+            }
+            else
             {
                 for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
                 {
-                    tmp[rowIdx - rowIdxBegin][colIdx - colIdxBegin] = (*this)[rowIdx][colIdx];
+                    for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
+                    {
+                        tmp(rowIdx - rowIdxBegin, colIdx - colIdxBegin) = matA(rowIdx, colIdx);
+                    }
                 }
             }
             return tmp;
@@ -583,29 +637,23 @@ namespace Figaro
         }
 
 
-
-        // TODO: parallelization
-
-
         MatrixType concatenateHorizontally(const MatrixType& m) const
         {
             FIGARO_LOG_ASSERT(getNumRows() == m.getNumRows());
             MatrixType tmp(m_numRows, m_numCols + m.m_numCols);
             auto& thisRef = *this;
 
-            //FIGARO_LOG_DBG("Entered concatenateHorizontally")
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                    tmp(rowIdx, colIdx) = thisRef(rowIdx, colIdx);
                 }
                 for (uint32_t colIdx = 0; colIdx < m.m_numCols; colIdx++)
                 {
-                    tmp[rowIdx][m_numCols + colIdx] = m[rowIdx][colIdx];
+                    tmp(rowIdx, m_numCols + colIdx) = m(rowIdx, colIdx);
                 }
             }
-            //FIGARO_LOG_DBG("Exited concatenateHorizontally")
             return tmp;
         }
 
@@ -619,7 +667,7 @@ namespace Figaro
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                    tmp(rowIdx, colIdx) = thisRef(rowIdx, colIdx);
                 }
             }
 
@@ -627,7 +675,7 @@ namespace Figaro
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    tmp[rowIdx + m_numRows][colIdx] = m[rowIdx][colIdx];
+                    tmp(rowIdx + m_numRows, colIdx) = m(rowIdx, colIdx);
                 }
             }
             return tmp;
@@ -638,19 +686,17 @@ namespace Figaro
             MatrixType tmp(m_numRows, m_numCols + numCols);
             auto& thisRef = *this;
 
-            //FIGARO_LOG_DBG("Entered concatenateHorizontallyScalar")
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                    tmp(rowIdx, colIdx) = thisRef(rowIdx, colIdx);
                 }
                 for (uint32_t colIdx = 0; colIdx < numCols; colIdx++)
                 {
-                    tmp[rowIdx][m_numCols + colIdx] = scalar;
+                    tmp(rowIdx, m_numCols + colIdx) = scalar;
                 }
             }
-            //FIGARO_LOG_DBG("FInished concatenateHorizontallyScalar")
             return tmp;
         }
 
@@ -663,7 +709,7 @@ namespace Figaro
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    tmp[rowIdx][colIdx] = thisRef[rowIdx][colIdx];
+                    tmp(rowIdx, colIdx) = thisRef(rowIdx, colIdx);
                 }
             }
 
@@ -671,7 +717,7 @@ namespace Figaro
             {
                 for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                 {
-                    tmp[rowIdx + m_numRows][colIdx] = scalar;
+                    tmp(rowIdx + m_numRows, colIdx) = scalar;
                 }
             }
             return tmp;
@@ -1331,8 +1377,6 @@ namespace Figaro
         }
 
 
-
-
         void computeQRGivensParallelizedThickMatrix(uint32_t numThreads, Figaro::QRHintType qrType)
         {
             if (qrType == QRHintType::GIV_THICK_DIAG)
@@ -1347,74 +1391,7 @@ namespace Figaro
             this->resize(std::min(m_numCols, m_numRows));
         }
 
-        constexpr uint32_t getLapackMajorOrder(void) const
-        {
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
-            {
-                return LAPACK_ROW_MAJOR;
-            }
-            else
-            {
-                return LAPACK_COL_MAJOR;
-            }
-        }
 
-        constexpr CBLAS_LAYOUT getCblasMajorOrder(void) const
-        {
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
-            {
-                return CBLAS_ORDER::CblasRowMajor;
-            }
-            else
-            {
-                return CBLAS_ORDER::CblasColMajor;
-            }
-        }
-
-        constexpr uint32_t getLeadingDimension(void) const
-        {
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
-            {
-                return m_numCols;
-            }
-            else
-            {
-                return m_numRows;
-            }
-        }
-
-        void setToZeroBelowMainDiagonal(void)
-        {
-            MatrixType& matA = *this;
-            uint32_t rank = std::min(m_numRows, m_numCols);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
-            {
-                this->resize(rank);
-                for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
-                {
-                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
-                    {
-                        if (colIdx < rowIdx)
-                        {
-                            matA(rowIdx, colIdx) = 0;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
-                {
-                    for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
-                    {
-                        if (colIdx < rowIdx)
-                        {
-                            matA(rowIdx, colIdx) = 0;
-                        }
-                    }
-                }
-            }
-        }
 
         /**
          * matrix. If compute Q is set to true, computed R in place will not be
@@ -2010,6 +1987,47 @@ namespace Figaro
             {
                 computeSVDR(numThreads, pMatU, pMatS, pMatV);
             }
+        }
+
+
+        double estCondNumber(uint32_t numJoinAttr) const
+        {
+            uint32_t m = getNumRows();
+            uint32_t n = getNumCols() - numJoinAttr;
+            uint32_t rank = std::min(m, n);
+            uint32_t ldA = getNumCols();
+            const double* pA = getArrPt() + numJoinAttr;
+            double condR;
+            MatrixType matrixU(0, 0);
+            MatrixType matrixS(0, 0);
+            MatrixType matrixVT(0, 0);
+            /*
+            MatrixType tmpMat {m_numRows, m_numCols};
+
+            tmpMat.copyBlockToThisMatrix(*this,
+                0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
+            */
+            (const_cast<MatrixType*>(this))->computeSVDDivAndConq(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
+            double maxSingValue = matrixS(0, 0);
+            double minSingValue = matrixS(rank - 1, 0);
+            //FIGARO_LOG_MIC_BEN("Dimensions", m, n)
+            //FIGARO_LOG_MIC_BEN("maxSingValue", maxSingValue)
+            //FIGARO_LOG_MIC_BEN("minSingValue", minSingValue)
+            double condition2  = maxSingValue / minSingValue;
+
+            return condition2;
+        }
+
+
+        void computePCA(
+            Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,
+            MatrixType* pRed = nullptr)
+        {
+            /*
+            computeSVDEigenDec(numThreads, svdType, computeUAndV, saveResult,
+                    pMatU, pMatS, pMatV);
+            */
+            //
         }
 
 

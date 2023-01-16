@@ -3,7 +3,6 @@
 
 namespace Figaro
 {
-#
     enum class  MemoryLayout: uint32_t
     {
         ROW_MAJOR = 0,
