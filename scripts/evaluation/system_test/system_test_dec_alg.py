@@ -105,10 +105,12 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             }
             """
         elif self.query.get_root_operator() == "SVD_FIGARO":
-            if self.conf_decomp.method == DecompConf.Method.JACOBI:
-                command = "SVD_JACOBI"
+            if self.conf_decomp.method == DecompConf.Method.DIV_AND_CONQ:
+                command = "SVD_DIV_AND_CONQ"
             elif self.conf_decomp.method == DecompConf.Method.POWER_ITER:
                 command = "SVD_POWER_ITER"
+            elif self.conf_decomp.method == DecompConf.Method.QR_ITER:
+                command = "SVD_QR_ITER"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_DIV_AND_CONQ:
                 command = "SVD_EIGEND_DECOMP_DIV_AND_CONQ"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_QR_ITER:

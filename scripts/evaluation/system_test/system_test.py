@@ -74,12 +74,13 @@ class DecompConf:
     class Method(IntEnum):
         GIV_THIN_DIAG = 1
         HOUSEHOLDER = 2
-        JACOBI = 3
+        DIV_AND_CONQ = 3
         POWER_ITER = 4
-        EIGEN_DECOMP_DIV_AND_CONQ = 5
-        EIGEN_DECOMP_QR_ITER = 6
-        EIGEN_DECOMP_RRR = 7
-        QR = 8
+        QR_ITER = 5
+        EIGEN_DECOMP_DIV_AND_CONQ = 6
+        EIGEN_DECOMP_QR_ITER = 7
+        EIGEN_DECOMP_RRR = 8
+        QR = 9
 
 
     class SparsityMode(IntEnum):
@@ -100,8 +101,9 @@ class DecompConf:
     map_method_to_enum = {
         'giv_thin_diag': Method.GIV_THIN_DIAG,
         'householder': Method.HOUSEHOLDER,
-        'jacobi': Method.JACOBI,
+        'divide_and_conquer': Method.DIV_AND_CONQ,
         'power_iter': Method.POWER_ITER,
+        'qr_iteration': Method.QR_ITER,
         'eigen_decomp_div_and_conq': Method.EIGEN_DECOMP_DIV_AND_CONQ,
         'eigen_decomp_qr_iter': Method.EIGEN_DECOMP_QR_ITER,
         'eigen_decomp_rrr': Method.EIGEN_DECOMP_RRR,
@@ -111,8 +113,9 @@ class DecompConf:
     map_method_to_str = {
         Method.GIV_THIN_DIAG: 'giv_thin_diag',
         Method.HOUSEHOLDER: 'householder',
-        Method.JACOBI: 'jacobi',
+        Method.DIV_AND_CONQ: 'divide_and_conquer',
         Method.POWER_ITER: 'power_iter',
+        Method.QR_ITER: 'qr_iteration',
         Method.EIGEN_DECOMP_DIV_AND_CONQ: 'eigen_decomp_div_and_conq',
         Method.EIGEN_DECOMP_QR_ITER: 'eigen_decomp_qr_iter',
         Method.EIGEN_DECOMP_RRR: 'eigen_decomp_rrr',

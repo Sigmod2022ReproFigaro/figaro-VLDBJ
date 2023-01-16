@@ -341,32 +341,35 @@ namespace Figaro
         FIGARO_LOG_BENCH("Figaro", "Computation of V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
 
 
-        FIGARO_LOG_INFO("COMPUTING U")
-        FIGARO_BENCH_INIT(uComp)
-        FIGARO_BENCH_START(uComp)
-        ASTNodeRelation* astVNOde =
-                    new ASTNodeRelation(vName,
-                    m_pDatabase->getRelationAttributeNames(vName));
-        ASTNodeRelation* astSNOde =
-                    new ASTNodeRelation(sName,
-                    m_pDatabase->getRelationAttributeNames(sName));
-        ASTNodeSVDSVTInverse* astSVDInvNode =
-            new ASTNodeSVDSVTInverse(astSNOde, astVNOde);
-        ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astSVDInvNode,
-            true);
-        // Add relation.
-        ASTVisitorResultJoin* pUResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
-        uName = pUResult->getJoinRelName();
-        delete pUResult;
-        FIGARO_BENCH_STOP(uComp)
-        FIGARO_LOG_BENCH("Figaro", "Computation of U",  FIGARO_BENCH_GET_TIMER_LAP(uComp));
+        if (pElement->isComputeU() || isFlagOn("computeUAndV"))
+        {
+            FIGARO_LOG_INFO("COMPUTING U")
+            FIGARO_BENCH_INIT(uComp)
+            FIGARO_BENCH_START(uComp)
+            ASTNodeRelation* astVNOde =
+                        new ASTNodeRelation(vName,
+                        m_pDatabase->getRelationAttributeNames(vName));
+            ASTNodeRelation* astSNOde =
+                        new ASTNodeRelation(sName,
+                        m_pDatabase->getRelationAttributeNames(sName));
+            ASTNodeSVDSVTInverse* astSVDInvNode =
+                new ASTNodeSVDSVTInverse(astSNOde, astVNOde);
+            ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astSVDInvNode,
+                true);
+            // Add relation.
+            ASTVisitorResultJoin* pUResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
+            uName = pUResult->getJoinRelName();
+            delete pUResult;
+            FIGARO_BENCH_STOP(uComp)
+            FIGARO_LOG_BENCH("Figaro", "Computation of U",  FIGARO_BENCH_GET_TIMER_LAP(uComp));
+        }
 
         return new ASTVisitorResultSVD(uName, sName, vName);
     }
 
     ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodeSVDDecAlg(ASTNodeSVDAlgDec* pElement)
     {
-        FIGARO_LOG_INFO("VISITING SVD LAPACK NODE")
+        FIGARO_LOG_INFO("VISITING SVD DEC ALG NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
         omp_set_num_threads(pElement->getNumThreads());
@@ -386,7 +389,7 @@ namespace Figaro
             pElement->getSVDAlgorithm(),
              m_memoryLayout, pElement->isComputeUAndV(), m_saveResult);
         FIGARO_BENCH_STOP(svdLapackEval)
-        FIGARO_LOG_BENCH("Figaro", "SVD LAPACK eval", FIGARO_BENCH_GET_TIMER_LAP(svdLapackEval))
+        FIGARO_LOG_BENCH("Figaro", "SVD Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(svdLapackEval))
         return new ASTVisitorResultSVD(uName, sName, vName);
     }
 

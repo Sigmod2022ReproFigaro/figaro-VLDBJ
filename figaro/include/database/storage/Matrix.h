@@ -1963,7 +1963,7 @@ namespace Figaro
 
         void computeSVD(uint32_t numThreads = 1, bool useHint = false,
             Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::DIV_AND_CONQ,
-            bool computeU = false, bool saveResult = false,
+            bool computeUAndV = false, bool saveResult = false,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatV = nullptr)
         {
@@ -1979,6 +1979,12 @@ namespace Figaro
             else
             {
                 svdType = Figaro::SVDHintType::DIV_AND_CONQ;
+            }
+
+            if (!computeUAndV)
+            {
+                pMatU = nullptr;
+                pMatV = nullptr;
             }
 
             if (svdType == Figaro::SVDHintType::DIV_AND_CONQ)
@@ -1997,7 +2003,7 @@ namespace Figaro
             (svdType == Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER)
             || (svdType == Figaro::SVDHintType::EIGEN_DECOMP_RRR))
             {
-                computeSVDEigenDec(numThreads, svdType, computeU, saveResult,
+                computeSVDEigenDec(numThreads, svdType, computeUAndV, saveResult,
                     pMatU, pMatS, pMatV);
             }
             else if (svdType == Figaro::SVDHintType::QR)
