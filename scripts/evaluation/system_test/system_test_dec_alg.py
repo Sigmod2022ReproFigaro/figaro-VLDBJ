@@ -142,6 +142,44 @@ class SystemTestDecompAlg(SystemTestCompetitor):
                 }}
             }}
             """.format(command=command)
+        elif self.query.get_root_operator() == "PCA_FIGARO":
+            if self.conf_decomp.method == DecompConf.Method.DIV_AND_CONQ:
+                command = "PCA_DIV_AND_CONQ"
+            elif self.conf_decomp.method == DecompConf.Method.POWER_ITER:
+                command = "PCA_POWER_ITER"
+            elif self.conf_decomp.method == DecompConf.Method.QR_ITER:
+                command = "PCA_QR_ITER"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_DIV_AND_CONQ:
+                command = "PCA_EIGEND_DECOMP_DIV_AND_CONQ"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_QR_ITER:
+                command = "PCA_EIGEND_DECOMP_QR_ITER"
+            elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_RRR:
+                command = "PCA_EIGEND_DECOMP_RRR"
+            elif self.conf_decomp.method == DecompConf.Method.QR:
+                command = "PCA_QR"
+
+            query_json_s = """
+            {{
+                "query":
+                {{
+                    "name": "FullJoin",
+                    "expression": "{command}(JoinTable)",
+                    "evaluation_hint":
+                    {{
+                        "operator": "{command}",
+                        "operands":
+                        [
+                            {{
+                                "operator": "relation",
+                                "relation": "JoinTable"
+                            }}
+                        ],
+                        "relation_order": ["JoinTable"],
+                        "num_threads": 48
+                    }}
+                }}
+            }}
+            """.format(command=command)
 
         query_json = json.loads(query_json_s)
         query_json["query"]["evaluation_hint"]["compute_all"] = \

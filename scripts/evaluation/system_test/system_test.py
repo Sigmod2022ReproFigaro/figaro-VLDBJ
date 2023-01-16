@@ -69,6 +69,7 @@ class DecompConf:
         QR = 1
         LU = 2
         SVD = 3
+        PCA = 4
 
 
     class Method(IntEnum):
@@ -125,7 +126,8 @@ class DecompConf:
     map_name_to_enum  = {
         'qr': Name.QR,
         'lu': Name.LU,
-        'svd': Name.SVD
+        'svd': Name.SVD,
+        'pca': Name.PCA
     }
 
 

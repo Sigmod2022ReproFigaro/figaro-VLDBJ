@@ -1780,10 +1780,10 @@ namespace Figaro
             {
                 MatrixType& matVT = *pMatVT;
                 matVT = std::move(MatrixType{rank, m_numCols});
+                pArrVT = matVT.getArrPt();
             }
 
             matS = std::move(MatrixType{rank, 1});
-
             pArrS = matS.getArrPt();
 
             LAPACKE_dgesvd(memLayout, jobType, jobType, m_numRows, m_numCols, pArr, ldA,

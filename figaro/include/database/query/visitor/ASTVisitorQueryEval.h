@@ -43,10 +43,12 @@ namespace Figaro
         ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;
         ASTVisitorResultQR* visitNodeQRDecAlg(ASTNodeQRAlg* pElement) override;
         ASTVisitorResultSVD* visitNodeSVDDecAlg(ASTNodeSVDAlgDec* pElement) override;
+        ASTVisitorResultSVD* visitNodePCADecAlg(ASTNodePCAAlgDec* pElement) override;
         ASTVisitorResultQR* visitNodeLUDecAlg(ASTNodeLUAlg* pElement) override;
         ASTVisitorResultQR* visitNodeLUThin(ASTNodeLUThin* pElement) override;
         ASTVisitorResultQR* visitNodeLUFigaro(ASTNodeLUFigaro* pElement) override;
         ASTVisitorResultSVD* visitNodeSVDFigaro(ASTNodeSVDFigaro* pElement) override;
+        ASTVisitorResultSVD* visitNodePCAFigaro(ASTNodePCAFigaro* pElement) override;
         ASTVisitorResultJoin* visitNodeLinReg(ASTNodeLinReg* pElement) override;
         ASTVisitorResultAbs* visitNodeAssign([[maybe_unused]] ASTNodeAssign* pElement) override { return nullptr; }
         ASTVisitorResultJoin* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
