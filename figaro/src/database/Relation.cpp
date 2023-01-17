@@ -3277,17 +3277,17 @@ namespace Figaro
         {
             MatrixDRowT matU = MatrixDRowT{0, 0};
             MatrixDRowT matS = MatrixDRowT{0, 0};
-            MatrixDRowT matV = MatrixDRowT{0, 0};
+            MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computeSVD(getNumberOfThreads(), true, svdHintType,
                 computeUAndV, saveResult,
-                &matU, &matS, &matV);
+                &matU, &matS, &matVT);
 
             if (saveResult)
             {
                 pU = createFactorRelation("U", std::move(matU), m_attributes.size());
                 pS = createFactorRelation("S", std::move(matS), m_attributes.size());
-                pV = createFactorRelation("V", std::move(matV), m_attributes.size());
+                pV = createFactorRelation("V", std::move(matVT), m_attributes.size());
             }
         }
         else
@@ -3295,17 +3295,17 @@ namespace Figaro
 
             MatrixDColT matU = MatrixDColT{0, 0};
             MatrixDColT matS = MatrixDColT{0, 0};
-            MatrixDColT matV = MatrixDColT{0, 0};
+            MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, &matU, &matS, &matV);
+                computeUAndV, saveResult, &matU, &matS, &matVT);
 
             if (saveResult)
             {
                 FIGARO_LOG_BENCH("matS", matS)
                 MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
                 MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
-                MatrixDRowT matVV{matV.getNumRows(), matV.getNumCols()};
+                MatrixDRowT matVV{matVT.getNumRows(), matVT.getNumCols()};
                 matUU.copyBlockToThisMatrixFromCol(
                     matU, 0, matUU.getNumRows() - 1,
                     0, matUU.getNumCols() - 1, 0, 0);
@@ -3313,7 +3313,7 @@ namespace Figaro
                     matS, 0, matSS.getNumRows() - 1,
                     0, matSS.getNumCols() - 1, 0, 0);
                  matVV.copyBlockToThisMatrixFromCol(
-                    matV, 0, matVV.getNumRows() - 1,
+                    matVT, 0, matVV.getNumRows() - 1,
                     0, matVV.getNumCols() - 1, 0, 0);
                 pU = createFactorRelation("U", std::move(matUU), m_attributes.size());
                 pS = createFactorRelation("S", std::move(matSS), m_attributes.size());

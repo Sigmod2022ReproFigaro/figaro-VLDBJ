@@ -1641,8 +1641,6 @@ namespace Figaro
             const MatrixType& matVT) const
         {
             const MatrixType& matS = *this;
-            //constexpr uint32_t k = 10;
-            //MatrixType mSVInv = MatrixType{matV.getNumRows() , k};
             MatrixType mSVInv = matVT.transpose();
 
             for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
@@ -1828,9 +1826,9 @@ namespace Figaro
 
         void computeSVDPowerIter(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
-            MatrixType* pMatV)
+            MatrixType* pMatVT)
         {
-            MatrixType& matV = *pMatV;
+            MatrixType& matVT = *pMatVT;
             MatrixType& matU = *pMatU;
             MatrixType& matS = *pMatS;
             MatrixType& matA = *this;
@@ -1838,7 +1836,7 @@ namespace Figaro
 
             matU = std::move(MatrixType{m_numRows, rank});
             matS = std::move(MatrixType{rank, 1});
-            matV = std::move(MatrixType{rank, m_numCols});
+            matVT = std::move(MatrixType{rank, m_numCols});
             MatrixType v = std::move(MatrixType{rank, 1});
             double sigma;
 
@@ -1849,8 +1847,6 @@ namespace Figaro
                 matT.powerIteration(v, sigma);
                 MatrixType u = matA * v;
                 u.scale(1 / sigma);
-                FIGARO_LOG_DBG("v", v, "sigma", sigma, "u", u)
-                FIGARO_LOG_BENCH("run", diagIdx, sigma)
                 MatrixType matOut = u.outerProduct(v);
                 matOut.scale(sigma);
 
@@ -1863,7 +1859,7 @@ namespace Figaro
                 }
                 for (uint32_t rowIdx = 0; rowIdx < m_numCols; rowIdx++)
                 {
-                    matV(diagIdx, rowIdx) = v(rowIdx, 0);
+                    matVT(diagIdx, rowIdx) = v(rowIdx, 0);
                 }
             }
         }
@@ -1873,14 +1869,14 @@ namespace Figaro
             Figaro::SVDHintType svdHintType,
             bool computeU, bool saveResult,
             MatrixType* pMatU, MatrixType* pMatS,
-            MatrixType* pMatV)
+            MatrixType* pMatVT)
         {
             MatrixType& matA = *this;
             MatrixType matATA{0, 0};
             Figaro::EDHintType edHintType;
             MatrixType& matU = *pMatU;
             MatrixType& matS = *pMatS;
-            MatrixType& matV = *pMatV;
+            MatrixType& matVT = *pMatVT;
             MatrixType matED{0, 0};
             MatrixType matEV{0 ,0};
 
@@ -1916,24 +1912,24 @@ namespace Figaro
                 }
             }
             matATA = matATA.transpose();
-            matV = MatrixType{matATA.m_numRows, matATA.m_numCols};
-            for (uint32_t rowIdx = 0; rowIdx < matV.m_numRows; rowIdx++)
+            matVT = MatrixType{matATA.m_numRows, matATA.m_numCols};
+            for (uint32_t rowIdx = 0; rowIdx < matVT.m_numRows; rowIdx++)
             {
-                for (uint32_t colIdx = 0; colIdx < matV.m_numCols; colIdx++)
+                for (uint32_t colIdx = 0; colIdx < matVT.m_numCols; colIdx++)
                 {
-                    matV(rowIdx, colIdx) = matATA(vPermIdxs[rowIdx], colIdx);
+                    matVT(rowIdx, colIdx) = matATA(vPermIdxs[rowIdx], colIdx);
                 }
             }
             if (computeU)
             {
-                MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matV);
+                MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
                 matU = matA * compInv;
             }
         }
 
         void computeSVDR(uint32_t numThreads,
             MatrixType* pMatU, MatrixType* pMatS,
-            MatrixType* pMatV)
+            MatrixType* pMatVT)
         {
 
         }
@@ -1942,7 +1938,7 @@ namespace Figaro
             Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::DIV_AND_CONQ,
             bool computeUAndV = false, bool saveResult = false,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
-            MatrixType* pMatV = nullptr)
+            MatrixType* pMatVT = nullptr)
         {
             Figaro::SVDHintType svdType;
             if ((0 == m_numRows) || (0 == m_numCols))
@@ -1961,31 +1957,31 @@ namespace Figaro
             if (!computeUAndV)
             {
                 pMatU = nullptr;
-                pMatV = nullptr;
+                pMatVT = nullptr;
             }
 
             if (svdType == Figaro::SVDHintType::DIV_AND_CONQ)
             {
-                computeSVDDivAndConq(numThreads, pMatU, pMatS, pMatV);
+                computeSVDDivAndConq(numThreads, pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::QR_ITER)
             {
-                computeSVDQRIter(numThreads, pMatU, pMatS, pMatV);
+                computeSVDQRIter(numThreads, pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::POWER_ITER)
             {
-                computeSVDPowerIter(numThreads,  pMatU, pMatS, pMatV);
+                computeSVDPowerIter(numThreads,  pMatU, pMatS, pMatVT);
             }
             else if ((svdType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ) ||
             (svdType == Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER)
             || (svdType == Figaro::SVDHintType::EIGEN_DECOMP_RRR))
             {
                 computeSVDEigenDec(numThreads, svdType, computeUAndV, saveResult,
-                    pMatU, pMatS, pMatV);
+                    pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::QR)
             {
-                computeSVDR(numThreads, pMatU, pMatS, pMatV);
+                computeSVDR(numThreads, pMatU, pMatS, pMatVT);
             }
         }
 
@@ -2019,14 +2015,20 @@ namespace Figaro
         }
 
 
-        void computePCA(
+        void computePCA(uint32_t numThreads = 1, bool useHint = false,
             Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,
-            MatrixType* pRed = nullptr)
+            bool computeUAndV = false, bool saveResult = false,
+            MatrixType* pRed = nullptr, MatrixType* pMatS = nullptr,
+            MatrixType* pMatVT = nullptr)
         {
+            // compute URed
             /*
             computeSVDEigenDec(numThreads, svdType, computeUAndV, saveResult,
-                    pMatU, pMatS, pMatV);
+                    pMatU, pMatS, pMatVT);
+            Multiply this reduce by Sigma reduced.
+            Return this.
             */
+            // Two approaches
             //
         }
 

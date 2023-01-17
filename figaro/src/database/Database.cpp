@@ -67,7 +67,7 @@ namespace Figaro
         std::string vName = "";
         Relation& matU = *pU;
         Relation& matS = *pS;
-        Relation& matV = *pV;
+        Relation& matVT = *pV;
         if (pU != nullptr)
         {
             uName = pU->getName();
@@ -83,7 +83,7 @@ namespace Figaro
         if (pV != nullptr)
         {
             vName = pV->getName();
-            m_relations.emplace(vName, std::move(matV));
+            m_relations.emplace(vName, std::move(matVT));
         }
         return std::make_tuple(uName, sName, vName);
     }
