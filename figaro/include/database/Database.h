@@ -257,6 +257,13 @@ namespace Figaro
             bool computeUAndV,
             bool saveResult);
 
+        std::tuple<std::string, std::string, std::string> evalPCADecAlg(
+            const std::string& relName,
+            Figaro::PCAHintType pcaHintType,
+            Figaro::MemoryLayout memoryLayout,
+            bool computeRed,
+            bool saveResult);
+
         /**
          * @brief Destroys temporary relation @p relName with its data.
          *

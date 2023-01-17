@@ -461,18 +461,16 @@ namespace Figaro
         {
             m_pDatabase->changeMemoryLayout();
         }
-        /*
-        FIGARO_BENCH_INIT(svdLapackEval)
-        FIGARO_BENCH_START(svdLapackEval)
+        FIGARO_BENCH_INIT(pcaLapackEval)
+        FIGARO_BENCH_START(pcaLapackEval)
         auto [uName, sName, vName] =
-            m_pDatabase->evalSVDDecAlg(pElement->getRelationOrder().at(0),
+            m_pDatabase->evalPCADecAlg(pElement->getRelationOrder().at(0),
             pElement->getPCAAlgorithm(),
              m_memoryLayout, pElement->isComputeUAndV(), m_saveResult);
-        FIGARO_BENCH_STOP(svdLapackEval)
-        FIGARO_LOG_BENCH("Figaro", "SVD Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(svdLapackEval))
-        */
-        //return new ASTVisitorResultSVD(uName, sName, vName);
-        return new ASTVisitorResultSVD("uName", "sName", "vName");
+        FIGARO_BENCH_STOP(pcaLapackEval)
+        FIGARO_LOG_BENCH("Figaro", "SVD Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(pcaLapackEval))
+        return new ASTVisitorResultSVD(uName, sName, vName);
+        //return new ASTVisitorResultSVD("uName", "sName", "vName");
     }
 
     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLUThin(ASTNodeLUThin* pElement)

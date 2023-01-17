@@ -893,6 +893,20 @@ namespace Figaro
         return saveSVDResult(svdResult);
     }
 
+     std::tuple<std::string, std::string, std::string>
+     Database::evalPCADecAlg(
+            const std::string& relName,
+            Figaro::PCAHintType pcaHintType,
+            Figaro::MemoryLayout memoryLayout,
+            bool computeRed,
+            bool saveResult)
+    {
+        Relation& rel = m_relations.at(relName);
+        auto svdResult = rel.computePCA(pcaHintType,
+            memoryLayout, computeRed, saveResult);
+        return saveSVDResult(svdResult);
+    }
+
     bool Database::destroyTemporaryRelation(const std::string& relationName)
     {
         Relation& rel = m_relations.at(relationName);

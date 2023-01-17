@@ -1656,6 +1656,7 @@ namespace Figaro
 
 
         void computeSVDDivAndConq(uint32_t numThreads,
+            bool saveResult,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatVT)
         {
@@ -1688,10 +1689,21 @@ namespace Figaro
                 MatrixType& matU = *pMatU;
                 matU = std::move(MatrixType{m_numRows, rank});
                 pArrU = matU.getArrPt();
-                jobType = 'S';
+                if (saveResult)
+                {
+                    jobType = 'S';
+                    FIGARO_LOG_BENCH("JOB TYPE", "SAVE")
+                }
+                else
+                {
+                    //jobType = 'O';
+                    jobType = 'S';
+                    FIGARO_LOG_BENCH("JOB TYPE", "COMPUTE")
+                }
             }
             else
             {
+                FIGARO_LOG_BENCH("JOB TYPE", "Singular values only")
                 jobType = 'N';
             }
 
@@ -1710,6 +1722,7 @@ namespace Figaro
         }
 
         void computeSVDQRIter(uint32_t numThreads,
+            bool saveResult,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatVT)
         {
@@ -1721,7 +1734,8 @@ namespace Figaro
             double *pArrU = nullptr;
             double *pArrS = nullptr;
             double *pArrVT = nullptr;
-            char jobType;
+            char jobTypeU;
+            char jobTypeV;
 
 
             uint32_t rank;
@@ -1745,11 +1759,23 @@ namespace Figaro
                 MatrixType& matU = *pMatU;
                 matU = std::move(MatrixType{m_numRows, rank});
                 pArrU = matU.getArrPt();
-                jobType = 'S';
+
+                if (saveResult)
+                {
+                    jobTypeU = 'S';
+                }
+                else
+                {
+                    //jobTypeU = 'O';
+                    jobTypeU = 'S';
+                }
+                jobTypeV = 'S';
             }
             else
             {
-                jobType = 'N';
+                FIGARO_LOG_BENCH("JOB TYPE", "Singular values only")
+                jobTypeU = 'N';
+                jobTypeV = 'N';
             }
             if (pMatVT != nullptr)
             {
@@ -1761,7 +1787,7 @@ namespace Figaro
             matS = std::move(MatrixType{rank, 1});
             pArrS = matS.getArrPt();
 
-            LAPACKE_dgesvd(memLayout, jobType, jobType, m_numRows, m_numCols, pArr, ldA,
+            LAPACKE_dgesvd(memLayout, jobTypeU, jobTypeV, m_numRows, m_numCols, pArr, ldA,
                 pArrS, pArrU, ldU, pArrVT, ldVT , pSuperb);
             delete [] pSuperb;
         }
@@ -1825,6 +1851,7 @@ namespace Figaro
         }
 
         void computeSVDPowerIter(uint32_t numThreads,
+            bool saveResult,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatVT)
         {
@@ -1965,15 +1992,15 @@ namespace Figaro
 
             if (svdType == Figaro::SVDHintType::DIV_AND_CONQ)
             {
-                computeSVDDivAndConq(numThreads, pMatU, pMatS, pMatVT);
+                computeSVDDivAndConq(numThreads, saveResult, pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::QR_ITER)
             {
-                computeSVDQRIter(numThreads, pMatU, pMatS, pMatVT);
+                computeSVDQRIter(numThreads, saveResult, pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::POWER_ITER)
             {
-                computeSVDPowerIter(numThreads,  pMatU, pMatS, pMatVT);
+                computeSVDPowerIter(numThreads, saveResult, pMatU, pMatS, pMatVT);
             }
             else if ((svdType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ) ||
             (svdType == Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER)
@@ -1996,17 +2023,10 @@ namespace Figaro
             uint32_t rank = std::min(m, n);
             uint32_t ldA = getNumCols();
             const double* pA = getArrPt() + numJoinAttr;
-            double condR;
-            MatrixType matrixU(0, 0);
-            MatrixType matrixS(0, 0);
-            MatrixType matrixVT(0, 0);
-            /*
-            MatrixType tmpMat {m_numRows, m_numCols};
 
-            tmpMat.copyBlockToThisMatrix(*this,
-                0, m_numRows - 1, 0, m_numCols - 1, 0, 0);
-            */
-            (const_cast<MatrixType*>(this))->computeSVDDivAndConq(getNumberOfThreads(), &matrixU, &matrixS, &matrixVT);
+            MatrixType matrixS(0, 0);
+            (const_cast<MatrixType*>(this))->computeSVDDivAndConq(getNumberOfThreads(),
+                false, nullptr, &matrixS, nullptr);
             double maxSingValue = matrixS(0, 0);
             double minSingValue = matrixS(rank - 1, 0);
             //FIGARO_LOG_MIC_BEN("Dimensions", m, n)
@@ -2020,18 +2040,21 @@ namespace Figaro
 
         void computePCA(uint32_t numThreads = 1, bool useHint = false,
             Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,
-            bool computeUAndV = false, bool saveResult = false,
+            bool computeRed = false, bool saveResult = false,
             MatrixType* pRed = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
         {
             uint32_t k = 10;
             MatrixType& matA = *this;
             MatrixType& matRed = *pRed;
-            Figaro::PCAHintType svdType = (Figaro::SVDHintType)(pcaHintType);
+            Figaro::SVDHintType svdType = (Figaro::SVDHintType)(pcaHintType);
             computeSVDEigenDec(numThreads, svdType, false, false,
                     nullptr, pMatS, pMatVT);
 
-            matRed = matA * (pMatVT->transpose()).getLeftCols(k);
+            if (computeRed && (pRed != nullptr))
+            {
+                matRed = matA * (pMatVT->transpose()).getLeftCols(k);
+            }
         }
 
 

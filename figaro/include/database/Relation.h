@@ -641,6 +641,12 @@ namespace Figaro
             bool computeUAndV,
             bool saveResult);
 
+        std::tuple<Relation*, Relation*, Relation*>
+        computePCA(Figaro::PCAHintType pcaHintType,
+            Figaro::MemoryLayout memoryLayout,
+            bool computeRed,
+            bool saveResult);
+
         uint64_t sumRedSize(uint32_t numJoinAttrs, uint32_t power) const;
 
         /*********************** Naming patterns ***************/

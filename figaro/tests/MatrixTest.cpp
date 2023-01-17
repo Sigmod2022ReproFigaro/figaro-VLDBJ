@@ -717,7 +717,7 @@ TEST(Matrix, computeSVDDivAndConqRowMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDDivAndConq(1,
+    matrix.computeSVDDivAndConq(1, true,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixU(0, 0), -0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
@@ -774,7 +774,7 @@ TEST(Matrix, computeSVDDivAndConqColMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDDivAndConq(1,
+    matrix.computeSVDDivAndConq(1, true,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixU(0, 0), -0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
@@ -830,7 +830,7 @@ TEST(Matrix, computeSVDDivAndConqRowMajorSingularValues)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDDivAndConq(1,
+    matrix.computeSVDDivAndConq(1, true,
         nullptr, &matrixS, nullptr);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
@@ -851,7 +851,7 @@ TEST(Matrix, computeSVDDivAndConqColMajorSingularValues)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDDivAndConq(1,
+    matrix.computeSVDDivAndConq(1, true,
         nullptr, &matrixS, nullptr);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
@@ -874,7 +874,7 @@ TEST(Matrix, computeSVDQRIterRowMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDQRIter(1, &matrixU, &matrixS, &matrixVT);
+    matrix.computeSVDQRIter(1, true, &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(std::abs(matrixU(0, 1)), 0.719504148787956, GIVENS_TEST_PRECISION_ERROR);
@@ -930,7 +930,7 @@ TEST(Matrix, computeSVDQRIterColMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDQRIter(1, &matrixU, &matrixS, &matrixVT);
+    matrix.computeSVDQRIter(1, true, &matrixU, &matrixS, &matrixVT);
 
    EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(std::abs(matrixU(0, 1)), 0.719504148787956, GIVENS_TEST_PRECISION_ERROR);
@@ -985,7 +985,7 @@ TEST(Matrix, computeSVDQRIterRowMajorSingularValues)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDQRIter(1, nullptr, &matrixS, nullptr);
+    matrix.computeSVDQRIter(1, true, nullptr, &matrixS, nullptr);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
@@ -1006,7 +1006,7 @@ TEST(Matrix, computeSVDQRIterColMajorSingularValues)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDQRIter(1, nullptr, &matrixS, nullptr);
+    matrix.computeSVDQRIter(1, true, nullptr, &matrixS, nullptr);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
@@ -1028,7 +1028,7 @@ TEST(Matrix, computeSVDPowerIterRowMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDPowerIter(1,
+    matrix.computeSVDPowerIter(1, true,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
@@ -1086,7 +1086,7 @@ TEST(Matrix, computeSVDPowerIterColMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDPowerIter(1,
+    matrix.computeSVDPowerIter(1, true,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
