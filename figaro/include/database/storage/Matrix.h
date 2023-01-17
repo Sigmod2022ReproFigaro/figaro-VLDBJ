@@ -620,7 +620,7 @@ namespace Figaro
 
         static MatrixType zeros(uint32_t numRows, uint32_t numCols)
         {
-            MatrixType m(numRows, numCols);
+            MatrixType m{numRows, numCols};
             m.m_pStorage->setToZeros();
             return m;
         }
@@ -1798,13 +1798,13 @@ namespace Figaro
             MatrixType* pED = nullptr, MatrixType* pEV = nullptr)
         {
             uint32_t memLayout = getLapackMajorOrder();
-            MatrixType& matE = *pED;
+            //MatrixType& matE = *pED;
             MatrixType& matEV = *pEV;
             uint32_t N = m_numRows;
-            matE = std::move(MatrixType{m_numRows, m_numRows});
+            //matE = std::move(MatrixType{m_numRows, m_numRows});
             matEV = std::move(MatrixType{m_numRows, 1});
             uint32_t ldA = getLeadingDimension();
-            uint32_t ldZ = matE.getLeadingDimension();
+            //uint32_t ldZ = matE.getLeadingDimension();
 
             double* pArrPt = getArrPt();
             double *pOut = matEV.getArrPt();
@@ -1874,11 +1874,8 @@ namespace Figaro
             MatrixType& matA = *this;
             MatrixType matATA{0, 0};
             Figaro::EDHintType edHintType;
-            MatrixType& matU = *pMatU;
             MatrixType& matS = *pMatS;
-            MatrixType& matVT = *pMatVT;
-            MatrixType matED{0, 0};
-            MatrixType matEV{0 ,0};
+            MatrixType matEV{0, 0};
 
             matATA = selfMatrixMultiply(0);
             if (svdHintType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ)
@@ -1893,7 +1890,7 @@ namespace Figaro
             {
                 edHintType = Figaro::EDHintType::RRR;
             }
-            matATA.computeEigenValueDecomposition(edHintType, &matED, &matEV);
+            matATA.computeEigenValueDecomposition(edHintType, nullptr, &matEV);
             matS = std::move(matEV);
             std::vector<uint32_t> vPermIdxs(matS.m_numRows);
             for (uint32_t rowIdx = 0; rowIdx < matS.m_numRows; rowIdx++)
@@ -1911,20 +1908,26 @@ namespace Figaro
                     std::swap(vPermIdxs[rowIdx1], vPermIdxs[rowIdx2]);
                 }
             }
-            matATA = matATA.transpose();
-            matVT = MatrixType{matATA.m_numRows, matATA.m_numCols};
-            for (uint32_t rowIdx = 0; rowIdx < matVT.m_numRows; rowIdx++)
+            if (pMatVT != nullptr)
             {
-                for (uint32_t colIdx = 0; colIdx < matVT.m_numCols; colIdx++)
+                MatrixType& matVT = *pMatVT;
+                matATA = matATA.transpose();
+                matVT = MatrixType{matATA.m_numRows, matATA.m_numCols};
+                for (uint32_t rowIdx = 0; rowIdx < matVT.m_numRows; rowIdx++)
                 {
-                    matVT(rowIdx, colIdx) = matATA(vPermIdxs[rowIdx], colIdx);
+                    for (uint32_t colIdx = 0; colIdx < matVT.m_numCols; colIdx++)
+                    {
+                        matVT(rowIdx, colIdx) = matATA(vPermIdxs[rowIdx], colIdx);
+                    }
+                }
+                if (computeU && (pMatU != nullptr))
+                {
+                    MatrixType& matU = *pMatU;
+                    MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
+                    matU = matA * compInv;
                 }
             }
-            if (computeU)
-            {
-                MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
-                matU = matA * compInv;
-            }
+
         }
 
         void computeSVDR(uint32_t numThreads,
@@ -2021,15 +2024,14 @@ namespace Figaro
             MatrixType* pRed = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
         {
-            // compute URed
-            /*
-            computeSVDEigenDec(numThreads, svdType, computeUAndV, saveResult,
-                    pMatU, pMatS, pMatVT);
-            Multiply this reduce by Sigma reduced.
-            Return this.
-            */
-            // Two approaches
-            //
+            uint32_t k = 10;
+            MatrixType& matA = *this;
+            MatrixType& matRed = *pRed;
+            Figaro::PCAHintType svdType = (Figaro::SVDHintType)(pcaHintType);
+            computeSVDEigenDec(numThreads, svdType, false, false,
+                    nullptr, pMatS, pMatVT);
+
+            matRed = matA * (pMatVT->transpose()).getLeftCols(k);
         }
 
 

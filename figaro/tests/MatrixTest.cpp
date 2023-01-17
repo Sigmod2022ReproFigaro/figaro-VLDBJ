@@ -89,47 +89,90 @@ TEST(Matrix, Resize)
     }
 }
 
-TEST(Matrix, Block)
+TEST(Matrix, BlockRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3,  NUM_COLS = 2;
-    Figaro::Matrix<double> matrix1(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix1(NUM_ROWS, NUM_COLS);
 
-    matrix1[0][0] = 1; matrix1[0][1] = 2;
-    matrix1[1][0] = 3; matrix1[1][1] = 4;
-    matrix1[2][0] = 5; matrix1[2][1] = 6;
+    matrix1(0, 0) = 1; matrix1(0, 1) = 2;
+    matrix1(1, 0) = 3; matrix1(1, 1) = 4;
+    matrix1(2, 0) = 5; matrix1(2, 1) = 6;
 
     const auto&& blockMat = matrix1.getBlock(1, 2, 0, 0);
     EXPECT_EQ(blockMat.getNumCols(), 1);
     EXPECT_EQ(blockMat.getNumRows(), 2);
-    EXPECT_EQ(blockMat[0][0], 3);
-    EXPECT_EQ(blockMat[0][1], 5);
+    EXPECT_EQ(blockMat(0, 0), 3);
+    EXPECT_EQ(blockMat(1, 0), 5);
 
     const auto&& rightCols = matrix1.getRightCols(1);
     EXPECT_EQ(rightCols.getNumCols(), 1);
     EXPECT_EQ(rightCols.getNumRows(), 3);
-    EXPECT_EQ(rightCols[0][0], 2);
-    EXPECT_EQ(rightCols[0][1], 4);
-    EXPECT_EQ(rightCols[0][2], 6);
+    EXPECT_EQ(rightCols(0, 0), 2);
+    EXPECT_EQ(rightCols(1, 0), 4);
+    EXPECT_EQ(rightCols(2, 0), 6);
 
     const auto&& leftCols = matrix1.getLeftCols(1);
     EXPECT_EQ(leftCols.getNumCols(), 1);
     EXPECT_EQ(leftCols.getNumRows(), 3);
-    EXPECT_EQ(leftCols[0][0], 1);
-    EXPECT_EQ(leftCols[0][1], 3);
-    EXPECT_EQ(leftCols[0][2], 5);
+    EXPECT_EQ(leftCols(0, 0), 1);
+    EXPECT_EQ(leftCols(1, 0), 3);
+    EXPECT_EQ(leftCols(2, 0), 5);
 
     const auto&& topRows = matrix1.getTopRows(1);
     EXPECT_EQ(topRows.getNumCols(), 2);
     EXPECT_EQ(topRows.getNumRows(), 1);
-    EXPECT_EQ(topRows[0][0], 1);
-    EXPECT_EQ(topRows[0][1], 2);
+    EXPECT_EQ(topRows(0, 0), 1);
+    EXPECT_EQ(topRows(0, 1), 2);
 
     const auto&& bottomRows = matrix1.getBottomRows(1);
     EXPECT_EQ(bottomRows.getNumCols(), 2);
     EXPECT_EQ(bottomRows.getNumRows(), 1);
-    EXPECT_EQ(bottomRows[0][0], 5);
-    EXPECT_EQ(bottomRows[0][1], 6);
+    EXPECT_EQ(bottomRows(0, 0), 5);
+    EXPECT_EQ(bottomRows(0, 1), 6);
+}
 
+
+TEST(Matrix, BlockColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 3,  NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix1(NUM_ROWS, NUM_COLS);
+
+    matrix1(0, 0) = 1; matrix1(0, 1) = 2;
+    matrix1(0, 0) = 1; matrix1(0, 1) = 2;
+    matrix1(1, 0) = 3; matrix1(1, 1) = 4;
+    matrix1(2, 0) = 5; matrix1(2, 1) = 6;
+
+    const auto&& blockMat = matrix1.getBlock(1, 2, 0, 0);
+    EXPECT_EQ(blockMat.getNumCols(), 1);
+    EXPECT_EQ(blockMat.getNumRows(), 2);
+    EXPECT_EQ(blockMat(0, 0), 3);
+    EXPECT_EQ(blockMat(1, 0), 5);
+
+    const auto&& rightCols = matrix1.getRightCols(1);
+    EXPECT_EQ(rightCols.getNumCols(), 1);
+    EXPECT_EQ(rightCols.getNumRows(), 3);
+    EXPECT_EQ(rightCols(0, 0), 2);
+    EXPECT_EQ(rightCols(1, 0), 4);
+    EXPECT_EQ(rightCols(2, 0), 6);
+
+    const auto&& leftCols = matrix1.getLeftCols(1);
+    EXPECT_EQ(leftCols.getNumCols(), 1);
+    EXPECT_EQ(leftCols.getNumRows(), 3);
+    EXPECT_EQ(leftCols(0, 0), 1);
+    EXPECT_EQ(leftCols(1, 0), 3);
+    EXPECT_EQ(leftCols(2, 0), 5);
+
+    const auto&& topRows = matrix1.getTopRows(1);
+    EXPECT_EQ(topRows.getNumCols(), 2);
+    EXPECT_EQ(topRows.getNumRows(), 1);
+    EXPECT_EQ(topRows(0, 0), 1);
+    EXPECT_EQ(topRows(0, 1), 2);
+
+    const auto&& bottomRows = matrix1.getBottomRows(1);
+    EXPECT_EQ(bottomRows.getNumCols(), 2);
+    EXPECT_EQ(bottomRows.getNumRows(), 1);
+    EXPECT_EQ(bottomRows(0, 0), 5);
+    EXPECT_EQ(bottomRows(0, 1), 6);
 }
 
 TEST(Matrix, ConcatenateVertically)
@@ -138,18 +181,18 @@ TEST(Matrix, ConcatenateVertically)
     Figaro::Matrix<double> matrix1(NUM_ROWS1, NUM_COLS);
     Figaro::Matrix<double> matrix2(NUM_ROWS2, NUM_COLS);
 
-    matrix1[0][0] = 1; matrix1[0][1] = 2;
+    matrix1[0][0] = 1; matrix1(0, 1) = 2;
     matrix1[1][0] = 3; matrix1[1][1] = 4;
     matrix1[2][0] = 5; matrix1[2][1] = 6;
 
-    matrix2[0][0] = 7; matrix2[0][1] = 8;
+    matrix2[0][0] = 7; matrix2(0, 1) = 8;
     matrix2[1][0] = 9; matrix2[1][1] = 10;
 
     Figaro::Matrix<double> matrix = matrix1.concatenateVertically(matrix2);
     matrix = matrix.concatenateVerticallyScalar(0, 2);
 
     EXPECT_EQ(matrix[0][0], 1);
-    EXPECT_EQ(matrix[0][1], 2);
+    EXPECT_EQ(matrix(0, 1), 2);
     EXPECT_EQ(matrix[1][0], 3);
     EXPECT_EQ(matrix[1][1], 4);
     EXPECT_EQ(matrix[2][0], 5);
@@ -171,21 +214,21 @@ TEST(Matrix, ConcatenateHorizontally)
     Figaro::Matrix<double> matrix1(NUM_ROWS, NUM_COLS1);
     Figaro::Matrix<double> matrix2(NUM_ROWS, NUM_COLS2);
 
-    matrix1[0][0] = 1; matrix1[0][1] = 2;
+    matrix1[0][0] = 1; matrix1(0, 1) = 2;
     matrix1[1][0] = 3; matrix1[1][1] = 4;
 
-    matrix2[0][0] = 5; matrix2[0][1] = 6; matrix2[0][2] = 7;
+    matrix2[0][0] = 5; matrix2(0, 1) = 6; matrix2(0, 2) = 7;
     matrix2[1][0] = 8 ;matrix2[1][1] = 9; matrix2[1][2] = 10;
 
     Figaro::Matrix<double> matrix = matrix1.concatenateHorizontally(matrix2);
     matrix = matrix.concatenateHorizontallyScalar(0, 2);
 
     EXPECT_EQ(matrix[0][0], 1);
-    EXPECT_EQ(matrix[0][1], 2);
+    EXPECT_EQ(matrix(0, 1), 2);
     EXPECT_EQ(matrix[1][0], 3);
     EXPECT_EQ(matrix[1][1], 4);
 
-    EXPECT_EQ(matrix[0][2], 5);
+    EXPECT_EQ(matrix(0, 2), 5);
     EXPECT_EQ(matrix[0][3], 6);
     EXPECT_EQ(matrix[0][4], 7);
     EXPECT_EQ(matrix[1][2], 8);
@@ -199,16 +242,30 @@ TEST(Matrix, ConcatenateHorizontally)
 }
 
 
-TEST(Matrix, Zeros)
+TEST(Matrix, ZerosRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 2, NUM_COLS = 3;
-    Figaro::Matrix<double> matrix = Figaro::Matrix<double>::zeros(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix = Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR>::zeros(NUM_ROWS, NUM_COLS);
 
     for(uint32_t rowIdx = 0; rowIdx < NUM_ROWS; rowIdx++)
     {
         for (uint32_t colIdx = 0; colIdx < NUM_COLS; colIdx++)
         {
-            EXPECT_EQ(matrix[rowIdx][colIdx], 0);
+            EXPECT_EQ(matrix(rowIdx, colIdx), 0);
+        }
+    }
+}
+
+TEST(Matrix, ZerosColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 2, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix = Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR>::zeros(NUM_ROWS, NUM_COLS);
+
+    for(uint32_t rowIdx = 0; rowIdx < NUM_ROWS; rowIdx++)
+    {
+        for (uint32_t colIdx = 0; colIdx < NUM_COLS; colIdx++)
+        {
+            EXPECT_EQ(matrix(rowIdx, colIdx), 0);
         }
     }
 }
@@ -1187,6 +1244,52 @@ TEST(Matrix, computeSVDEigDecDivAndConqColMajor)
 }
 
 
+TEST(Matrix, computeSVDEigDecDivAndConqSingValuesRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ,
+        false, false, nullptr, &matrixS, nullptr);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeSVDEigDecDivAndConqSingValuesColMajor)
+{
+   static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ,
+        false, false, nullptr, &matrixS, nullptr);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
 TEST(Matrix, computeSVDEigDecQrIterRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
@@ -1298,6 +1401,52 @@ TEST(Matrix, computeSVDEigDecQrIterColMajor)
 
     EXPECT_NEAR(matrixU.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeSVDEigDecQrIterSingValuesRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER,
+        false, false, nullptr, &matrixS, nullptr);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeSVDEigDecQrIterSingValuesColMajor)
+{
+   static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER,
+        false, false, nullptr, &matrixS, nullptr);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
 }
 
 TEST(Matrix, computeLULapackRowMajor)
