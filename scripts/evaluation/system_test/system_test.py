@@ -297,13 +297,16 @@ class SystemTest(ABC):
 
     def run(self):
         if (self.conf_decomp.name == DecompConf.Name.QR):
-            q_str = "Q and R" if (self.conf_decomp.compute_all) else "R"
-            decomp_str = q_str + " in a QR decomposition"
+            txt = "Q and R" if (self.conf_decomp.compute_all) else "R"
+            decomp_str = txt + " in a QR decomposition"
         elif (self.conf_decomp.name == DecompConf.Name.LU):
             decomp_str = "L and U in an LU decomposition"
         elif (self.conf_decomp.name == DecompConf.Name.SVD):
-            q_str = "U, Sigma and V " if (self.conf_decomp.compute_all) else "Sigma and V"
-            decomp_str = q_str + " in an SVD decomposition"
+            txt = "U, Sigma and V " if (self.conf_decomp.compute_all) else "Sigma and V"
+            decomp_str = txt + " in an SVD decomposition"
+        elif (self.conf_decomp.name == DecompConf.Name.PCA):
+            txt = "RedDim, Sigma and V " if (self.conf_decomp.compute_all) else "Sigma and V"
+            decomp_str = txt + " in an SVD decomposition"
         info_str = "Run {{mode}} for database {db_name} and query {query_name} and {decomp_str}".format(
             db_name=self.database.get_name(), query_name=self.query.get_name(),
             decomp_str=decomp_str)

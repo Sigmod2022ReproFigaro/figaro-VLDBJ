@@ -3329,6 +3329,7 @@ namespace Figaro
             bool computeUAndV,
             bool saveResult)
     {
+        static constexpr uint32_t NUM_DIM = 1;
         Relation* pU = nullptr;
         Relation* pS = nullptr;
         Relation* pV = nullptr;
@@ -3339,7 +3340,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult,
+                computeUAndV, saveResult, NUM_DIM,
                 &matRed, &matS, &matVT);
 
             if (saveResult)
@@ -3356,7 +3357,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, &matRed, &matS, &matVT);
+                computeUAndV, saveResult, NUM_DIM, &matRed, &matS, &matVT);
 
             if (saveResult)
             {

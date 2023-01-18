@@ -1821,32 +1821,41 @@ namespace Figaro
 
         void computeEigenValueDecomposition(
             Figaro::EDHintType edHintType = Figaro::EDHintType::DIV_AND_CONQ,
+            bool saveResult = false,
             MatrixType* pED = nullptr, MatrixType* pEV = nullptr)
         {
             uint32_t memLayout = getLapackMajorOrder();
-            //MatrixType& matE = *pED;
+            uint32_t ldA = getLeadingDimension();
             MatrixType& matEV = *pEV;
             uint32_t N = m_numRows;
-            //matE = std::move(MatrixType{m_numRows, m_numRows});
-            matEV = std::move(MatrixType{m_numRows, 1});
-            uint32_t ldA = getLeadingDimension();
-            //uint32_t ldZ = matE.getLeadingDimension();
 
+            matEV = std::move(MatrixType{m_numRows, 1});
             double* pArrPt = getArrPt();
-            double *pOut = matEV.getArrPt();
+            double *pEVOut = matEV.getArrPt();
+
             if (edHintType == Figaro::EDHintType::QR_ITER)
             {
                 FIGARO_LOG_DBG("Qr iteration")
-                LAPACKE_dsyev(memLayout, 'V', 'L', N, pArrPt, ldA, pOut);
+                LAPACKE_dsyev(memLayout, 'V', 'L', N, pArrPt, ldA, pEVOut);
             }
             else if (edHintType == Figaro::EDHintType::RRR)
             {
-                //LAPACKE_dsyevr(memLayout, 'V', 'A', 'L', N, pArrPt, ldA, 1.0, 1.0, 1, 1, 0.0, N, eigenValue, pOut, ldZ, outArray);
+                MatrixType& matED = *pED;
+                long long int numEigValsFound;
+                matED = std::move(MatrixType{m_numRows, m_numRows});
+                double* pEVDOut = matED.getArrPt();
+                long long int* pIsUppZ = new long long int[N * 2];
+                uint32_t ldZ = matED.getLeadingDimension();
+                LAPACKE_dsyevr(memLayout, 'V', 'A', 'L', N, pArrPt, ldA,
+                    1.0, 1.0, 1, 1,
+                    0.0, &numEigValsFound,
+                    pEVOut, pEVDOut, ldZ, pIsUppZ);
+                delete [] pIsUppZ;
             }
             else if (edHintType == Figaro::EDHintType::DIV_AND_CONQ)
             {
                 FIGARO_LOG_DBG("DIvide and conquer")
-                LAPACKE_dsyevd(memLayout, 'V', 'L', N, pArrPt, ldA, pOut);
+                LAPACKE_dsyevd(memLayout, 'V', 'L', N, pArrPt, ldA, pEVOut);
             }
         }
 
@@ -1903,6 +1912,7 @@ namespace Figaro
             Figaro::EDHintType edHintType;
             MatrixType& matS = *pMatS;
             MatrixType matEV{0, 0};
+            MatrixType matEVD{0, 0};
 
             matATA = selfMatrixMultiply(0);
             if (svdHintType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ)
@@ -1917,7 +1927,7 @@ namespace Figaro
             {
                 edHintType = Figaro::EDHintType::RRR;
             }
-            matATA.computeEigenValueDecomposition(edHintType, nullptr, &matEV);
+            matATA.computeEigenValueDecomposition(edHintType, false, &matEVD, &matEV);
             matS = std::move(matEV);
             std::vector<uint32_t> vPermIdxs(matS.m_numRows);
             for (uint32_t rowIdx = 0; rowIdx < matS.m_numRows; rowIdx++)
@@ -1938,13 +1948,21 @@ namespace Figaro
             if (pMatVT != nullptr)
             {
                 MatrixType& matVT = *pMatVT;
-                matATA = matATA.transpose();
-                matVT = MatrixType{matATA.m_numRows, matATA.m_numCols};
+                if (edHintType == Figaro::EDHintType::RRR)
+                {
+                    matEVD = matEVD.transpose();
+                }
+                else
+                {
+                    matEVD = matATA.transpose();
+                }
+
+                matVT = MatrixType{matEVD.m_numRows, matEVD.m_numCols};
                 for (uint32_t rowIdx = 0; rowIdx < matVT.m_numRows; rowIdx++)
                 {
                     for (uint32_t colIdx = 0; colIdx < matVT.m_numCols; colIdx++)
                     {
-                        matVT(rowIdx, colIdx) = matATA(vPermIdxs[rowIdx], colIdx);
+                        matVT(rowIdx, colIdx) = matEVD(vPermIdxs[rowIdx], colIdx);
                     }
                 }
                 if (computeU && (pMatU != nullptr))
@@ -1954,7 +1972,6 @@ namespace Figaro
                     matU = matA * compInv;
                 }
             }
-
         }
 
         void computeSVDR(uint32_t numThreads,
@@ -2040,20 +2057,18 @@ namespace Figaro
 
         void computePCA(uint32_t numThreads = 1, bool useHint = false,
             Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,
-            bool computeRed = false, bool saveResult = false,
+            bool computeRed = false, bool saveResult = false, uint32_t redDim = 1,
             MatrixType* pRed = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
         {
-            uint32_t k = 10;
             MatrixType& matA = *this;
             MatrixType& matRed = *pRed;
             Figaro::SVDHintType svdType = (Figaro::SVDHintType)(pcaHintType);
             computeSVDEigenDec(numThreads, svdType, false, false,
                     nullptr, pMatS, pMatVT);
-
             if (computeRed && (pRed != nullptr))
             {
-                matRed = matA * (pMatVT->transpose()).getLeftCols(k);
+                matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
             }
         }
 

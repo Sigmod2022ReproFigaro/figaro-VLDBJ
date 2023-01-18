@@ -21,7 +21,7 @@ namespace Figaro
     {
         std::string operatorName = jsonQueryConfig["operator"];
         ASTNode* pCreatedNode = nullptr;
-        // TODO: Replace with factory pattern.
+    // TODO: Replace with factory pattern.
         // TODO: Rename QR_FIGARO with QR_FIGARO
         if ((operatorName == "QR_FIGARO") || (operatorName == "QR_HOUSEHOLDER")
         || (operatorName == "QR_GIV_THIN_DIAG") || (operatorName == "eval_join")

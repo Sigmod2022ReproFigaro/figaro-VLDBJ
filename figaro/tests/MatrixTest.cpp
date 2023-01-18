@@ -625,7 +625,8 @@ TEST(Matrix, computeEigenValueDecompositionQRIterRowMajor)
     matrix(3, 0) = 4; matrix(3, 1) = 7;
     matrix(3, 2) = 10; matrix(3, 3) = 11;
 
-    matrix.computeEigenValueDecomposition(Figaro::EDHintType::QR_ITER, &matrixE, &matrixEV);
+    matrix.computeEigenValueDecomposition(Figaro::EDHintType::QR_ITER, false,
+        &matrixE, &matrixEV);
 
     FIGARO_LOG_DBG("matrixE", matrixE)
     FIGARO_LOG_DBG("matrixOriginal", matrix)
@@ -675,7 +676,8 @@ TEST(Matrix, computeEigenValueDecompositionDivAndConqRowMajor)
     matrix(3, 0) = 4; matrix(3, 1) = 7;
     matrix(3, 2) = 10; matrix(3, 3) = 11;
 
-    matrix.computeEigenValueDecomposition(Figaro::EDHintType::DIV_AND_CONQ, &matrixE, &matrixEV);
+    matrix.computeEigenValueDecomposition(Figaro::EDHintType::DIV_AND_CONQ, false,
+        &matrixE, &matrixEV);
 
     FIGARO_LOG_DBG("matrixE", matrixE)
     FIGARO_LOG_DBG("matrixE", matrixEV)
@@ -1448,6 +1450,550 @@ TEST(Matrix, computeSVDEigDecQrIterSingValuesColMajor)
     EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
 }
+
+
+TEST(Matrix, computeSVDEigDecRRRRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_RRR,
+        true, true, &matrixU, &matrixS, &matrixVT);
+    EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 1)), 0.719504148787956, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 2)), 0.382389696847683, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(1, 0)), 0.283948361179314, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 1)), 0.134893419827008, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 2)), 0.145821660497625, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(2, 0)), 0.334946954795978, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 1)), 0.040622061532983, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 2)), 0.422403208347773, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(3, 0)), 0.385945548412641, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 1)), 0.053649296761042, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 2)), 0.698984756197921, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(4, 0)), 0.611689960650861, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 1)), 0.677930045239293, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 2)), 0.406829206491980, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)), 0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixU.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeSVDEigDecRRRColMajor)
+{
+   static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_RRR,
+        true, true, &matrixU, &matrixS, &matrixVT);
+    EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 1)), 0.719504148787956, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 2)), 0.382389696847683, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(1, 0)), 0.283948361179314, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 1)), 0.134893419827008, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 2)), 0.145821660497625, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(2, 0)), 0.334946954795978, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 1)), 0.040622061532983, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 2)), 0.422403208347773, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(3, 0)), 0.385945548412641, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 1)), 0.053649296761042, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 2)), 0.698984756197921, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(4, 0)), 0.611689960650861, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 1)), 0.677930045239293, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 2)), 0.406829206491980, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)), 0.383093759660007, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixU.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeSVDEigDecRRRSingValuesRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_RRR,
+        false, false, nullptr, &matrixS, nullptr);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computeSVDEigDecRRRSingValuesColMajor)
+{
+   static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computeSVDEigenDec(1, Figaro::SVDHintType::EIGEN_DECOMP_RRR,
+        false, false, nullptr, &matrixS, nullptr);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computePCADivAndConqEigValsAndEigVectRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 1,
+        nullptr, &matrixS, &matrixVT);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+TEST(Matrix, computePCADivAndConqEigValsAndEigVectColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+     matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 1,
+        nullptr, &matrixS, &matrixVT);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computePCADivAndConqRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 2,
+        &matrixU, &matrixS, &matrixVT);
+
+    EXPECT_EQ(matrixU.getNumRows(), 5);
+    EXPECT_EQ(matrixU.getNumCols(), 2);
+
+    FIGARO_LOG_DBG(matrixU)
+
+    EXPECT_NEAR(std::abs(matrixU(0, 0)),  23.978239547619253, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 1)), 12.532232599498553, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(1, 0)),  12.774607779273254, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 1)), 2.349556588744679, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(2, 0)), 15.068993378266047,  RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 1)), 0.707549949030961, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(3, 0)), 17.363378977258840, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 1)), 0.934456690682756, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(4, 0)), 27.519438032252665, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 1)), 11.808100102604470, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computePCADivAndConqColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+     matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 2,
+        &matrixU, &matrixS, &matrixVT);
+
+    EXPECT_EQ(matrixU.getNumRows(), 5);
+    EXPECT_EQ(matrixU.getNumCols(), 2);
+
+    FIGARO_LOG_DBG(matrixU)
+
+    EXPECT_NEAR(std::abs(matrixU(0, 0)),  23.978239547619253, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 1)), 12.532232599498553, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(1, 0)),  12.774607779273254, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 1)), 2.349556588744679, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(2, 0)), 15.068993378266047,  RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 1)), 0.707549949030961, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(3, 0)), 17.363378977258840, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 1)), 0.934456690682756, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(4, 0)), 27.519438032252665, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 1)), 11.808100102604470, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+
+TEST(Matrix, computePCAQRIterEigValsAndEigVectRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 1,
+        nullptr, &matrixS, &matrixVT);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+TEST(Matrix, computePCAQRIterEigValsAndEigVectColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+     matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 1,
+        nullptr, &matrixS, &matrixVT);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computePCAQRIterRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+    matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 2,
+        &matrixU, &matrixS, &matrixVT);
+
+    EXPECT_EQ(matrixU.getNumRows(), 5);
+    EXPECT_EQ(matrixU.getNumCols(), 2);
+
+    FIGARO_LOG_DBG(matrixU)
+
+    EXPECT_NEAR(std::abs(matrixU(0, 0)),  23.978239547619253, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 1)), 12.532232599498553, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(1, 0)),  12.774607779273254, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 1)), 2.349556588744679, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(2, 0)), 15.068993378266047,  RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 1)), 0.707549949030961, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(3, 0)), 17.363378977258840, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 1)), 0.934456690682756, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(4, 0)), 27.519438032252665, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 1)), 11.808100102604470, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
+
+TEST(Matrix, computePCAQRIterColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixVT(0, 0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2; matrix(0, 2) = 27;
+    matrix(1, 0) = 3; matrix(1, 1) = 4; matrix(1, 2) = 12;
+    matrix(2, 0) = 5; matrix(2, 1) = 6; matrix(2, 2) = 13;
+    matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
+    matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
+
+     matrix.computePCA(1, true,
+        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 2,
+        &matrixU, &matrixS, &matrixVT);
+
+    EXPECT_EQ(matrixU.getNumRows(), 5);
+    EXPECT_EQ(matrixU.getNumCols(), 2);
+
+    FIGARO_LOG_DBG(matrixU)
+
+    EXPECT_NEAR(std::abs(matrixU(0, 0)),  23.978239547619253, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(0, 1)), 12.532232599498553, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(1, 0)),  12.774607779273254, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(1, 1)), 2.349556588744679, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(2, 0)), 15.068993378266047,  RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(2, 1)), 0.707549949030961, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(3, 0)), 17.363378977258840, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(3, 1)), 0.934456690682756, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixU(4, 0)), 27.519438032252665, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixU(4, 1)), 11.808100102604470, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, RELAX_GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, RELAX_GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 0)), 0.250424273299085, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 0)), 0.295651511272016, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 0)), 0.921888207552954, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 1)), 0.474955483467975, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 1)), 0.792247726429847, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 1)),  0.383093759660007, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixVT(0, 2)), 0.843626085458675, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(1, 2)), 0.533791835690010, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixVT(2, 2)), 0.057976754689808, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(matrixVT.getOrthogonality(0), 0, GIVENS_TEST_PRECISION_ERROR);
+}
+
 
 TEST(Matrix, computeLULapackRowMajor)
 {
