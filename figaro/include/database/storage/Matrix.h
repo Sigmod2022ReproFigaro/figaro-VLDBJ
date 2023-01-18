@@ -1914,7 +1914,12 @@ namespace Figaro
             MatrixType matEV{0, 0};
             MatrixType matEVD{0, 0};
 
+            FIGARO_BENCH_INIT(smm)
+            FIGARO_BENCH_START(smm)
             matATA = selfMatrixMultiply(0);
+            FIGARO_BENCH_STOP(smm)
+            FIGARO_LOG_BENCH("SMM Time", FIGARO_BENCH_GET_TIMER_LAP(smm))
+
             if (svdHintType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ)
             {
                 edHintType = Figaro::EDHintType::DIV_AND_CONQ;
@@ -1965,12 +1970,18 @@ namespace Figaro
                         matVT(rowIdx, colIdx) = matEVD(vPermIdxs[rowIdx], colIdx);
                     }
                 }
+
+                FIGARO_BENCH_INIT(uRed)
+                FIGARO_BENCH_START(uRed)
+
                 if (computeU && (pMatU != nullptr))
                 {
                     MatrixType& matU = *pMatU;
                     MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
                     matU = matA * compInv;
                 }
+                FIGARO_BENCH_STOP(uRed)
+                FIGARO_LOG_BENCH("URed Time", FIGARO_BENCH_GET_TIMER_LAP(uRed))
             }
         }
 
@@ -2062,13 +2073,15 @@ namespace Figaro
             MatrixType* pMatVT = nullptr)
         {
             MatrixType& matA = *this;
-            MatrixType& matRed = *pRed;
+
             Figaro::SVDHintType svdType = (Figaro::SVDHintType)(pcaHintType);
             computeSVDEigenDec(numThreads, svdType, false, false,
                     nullptr, pMatS, pMatVT);
             if (computeRed && (pRed != nullptr))
             {
+                MatrixType& matRed = *pRed;
                 matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
+                FIGARO_LOG_BENCH("Here", matRed.getNumRows(), matRed.getNumCols())
             }
         }
 

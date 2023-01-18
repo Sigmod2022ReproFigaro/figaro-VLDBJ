@@ -3329,7 +3329,7 @@ namespace Figaro
             bool computeUAndV,
             bool saveResult)
     {
-        static constexpr uint32_t NUM_DIM = 1;
+        static constexpr uint32_t NUM_DIM = 10;
         Relation* pU = nullptr;
         Relation* pS = nullptr;
         Relation* pV = nullptr;

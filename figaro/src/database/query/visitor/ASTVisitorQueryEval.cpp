@@ -449,7 +449,7 @@ namespace Figaro
 
     ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodePCADecAlg(ASTNodePCAAlgDec* pElement)
     {
-        FIGARO_LOG_INFO("VISITING SVD DEC ALG NODE")
+        FIGARO_LOG_INFO("VISITING PCA DEC ALG NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
 
         omp_set_num_threads(pElement->getNumThreads());
@@ -468,9 +468,8 @@ namespace Figaro
             pElement->getPCAAlgorithm(),
              m_memoryLayout, pElement->isComputeUAndV(), m_saveResult);
         FIGARO_BENCH_STOP(pcaLapackEval)
-        FIGARO_LOG_BENCH("Figaro", "SVD Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(pcaLapackEval))
+        FIGARO_LOG_BENCH("Figaro", "PCA Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(pcaLapackEval))
         return new ASTVisitorResultSVD(uName, sName, vName);
-        //return new ASTVisitorResultSVD("uName", "sName", "vName");
     }
 
     ASTVisitorResultQR* ASTVisitorQueryEval::visitNodeLUThin(ASTNodeLUThin* pElement)

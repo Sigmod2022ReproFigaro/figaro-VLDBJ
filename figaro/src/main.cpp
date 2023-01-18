@@ -121,6 +121,11 @@ int main(int argc, char *argv[])
             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},{"postProcessing", true}}, memoryLayout, dump);
             break;
         }
+        case Figaro::Query::OpType::DECOMP_PCA:
+        {
+             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}}, memoryLayout, dump);
+                break;
+        }
     }
     Figaro::ASTVisitorResultAbs* pResult = query.getResult();
     if (dump)
@@ -158,6 +163,23 @@ int main(int argc, char *argv[])
                     FIGARO_LOG_BENCH("Orthogonality of U",  ortMeasureU);
                       double ortMeasureV = database.checkOrthogonality(pSVDResult->getVRelationName(), {});
                     FIGARO_LOG_BENCH("Orthogonality of V",  ortMeasureV);
+                }
+                break;
+            }
+            case Figaro::Query::OpType::DECOMP_PCA:
+            {
+                Figaro::ASTVisitorResultSVD* pSVDResult = (Figaro::ASTVisitorResultSVD*)pResult;
+                std::ofstream fileDumpS(dumpFilePath, std::ofstream::out);
+                database.outputRelationToFile(fileDumpS,
+                pSVDResult->getSRelationName(), ',', precision);
+                if (computeAll)
+                {
+                    /*
+                    double ortMeasureU = database.checkOrthogonality(pSVDResult->getURelationName(), {});
+                    FIGARO_LOG_BENCH("Orthogonality of U",  ortMeasureU);
+                      double ortMeasureV = database.checkOrthogonality(pSVDResult->getVRelationName(), {});
+                    FIARO_LOG_BENCH("Orthogonality of V",  ortMeasureV);
+                    */
                 }
                 break;
             }

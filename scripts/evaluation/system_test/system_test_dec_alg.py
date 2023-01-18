@@ -112,11 +112,11 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             elif self.conf_decomp.method == DecompConf.Method.QR_ITER:
                 command = "SVD_QR_ITER"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_DIV_AND_CONQ:
-                command = "SVD_EIGEND_DECOMP_DIV_AND_CONQ"
+                command = "SVD_EIGEN_DECOMP_DIV_AND_CONQ"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_QR_ITER:
-                command = "SVD_EIGEND_DECOMP_QR_ITER"
+                command = "SVD_EIGEN_DECOMP_QR_ITER"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_RRR:
-                command = "SVD_EIGEND_DECOMP_RRR"
+                command = "SVD_EIGEN_DECOMP_RRR"
             elif self.conf_decomp.method == DecompConf.Method.QR:
                 command = "SVD_QR"
 
@@ -150,11 +150,11 @@ class SystemTestDecompAlg(SystemTestCompetitor):
             elif self.conf_decomp.method == DecompConf.Method.QR_ITER:
                 command = "PCA_QR_ITER"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_DIV_AND_CONQ:
-                command = "PCA_EIGEND_DECOMP_DIV_AND_CONQ"
+                command = "PCA_EIGEN_DECOMP_DIV_AND_CONQ"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_QR_ITER:
-                command = "PCA_EIGEND_DECOMP_QR_ITER"
+                command = "PCA_EIGEN_DECOMP_QR_ITER"
             elif self.conf_decomp.method == DecompConf.Method.EIGEN_DECOMP_RRR:
-                command = "PCA_EIGEND_DECOMP_RRR"
+                command = "PCA_EIGEN_DECOMP_RRR"
             elif self.conf_decomp.method == DecompConf.Method.QR:
                 command = "PCA_QR"
 
