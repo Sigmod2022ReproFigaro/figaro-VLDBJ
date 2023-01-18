@@ -45,6 +45,7 @@ namespace Figaro
          */
         void evaluateQuery(bool saveMemory = true,
             const std::map<std::string, bool>& mFlags = {},
+            const std::map<std::string, uint32_t>& mIntArgs = {},
             Figaro::MemoryLayout  = Figaro::MemoryLayout::ROW_MAJOR,
             bool saveResult = false);
 

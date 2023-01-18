@@ -3326,10 +3326,11 @@ namespace Figaro
     std::tuple<Relation*, Relation*, Relation*> Relation::computePCA(
             Figaro::PCAHintType pcaHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t numDims,
             bool computeUAndV,
             bool saveResult)
     {
-        static constexpr uint32_t NUM_DIM = 10;
+        FIGARO_LOG_BENCH("numDims", numDims)
         Relation* pU = nullptr;
         Relation* pS = nullptr;
         Relation* pV = nullptr;
@@ -3340,7 +3341,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, NUM_DIM,
+                computeUAndV, saveResult, numDims,
                 &matRed, &matS, &matVT);
 
             if (saveResult)
@@ -3357,7 +3358,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, NUM_DIM, &matRed, &matS, &matVT);
+                computeUAndV, saveResult, numDims, &matRed, &matS, &matVT);
 
             if (saveResult)
             {

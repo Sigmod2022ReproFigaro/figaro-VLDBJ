@@ -261,6 +261,7 @@ namespace Figaro
             const std::string& relName,
             Figaro::PCAHintType pcaHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t numDims,
             bool computeRed,
             bool saveResult);
 

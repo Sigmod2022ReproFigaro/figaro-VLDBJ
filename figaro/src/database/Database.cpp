@@ -898,12 +898,13 @@ namespace Figaro
             const std::string& relName,
             Figaro::PCAHintType pcaHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t numDims,
             bool computeRed,
             bool saveResult)
     {
         Relation& rel = m_relations.at(relName);
         auto svdResult = rel.computePCA(pcaHintType,
-            memoryLayout, computeRed, saveResult);
+            memoryLayout, numDims, computeRed, saveResult);
         return saveSVDResult(svdResult);
     }
 

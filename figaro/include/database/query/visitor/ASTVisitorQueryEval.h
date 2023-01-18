@@ -16,6 +16,7 @@ namespace Figaro
         bool m_saveResult;
         bool m_saveMemory;
         std::map<std::string, bool> m_mFlagPhases;
+        std::map<std::string, uint32_t> m_mIntOpts;
 
         bool isFlagOn(const std::string& flagName) const
         {
@@ -32,12 +33,15 @@ namespace Figaro
             Figaro::MemoryLayout memoryLayout,
             bool saveResult,
             bool saveMemory,
-            const std::map<std::string, bool>& mFlagPhases
+            const std::map<std::string, bool>& mFlagPhases,
+            const std::map<std::string, uint32_t>& mIntOpts
             ): ASTVisitor(pDatabase), m_memoryLayout(memoryLayout),
                 m_pDatabase(pDatabase),
                 m_saveResult(saveResult),
                 m_saveMemory(saveMemory),
-                m_mFlagPhases(mFlagPhases){}
+                m_mFlagPhases(mFlagPhases),
+                m_mIntOpts(mIntOpts){}
+
         ASTVisitorResultJoin* visitNodeRelation(ASTNodeRelation* pElement) override;
         ASTVisitorResultAbs* visitNodeJoin(ASTNodeJoin* pElement) override { return nullptr; }
         ASTVisitorResultQR* visitNodeQRFigaro(ASTNodeQRFigaro* pElement) override;

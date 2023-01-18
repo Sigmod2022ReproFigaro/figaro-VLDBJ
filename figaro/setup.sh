@@ -12,6 +12,7 @@ function init_global_paths()
     FIGARO_NUM_THREADS=1
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
     FIGARO_DECOMP_ALG="HOUSEHOLDER"
+    FIGARO_NUM_SING_VALS=1
     FIGARO_COMPUTE_ALL=false
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
@@ -70,6 +71,10 @@ function get_str_args()
         --compute_all=*)
             EXTENSION="${option#*=}"
             FIGARO_COMPUTE_ALL=$EXTENSION
+        ;;
+         --num_sing_vals=*)
+            EXTENSION="${option#*=}"
+            FIGARO_NUM_SING_VALS=$EXTENSION
         ;;
         --profiler_dump_path=*)
             EXTENSION="${option#*=}"
@@ -139,6 +144,7 @@ function main()
     ARGS+="--memory_layout ${FIGARO_MEMORY_LAYOUT} "
     ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
     ARGS+="--decomposition_algorithm ${FIGARO_DECOMP_ALG} "
+    ARGS+="--num_sing_vals ${FIGARO_NUM_SING_VALS} "
 
     echo $ARGS
 
@@ -178,7 +184,7 @@ function main()
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         #vtune -collect performance-snapshot
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*computeSVDEigDecQrIter* > "${FIGARO_LOG_FILE_PATH}" 2>&1
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*Matrix* > "${FIGARO_LOG_FILE_PATH}" 2>&1
         #valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         #>   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \

@@ -406,13 +406,14 @@ namespace Figaro
 
      void Query::evaluateQuery(bool saveMemory,
         const std::map<std::string, bool>& mFlags,
+        const std::map<std::string, uint32_t>& mIntOpts,
         Figaro::MemoryLayout memoryLayout, bool saveResult
         )
     {
         FIGARO_BENCH_INIT(joinEval)
         FIGARO_BENCH_START(joinEval)
-        ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout, saveResult,
-            saveMemory, mFlags);
+        ASTVisitorQueryEval queryEvalVisitor(m_pDatabase, memoryLayout,
+            saveResult, saveMemory, mFlags, mIntOpts);
         m_pResult = m_pASTRoot->accept(&queryEvalVisitor);
         FIGARO_BENCH_STOP(joinEval)
         FIGARO_LOG_BENCH("Query eval", FIGARO_BENCH_GET_TIMER_LAP(joinEval))

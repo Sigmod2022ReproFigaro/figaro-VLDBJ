@@ -451,6 +451,7 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("VISITING PCA DEC ALG NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        uint32_t numDims = 1;
 
         omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
@@ -461,12 +462,17 @@ namespace Figaro
         {
             m_pDatabase->changeMemoryLayout();
         }
+        if (m_mIntOpts.contains("numSingVals"))
+        {
+            numDims = m_mIntOpts["numSingVals"];
+        }
         FIGARO_BENCH_INIT(pcaLapackEval)
         FIGARO_BENCH_START(pcaLapackEval)
         auto [uName, sName, vName] =
             m_pDatabase->evalPCADecAlg(pElement->getRelationOrder().at(0),
             pElement->getPCAAlgorithm(),
-             m_memoryLayout, pElement->isComputeUAndV(), m_saveResult);
+             m_memoryLayout,
+             numDims, pElement->isComputeUAndV(), m_saveResult);
         FIGARO_BENCH_STOP(pcaLapackEval)
         FIGARO_LOG_BENCH("Figaro", "PCA Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(pcaLapackEval))
         return new ASTVisitorResultSVD(uName, sName, vName);

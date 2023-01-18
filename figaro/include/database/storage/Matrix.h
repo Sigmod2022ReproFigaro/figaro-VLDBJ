@@ -573,7 +573,7 @@ namespace Figaro
                         uint32_t colIdxBegin, uint32_t colIdxEnd) const
         {
             const MatrixType& matA = *this;
-            MatrixType tmp(rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1);
+            MatrixType tmp{rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1};
 
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
@@ -1971,17 +1971,13 @@ namespace Figaro
                     }
                 }
 
-                FIGARO_BENCH_INIT(uRed)
-                FIGARO_BENCH_START(uRed)
-
                 if (computeU && (pMatU != nullptr))
                 {
                     MatrixType& matU = *pMatU;
                     MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
                     matU = matA * compInv;
                 }
-                FIGARO_BENCH_STOP(uRed)
-                FIGARO_LOG_BENCH("URed Time", FIGARO_BENCH_GET_TIMER_LAP(uRed))
+
             }
         }
 
@@ -2077,12 +2073,18 @@ namespace Figaro
             Figaro::SVDHintType svdType = (Figaro::SVDHintType)(pcaHintType);
             computeSVDEigenDec(numThreads, svdType, false, false,
                     nullptr, pMatS, pMatVT);
+
+            FIGARO_BENCH_INIT(uRed)
+            FIGARO_BENCH_START(uRed)
+
             if (computeRed && (pRed != nullptr))
             {
                 MatrixType& matRed = *pRed;
                 matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
                 FIGARO_LOG_BENCH("Here", matRed.getNumRows(), matRed.getNumCols())
             }
+            FIGARO_BENCH_STOP(uRed)
+            FIGARO_LOG_BENCH("URed Time", FIGARO_BENCH_GET_TIMER_LAP(uRed))
         }
 
 

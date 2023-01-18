@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     bool dump = false;
     uint32_t precision;
     uint32_t numThreads = 1;
+    uint32_t numSingVals = 1;
     bool computeAll = false;
     std::string computeAllStr = "false";
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
     ("precision", po::value<uint32_t>(&precision))
     ("num_threads", po::value<uint32_t>(&numThreads))
     ("compute_all",  boost::program_options::value<bool>())
+    ("num_sing_vals",  po::value<uint32_t>(&precision))
     ("decomposition_algorithm", po::value<std::string>(&decompositionAlgorithm))
     ("memory_layout", po::value<std::string>(&strMemoryLayout))
     ;
@@ -90,6 +92,11 @@ int main(int argc, char *argv[])
         computeAllStr = computeAll ? "true" : "false";
     }
 
+
+    if (vm.count("num_sing_vals"))
+    {
+        numSingVals = vm["num_sing_vals"].as<std::uint32_t>();
+    }
     dbConfigPath = vm["db_config_path"].as<std::string>();
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
@@ -108,22 +115,24 @@ int main(int argc, char *argv[])
     {
         case Figaro::Query::OpType::DECOMP_QR:
         {
-            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}}, memoryLayout, dump);
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}}, {}, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_LU:
         {
-            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}, {"computeL", true}}, memoryLayout, dump);
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}, {"computeL", true}}, {}, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_SVD:
         {
-            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},{"postProcessing", true}}, memoryLayout, dump);
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},{"postProcessing", true}},{}, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_PCA:
         {
-             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}}, memoryLayout, dump);
+             query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}},
+                {{"numSingVals", numSingVals}},
+                memoryLayout, dump);
                 break;
         }
     }

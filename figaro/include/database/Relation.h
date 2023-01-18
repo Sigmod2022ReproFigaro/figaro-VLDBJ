@@ -644,6 +644,7 @@ namespace Figaro
         std::tuple<Relation*, Relation*, Relation*>
         computePCA(Figaro::PCAHintType pcaHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t numDims,
             bool computeRed,
             bool saveResult);
 
