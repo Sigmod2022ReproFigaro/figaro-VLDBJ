@@ -922,10 +922,6 @@ namespace Figaro
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
                     uint32_t outColIdx = idxNonJoin - vvJoinAttrIdxs[idxRel].size();
-                    if (outColIdx >= 10)
-                    {
-                        continue;
-                    }
 
                     if (idxRel == 0)
                     {

@@ -431,6 +431,9 @@ namespace Figaro
 
         double getOrthogonality(uint32_t numJoinAttrs) const
         {
+            //static constexpr uint32_t NUM_DIMS = m_numCols;
+            //MatrixType redMat = this->getLeftCols(m_numCols);
+            //MatrixType result = redMat.selfMatrixMultiply(numJoinAttrs);
             MatrixType result = selfMatrixMultiply(numJoinAttrs);
             MatrixType eye = MatrixType::identity(result.getNumRows());
             MatrixType diff = eye.subtract(result, 0, numJoinAttrs);
@@ -442,6 +445,7 @@ namespace Figaro
             FIGARO_LOG_BENCH("Dimensions Diff", diff.getNumRows(), diff.getNumCols())
             FIGARO_LOG_BENCH("Norm diff",  diff.norm(numJoinAttrs))
             FIGARO_LOG_BENCH("Norm eye",  eye.norm(0))
+            //FIGARO_LOG_BENCH("Dimensions", redMat.getNumRows(), redMat.getNumCols())
             FIGARO_LOG_BENCH("Dimensions", getNumRows(), getNumCols())
 
             return diff.norm(numJoinAttrs) / eye.norm(0);
@@ -1641,13 +1645,27 @@ namespace Figaro
             const MatrixType& matVT) const
         {
             const MatrixType& matS = *this;
+
             MatrixType mSVInv = matVT.transpose();
 
-            for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
+            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            {
+                for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < mSVInv.getNumCols(); colIdx++)
+                    {
+                        mSVInv(rowIdx, colIdx) /= matS(colIdx, 0);
+                    }
+                }
+            }
+            else
             {
                 for (uint32_t colIdx = 0; colIdx < mSVInv.getNumCols(); colIdx++)
                 {
-                    mSVInv(rowIdx, colIdx) = mSVInv(rowIdx, colIdx) / matS(colIdx, 0);
+                    for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
+                    {
+                        mSVInv(rowIdx, colIdx) /= matS(colIdx, 0);
+                    }
                 }
             }
 
@@ -1794,7 +1812,7 @@ namespace Figaro
 
         void powerIteration(MatrixType& vectV, double& sigma)
         {
-            constexpr uint32_t NUM_ITERATIONS = 100;
+            constexpr uint32_t NUM_ITERATIONS = 10;
             std::random_device randDev{};
             std::mt19937 intGen{randDev()};
             std::normal_distribution<double> normDistr{0, 1};
@@ -1977,7 +1995,6 @@ namespace Figaro
                     MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
                     matU = matA * compInv;
                 }
-
             }
         }
 
@@ -2016,14 +2033,17 @@ namespace Figaro
 
             if (svdType == Figaro::SVDHintType::DIV_AND_CONQ)
             {
+                FIGARO_LOG_BENCH("Algorithm is", "Divide and conquer")
                 computeSVDDivAndConq(numThreads, saveResult, pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::QR_ITER)
             {
+                FIGARO_LOG_BENCH("Algorithm is", "Qr iteration")
                 computeSVDQRIter(numThreads, saveResult, pMatU, pMatS, pMatVT);
             }
             else if (svdType == Figaro::SVDHintType::POWER_ITER)
             {
+                FIGARO_LOG_BENCH("Algorithm is", "Power iteration")
                 computeSVDPowerIter(numThreads, saveResult, pMatU, pMatS, pMatVT);
             }
             else if ((svdType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ) ||
@@ -2037,6 +2057,8 @@ namespace Figaro
             {
                 computeSVDR(numThreads, pMatU, pMatS, pMatVT);
             }
+            FIGARO_LOG_BENCH("pMats", *pMatS)
+            FIGARO_LOG_BENCH("pMatVT", *pMatVT)
         }
 
 

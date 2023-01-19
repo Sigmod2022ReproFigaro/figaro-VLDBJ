@@ -1376,10 +1376,6 @@ namespace Figaro
     double Relation::checkOrthogonality(const std::vector<std::string>& vJoinAttrNames) const
     {
         FIGARO_LOG_INFO("m_attributes", m_attributes)
-        //auto test = MatrixDRowT{m_data.getNumRows(), m_data.getNumCols()};
-        //test.copyBlockToThisMatrix(m_data, 0, m_data.getNumRows() -1,
-        //0, m_data.getNumCols() -1, 0, 0);
-        //test.resizeCols(10);
         double ort = m_data.getOrthogonality(vJoinAttrNames.size());
 
         return ort;

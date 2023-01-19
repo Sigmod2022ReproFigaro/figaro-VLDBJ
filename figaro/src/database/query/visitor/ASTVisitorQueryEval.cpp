@@ -338,7 +338,7 @@ namespace Figaro
             pElement->getHelpSVDAlg(), Figaro::MemoryLayout::ROW_MAJOR,
             pElement->isComputeU(), true);
         FIGARO_BENCH_STOP(vComp)
-        FIGARO_LOG_BENCH("Figaro", "Computation of V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
+        FIGARO_LOG_BENCH("Figaro", "Computation of S and V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
 
 
         if (pElement->isComputeU() || isFlagOn("computeUAndV"))
