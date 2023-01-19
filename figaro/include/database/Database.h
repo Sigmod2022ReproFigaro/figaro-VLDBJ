@@ -102,7 +102,8 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             const std::vector<uint32_t>& vDownCountsSizes,
-            const std::vector<uint32_t>& vBlockSizes);
+            const std::vector<uint32_t>& vBlockSizes,
+            uint32_t numOutCols);
 
 
         std::string multiply(const std::string& relationName1,

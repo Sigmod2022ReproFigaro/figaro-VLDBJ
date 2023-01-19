@@ -307,7 +307,8 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             const std::vector<uint32_t>& vDownCountsSizes,
-            const std::vector<uint32_t>& vBlockSizes)
+            const std::vector<uint32_t>& vBlockSizes,
+            uint32_t numOutCols)
     {
         std::vector<Relation*> vpRels;
         std::vector<Relation*> vpParRels;
@@ -332,7 +333,8 @@ namespace Figaro
 
         Relation relJoin = Relation::joinRelationsAndAddColumns(
             vpRels, vpParRels,
-            vvJoinAttrNames, vvParJoinAttrNames, vDownCountsSizes, vBlockSizes);
+            vvJoinAttrNames, vvParJoinAttrNames, vDownCountsSizes, vBlockSizes,
+            numOutCols);
         std::string relJoinName = relJoin.getName();
         m_relations.emplace(relJoin.getName(), std::move(relJoin));;
         FIGARO_LOG_INFO("New rel name", relJoin.getName())

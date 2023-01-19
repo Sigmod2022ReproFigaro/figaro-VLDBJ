@@ -353,6 +353,7 @@ namespace Figaro
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             const std::vector<Relation::IteratorJoin>& vIts,
             uint32_t& outRowIdx,
+            uint32_t numOutCols,
             bool addColumns);
 
         static void iterateOverRootRel(
@@ -369,6 +370,7 @@ namespace Figaro
             const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
             const std::vector<uint32_t>& vParRelIdxs,
             const std::vector<void*>& vpHashTabQueueOffsets,
+            uint32_t numOutCols,
             bool addColumns = false
             );
 
@@ -378,6 +380,7 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             const std::vector<uint32_t>& vDownCountsSizes,
             const std::vector<uint32_t>& vBlockSizes,
+            uint32_t numOutCols,
             bool addColumns = false);
         /**
          * @brief Construct a new Relation object. WARNING: data ownerships is passed
@@ -476,7 +479,8 @@ namespace Figaro
             const std::vector<std::vector<std::string> >& vvJoinAttrNames,
             const std::vector<std::vector<std::string> >& vvParJoinAttrNames,
             const std::vector<uint32_t>& vDownCountsSizes,
-            const std::vector<uint32_t>& vBlockSizes);
+            const std::vector<uint32_t>& vBlockSizes,
+            uint32_t numOutCols);
 
         Relation addRelation(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
@@ -899,6 +903,7 @@ namespace Figaro
         const std::vector<uint32_t>& vCumNonJoinAttrIdxs,
         const std::vector<Relation::IteratorJoin>& vIts,
         uint32_t& outRowIdx,
+        uint32_t numOutCols,
         bool addColumns
     )
     {
@@ -911,7 +916,12 @@ namespace Figaro
                 uint32_t relRowIdx = vIts[idxRel].getRowIdx();
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
-                    dataOut[outRowIdx][idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset]
+                    uint32_t outColIdx = idxNonJoin - vvJoinAttrIdxs[idxRel].size() + offset;
+                    if (outColIdx >= numOutCols)
+                    {
+                        continue;
+                    }
+                    dataOut[outRowIdx][outColIdx]
                         = vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];
                 }
             }
@@ -924,7 +934,10 @@ namespace Figaro
                 for (const auto& idxNonJoin: vvNonJoinAttrIdxs[idxRel])
                 {
                     uint32_t outColIdx = idxNonJoin - vvJoinAttrIdxs[idxRel].size();
-
+                    if (outColIdx >= numOutCols)
+                    {
+                        continue;
+                    }
                     if (idxRel == 0)
                     {
                         dataOut[outRowIdx][outColIdx] =  vpRels[idxRel]->m_data[relRowIdx][idxNonJoin];

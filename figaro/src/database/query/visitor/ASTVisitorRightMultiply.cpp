@@ -97,9 +97,10 @@ namespace Figaro
                 }
                 m_vParRelNames.push_back(parRelNameAd);
             }
+            uint32_t numOutCols = m_pDatabase->getRelationAttributeNames(m_relName).size();
             std::string qRelName = m_pDatabase->joinRelationsAndAddColumns(
                 m_vRelNames, m_vParRelNames,
-                m_vvJoinAttrNames, m_vvParJoinAttrNames, m_vDownCountsSize, m_vBlockSizes);
+                m_vvJoinAttrNames, m_vvParJoinAttrNames, m_vDownCountsSize, m_vBlockSizes, numOutCols);
             pResult = new ASTVisitorResultJoin(qRelName);
         }
         else

@@ -648,7 +648,6 @@ namespace Figaro
             perSingVals = m_mIntOpts["numSingVals"];
         }
 
-
         std::string svdSVTInvName = m_pDatabase->computeSVDSigmaVTranInverse(
             pSigmaRes->getJoinRelName(), pVRes->getJoinRelName(),
             perSingVals);

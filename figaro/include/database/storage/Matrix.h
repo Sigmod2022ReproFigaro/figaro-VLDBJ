@@ -2065,10 +2065,10 @@ namespace Figaro
             {
                 MatrixType& matU = *pMatU;
                 uint32_t numCols = perSingVals * m_numCols / 100;
-                matU = matU.getRightCols(numCols);
+                matU = matU.getLeftCols(numCols);
             }
-            FIGARO_LOG_BENCH("pMats", *pMatS)
-            FIGARO_LOG_BENCH("pMatVT", *pMatVT)
+            //FIGARO_LOG_BENCH("pMats", *pMatS)
+            //FIGARO_LOG_BENCH("pMatVT", *pMatVT)
         }
 
 
@@ -2118,7 +2118,6 @@ namespace Figaro
             {
                 MatrixType& matRed = *pRed;
                 matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
-                FIGARO_LOG_BENCH("Here", matRed.getNumRows(), matRed.getNumCols())
                 // TODO: Scale each column of U by the value in the matrix
             }
             FIGARO_BENCH_STOP(uRed)
