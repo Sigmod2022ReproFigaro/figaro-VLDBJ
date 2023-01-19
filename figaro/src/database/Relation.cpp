@@ -3276,6 +3276,7 @@ namespace Figaro
         Relation* pU = nullptr;
         Relation* pS = nullptr;
         Relation* pV = nullptr;
+        uint32_t numRedSize;
         if (memoryLayout == MemoryLayout::ROW_MAJOR)
         {
             MatrixDRowT matU = MatrixDRowT{0, 0};
@@ -3288,7 +3289,8 @@ namespace Figaro
 
             if (saveResult)
             {
-                pU = createFactorRelation("U", std::move(matU), m_attributes.size());
+                numRedSize = matU.getNumCols();
+                pU = createFactorRelation("U", std::move(matU), numRedSize);
                 pS = createFactorRelation("S", std::move(matS), m_attributes.size());
                 pV = createFactorRelation("V", std::move(matVT), m_attributes.size());
             }
@@ -3305,7 +3307,7 @@ namespace Figaro
 
             if (saveResult)
             {
-                FIGARO_LOG_BENCH("matS", matS)
+                numRedSize = matU.getNumCols();
                 MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
                 MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
                 MatrixDRowT matVV{matVT.getNumRows(), matVT.getNumCols()};
@@ -3318,7 +3320,7 @@ namespace Figaro
                  matVV.copyBlockToThisMatrixFromCol(
                     matVT, 0, matVV.getNumRows() - 1,
                     0, matVV.getNumCols() - 1, 0, 0);
-                pU = createFactorRelation("U", std::move(matUU), m_attributes.size());
+                pU = createFactorRelation("U", std::move(matUU), numRedSize);
                 pS = createFactorRelation("S", std::move(matSS), m_attributes.size());
                 pV = createFactorRelation("V", std::move(matVV), m_attributes.size());
             }
