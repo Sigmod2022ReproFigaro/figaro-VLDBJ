@@ -1642,11 +1642,14 @@ namespace Figaro
         }
 
         MatrixType computeSVDSigmaVTranInverse(uint32_t numThreads,
-            const MatrixType& matVT) const
+            const MatrixType& matVT,
+            uint32_t perNumSingVals = 100) const
         {
             const MatrixType& matS = *this;
 
             MatrixType mSVInv = matVT.transpose();
+            uint32_t redNumCols = perNumSingVals * mSVInv.getNumCols() / 100;
+            mSVInv = mSVInv.getLeftCols(redNumCols);
 
             if constexpr (L == MemoryLayout::ROW_MAJOR)
             {
@@ -2008,6 +2011,7 @@ namespace Figaro
         void computeSVD(uint32_t numThreads = 1, bool useHint = false,
             Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::DIV_AND_CONQ,
             bool computeUAndV = false, bool saveResult = false,
+            uint32_t perSingVals = 100,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
         {
@@ -2057,6 +2061,12 @@ namespace Figaro
             {
                 computeSVDR(numThreads, pMatU, pMatS, pMatVT);
             }
+            if ((computeUAndV) && (pMatU != nullptr))
+            {
+                MatrixType& matU = *pMatU;
+                uint32_t numCols = perSingVals * m_numCols / 100;
+                matU = matU.getRightCols(numCols);
+            }
             FIGARO_LOG_BENCH("pMats", *pMatS)
             FIGARO_LOG_BENCH("pMatVT", *pMatVT)
         }
@@ -2091,10 +2101,15 @@ namespace Figaro
             MatrixType* pMatVT = nullptr)
         {
             MatrixType& matA = *this;
+            MatrixType matRed{m_numRows, m_numCols};
 
             Figaro::SVDHintType svdType = (Figaro::SVDHintType)(pcaHintType);
             computeSVDEigenDec(numThreads, svdType, false, false,
                     nullptr, pMatS, pMatVT);
+            /*
+            computeSVD(numThreads, svdType, true, true,
+                &matRed, pMatS, pMatVT);
+            */
 
             FIGARO_BENCH_INIT(uRed)
             FIGARO_BENCH_START(uRed)
@@ -2104,6 +2119,7 @@ namespace Figaro
                 MatrixType& matRed = *pRed;
                 matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
                 FIGARO_LOG_BENCH("Here", matRed.getNumRows(), matRed.getNumCols())
+                // TODO: Scale each column of U by the value in the matrix
             }
             FIGARO_BENCH_STOP(uRed)
             FIGARO_LOG_BENCH("URed Time", FIGARO_BENCH_GET_TIMER_LAP(uRed))

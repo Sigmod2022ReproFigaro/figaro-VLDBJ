@@ -122,7 +122,8 @@ namespace Figaro
 
         std::string computeSVDSigmaVTranInverse(
             const std::string& relationSigmaName,
-            const std::string& relationVTName
+            const std::string& relationVTName,
+            uint32_t perNumSingVals
         );
 
         double checkOrthogonality(const std::string& relationName,
@@ -254,6 +255,7 @@ namespace Figaro
             const std::string& relName,
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t perSingVals,
             bool computeUAndV,
             bool saveResult);
 

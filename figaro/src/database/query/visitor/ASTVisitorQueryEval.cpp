@@ -332,11 +332,17 @@ namespace Figaro
         rRelName = pQrResult->getRRelationName();
         delete pQrResult;
 
+        uint32_t perSingVals = 100;
+         if (m_mIntOpts.contains("numSingVals"))
+        {
+            perSingVals = m_mIntOpts["numSingVals"];
+        }
+
         FIGARO_BENCH_INIT(vComp)
         FIGARO_BENCH_START(vComp)
         auto [uName, sName, vName] = m_pDatabase->evalSVDDecAlg(rRelName,
             pElement->getHelpSVDAlg(), Figaro::MemoryLayout::ROW_MAJOR,
-            pElement->isComputeU(), true);
+            perSingVals, pElement->isComputeU(), true);
         FIGARO_BENCH_STOP(vComp)
         FIGARO_LOG_BENCH("Figaro", "Computation of S and V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
 
@@ -371,7 +377,7 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("VISITING SVD DEC ALG NODE")
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
-
+        uint32_t perDims = 100;
         omp_set_num_threads(pElement->getNumThreads());
         m_pDatabase->dropAttributesFromRelations(
             pElement->getDropAttributes());
@@ -382,12 +388,18 @@ namespace Figaro
             m_pDatabase->changeMemoryLayout();
         }
 
+        if (m_mIntOpts.contains("numSingVals"))
+        {
+            perDims = m_mIntOpts["numSingVals"];
+        }
+
         FIGARO_BENCH_INIT(svdLapackEval)
         FIGARO_BENCH_START(svdLapackEval)
         auto [uName, sName, vName] =
             m_pDatabase->evalSVDDecAlg(pElement->getRelationOrder().at(0),
             pElement->getSVDAlgorithm(),
-             m_memoryLayout, pElement->isComputeUAndV(), m_saveResult);
+             m_memoryLayout, perDims,
+             pElement->isComputeUAndV(), m_saveResult);
         FIGARO_BENCH_STOP(svdLapackEval)
         FIGARO_LOG_BENCH("Figaro", "SVD Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(svdLapackEval))
         return new ASTVisitorResultSVD(uName, sName, vName);
@@ -630,8 +642,16 @@ namespace Figaro
         ASTVisitorResultJoin* pSigmaRes = (ASTVisitorResultJoin*)pElement->getOpSig()->accept(this);
          ASTVisitorResultJoin* pVRes = (ASTVisitorResultJoin*)pElement->getOpV()->accept(this);
 
+        uint32_t perSingVals = 100;
+        if (m_mIntOpts.contains("numSingVals"))
+        {
+            perSingVals = m_mIntOpts["numSingVals"];
+        }
+
+
         std::string svdSVTInvName = m_pDatabase->computeSVDSigmaVTranInverse(
-            pSigmaRes->getJoinRelName(), pVRes->getJoinRelName());
+            pSigmaRes->getJoinRelName(), pVRes->getJoinRelName(),
+            perSingVals);
 
         delete pSigmaRes;
         delete pVRes;

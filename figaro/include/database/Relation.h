@@ -621,7 +621,8 @@ namespace Figaro
             bool saveResult,
             const Relation* pJoinRel);
 
-        Relation computeSVDSigmaVTranInverse(const Relation& relV) const;
+        Relation computeSVDSigmaVTranInverse(const Relation& relV,
+            uint32_t perNumSingVals) const;
 
         std::tuple<Relation*, Relation*>
         computeQR(Figaro::QRHintType qrHintType,
@@ -638,6 +639,7 @@ namespace Figaro
         std::tuple<Relation*, Relation*, Relation*>
         computeSVD(Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t perSingVals,
             bool computeUAndV,
             bool saveResult);
 

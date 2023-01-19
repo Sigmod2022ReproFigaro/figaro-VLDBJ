@@ -277,7 +277,7 @@ class SystemTest(ABC):
         memory_layout = decomp_json.get("memory_layout", "row_major")
         sparsity = decomp_json.get("sparsity", "dense")
         compute_all = bool(decomp_json.get("compute_all", False))
-        num_sing_vals = decomp_json.get("number_singular_values", 0)
+        num_sing_vals = decomp_json.get("number_singular_values", 100)
 
         executable_json = system_json["system"].get("executable", {})
         interpreter = executable_json.get("interpreter", "")

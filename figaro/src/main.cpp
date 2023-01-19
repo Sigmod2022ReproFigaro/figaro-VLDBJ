@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     bool dump = false;
     uint32_t precision;
     uint32_t numThreads = 1;
-    uint32_t numSingVals = 1;
+    uint32_t numSingVals = 100;
     bool computeAll = false;
     std::string computeAllStr = "false";
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
         }
         case Figaro::Query::OpType::DECOMP_SVD:
         {
-            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},{"postProcessing", true}},{}, memoryLayout, dump);
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true},{"postProcessing", true}},{{"numSingVals", numSingVals}}, memoryLayout, dump);
             break;
         }
         case Figaro::Query::OpType::DECOMP_PCA:

@@ -3144,12 +3144,13 @@ namespace Figaro
         return std::make_tuple(pU, pL);
     }
 
-    Relation Relation::computeSVDSigmaVTranInverse(const Relation& relVT) const
+    Relation Relation::computeSVDSigmaVTranInverse(const Relation& relVT,
+        uint32_t perNumSingVals) const
     {
         const Relation& relSigma = *this;
 
         MatrixDRowT sigmaVInv = relSigma.m_data.computeSVDSigmaVTranInverse(
-            getNumberOfThreads(), relVT.m_data);
+            getNumberOfThreads(), relVT.m_data, perNumSingVals);
 
         return Relation("SVD_SIGMA_V_T_INVERSE" + getName(), std::move(sigmaVInv),
             m_attributes);
@@ -3263,6 +3264,7 @@ namespace Figaro
     std::tuple<Relation*, Relation*, Relation*> Relation::computeSVD(
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
+            uint32_t perSingVals,
             bool computeUAndV,
             bool saveResult)
     {
@@ -3276,7 +3278,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult,
+                computeUAndV, saveResult, perSingVals,
                 &matU, &matS, &matVT);
 
             if (saveResult)
@@ -3294,7 +3296,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, &matU, &matS, &matVT);
+                computeUAndV, saveResult, perSingVals, &matU, &matS, &matVT);
 
             if (saveResult)
             {
