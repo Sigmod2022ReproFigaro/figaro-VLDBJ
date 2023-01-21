@@ -54,6 +54,11 @@ namespace Figaro
         DIV_AND_CONQ = 1,
         RRR = 2
     };
+
+    constexpr SVDHintType convertPcaHintTypeToSvd(PCAHintType pcaHintType)
+    {
+        return static_cast<SVDHintType>(pcaHintType);
+    }
 }
 
 #endif

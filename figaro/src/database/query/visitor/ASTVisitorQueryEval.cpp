@@ -424,14 +424,18 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), true,
-                SVDHintType::DIV_AND_CONQ);
+                convertPcaHintTypeToSvd(pElement->getHelpPCAAlg()));
         ASTVisitorResultSVD* pSvdResult = (ASTVisitorResultSVD*)astSVDFigaro.accept(this);
         uRelName = pSvdResult->getURelationName();
         sRelName = pSvdResult->getSRelationName();
         vRelName = pSvdResult->getVRelationName();
         delete pSvdResult;
 
+        FIGARO_BENCH_INIT(pcaFigaroEval)
+        FIGARO_BENCH_START(pcaFigaroEval)
         std::string uRedName = m_pDatabase->computeMatrixProductRecDiag(uRelName, sRelName);
+        FIGARO_BENCH_STOP(pcaFigaroEval)
+        FIGARO_LOG_BENCH("Figaro", "U * S product", FIGARO_BENCH_GET_TIMER_LAP(pcaFigaroEval))
 
         return new ASTVisitorResultSVD(uRedName, sRelName, vRelName);
     }

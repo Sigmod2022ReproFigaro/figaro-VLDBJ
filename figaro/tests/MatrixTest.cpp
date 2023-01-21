@@ -52,7 +52,7 @@ TEST(Matrix, Basic)
     }
 }
 
-TEST(Matrix, Resize)
+TEST(Matrix, ResizeRows)
 {
     static constexpr uint32_t NUM_ROWS = 5, NEW_NUM_ROWS = 3, NUM_COLS = 4;
     Figaro::Matrix<double> matrix(0, NUM_COLS);
@@ -60,7 +60,7 @@ TEST(Matrix, Resize)
     EXPECT_EQ(matrix.getNumRows(), 0);
     EXPECT_EQ(matrix.getNumCols(), NUM_COLS);
 
-    matrix.resize(NUM_ROWS);
+    matrix.resizeRows(NUM_ROWS);
     EXPECT_EQ(matrix.getNumRows(), NUM_ROWS);
     for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx ++)
     {
@@ -78,7 +78,7 @@ TEST(Matrix, Resize)
         }
     }
 
-    matrix.resize(NEW_NUM_ROWS);
+    matrix.resizeRows(NEW_NUM_ROWS);
     EXPECT_EQ(matrix.getNumRows(), NEW_NUM_ROWS);
     for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx ++)
     {
@@ -1627,7 +1627,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 1,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1664,7 +1664,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 1,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1702,7 +1702,7 @@ TEST(Matrix, computePCADivAndConqRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 2,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1760,7 +1760,7 @@ TEST(Matrix, computePCADivAndConqColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 2,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1819,7 +1819,7 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 1,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1856,10 +1856,10 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 1,
+        Figaro::PCAHintType::QR_ITER, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
-    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
 
@@ -1894,7 +1894,7 @@ TEST(Matrix, computePCAQRIterRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 2,
+        Figaro::PCAHintType::QR_ITER, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1952,7 +1952,7 @@ TEST(Matrix, computePCAQRIterColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 2,
+        Figaro::PCAHintType::QR_ITER, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);

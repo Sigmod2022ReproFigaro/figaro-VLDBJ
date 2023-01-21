@@ -328,6 +328,7 @@ namespace Figaro
             uint32_t numJoinAttr) const
         {
             // TODO: Based on type generate different code
+
             uint32_t m = getNumCols() - numJoinAttr;
             uint32_t n = getNumCols() - numJoinAttr;
             uint32_t k = getNumRows();
@@ -1997,7 +1998,6 @@ namespace Figaro
 
                 if (computeU && (pMatU != nullptr))
                 {
-                    FIGARO_LOG_BENCH("Computing SVD-ED", "U")
                     MatrixType& matU = *pMatU;
                     MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
                     matU = matA * compInv;
@@ -2045,6 +2045,7 @@ namespace Figaro
             Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::DIV_AND_CONQ,
             bool computeUAndV = false, bool saveResult = false,
             uint32_t perSingVals = 100,
+            bool isPercent = true,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
         {
@@ -2097,11 +2098,19 @@ namespace Figaro
             if ((computeUAndV) && (pMatU != nullptr))
             {
                 MatrixType& matU = *pMatU;
-                uint32_t numCols = perSingVals * m_numCols / 100;
+                uint32_t numCols;
+                if (isPercent)
+                {
+                   numCols = perSingVals * m_numCols / 100;
+                }
+                else
+                {
+                    numCols = perSingVals;
+                }
+                FIGARO_LOG_DBG("Number of columns is", numCols)
                 matU = matU.getLeftCols(numCols);
+                FIGARO_LOG_DBG("matU is", matU)
             }
-            //FIGARO_LOG_BENCH("pMats", *pMatS)
-            //FIGARO_LOG_BENCH("pMatVT", *pMatVT)
         }
 
 
@@ -2130,28 +2139,29 @@ namespace Figaro
         void computePCA(uint32_t numThreads = 1, bool useHint = false,
             Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,
             bool computeRed = false, bool saveResult = false, uint32_t redDim = 1,
+            bool isPercent = true,
             MatrixType* pRed = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
         {
             MatrixType& matA = *this;
-            MatrixType matRed{m_numRows, m_numCols};
+            MatrixType matRed{0, 0};
 
-            Figaro::SVDHintType svdType = (Figaro::SVDHintType)(pcaHintType);
+            Figaro::SVDHintType svdType = convertPcaHintTypeToSvd(pcaHintType);
+            /*
             computeSVDEigenDec(numThreads, svdType, false, false,
                     nullptr, pMatS, pMatVT);
-            /*
-            computeSVD(numThreads, svdType, true, true,
-                &matRed, pMatS, pMatVT);
             */
 
+            computeSVD(numThreads, true, svdType, true, true,
+                redDim, isPercent, &matRed, pMatS, pMatVT);
             FIGARO_BENCH_INIT(uRed)
             FIGARO_BENCH_START(uRed)
 
             if (computeRed && (pRed != nullptr))
             {
-                MatrixType& matRed = *pRed;
-                matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
-                // TODO: Scale each column of U by the value in the matrix
+                MatrixType& matRedOut = *pRed;
+                matRedOut = matRed.computeMatrixProductRecDiag(*pMatS);
+                //matRed = matA * (pMatVT->transpose()).getLeftCols(redDim);
             }
             FIGARO_BENCH_STOP(uRed)
             FIGARO_LOG_BENCH("URed Time", FIGARO_BENCH_GET_TIMER_LAP(uRed))

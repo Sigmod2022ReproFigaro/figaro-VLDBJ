@@ -3293,7 +3293,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, perSingVals,
+                computeUAndV, saveResult, perSingVals, true,
                 &matU, &matS, &matVT);
 
             if (saveResult)
@@ -3312,7 +3312,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, perSingVals, &matU, &matS, &matVT);
+                computeUAndV, saveResult, perSingVals, true, &matU, &matS, &matVT);
 
             if (saveResult)
             {
