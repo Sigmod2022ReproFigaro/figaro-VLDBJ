@@ -178,7 +178,6 @@ namespace Figaro
         void normalizeVector(void)
         {
             double l2Norm = normVec();
-            double* pX = getArrPt();
             MatrixType & matA = *this;
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx ++)
             {
@@ -402,7 +401,7 @@ namespace Figaro
             uint32_t rank = std::min(m_numRows, m_numCols);
             if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
-                this->resize(rank);
+                this->resizeRows(rank);
                 for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
                 {
                     for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
@@ -453,7 +452,7 @@ namespace Figaro
 
 
         // Changes the size of matrix while keeping the data.
-        void resize(uint32_t newNumRows)
+        void resizeRows(uint32_t newNumRows)
         {
             uint32_t oldNumRows = m_numRows;
             m_numRows = newNumRows;
@@ -1281,7 +1280,7 @@ namespace Figaro
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
             //FIGARO_LOG_INFO("rowTotalEndIdx, numEndRows", rowTotalEndIdx, numRedEndRows)
-            this->resize(numRedEndRows);
+            this->resizeRows(numRedEndRows);
             //FIGARO_LOG_INFO("After processing", matA)
             //FIGARO_MIC_BEN_STOP(qrGivensPar2)
             //FIGARO_LOG_MIC_BEN("Time Second", //FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar2))
@@ -1375,7 +1374,7 @@ namespace Figaro
             computeLUGaussianSequentialBlockDiag(0, rowTotalEndIdx, 0, m_numCols - 1, numThreads, 0, true);
 
             numRedEndRows = std::min(rowTotalEndIdx + 1, m_numCols);
-            this->resize(numRedEndRows);
+            this->resizeRows(numRedEndRows);
             //FIGARO_MIC_BEN_STOP(qrGivensPar2)
             //FIGARO_LOG_MIC_BEN("Time Second", //FIGARO_MIC_BEN_GET_TIMER_LAP(qrGivensPar2))
         }
@@ -1392,7 +1391,7 @@ namespace Figaro
             {
                 computeQRGivensParallelBlockBottom(0, m_numRows - 1, 0, m_numCols - 1, numThreads);
             }
-            this->resize(std::min(m_numCols, m_numRows));
+            this->resizeRows(std::min(m_numCols, m_numRows));
         }
 
 
@@ -1587,7 +1586,7 @@ namespace Figaro
                 pMatU->computeLUGaussianSequentialBlockDiag(0, m_numRows - 1,
                     0, m_numCols - 1, allowPerm);
                 uint32_t numRedEndRows = std::min(m_numRows, m_numCols);
-                pMatU->resize(numRedEndRows);
+                pMatU->resizeRows(numRedEndRows);
                 //computeLUGivensParallelizedThinMatrix(numThreads, qrType);
             }
             else if (qrTypeHint == LUHintType::PART_PIVOT_LAPACK)
@@ -1832,7 +1831,7 @@ namespace Figaro
             }
 
             vectV.normalizeVector();
-            for (int numIt = 0; numIt < NUM_ITERATIONS; numIt++)
+            for (uint32_t numIt = 0; numIt < NUM_ITERATIONS; numIt++)
             {
                 vectV = matA * vectV;
                 vectV.normalizeVector();
@@ -1932,7 +1931,7 @@ namespace Figaro
         {
             MatrixType& matA = *this;
             MatrixType matATA{0, 0};
-            Figaro::EDHintType edHintType;
+            Figaro::EDHintType edHintType = Figaro::EDHintType::DIV_AND_CONQ;
             MatrixType& matS = *pMatS;
             MatrixType matEV{0, 0};
             MatrixType matEVD{0, 0};
@@ -2013,9 +2012,9 @@ namespace Figaro
 
         }
 
-        MatrixType computeMatrixProductRecDiag(const MatrixType& second)
+        MatrixType computeMatrixProductRecDiag(const MatrixType& second) const
         {
-            MatrixType& matA = *this;
+            const MatrixType& matA = *this;
             MatrixType matC{m_numRows, m_numCols};
             if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
@@ -2169,8 +2168,6 @@ namespace Figaro
             uint32_t N = m_numCols;
             double* pA = getArrPt();
             MatrixType& matA = *this;
-
-            //FIGARO_LOG_DBG("Dimensions", M, N)
 
             uint32_t rank = std::min(M, N);
 

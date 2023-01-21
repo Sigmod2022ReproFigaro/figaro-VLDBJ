@@ -116,6 +116,11 @@ namespace Figaro
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames);
 
+        std::string computeMatrixProductRecDiag(
+            const std::string& relationRectName,
+            const std::string& relationDiagName
+        );
+
         std::string linearRegression(
             const std::string& relationRName,
             const std::string& labelName

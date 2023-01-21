@@ -498,6 +498,8 @@ namespace Figaro
         Relation selfMatrixMultiply(
         const std::vector<std::string>& vJoinAttrNames) const;
 
+        Relation computeMatrixProductRecDiag(const Relation& relDiag) const;
+
         Relation linearRegression(
             const std::string& labelName) const;
 
