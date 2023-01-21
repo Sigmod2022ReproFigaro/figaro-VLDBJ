@@ -3355,7 +3355,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, numDims,
+                computeUAndV, saveResult, numDims, true,
                 &matRed, &matS, &matVT);
 
             if (saveResult)
@@ -3372,7 +3372,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, numDims, &matRed, &matS, &matVT);
+                computeUAndV, saveResult, numDims, true, &matRed, &matS, &matVT);
 
             if (saveResult)
             {
