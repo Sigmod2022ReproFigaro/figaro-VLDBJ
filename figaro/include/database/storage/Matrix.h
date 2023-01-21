@@ -12,7 +12,7 @@
 namespace Figaro
 {
     // Row-major order of storing elements of matrix is assumed.
-    template <typename T, MemoryLayout L = MemoryLayout::ROW_MAJOR>
+    template <typename T, MemoryLayout Layout = MemoryLayout::ROW_MAJOR>
     class Matrix
     {
         static constexpr uint32_t MIN_COLS_PAR = UINT32_MAX;
@@ -20,8 +20,8 @@ namespace Figaro
         uint32_t m_numRows = 0, m_numCols = 0;
         ArrayStorage<T>* m_pStorage = nullptr;
 
-        using MatrixType = Matrix<T, L>;
-        using MatrixUInt32Type = Matrix<uint32_t, L>;
+        using MatrixType = Matrix<T, Layout>;
+        using MatrixUInt32Type = Matrix<uint32_t, Layout>;
         using MatrixTypeCol = Matrix<T, MemoryLayout::COL_MAJOR>;
         using MatrixTypeRow = Matrix<T, MemoryLayout::ROW_MAJOR>;
 
@@ -119,7 +119,7 @@ namespace Figaro
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
             FIGARO_LOG_ASSERT(colIdx < m_numCols);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 return (*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols) + colIdx];
             }
@@ -133,7 +133,7 @@ namespace Figaro
         {
             FIGARO_LOG_ASSERT(rowIdx < m_numRows);
             FIGARO_LOG_ASSERT(colIdx < m_numCols);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 return (*m_pStorage)[(uint64_t)(rowIdx) * (uint64_t)(m_numCols) + (uint64_t)colIdx];
             }
@@ -225,7 +225,7 @@ namespace Figaro
             uint32_t ldA = matA.getLeadingDimension();
             uint32_t ldB = matB.getLeadingDimension();
             char ordering;
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 ordering = 'R';
             }
@@ -362,7 +362,7 @@ namespace Figaro
 
         constexpr uint32_t getLapackMajorOrder(void) const
         {
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 return LAPACK_ROW_MAJOR;
             }
@@ -374,7 +374,7 @@ namespace Figaro
 
         constexpr CBLAS_LAYOUT getCblasMajorOrder(void) const
         {
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 return CBLAS_ORDER::CblasRowMajor;
             }
@@ -386,7 +386,7 @@ namespace Figaro
 
         constexpr uint32_t getLeadingDimension(void) const
         {
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 return m_numCols;
             }
@@ -400,7 +400,7 @@ namespace Figaro
         {
             MatrixType& matA = *this;
             uint32_t rank = std::min(m_numRows, m_numCols);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 this->resize(rank);
                 for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
@@ -464,7 +464,7 @@ namespace Figaro
             }
             else
             {
-                if constexpr (L == MemoryLayout::ROW_MAJOR)
+                if constexpr (Layout == MemoryLayout::ROW_MAJOR)
                 {
                     m_pStorage->resize(newNumEntries);
                 }
@@ -502,7 +502,7 @@ namespace Figaro
             }
             else
             {
-                if constexpr (L == MemoryLayout::COL_MAJOR)
+                if constexpr (Layout == MemoryLayout::COL_MAJOR)
                 {
                     m_pStorage->resize(newNumEntries);
                 }
@@ -579,7 +579,7 @@ namespace Figaro
             const MatrixType& matA = *this;
             MatrixType tmp{rowIdxEnd - rowIdxBegin + 1, colIdxEnd-colIdxBegin + 1};
 
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
                 {
@@ -735,7 +735,7 @@ namespace Figaro
         {
             auto& matA = *this;
 
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
                 {
@@ -1413,7 +1413,7 @@ namespace Figaro
             uint32_t ldA;
             uint32_t memLayout = getLapackMajorOrder();
 
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 ldA = m_numCols;
             }
@@ -1439,7 +1439,7 @@ namespace Figaro
                 MatrixType& matR = *pMatR;
                 // Copying R to a newly allocated matrix.
                 matR = std::move(MatrixType{rank, m_numCols});
-                if constexpr (L == MemoryLayout::ROW_MAJOR)
+                if constexpr (Layout == MemoryLayout::ROW_MAJOR)
                 {
                     for (uint32_t rowIdx = 0; rowIdx < rank; rowIdx++)
                     {
@@ -1491,7 +1491,7 @@ namespace Figaro
                     MatrixType& matQ = *pMatQ;
                     FIGARO_LOG_ASSERT(pMatQ != nullptr);
                     matQ = std::move(MatrixType{m_numRows, rank});
-                    if constexpr (L == MemoryLayout::ROW_MAJOR)
+                    if constexpr (Layout == MemoryLayout::ROW_MAJOR)
                     {
                         for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
                         {
@@ -1611,7 +1611,7 @@ namespace Figaro
             uint32_t memLayout = getLapackMajorOrder();
             MatrixType& matA = *this;
             uint32_t ldA;
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 ldA = m_numCols;
             }
@@ -1651,8 +1651,9 @@ namespace Figaro
             uint32_t redNumCols = perNumSingVals * mSVInv.getNumCols() / 100;
             mSVInv = mSVInv.getLeftCols(redNumCols);
 
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
+                #pragma omp parallel for schedule(static)
                 for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
                 {
                     for (uint32_t colIdx = 0; colIdx < mSVInv.getNumCols(); colIdx++)
@@ -1663,6 +1664,7 @@ namespace Figaro
             }
             else
             {
+                #pragma omp parallel for schedule(static)
                 for (uint32_t colIdx = 0; colIdx < mSVInv.getNumCols(); colIdx++)
                 {
                     for (uint32_t rowIdx = 0; rowIdx < mSVInv.getNumRows(); rowIdx++)
@@ -1693,7 +1695,7 @@ namespace Figaro
             uint32_t rank;
 
             rank = std::min(m_numRows, m_numCols);
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 ldA = m_numCols;
                 ldU = rank;
@@ -1763,7 +1765,7 @@ namespace Figaro
             rank = std::min(m_numRows, m_numCols);
 
             double* pSuperb = new double [rank];
-            if constexpr (L == MemoryLayout::ROW_MAJOR)
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
                 ldA = m_numCols;
                 ldU = rank;
@@ -1984,6 +1986,8 @@ namespace Figaro
                 }
 
                 matVT = MatrixType{matEVD.m_numRows, matEVD.m_numCols};
+
+                #pragma omp parallel for schedule(static)
                 for (uint32_t rowIdx = 0; rowIdx < matVT.m_numRows; rowIdx++)
                 {
                     for (uint32_t colIdx = 0; colIdx < matVT.m_numCols; colIdx++)
@@ -1994,6 +1998,7 @@ namespace Figaro
 
                 if (computeU && (pMatU != nullptr))
                 {
+                    FIGARO_LOG_BENCH("Computing SVD-ED", "U")
                     MatrixType& matU = *pMatU;
                     MatrixType compInv = matS.computeSVDSigmaVTranInverse(numThreads, matVT);
                     matU = matA * compInv;
@@ -2006,6 +2011,35 @@ namespace Figaro
             MatrixType* pMatVT)
         {
 
+        }
+
+        MatrixType computeMatrixProductRecDiag(const MatrixType& second)
+        {
+            MatrixType& matA = *this;
+            MatrixType matC{m_numRows, m_numCols};
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
+            {
+                #pragma omp parallel for schedule(static)
+                for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                    {
+                        matC(rowIdx, colIdx) = matA(rowIdx, colIdx) * second(colIdx, 0);
+                    }
+                }
+            }
+            else
+            {
+                #pragma omp parallel for schedule(static)
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+                    {
+                        matC(rowIdx, colIdx) = matA(rowIdx, colIdx) * second(colIdx, 0);
+                    }
+                }
+            }
+            return matC;
         }
 
         void computeSVD(uint32_t numThreads = 1, bool useHint = false,
@@ -2156,7 +2190,7 @@ namespace Figaro
                     matU = std::move(MatrixType{rank, N});
                 }
 
-                if constexpr (L == MemoryLayout::ROW_MAJOR)
+                if constexpr (Layout == MemoryLayout::ROW_MAJOR)
                 {
                     for (uint32_t rowIdx = 0; rowIdx < M; rowIdx++)
                     {
