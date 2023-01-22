@@ -374,6 +374,20 @@ namespace Figaro
         return smmRelName;
     }
 
+    std::string Database::computeMatrixProductRecDiag(
+            const std::string& relationRectName,
+            const std::string& relationDiagName)
+    {
+        Relation& rel1 = m_relations.at(relationRectName);
+        Relation& rel2 = m_relations.at(relationDiagName);
+
+        Relation mulRel = rel1.computeMatrixProductRecDiag(rel2);
+
+        std::string mulRelName = mulRel.getName();
+        m_relations.emplace(mulRel.getName(), std::move(mulRel));
+        return mulRelName;
+    }
+
     std::string Database::linearRegression(
             const std::string& relationName,
             const std::string& labelName)

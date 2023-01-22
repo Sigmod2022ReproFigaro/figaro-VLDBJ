@@ -10,7 +10,7 @@
 #include <tbb/atomic.h>
 #include "Hash.h"
 
-// TODO: Optimize tuple instanciated Relation based on number of attributes.
+// TODO: Optimize tuple instantiated Relation based on number of attributes.
 namespace Figaro
 {
     /**
@@ -497,6 +497,8 @@ namespace Figaro
 
         Relation selfMatrixMultiply(
         const std::vector<std::string>& vJoinAttrNames) const;
+
+        Relation computeMatrixProductRecDiag(const Relation& relDiag) const;
 
         Relation linearRegression(
             const std::string& labelName) const;

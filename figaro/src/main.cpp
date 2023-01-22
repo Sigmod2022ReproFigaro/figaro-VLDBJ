@@ -179,16 +179,11 @@ int main(int argc, char *argv[])
             {
                 Figaro::ASTVisitorResultSVD* pSVDResult = (Figaro::ASTVisitorResultSVD*)pResult;
                 std::ofstream fileDumpS(dumpFilePath, std::ofstream::out);
-                database.outputRelationToFile(fileDumpS,
-                pSVDResult->getSRelationName(), ',', precision);
                 if (computeAll)
                 {
-                    /*
-                    double ortMeasureU = database.checkOrthogonality(pSVDResult->getURelationName(), {});
-                    FIGARO_LOG_BENCH("Orthogonality of U",  ortMeasureU);
-                      double ortMeasureV = database.checkOrthogonality(pSVDResult->getVRelationName(), {});
-                    FIARO_LOG_BENCH("Orthogonality of V",  ortMeasureV);
-                    */
+                    std::string uSingVals = database.selfMatrixMultiply(pSVDResult->getURelationName(), {});
+                    database.outputRelationToFile(fileDumpS,
+                        uSingVals, ',', precision);
                 }
                 break;
             }

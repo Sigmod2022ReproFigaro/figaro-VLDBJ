@@ -793,7 +793,7 @@ namespace Figaro
         {
             destroyHashTableMNJoin(vvCurJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
         }
-        dataOutput.resize(rowIdxOutAt + 1);
+        dataOutput.resizeRows(rowIdxOutAt + 1);
         FIGARO_LOG_DBG("rowIdxOutAt", rowIdxOutAt)
         FIGARO_LOG_INFO("outputSize", dataOutput.getNumRows(), dataOutput.getNumCols())
         FIGARO_LOG_INFO(newRelName, dataOutput.getNumRows(), dataOutput.getNumCols())
@@ -1200,7 +1200,7 @@ namespace Figaro
         {
             destroyHashTableMNJoin(vvCurJoinAttrIdxs[idxRel], vpHashTabQueueOffsets[idxRel]);
         }
-        dataOutput.resize(rowIdxOutAt + 1);
+        dataOutput.resizeRows(rowIdxOutAt + 1);
         FIGARO_LOG_INFO("outputSize", dataOutput.getNumRows(), dataOutput.getNumCols())
         FIGARO_LOG_INFO(newRelName, dataOutput.getNumRows(), dataOutput.getNumCols())
         Relation joinRel = Relation("JOIN_" + newRelName, std::move(dataOutput), attributes);
@@ -1303,6 +1303,15 @@ namespace Figaro
             m_attributes);
     }
 
+    Relation Relation::computeMatrixProductRecDiag(const Relation& relDiag) const
+    {
+        std::vector<Attribute> newAttributes;
+
+        auto result = m_data.computeMatrixProductRecDiag(relDiag.m_data);
+
+        return Relation("MUL_" + getName() + relDiag.getName(), std::move(result),
+            m_attributes);
+    }
 
     Relation Relation::linearRegression(
             const std::string& labelName) const
@@ -1502,7 +1511,7 @@ namespace Figaro
             cumParBlockSizes += blockSize - 1;
             cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
             cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
-            cntJoinVals.resize(distCnt);
+            cntJoinVals.resizeRows(distCnt);
             // Dummy indices
             vParBlockStartIdxs.push_back(distCnt);
             vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
@@ -1598,7 +1607,7 @@ namespace Figaro
                 cumParBlockSizes += blockSize - 1;
                 cntJoinVals[distCnt-1][m_cntsJoinIdxV] = blockSize;
                 cntJoinVals[distCnt-1][m_cntsJoinIdxE] = rowIdx;
-                cntJoinVals.resize(distCnt);
+                cntJoinVals.resizeRows(distCnt);
                 // Dummy indices
                 vParBlockStartIdxs.push_back(distCnt);
                 vParBlockStartIdxsAfterFirstPass.push_back(rowIdx - cumParBlockSizes);
@@ -3284,7 +3293,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, perSingVals,
+                computeUAndV, saveResult, perSingVals, true,
                 &matU, &matS, &matVT);
 
             if (saveResult)
@@ -3303,7 +3312,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, perSingVals, &matU, &matS, &matVT);
+                computeUAndV, saveResult, perSingVals, true, &matU, &matS, &matVT);
 
             if (saveResult)
             {
@@ -3346,7 +3355,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, numDims,
+                computeUAndV, saveResult, numDims, true,
                 &matRed, &matS, &matVT);
 
             if (saveResult)
@@ -3363,7 +3372,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computePCA(getNumberOfThreads(), true, pcaHintType,
-                computeUAndV, saveResult, numDims, &matRed, &matS, &matVT);
+                computeUAndV, saveResult, numDims, true, &matRed, &matS, &matVT);
 
             if (saveResult)
             {

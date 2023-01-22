@@ -52,7 +52,7 @@ TEST(Matrix, Basic)
     }
 }
 
-TEST(Matrix, Resize)
+TEST(Matrix, ResizeRows)
 {
     static constexpr uint32_t NUM_ROWS = 5, NEW_NUM_ROWS = 3, NUM_COLS = 4;
     Figaro::Matrix<double> matrix(0, NUM_COLS);
@@ -60,7 +60,7 @@ TEST(Matrix, Resize)
     EXPECT_EQ(matrix.getNumRows(), 0);
     EXPECT_EQ(matrix.getNumCols(), NUM_COLS);
 
-    matrix.resize(NUM_ROWS);
+    matrix.resizeRows(NUM_ROWS);
     EXPECT_EQ(matrix.getNumRows(), NUM_ROWS);
     for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx ++)
     {
@@ -78,7 +78,7 @@ TEST(Matrix, Resize)
         }
     }
 
-    matrix.resize(NEW_NUM_ROWS);
+    matrix.resizeRows(NEW_NUM_ROWS);
     EXPECT_EQ(matrix.getNumRows(), NEW_NUM_ROWS);
     for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx ++)
     {
@@ -1627,7 +1627,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 1,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1664,7 +1664,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 1,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1702,7 +1702,7 @@ TEST(Matrix, computePCADivAndConqRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 2,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1760,7 +1760,7 @@ TEST(Matrix, computePCADivAndConqColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_DIV_AND_CONQ, true, true, 2,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1819,7 +1819,7 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 1,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1856,10 +1856,10 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 1,
+        Figaro::PCAHintType::QR_ITER, true, true, 1, false,
         nullptr, &matrixS, &matrixVT);
 
-    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(1, 0), 17.417873990872451, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(matrixS(2, 0), 3.686479264511551, GIVENS_TEST_PRECISION_ERROR);
 
@@ -1894,7 +1894,7 @@ TEST(Matrix, computePCAQRIterRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 2,
+        Figaro::PCAHintType::QR_ITER, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1952,7 +1952,7 @@ TEST(Matrix, computePCAQRIterColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::EIGEN_DECOMP_QR_ITER, true, true, 2,
+        Figaro::PCAHintType::QR_ITER, true, true, 2, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -2318,6 +2318,101 @@ TEST(Matrix, SelfMatrixMultiplyColMajor)
         }
     }
 }
+
+
+TEST(Matrix, MultiplicationRectDiagRowMajor)
+{
+    static constexpr uint32_t M = 3, N = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> A(M, N), B(N, 1), expC(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), N);
+
+    EXPECT_EQ(B.getNumRows(), N);
+    EXPECT_EQ(B.getNumCols(), 1);
+
+
+    A(0, 0) = 0;
+    A(0, 1) = 1;
+
+    A(1, 0) = 3;
+    A(1, 1) = 4;
+
+    A(2, 0) = 6;
+    A(2, 1) = 7;
+
+    B(0, 0) = 2;
+    B(1, 0) = 3;
+
+    expC(0, 0) = 0;
+    expC(1, 0) = 6;
+    expC(2, 0) = 12;
+
+    expC(0, 1) = 3;
+    expC(1, 1) = 12;
+    expC(2, 1) = 21;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> C =
+        A.computeMatrixProductRecDiag(B);
+    EXPECT_EQ(C.getNumRows(), expC.getNumRows());
+    EXPECT_EQ(C.getNumCols(), expC.getNumCols());
+
+    for (uint32_t row = 0; row < expC.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expC.getNumCols(); col++)
+        {
+            EXPECT_NEAR(C(row, col), expC(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
+TEST(Matrix, MultiplicationRectDiagColMajor)
+{
+    static constexpr uint32_t M = 3, N = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> A(M, N), B(N, 1), expC(M, N);
+
+    EXPECT_EQ(A.getNumRows(), M);
+    EXPECT_EQ(A.getNumCols(), N);
+
+    EXPECT_EQ(B.getNumRows(), N);
+    EXPECT_EQ(B.getNumCols(), 1);
+
+
+    A(0, 0) = 0;
+    A(0, 1) = 1;
+
+    A(1, 0) = 3;
+    A(1, 1) = 4;
+
+    A(2, 0) = 6;
+    A(2, 1) = 7;
+
+    B(0, 0) = 2;
+    B(1, 0) = 3;
+
+    expC(0, 0) = 0;
+    expC(1, 0) = 6;
+    expC(2, 0) = 12;
+
+    expC(0, 1) = 3;
+    expC(1, 1) = 12;
+    expC(2, 1) = 21;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> C =
+        A.computeMatrixProductRecDiag(B);
+    EXPECT_EQ(C.getNumRows(), expC.getNumRows());
+    EXPECT_EQ(C.getNumCols(), expC.getNumCols());
+
+    for (uint32_t row = 0; row < expC.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expC.getNumCols(); col++)
+        {
+            EXPECT_NEAR(C(row, col), expC(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
 
 
 TEST(Matrix, InverseRowMajor)

@@ -327,7 +327,7 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), false,
-                QRHintType::GIV_THIN_DIAG);
+                QRHintType::HOUSEHOLDER);
         ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
         rRelName = pQrResult->getRRelationName();
         delete pQrResult;
@@ -407,56 +407,37 @@ namespace Figaro
 
     ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodePCAFigaro(ASTNodePCAFigaro* pElement)
     {
-        std::string rRelName;
+        uint32_t perDims = 100;
+        std::string uRelName;
+        std::string sRelName;
+        std::string vRelName;
+        if (m_mIntOpts.contains("numSingVals"))
+        {
+            perDims = m_mIntOpts["numSingVals"];
+        }
 
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
         ASTVisitorJoin astVisitorJoin(m_pDatabase);
         omp_set_num_threads(pElement->getNumThreads());
-        ASTNodeQRFigaro astQRGivens(
+        ASTNodeSVDFigaro astSVDFigaro(
                 pElement->getOperand()->copy(),
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
-                pElement->getNumThreads(), false,
-                QRHintType::GIV_THIN_DIAG);
-        ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
-        rRelName = pQrResult->getRRelationName();
-        delete pQrResult;
-        /*
-        FIGARO_BENCH_INIT(vComp)
-        FIGARO_BENCH_START(vComp)
-        auto [uName, sName, vName] = m_pDatabase->evalSVDDecAlg(rRelName,
-            pElement->getHelpPCAAlg(), Figaro::MemoryLayout::ROW_MAJOR,
-            pElement->isComputeU(), true);
-        FIGARO_BENCH_STOP(vComp)
-        FIGARO_LOG_BENCH("Figaro", "Computation of V",  FIGARO_BENCH_GET_TIMER_LAP(vComp));
+                pElement->getNumThreads(), true,
+                convertPcaHintTypeToSvd(pElement->getHelpPCAAlg()));
+        ASTVisitorResultSVD* pSvdResult = (ASTVisitorResultSVD*)astSVDFigaro.accept(this);
+        uRelName = pSvdResult->getURelationName();
+        sRelName = pSvdResult->getSRelationName();
+        vRelName = pSvdResult->getVRelationName();
+        delete pSvdResult;
 
+        FIGARO_BENCH_INIT(pcaFigaroEval)
+        FIGARO_BENCH_START(pcaFigaroEval)
+        std::string uRedName = m_pDatabase->computeMatrixProductRecDiag(uRelName, sRelName);
+        FIGARO_BENCH_STOP(pcaFigaroEval)
+        FIGARO_LOG_BENCH("Figaro", "U * S product", FIGARO_BENCH_GET_TIMER_LAP(pcaFigaroEval))
 
-        if (pElement->isComputeU() || isFlagOn("computeUAndV"))
-        {
-            FIGARO_LOG_INFO("COMPUTING U")
-            FIGARO_BENCH_INIT(uComp)
-            FIGARO_BENCH_START(uComp)
-            ASTNodeRelation* astVNOde =
-                        new ASTNodeRelation(vName,
-                        m_pDatabase->getRelationAttributeNames(vName));
-            ASTNodeRelation* astSNOde =
-                        new ASTNodeRelation(sName,
-                        m_pDatabase->getRelationAttributeNames(sName));
-            ASTNodeSVDSVTInverse* astSVDInvNode =
-                new ASTNodeSVDSVTInverse(astSNOde, astVNOde);
-            ASTNodeRightMultiply astRightMulNode(pElement->getOperand()->copy(), astSVDInvNode,
-                true);
-            // Add relation.
-            ASTVisitorResultJoin* pUResult =  (ASTVisitorResultJoin*)astRightMulNode.accept(this);
-            uName = pUResult->getJoinRelName();
-            delete pUResult;
-            FIGARO_BENCH_STOP(uComp)
-            FIGARO_LOG_BENCH("Figaro", "Computation of U",  FIGARO_BENCH_GET_TIMER_LAP(uComp));
-        }
-        */
-
-        //return new ASTVisitorResultSVD(uName, sName, vName);
-        return new ASTVisitorResultSVD("uName", "sName", "vName");
+        return new ASTVisitorResultSVD(uRedName, sRelName, vRelName);
     }
 
     ASTVisitorResultSVD* ASTVisitorQueryEval::visitNodePCADecAlg(ASTNodePCAAlgDec* pElement)
