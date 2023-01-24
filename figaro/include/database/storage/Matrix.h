@@ -581,6 +581,7 @@ namespace Figaro
 
             if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
+                #pragma omp parallel for schedule(static)
                 for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
                 {
                     for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
@@ -591,6 +592,7 @@ namespace Figaro
             }
             else
             {
+                #pragma omp parallel for schedule(static)
                 for (uint32_t colIdx = colIdxBegin; colIdx <= colIdxEnd; colIdx++)
                 {
                     for (uint32_t rowIdx = rowIdxBegin; rowIdx <= rowIdxEnd; rowIdx++)
@@ -737,6 +739,7 @@ namespace Figaro
 
             if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
+                #pragma omp parallel for schedule(static)
                 for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
                 {
                     for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
@@ -749,6 +752,7 @@ namespace Figaro
             }
             else
             {
+                #pragma omp parallel for schedule(static)
                 for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
                 {
                     for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
@@ -767,6 +771,7 @@ namespace Figaro
             uint32_t rowDstBeginIdx, uint32_t colDstBeginIdx)
         {
             auto& matA = *this;
+            #pragma omp parallel for schedule(static)
             for (uint32_t rowIdxSrc = rowSrcBeginIdx; rowIdxSrc <= rowSrcEndIdx; rowIdxSrc++)
             {
                 for (uint32_t colIdxSrc = colSrcBeginIdx; colIdxSrc <= colSrcEndIdx; colIdxSrc++)
@@ -2095,7 +2100,11 @@ namespace Figaro
             {
                 computeSVDR(numThreads, pMatU, pMatS, pMatVT);
             }
-            if ((computeUAndV) && (pMatU != nullptr))
+            if ((isPercent) && (perSingVals == 100) && (computeUAndV))
+            {
+                return;
+            }
+            if ((computeUAndV) && (pMatU != nullptr) && saveResult)
             {
                 MatrixType& matU = *pMatU;
                 uint32_t numCols;
@@ -2107,9 +2116,7 @@ namespace Figaro
                 {
                     numCols = perSingVals;
                 }
-                FIGARO_LOG_DBG("Number of columns is", numCols)
                 matU = matU.getLeftCols(numCols);
-                FIGARO_LOG_DBG("matU is", matU)
             }
         }
 

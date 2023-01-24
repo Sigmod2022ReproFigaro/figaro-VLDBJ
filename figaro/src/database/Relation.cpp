@@ -3316,22 +3316,34 @@ namespace Figaro
 
             if (saveResult)
             {
-                numRedSize = matU.getNumCols();
-                MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
-                MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
-                MatrixDRowT matVV{matVT.getNumRows(), matVT.getNumCols()};
-                matUU.copyBlockToThisMatrixFromCol(
-                    matU, 0, matUU.getNumRows() - 1,
-                    0, matUU.getNumCols() - 1, 0, 0);
-                matSS.copyBlockToThisMatrixFromCol(
+                if (computeUAndV)
+                {
+                    numRedSize = matU.getNumCols();
+                    MatrixDRowT matUU{matU.getNumRows(), matU.getNumCols()};
+                    MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
+                    MatrixDRowT matVV{matVT.getNumRows(), matVT.getNumCols()};
+                    matUU.copyBlockToThisMatrixFromCol(
+                        matU, 0, matUU.getNumRows() - 1,
+                        0, matUU.getNumCols() - 1, 0, 0);
+                    matSS.copyBlockToThisMatrixFromCol(
+                        matS, 0, matSS.getNumRows() - 1,
+                        0, matSS.getNumCols() - 1, 0, 0);
+                    matVV.copyBlockToThisMatrixFromCol(
+                        matVT, 0, matVV.getNumRows() - 1,
+                        0, matVV.getNumCols() - 1, 0, 0);
+                    pU = createFactorRelation("U", std::move(matUU), numRedSize);
+                    pS = createFactorRelation("S", std::move(matSS), m_attributes.size());
+                    pV = createFactorRelation("V", std::move(matVV), m_attributes.size());
+                    FIGARO_LOG_BENCH("JOB TYPE", "Everything works3")
+                }
+                else
+                {
+                    MatrixDRowT matSS{matS.getNumRows(), matS.getNumCols()};
+                    matSS.copyBlockToThisMatrixFromCol(
                     matS, 0, matSS.getNumRows() - 1,
                     0, matSS.getNumCols() - 1, 0, 0);
-                 matVV.copyBlockToThisMatrixFromCol(
-                    matVT, 0, matVV.getNumRows() - 1,
-                    0, matVV.getNumCols() - 1, 0, 0);
-                pU = createFactorRelation("U", std::move(matUU), numRedSize);
-                pS = createFactorRelation("S", std::move(matSS), m_attributes.size());
-                pV = createFactorRelation("V", std::move(matVV), m_attributes.size());
+                    pS = createFactorRelation("S", std::move(matSS), m_attributes.size());
+                }
             }
         }
         return std::make_tuple(pU, pS, pV);
