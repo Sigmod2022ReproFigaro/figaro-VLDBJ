@@ -435,7 +435,7 @@ namespace Figaro
         FIGARO_BENCH_START(pcaFigaroEval)
         std::string uRedName = m_pDatabase->computeMatrixProductRecDiag(uRelName, sRelName);
         FIGARO_BENCH_STOP(pcaFigaroEval)
-        FIGARO_LOG_BENCH("Figaro", "U * S product", FIGARO_BENCH_GET_TIMER_LAP(pcaFigaroEval))
+        FIGARO_LOG_BENCH("Figaro", "US product", FIGARO_BENCH_GET_TIMER_LAP(pcaFigaroEval))
 
         return new ASTVisitorResultSVD(uRedName, sRelName, vRelName);
     }
@@ -523,7 +523,7 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), false,
-                QRHintType::HOUSEHOLDER
+                QRHintType::GIV_THIN_DIAG
             );
             m_saveResult = true;
             ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astNodeQRAlg.accept(this);

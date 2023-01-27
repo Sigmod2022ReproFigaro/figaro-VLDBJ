@@ -111,6 +111,11 @@ class DecompConf:
         'qr': Method.QR
     }
 
+    map_sub_method_to_enum = {
+        'giv_thin_diag': Method.GIV_THIN_DIAG,
+        'householder': Method.HOUSEHOLDER
+    }
+
     map_method_to_str = {
         Method.GIV_THIN_DIAG: 'giv_thin_diag',
         Method.HOUSEHOLDER: 'householder',
@@ -121,6 +126,11 @@ class DecompConf:
         Method.EIGEN_DECOMP_QR_ITER: 'eigen_decomp_qr_iter',
         Method.EIGEN_DECOMP_RRR: 'eigen_decomp_rrr',
         Method.QR: 'qr'
+    }
+
+    map_sub_method_to_str = {
+        Method.GIV_THIN_DIAG: 'giv_thin_diag',
+        Method.HOUSEHOLDER: 'householder'
     }
 
     map_name_to_enum  = {
@@ -151,14 +161,19 @@ class DecompConf:
     def method_to_str(method: Method)->str:
         return DecompConf.map_method_to_str[method]
 
+    @staticmethod
+    def sub_method_to_str(method: Method)->str:
+        return DecompConf.map_method_to_str[method]
+
 
     def __init__(self, sparsity: str,
         memory_layout: str, compute_all: bool,
-        name: str, method: str, num_sing_vals: int):
+        name: str, method: str, sub_method: str, num_sing_vals: int):
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
         self.memory_layout = DecompConf.map_memory_layout_to_enum[memory_layout]
         self.compute_all = compute_all
         self.method  = DecompConf.map_method_to_enum[method]
+        self.sub_method  = DecompConf.map_sub_method_to_enum[sub_method]
         self.name = DecompConf.map_name_to_enum[name]
         self.num_sing_vals = num_sing_vals
 
@@ -274,6 +289,7 @@ class SystemTest(ABC):
         decomp_json = system_json["system"]["decomposition"]
         decomp_name = decomp_json.get("name", "qr")
         method = decomp_json.get("method", "lapack")
+        sub_method = decomp_json.get("sub_method", "householder")
         memory_layout = decomp_json.get("memory_layout", "row_major")
         sparsity = decomp_json.get("sparsity", "dense")
         compute_all = bool(decomp_json.get("compute_all", False))
@@ -290,7 +306,7 @@ class SystemTest(ABC):
             PerformanceConf(path_glob, path_perf, num_reps, num_threads),
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
             DecompConf(sparsity,
-                memory_layout, compute_all, decomp_name, method,
+                memory_layout, compute_all, decomp_name, method, sub_method,
                 num_sing_vals),
             ExcecutableConf(interpreter),
             database, query, test_mode,

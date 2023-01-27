@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
     std::string strMemoryLayout;
     std::string queryConfigPath;
     std::string decompositionAlgorithm;
+    std::string subMethod;
 
     Figaro::MemoryLayout memoryLayout = Figaro::MemoryLayout::ROW_MAJOR;
     bool dump = false;
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
     ("compute_all",  boost::program_options::value<bool>())
     ("num_sing_vals",  po::value<uint32_t>(&precision))
     ("decomposition_algorithm", po::value<std::string>(&decompositionAlgorithm))
+    ("sub_method", po::value<std::string>(&subMethod))
     ("memory_layout", po::value<std::string>(&strMemoryLayout))
     ;
 

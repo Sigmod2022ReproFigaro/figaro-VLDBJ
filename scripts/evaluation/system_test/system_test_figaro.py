@@ -29,6 +29,7 @@ class SystemTestFigaro(SystemTest):
     def eval(self, dump = False, profiler = False):
         compute_all = "true" if self.conf_decomp.compute_all else "false"
         decomp_alg = DecompConf.method_to_str(self.conf_decomp.method)
+        sub_method = DecompConf.sub_method_to_str(self.conf_decomp.sub_method)
         memory_layout = DecompConf.memory_layout_to_str(self.conf_decomp.memory_layout)
         args = ["/bin/bash", "setup.sh",
                 "--root_path={}".format(self.figaro_path),
@@ -38,6 +39,7 @@ class SystemTestFigaro(SystemTest):
                 "--num_threads={}".format(self.conf_perf.num_threads),
                 "--memory_layout={}".format(memory_layout),
                 "--decomp_alg={}".format(decomp_alg),
+                "--sub_method={}".format(sub_method),
                 "--compute_all={}".format(compute_all),
                 "--num_sing_vals={}".format(self.conf_decomp.num_sing_vals),
                 "--precision={}".format(self.conf_accur.precision),
