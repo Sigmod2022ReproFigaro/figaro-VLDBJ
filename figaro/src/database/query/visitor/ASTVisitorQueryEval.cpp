@@ -86,6 +86,14 @@ namespace Figaro
             if (isFlagOn("generalizedHeadsAndTails"))
             {
                 bool evalPostProcessing = isFlagOn("postProcessing");
+                if (pElement->getHelpQrAlg() == QRHintType::GIV_THIN_DIAG)
+                {
+                    FIGARO_LOG_BENCH("QR ALGORITHM", "THIN_DIAG")
+                }
+                else if (pElement->getHelpQrAlg() == QRHintType::HOUSEHOLDER)
+                {
+                    FIGARO_LOG_BENCH("QR ALGORITHM", "HOUSEHOLDER")
+                }
                 ASTVisitorQRFigaroSecondPass figaroSecondPassVisitor(m_pDatabase,
                  pElement->getHelpQrAlg(), m_saveResult, joinRelName,
                  pResult->getHtNamesTmpRels(),
@@ -327,7 +335,7 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), false,
-                QRHintType::HOUSEHOLDER);
+                pElement->getHelpQRAlg());
         ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
         rRelName = pQrResult->getRRelationName();
         delete pQrResult;
@@ -424,7 +432,8 @@ namespace Figaro
                 pElement->getRelationOrder(),
                 pElement->getDropAttributes(),
                 pElement->getNumThreads(), true,
-                convertPcaHintTypeToSvd(pElement->getHelpPCAAlg()));
+                convertPcaHintTypeToSvd(pElement->getHelpPCAAlg()),
+                pElement->getHelpQRAlg());
         ASTVisitorResultSVD* pSvdResult = (ASTVisitorResultSVD*)astSVDFigaro.accept(this);
         uRelName = pSvdResult->getURelationName();
         sRelName = pSvdResult->getSRelationName();

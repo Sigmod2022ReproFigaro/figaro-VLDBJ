@@ -12,6 +12,7 @@ function init_global_paths()
     FIGARO_NUM_THREADS=1
     FIGARO_MEMORY_LAYOUT="ROW_MAJOR"
     FIGARO_DECOMP_ALG="HOUSEHOLDER"
+    FIGARO_SUB_METHOD="HOUSEHOLDER"
     FIGARO_NUM_SING_VALS=1
     FIGARO_COMPUTE_ALL=false
     FIGARO_PROFILER_DUMP_PATH="..."
@@ -67,6 +68,10 @@ function get_str_args()
         --decomp_alg=*)
             EXTENSION="${option#*=}"
             FIGARO_DECOMP_ALG=$EXTENSION
+        ;;
+        --sub_method=*)
+            EXTENSION="${option#*=}"
+            FIGARO_SUB_METHOD=$EXTENSION
         ;;
         --compute_all=*)
             EXTENSION="${option#*=}"
@@ -145,6 +150,7 @@ function main()
     ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
     ARGS+="--decomposition_algorithm ${FIGARO_DECOMP_ALG} "
     ARGS+="--num_sing_vals ${FIGARO_NUM_SING_VALS} "
+    ARGS+="--sub_method ${FIGARO_SUB_METHOD} "
 
     echo $ARGS
 

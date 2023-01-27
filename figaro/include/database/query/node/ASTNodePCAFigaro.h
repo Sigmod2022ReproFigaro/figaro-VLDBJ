@@ -18,10 +18,12 @@ namespace Figaro
         uint32_t m_numThreads;
         bool m_computeU;
         PCAHintType m_pcaHelpAlgorithm;
+        QRHintType m_qrHelpAlgorithm;
     public:
         ASTNodePCAFigaro(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes,
         uint32_t numThreads, bool computeU,
-        PCAHintType pcaAlgorithm
+        PCAHintType pcaAlgorithm,
+        QRHintType qrAlgorithm
         ): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
         m_vDropAttributes(vDropAttributes),
         m_numThreads(numThreads),
@@ -49,6 +51,11 @@ namespace Figaro
             return m_pcaHelpAlgorithm;
         }
 
+        QRHintType getHelpQRAlg(void) const
+        {
+            return m_qrHelpAlgorithm;
+        }
+
         bool isComputeU(void) const { return m_computeU; }
 
         ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
@@ -57,7 +64,7 @@ namespace Figaro
         {
             return new ASTNodePCAFigaro(m_pOperand->copy(),
                 m_vDropAttributes, m_vRelationOrder, m_numThreads,
-                m_computeU, m_pcaHelpAlgorithm);
+                m_computeU, m_pcaHelpAlgorithm, m_qrHelpAlgorithm);
         }
     };
 

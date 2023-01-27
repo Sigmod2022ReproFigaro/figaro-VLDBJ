@@ -18,14 +18,17 @@ namespace Figaro
         uint32_t m_numThreads;
         bool m_computeU;
         SVDHintType m_svdHelpAlgorithm;
+        QRHintType m_qrHelpAlgorithm;
     public:
         ASTNodeSVDFigaro(ASTNode *pOperand, const std::vector<std::string>& vRelationOrder, const std::vector<std::string>& vDropAttributes,
         uint32_t numThreads, bool computeU,
-        SVDHintType svdAlgorithm
+        SVDHintType svdAlgorithm,
+        QRHintType qrAlgorithm
         ): m_pOperand(pOperand), m_vRelationOrder(vRelationOrder),
         m_vDropAttributes(vDropAttributes),
         m_numThreads(numThreads),
-        m_computeU(computeU), m_svdHelpAlgorithm(svdAlgorithm) {};
+        m_computeU(computeU), m_svdHelpAlgorithm(svdAlgorithm),
+        m_qrHelpAlgorithm(qrAlgorithm) {};
         virtual ~ASTNodeSVDFigaro() override { delete m_pOperand; }
         ASTNode* getOperand(void)
         {
@@ -49,6 +52,11 @@ namespace Figaro
             return m_svdHelpAlgorithm;
         }
 
+        QRHintType getHelpQRAlg(void) const
+        {
+            return m_qrHelpAlgorithm;
+        }
+
         bool isComputeU(void) const { return m_computeU; }
 
         ASTVisitorResultAbs* accept(ASTVisitor *pVisitor) override;
@@ -57,7 +65,7 @@ namespace Figaro
         {
             return new ASTNodeSVDFigaro(m_pOperand->copy(),
                 m_vDropAttributes, m_vRelationOrder, m_numThreads,
-                m_computeU, m_svdHelpAlgorithm);
+                m_computeU, m_svdHelpAlgorithm, m_qrHelpAlgorithm);
         }
     };
 

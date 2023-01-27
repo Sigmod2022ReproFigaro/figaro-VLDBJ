@@ -131,6 +131,7 @@ namespace Figaro
             {
                 m_opType = Query::OpType::DECOMP_SVD;
                 Figaro::SVDHintType decompAlg = Figaro::SVDHintType::DIV_AND_CONQ;
+                Figaro::QRHintType rFigAlg = Figaro::QRHintType::HOUSEHOLDER;
                 if (m_mOps.contains("decomp_alg"))
                 {
                     std::string strDecAlg = m_mOps["decomp_alg"];
@@ -143,14 +144,27 @@ namespace Figaro
                         decompAlg = Figaro::SVDHintType::POWER_ITER;
                     }
                 }
+                if (m_mOps.contains("decomp_alg"))
+                {
+                    std::string strrFigAlg = m_mOps["sub_method"];
+                    if (strrFigAlg == "giv_thin_diag")
+                    {
+                        rFigAlg = Figaro::QRHintType::GIV_THIN_DIAG;
+                    }
+                    else if (strrFigAlg == "householder")
+                    {
+                        rFigAlg = Figaro::QRHintType::HOUSEHOLDER;
+                    }
+                }
                 pCreatedNode = new ASTNodeSVDFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
-                    decompAlg);
+                    decompAlg, rFigAlg);
                 FIGARO_LOG_INFO("CREATE SVD_FIGARO NODE")
             }
              else if (operatorName == "PCA_FIGARO")
             {
                 m_opType = Query::OpType::DECOMP_PCA;
+                Figaro::QRHintType rFigAlg = Figaro::QRHintType::HOUSEHOLDER;
                 Figaro::PCAHintType decompAlg = Figaro::PCAHintType::DIV_AND_CONQ;
                 if (m_mOps.contains("decomp_alg"))
                 {
@@ -164,9 +178,21 @@ namespace Figaro
                         decompAlg = Figaro::PCAHintType::POWER_ITER;
                     }
                 }
+                if (m_mOps.contains("decomp_alg"))
+                {
+                    std::string strrFigAlg = m_mOps["sub_method"];
+                    if (strrFigAlg == "giv_thin_diag")
+                    {
+                        rFigAlg = Figaro::QRHintType::GIV_THIN_DIAG;
+                    }
+                    else if (strrFigAlg == "householder")
+                    {
+                        rFigAlg = Figaro::QRHintType::HOUSEHOLDER;
+                    }
+                }
                 pCreatedNode = new ASTNodePCAFigaro(
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
-                    decompAlg);
+                    decompAlg, rFigAlg);
                 FIGARO_LOG_INFO("CREATE PCA_FIGARO NODE")
             }
             else if (operatorName == "QR_HOUSEHOLDER")

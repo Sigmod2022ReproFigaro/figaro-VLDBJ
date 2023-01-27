@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath, {{"decomp_alg", decompositionAlgorithm},
-                {"compute_all",  computeAllStr}});
+                {"compute_all",  computeAllStr}, {"sub_method", subMethod}});
     Figaro::Query::OpType opType = query.getOpType();
     switch (opType)
     {
