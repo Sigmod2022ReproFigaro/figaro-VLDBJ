@@ -924,6 +924,9 @@ namespace Figaro
         vvIts.resize(numThreads);
         vStartRowIdxs[0] = 0;
 
+        FIGARO_MIC_BEN_INIT(joinBuildIndices)
+        FIGARO_MIC_BEN_START(joinBuildIndices)
+
         for (uint32_t idx = 0; idx < numThreads; idx++)
         {
             vvIts[idx].resize(vpRels.size());
@@ -999,6 +1002,8 @@ namespace Figaro
             }
 
         }
+        FIGARO_MIC_BEN_STOP(joinBuildIndices)
+        FIGARO_LOG_MIC_BEN("join build indices", FIGARO_MIC_BEN_GET_TIMER_LAP(joinBuildIndices))
 
 
         for (uint32_t idxRel = 1; idxRel < vParRelIdxs.size(); idxRel++)
@@ -1008,8 +1013,8 @@ namespace Figaro
 
         MatrixDRowT dataOutput {joinSize, (uint32_t)(newAttributes.size())};
 
-        FIGARO_BENCH_INIT(iterateOverRootRelTimer)
-        FIGARO_BENCH_START(iterateOverRootRelTimer)
+        FIGARO_MIC_BEN_INIT(iterateOverRootRelTimer)
+        FIGARO_MIC_BEN_START(iterateOverRootRelTimer)
         #pragma omp parallel for schedule(static)
         for (uint32_t threadIdx = 0; threadIdx < numThreads; threadIdx++)
         {
@@ -1028,8 +1033,8 @@ namespace Figaro
             }
 
         }
-        FIGARO_BENCH_STOP(iterateOverRootRelTimer)
-        FIGARO_LOG_BENCH("join and add columns", FIGARO_BENCH_GET_TIMER_LAP(iterateOverRootRelTimer))
+        FIGARO_MIC_BEN_STOP(iterateOverRootRelTimer)
+        FIGARO_LOG_MIC_BEN("join and add columns", FIGARO_MIC_BEN_GET_TIMER_LAP(iterateOverRootRelTimer))
 
         for (uint32_t idxRel = 0; idxRel < vpRels.size(); idxRel++)
         {
