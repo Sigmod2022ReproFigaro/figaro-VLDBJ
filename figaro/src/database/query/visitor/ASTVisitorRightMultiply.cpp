@@ -10,8 +10,8 @@ namespace Figaro
         numNonJoinAttrs = m_pDatabase->
             getRelationAttributeNames(pElement->getRelationName()).size()
             - pElement->getJoinAttributeNames().size();
-        //FIGARO_MIC_BEN_INIT(rightMultiply)
-        //FIGARO_MIC_BEN_START(rightMultiply)
+        FIGARO_MIC_BEN_INIT(rightMultiply)
+        FIGARO_MIC_BEN_START(rightMultiply)
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
         pElement->getJoinAttributeNames(), {}, startRowIdx);
         if (m_useLFTJoin)
@@ -22,8 +22,8 @@ namespace Figaro
         startRowIdx += numNonJoinAttrs;
         FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
         FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
-        //FIGARO_MIC_BEN_STOP(rightMultiply)
-        //FIGARO_LOG_BENCH("rightMultiplyRelation", FIGARO_MIC_BEN_GET_TIMER_LAP(rightMultiply))
+        FIGARO_MIC_BEN_STOP(rightMultiply)
+        FIGARO_LOG_MIC_BEN("rightMultiplyRelation", FIGARO_MIC_BEN_GET_TIMER_LAP(rightMultiply))
         return new ASTVisitorResultJoin(mulRelName);
     }
 
@@ -71,6 +71,8 @@ namespace Figaro
         FIGARO_LOG_INFO("VISITING RIGHT MULTIPLY")
         FIGARO_LOG_INFO("VISITING LEFT")
         ASTVisitorResultAbs* pResult;
+        FIGARO_MIC_BEN_INIT(qAdd)
+        FIGARO_MIC_BEN_START(qAdd)
         if (m_useLFTJoin)
         {
             FIGARO_LOG_INFO("USING LFT JOIN")
@@ -107,6 +109,8 @@ namespace Figaro
         {
             pResult = pElement->getLeftOperand()->accept(this);
         }
+        FIGARO_MIC_BEN_STOP(qAdd)
+        FIGARO_LOG_MIC_BEN("qAdd", FIGARO_MIC_BEN_GET_TIMER_LAP(qAdd))
         return pResult;
     }
 }
