@@ -5,10 +5,10 @@ FIGARO_DUMP_PATH=/figaroDumps
 FIGARO_DATA_PATH=/figaroData
 mkdir -p ${FIGARO_PATH}
 
-cd $FIGARO_DATA_PATH 
+cd $FIGARO_DATA_PATH
 rm * -rf
 sudo chown zivanovic $FIGARO_DATA_PATH
-cd $FIGARO_DUMP_PATH 
+cd $FIGARO_DUMP_PATH
 rm * -rf
 sudo chown zivanovic $FIGARO_DUMP_PATH
 
@@ -26,7 +26,7 @@ NUMPY_PATH=/home/zivanovic
 ############# Cloning repository #########
 cd $FIGARO_PATH
 
-git clone --branch Sigmod-2022-Repro https://gitlab.ifi.uzh.ch/dast/papers/figaro-code.git
+git clone --branch Sigmod-2022-Repro https://github.com/Sigmod2022ReproFigaro/figaro-VLDBJ
 ln -s $FIGARO_DUMP_PATH ${FIGARO_PATH}/figaro-code/dumps
 cd $FIGARO_SCRIPTS_PATH
 
@@ -51,9 +51,9 @@ python -m data_management.data_formating -r $FIGARO_CODE_PATH -d $FIGARO_DATA_PA
 python -m evaluation.data_generation -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD  -s $FIGARO_SYSTEMS_TESTS_PATH -d $FIGARO_DATA_PATH --data_type download_real_data
 python -m evaluation.data_generation -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD  -s $FIGARO_SYSTEMS_TESTS_PATH -d $FIGARO_DATA_PATH --data_type all
 ############# Run experiments ###########
-for i in {1..4}
-do
-	python -m evaluation.experiment -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD -r $FIGARO_CODE_PATH -s $FIGARO_SYSTEMS_TESTS_PATH -e $i
-done
+#for i in {1..4}
+#do
+#	python -m evaluation.experiment -u $FIGARO_PSQL_USER -p $FIGARO_PSQL_PASSWORD -r $FIGARO_CODE_PATH -s $FIGARO_SYSTEMS_TESTS_PATH -e $i
+#done
 
 

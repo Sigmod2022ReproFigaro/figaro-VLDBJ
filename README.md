@@ -1,13 +1,26 @@
 # FIGARO-code
 
-This repository accompanies the submission "Givens QR Decomposition over Relational Databases" to SIGMOD 2022.
+This repository accompanies the submission "Givens Rotations for QR Decomposition, SVD and PCA over Database Joins" to Special Issue on Machine Learning and Databases.
 
 The material and the data is made available for the review process only. Please do not store or share the data elsewhere.
-
 
 ## Using the code
 
 Detailed instructions on how to set up the system and running the experiments can be found in this file: [Setup and running experiments](./USAGE.md)
+The repository that was submitted to Sigmod 2022 reproducibilty effort contains more up to date explanations on how to run the repro on that version of the code: [https://github.com/Sigmod2022ReproFigaro/figaro].
+
+The current code would require following the instructions from the other repository for repro.sh in this. This creates the docker container with the appropriate apps, structure and libraries.
+
+See [Paths](./reproducibility/run_experiments.sh) for all the variables.
+
+``` cd $FIGARO_SCRIPTS_PATH ```
+```source run-env-mkl/bin/activate```
+
+Then, manually editting the appropriate configuration files in system_tests directory and running the corresponding experiments using:
+
+``` python -m evaluation.evaluator -u zivanovic -p 12345 -r /home/zivanovic/Figaro/Figaro/figaro-code -s /home/zivanovic/Figaro/Figaro/figaro-code/system_tests --test _real_data ```
+This is an example of running tests specified in system_tests/system_real_data/tests_specs.conf.
+
 
 
 ## Code organization
@@ -31,8 +44,8 @@ This folder contains code for running numpy + (mkl or openblas).
 The directory system_tests contains the configuration files used in running each of the experiments. It has the following subfolders.
 
 - systems: contains configuration files for the systems that are used in the experiments, including psql, numpy+mkl and figaro.
-- test_accuracy_car_prod: contains the configuration files for testing the accuracy for synthetic data.
-- test_cartesian_product: contains the configuration files for testing performance for synthetic data.
+- test_syn_accur: contains the configuration files for testing the accuracy for synthetic data.
+- test_syn_perf: contains the configuration files for testing performance for synthetic data.
 - test_real_data: contains the configuration files for experiments over real datasets.
 - test_real_data_ohe: contains the configuration files for experiments over real datasets where one of join attributes is one hot encoded.
 
@@ -48,7 +61,7 @@ Each of test_* folders has the following files and folders with json configurati
     - performance evaluates the corresponding system for a number of times that is specified in the configuration files (standard: 5) and measures the execution times. Every time the system is evaluated as a separate process.
     - accuracy compares R computed by that system to other systems. In particular, this is useful to check that Figaro works correctly on real datasets.
     - performance_analysis parses the logs with evaluation times and creates xlsx with times. This was used in microbenchmarks to optimize the implementation of the algorithm.
-- file tess_specs.conf: specifies which groups of tests are evaluated.
+- file test_specs.conf: specifies which groups of tests are evaluated.
 
 The "disable" property in each configuration file specifies whether the certain type is skipped.
 
