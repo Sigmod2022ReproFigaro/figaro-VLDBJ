@@ -1646,6 +1646,82 @@ namespace Figaro
             }
         }
 
+        void computeQRCholesky2(bool computeQ = false, bool saveResult = false,
+            MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
+        {
+            MatrixType& matR = *pMatR;
+            FIGARO_LOG_BENCH("Cholesky", "This is cholesky2")
+            MatrixType& matQ = *pMatQ;
+            MatrixType& matA = *this;
+
+            MatrixType smtt = selfMatrixMultiply(0);
+            MatrixType matC = identity(m_numCols);
+            matR = MatrixType{m_numCols, m_numCols};
+            FIGARO_LOG_DBG("HERE-1")
+            FIGARO_LOG_DBG("smtt", smtt)
+            FIGARO_LOG_DBG("matC", matC)
+            for (int32_t k = 0; k < m_numCols; k++)
+            {
+                FIGARO_LOG_DBG("HERE0")
+                for (int32_t i = 0; i <= k - 1; i++)
+                {
+                    FIGARO_LOG_DBG("HEREWTF")
+                    matR(i, k) = 0;
+                    for (int32_t l = 0; l <= i; l ++)
+                    {
+                        matR(i, k) += matC(l, i) * smtt(l, k);
+                    }
+                }
+                FIGARO_LOG_DBG("HEREHERE", k, matR)
+
+                for (int32_t j = 0; j <= k - 1; j++)
+                {
+                    matC(j, k) = 0;
+                    for (int32_t i = j; i <= k - 1; i ++)
+                    {
+                        matC(j, k) -= matR(i, k) * matC(j, i) / matR(i, i);
+                    }
+                }
+                FIGARO_LOG_DBG("HERE2")
+                matR(k, k)  = 0;
+                for (int32_t p = 0; p <= k; p++)
+                {
+                    for (int32_t l = 0; l <= k; l++)
+                    {
+                        matR(k, k) += matC(p, k) * matC(l, k) * smtt(l, p);
+                    }
+                }
+                FIGARO_LOG_DBG("HERE3")
+            }
+            FIGARO_LOG_DBG("HERE4")
+
+            // for (int32_t k = 0; k < m_numCols; k++)
+            // {
+            //     double val = std::sqrt(matR(k, k));
+            //     for (int32_t j = k; j < m_numCols; j++)
+            //     {
+            //         matC(k, j) = matC(k, j) / val;
+            //     }
+            // }
+            for (int32_t k = 0; k < m_numCols; k++)
+            {
+                double val = std::sqrt(matR(k, k));
+                for (int32_t j = k; j < m_numCols; j++)
+                {
+                    matR(k, j) = matR(k, j) / val;
+                }
+            }
+
+
+            FIGARO_LOG_DBG("HERE5")
+
+            if (computeQ)
+            {
+                auto invR = matR.computeInverse(0, true);
+                matQ = matA * invR;
+            }
+        }
+
         MatrixType computeSVDSigmaVTranInverse(uint32_t numThreads,
             const MatrixType& matVT,
             uint32_t perNumSingVals = 100) const
