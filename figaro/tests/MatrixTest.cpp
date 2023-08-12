@@ -1,6 +1,7 @@
 #include "UtilTest.h"
 #include "database/storage/ArrayStorage.h"
 #include "database/storage/Matrix.h"
+#include "database/storage/MatrixSparse.h"
 #include "database/Database.h"
 #include "database/Relation.h"
 #include "database/query/Query.h"
@@ -8,6 +9,7 @@
 #include "database/query/visitor/result/ASTVisitorResultSVD.h"
 #include <vector>
 #include <string>
+#include <array>
 #include <cmath>
 
 using namespace Figaro;
@@ -49,6 +51,40 @@ TEST(Matrix, Basic)
         {
             EXPECT_EQ(matrix[rowIdx][colIdx], rowIdx * NUM_COLS + colIdx);
         }
+    }
+}
+
+TEST(MatrixSparse, Basic)
+{
+    static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 4;
+    std::vector<double> vVals = {0, 1, 2, 3, 4, 5, 6, 7, 8,
+        9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+    std::vector<int64_t> rowStartPos = {0, 4, 8, 12, 16, 20};
+    std::vector<int64_t> vColIndcs = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
+    Figaro::MatrixSparse<double> matrix{NUM_ROWS, NUM_COLS, rowStartPos.data(),  vColIndcs.data(), vVals.data()};
+    long long int numRows;
+    long long int numCols;
+    long long int* pRowStartPos;
+    long long int* pColInds;
+    double* pVals;
+    matrix.getElems(numRows, numCols, pRowStartPos, pColInds, pVals);
+
+    EXPECT_EQ(numRows, NUM_ROWS);
+    EXPECT_EQ(numCols, NUM_COLS);
+
+    for (int idx = 0; idx < rowStartPos.size() - 1; idx++)
+    {
+        EXPECT_EQ(rowStartPos[idx], pRowStartPos[idx]);
+    }
+
+    for (int idx = 0; idx < vColIndcs.size(); idx++)
+    {
+        EXPECT_EQ(vColIndcs[idx], pColInds[idx]);
+    }
+
+    for (int idx = 0; idx < vVals.size(); idx++)
+    {
+        EXPECT_EQ(vVals[idx], pVals[idx]);
     }
 }
 
@@ -553,7 +589,7 @@ TEST(Matrix, computeQRCholeskyQRowMajor)
     matrix(1, 0) = 3; matrix(1, 1) = 4;
     matrix(2, 0) = 4; matrix(2, 1) = 3;
 
-    matrix.computeQRHouseholder(true, true, &matrixR, &matrixQ);
+    matrix.computeQRCholesky(true, true, &matrixR, &matrixQ);
 
     EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
@@ -563,6 +599,37 @@ TEST(Matrix, computeQRCholeskyQRowMajor)
 
     FIGARO_LOG_DBG("matrixR", matrixR)
     FIGARO_LOG_DBG("matrixQ", matrixQ)
+
+    EXPECT_NEAR(std::abs(matrixQ(0, 0)), std::abs(-0.196116135138184), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(1, 0)), std::abs(-0.588348405414552), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(2, 0)), std::abs(-0.784464540552736), GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixQ(0, 1)), std::abs(0.577350269189625), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(1, 1)), std::abs(-0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixQ(2, 1)), std::abs(0.577350269189626), GIVENS_TEST_PRECISION_ERROR);
+}
+
+TEST(Matrix, computeQRCholesky2QRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixR(0, 0), matrixQ(0,0);
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(1, 0) = 3; matrix(1, 1) = 4;
+    matrix(2, 0) = 4; matrix(2, 1) = 3;
+
+    matrix.computeQRCholesky2(true, true, &matrixR, &matrixQ);
+
+    EXPECT_NEAR(std::abs(matrixR(0, 0)), 5.099019513592785, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(0, 1)), 5.099019513592786, GIVENS_TEST_PRECISION_ERROR);
+
+    EXPECT_NEAR(std::abs(matrixR(1, 0)), 0, GIVENS_TEST_PRECISION_ERROR);
+    EXPECT_NEAR(std::abs(matrixR(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
+
+    FIGARO_LOG_DBG("matrixR", matrixR)
+    FIGARO_LOG_DBG("matrixQ", matrixQ)
+    FIGARO_LOG_DBG("matrixQ orthogonality", matrixQ.getOrthogonality(0))
 
     EXPECT_NEAR(std::abs(matrixQ(0, 0)), std::abs(-0.196116135138184), GIVENS_TEST_PRECISION_ERROR);
     EXPECT_NEAR(std::abs(matrixQ(1, 0)), std::abs(-0.588348405414552), GIVENS_TEST_PRECISION_ERROR);
@@ -2265,6 +2332,41 @@ TEST(Matrix, SelfMatrixMultiplyRowMajor)
     }
 }
 
+
+TEST(Matrix, SelfMatrixMultiplyRowMajor2)
+{
+    static constexpr uint32_t M = 3, N = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> A(M, N), expB(N, N);
+
+    A(0, 0) = 1;
+    A(0, 1) = 2;
+
+    A(1, 0) = 1;
+    A(1, 1) = 2;
+
+    A(2, 0) = 1;
+    A(2, 1) = 2;
+
+
+    expB(0, 0) = 3;
+    expB(0, 1) = 6;
+
+    expB(1, 0) = 6;
+    expB(1, 1) = 12;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> B = A.selfMatrixMultiply(0);
+    EXPECT_EQ(B.getNumRows(), expB.getNumRows());
+    EXPECT_EQ(B.getNumCols(), expB.getNumCols());
+
+    for (uint32_t row = 0; row < expB.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expB.getNumCols(); col++)
+        {
+            EXPECT_NEAR(B(row, col), expB(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
 TEST(Matrix, SelfMatrixMultiplyColMajor)
 {
     static constexpr uint32_t M = 3, N = 4;
@@ -2307,6 +2409,41 @@ TEST(Matrix, SelfMatrixMultiplyColMajor)
 
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> B = A.selfMatrixMultiply(0);
 
+    EXPECT_EQ(B.getNumRows(), expB.getNumRows());
+    EXPECT_EQ(B.getNumCols(), expB.getNumCols());
+
+    for (uint32_t row = 0; row < expB.getNumRows(); row ++)
+    {
+        for (uint32_t col = 0; col < expB.getNumCols(); col++)
+        {
+            EXPECT_NEAR(B(row, col), expB(row, col), QR_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+
+TEST(Matrix, SelfMatrixMultiplyColMajor2)
+{
+    static constexpr uint32_t M = 3, N = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> A(M, N), expB(N, N);
+
+    A(0, 0) = 1;
+    A(0, 1) = 2;
+
+    A(1, 0) = 1;
+    A(1, 1) = 2;
+
+    A(2, 0) = 1;
+    A(2, 1) = 2;
+
+
+    expB(0, 0) = 3;
+    expB(0, 1) = 6;
+
+    expB(1, 0) = 6;
+    expB(1, 1) = 12;
+
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> B = A.selfMatrixMultiply(0);
     EXPECT_EQ(B.getNumRows(), expB.getNumRows());
     EXPECT_EQ(B.getNumCols(), expB.getNumCols());
 

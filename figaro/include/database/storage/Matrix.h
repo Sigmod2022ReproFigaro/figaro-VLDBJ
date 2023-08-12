@@ -9,6 +9,7 @@
 #include <mkl.h>
 #include <random>
 #include "utils/Types.h"
+
 namespace Figaro
 {
     // Row-major order of storing elements of matrix is assumed.
@@ -1403,8 +1404,8 @@ namespace Figaro
 
 
         /**
-         * matrix. If compute Q is set to true, computed R in place will not be
          * @brief If computeQ is set to false, computed R in place will be an upper triangular
+         * matrix. If compute Q is set to true, computed R in place will not be
          * upper triangular.
          *
          */
@@ -1428,8 +1429,9 @@ namespace Figaro
             }
             //FIGARO_MIC_BEN_INIT(computeRLapack)
             //FIGARO_MIC_BEN_START(computeRLapack)
-            LAPACKE_dgeqrf(memLayout, m_numRows, m_numCols,
-                pMat /* *a */, ldA,/*lda*/ tau/* tau */);
+            // LAPACKE_dgeqrf(memLayout, m_numRows, m_numCols,
+            //    pMat /* *a */, ldA,/*lda*/ tau/* tau */);
+            LAPACKE_dgeqr2(memLayout, m_numRows, m_numCols, pMat, ldA, tau);
             //FIGARO_MIC_BEN_STOP(computeRLapack)
             //FIGARO_LOG_MIC_BEN("Compute R",  //FIGARO_MIC_BEN_GET_TIMER_LAP(computeRLapack));
 
@@ -1632,6 +1634,8 @@ namespace Figaro
         void computeQRCholesky(bool computeQ = false, bool saveResult = false,
             MatrixType* pMatR = nullptr, MatrixType* pMatQ = nullptr)
         {
+            FIGARO_LOG_BENCH("HEre in Cholesky", "YEah babe")
+
             MatrixType& matR = *pMatR;
             MatrixType& matQ = *pMatQ;
             MatrixType& matA = *this;
@@ -1644,6 +1648,7 @@ namespace Figaro
                 auto invR = matR.computeInverse(0, true);
                 matQ = matA * invR;
             }
+            FIGARO_LOG_BENCH("Condition number", estCondNumber(0));
         }
 
         void computeQRCholesky2(bool computeQ = false, bool saveResult = false,

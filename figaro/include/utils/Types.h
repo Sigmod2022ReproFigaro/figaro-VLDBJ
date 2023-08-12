@@ -9,6 +9,14 @@ namespace Figaro
         COL_MAJOR = 1
     };
 
+    enum class  SparseMemoryLayout: uint32_t
+    {
+        COO = 0,
+        CSR = 1,
+        CSC = 2
+    };
+
+
     enum class QRHintType
     {
         GIV_THIN_BOTTOM = 0,
