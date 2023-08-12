@@ -16,6 +16,7 @@ namespace Figaro
     class MatrixSparse
     {
         sparse_matrix_t m_pMatrix;
+        using MatrixType = MatrixSparse<T, Layout>;
         uint32_t m_numRows;
         uint32_t m_numCols;
     public:
@@ -24,10 +25,15 @@ namespace Figaro
             int64_t* pColInds,
             double* pVals)
         {
-            mkl_sparse_d_create_csr(&m_pMatrix,
+            sparse_matrix_t pMatrixCopy;
+            matrix_descr mDescr;
+            mkl_sparse_d_create_csr(&pMatrixCopy,
                 sparse_index_base_t::SPARSE_INDEX_BASE_ZERO,
                 numRows,  numCols, (long long int*)pRows, (long long int*)(pRows + 1),
                 (long long int*)pColInds, pVals);
+            mDescr.type = SPARSE_MATRIX_TYPE_GENERAL;
+            // Create a copy of data, since the data might be lost
+            mkl_sparse_copy(pMatrixCopy, mDescr, &m_pMatrix);
             m_numRows = numRows;
             m_numCols = numCols;
         }
@@ -57,6 +63,19 @@ namespace Figaro
                 &base,
                 &numRows,  &numCols, &pRows, &pRowsEnd,
                 &pColInds, &pVals);
+        }
+        /*
+        * https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2023-0/mkl-sparse-qr.html
+        **/
+        void computeQR(void)
+        {
+            matrix_descr mDescr;
+            mDescr.type = SPARSE_MATRIX_TYPE_GENERAL;
+            sparse_status_t status;
+            status = mkl_sparse_qr_reorder(m_pMatrix, mDescr);
+            FIGARO_LOG_ASSERT(status == SPARSE_STATUS_SUCCESS)
+            status = mkl_sparse_d_qr_factorize(m_pMatrix, nullptr);
+            FIGARO_LOG_ASSERT(status == SPARSE_STATUS_SUCCESS)
         }
         /*
         T& operator()(uint32_t rowIdx, uint32_t colIdx)

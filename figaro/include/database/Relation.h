@@ -3,6 +3,7 @@
 
 #include "utils/Utils.h"
 #include "database/storage/Matrix.h"
+#include "database/storage/MatrixSparse.h"
 #include <vector>
 #include <memory>
 #include <unordered_map>
@@ -47,6 +48,7 @@ namespace Figaro
         // key: PK values -> value: corresponding aggregate
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> MatrixDColT;
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> MatrixDRowT;
+        typedef Figaro::MatrixSparse<double, Figaro::SparseMemoryLayout::CSR> MatrixSparseDCSR;
         typedef Figaro::Matrix<uint32_t> MatrixUI32T;
         typedef std::tuple<uint32_t, tbb::atomic<uint32_t> > DownUpCntT;
 
