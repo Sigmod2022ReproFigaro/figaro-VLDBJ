@@ -243,7 +243,7 @@ namespace Figaro
 
         std::string extractLUPermutationMatrix(const std::string& relName);
 
-        void changeMemoryLayout(void);
+        void changeMemoryLayout(const MemoryLayout& newMemoryLayout);
 
         std::tuple<std::string, std::string> evalQRDecAlg(
             const std::string& relName,

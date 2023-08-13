@@ -53,12 +53,13 @@ class SystemTestDecompAlg(SystemTestCompetitor):
 
 
     def get_query_json(self):
-
         if self.query.get_root_operator() == "QR_FIGARO":
             if self.conf_decomp.method == DecompConf.Method.GIV_THIN_DIAG:
                 command = "QR_GIV_THIN_DIAG"
             elif self.conf_decomp.method == DecompConf.Method.HOUSEHOLDER:
                 command = "QR_HOUSEHOLDER"
+            elif self.conf_decomp.method == DecompConf.Method.SPARSE_QR:
+                command = "QR_SPARSE"
             query_json_s = """
             {{
                 "query":
@@ -199,7 +200,6 @@ class SystemTestDecompAlg(SystemTestCompetitor):
         dump_db_config_path = os.path.join(self.conf_dump.path,  "database_specs.conf")
         dump_query_config_path = os.path.join(self.conf_dump.path,  "query_specs.conf")
         with open(dump_db_config_path, 'w') as dump_db_config_file:
-            logging.debug(dump_db_config_path)
             json.dump(database_json, dump_db_config_file, indent=4)
 
         with open(dump_query_config_path, 'w') as dump_query_config_file:

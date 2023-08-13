@@ -24,7 +24,9 @@ namespace Figaro
     // TODO: Replace with factory pattern.
         // TODO: Rename QR_FIGARO with QR_FIGARO
         if ((operatorName == "QR_FIGARO") || (operatorName == "QR_HOUSEHOLDER")
-        || (operatorName == "QR_GIV_THIN_DIAG") || (operatorName == "eval_join")
+        || (operatorName == "QR_GIV_THIN_DIAG") ||
+        (operatorName == "QR_SPARSE") ||
+        (operatorName == "eval_join")
         || (operatorName == "LIN_REG")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
         || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_DIV_AND_CONQ")
@@ -202,6 +204,14 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
                 Figaro::QRHintType::HOUSEHOLDER);
                 FIGARO_LOG_INFO("CREATE QR_HOUSEHOLDER NODE")
+            }
+            else if (operatorName == "QR_SPARSE")
+            {
+                m_opType = Query::OpType::DECOMP_QR;
+                pCreatedNode = new ASTNodeQRAlg(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads, m_computeAll,
+                Figaro::QRHintType::QR_SPARSE);
+                FIGARO_LOG_INFO("CREATE QR_SPARSE NODE")
             }
             else if (operatorName == "QR_GIV_THIN_DIAG")
             {

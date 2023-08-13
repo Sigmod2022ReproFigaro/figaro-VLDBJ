@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
-
     if (vm.count("dump_file_path"))
     {
         dumpFilePath = vm["dump_file_path"].as<std::string>();
@@ -86,6 +85,10 @@ int main(int argc, char *argv[])
         {
             memoryLayout = Figaro::MemoryLayout::COL_MAJOR;
         }
+        else if (strMemoryLayout == "CSR")
+        {
+            memoryLayout = Figaro::MemoryLayout::CSR;
+        }
     }
 
     if (vm.count("compute_all"))
@@ -93,7 +96,6 @@ int main(int argc, char *argv[])
         computeAll = vm["compute_all"].as<bool>();
         computeAllStr = computeAll ? "true" : "false";
     }
-
 
     if (vm.count("num_sing_vals"))
     {
@@ -103,12 +105,10 @@ int main(int argc, char *argv[])
     queryConfigPath = vm["query_config_path"].as<std::string>();
     FIGARO_LOG_INFO(dbConfigPath)
 
-
     initGlobalState(numThreads);
 
     Figaro::Database database(dbConfigPath);
     database.loadData();
-
     Figaro::Query query(&database);
     query.loadQuery(queryConfigPath, {{"decomp_alg", decompositionAlgorithm},
                 {"compute_all",  computeAllStr}, {"sub_method", subMethod}});

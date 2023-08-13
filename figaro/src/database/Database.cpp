@@ -863,12 +863,11 @@ namespace Figaro
         return permName;
     }
 
-    void Database::changeMemoryLayout(void)
+    void Database::changeMemoryLayout(const MemoryLayout& newMemoryLayout)
     {
         for (auto& [relName, relation]: m_relations)
         {
-            FIGARO_LOG_INFO("One hot encoding relation", relName)
-            relation.changeMemoryLayout(MemoryLayout::COL_MAJOR);
+            relation.changeMemoryLayout(newMemoryLayout);
         }
     }
 

@@ -6,16 +6,11 @@ namespace Figaro
     enum class  MemoryLayout: uint32_t
     {
         ROW_MAJOR = 0,
-        COL_MAJOR = 1
+        COL_MAJOR = 1,
+        COO = 2,
+        CSR = 3,
+        CSC = 4
     };
-
-    enum class  SparseMemoryLayout: uint32_t
-    {
-        COO = 0,
-        CSR = 1,
-        CSC = 2
-    };
-
 
     enum class QRHintType
     {
@@ -23,7 +18,8 @@ namespace Figaro
         GIV_THIN_DIAG = 1,
         GIV_THICK_BOTTOM = 2,
         GIV_THICK_DIAG = 3,
-        HOUSEHOLDER = 4
+        HOUSEHOLDER = 4,
+        QR_SPARSE = 5
     };
 
     enum class SVDHintType

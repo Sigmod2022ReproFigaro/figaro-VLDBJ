@@ -3201,7 +3201,7 @@ namespace Figaro
                 pQ = createFactorRelation("Q", std::move(matQ), m_attributes.size());
             }
         }
-        else
+        else if (memoryLayout == MemoryLayout::COL_MAJOR)
         {
             MatrixDColT matR = MatrixDColT{0, 0};
             MatrixDColT matQ = MatrixDColT{0, 0};
@@ -3227,6 +3227,11 @@ namespace Figaro
                 pR = createFactorRelation("R", std::move(matRR), m_attributes.size());
                 pQ = createFactorRelation("Q", std::move(matRQ), m_attributes.size());
             }
+        }
+        else if (memoryLayout == MemoryLayout::CSR)
+        {
+            FIGARO_LOG_BENCH("On the right place", "On the right place")
+            m_dataSparseCSR.computeQR();
         }
         return std::make_tuple(pR, pQ);
     }
@@ -3458,9 +3463,9 @@ namespace Figaro
         return m_dataScales;
     }
 
-    void Relation::changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout)
+    void Relation::changeMemoryLayout(const Figaro::MemoryLayout& newMemoryLayout)
     {
-        if (memoryLayout == MemoryLayout::COL_MAJOR)
+        if (newMemoryLayout == MemoryLayout::COL_MAJOR)
         {
             MatrixDColT tmpOut{m_data.getNumRows(), m_data.getNumCols()};
             for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
@@ -3473,7 +3478,7 @@ namespace Figaro
             m_dataColumnMajor = std::move(tmpOut);
             m_data = std::move(MatrixDRowT{0, 0});
         }
-        else if (memoryLayout == MemoryLayout::ROW_MAJOR)
+        else if (newMemoryLayout == MemoryLayout::ROW_MAJOR)
         {
             MatrixDRowT tmpOut{m_dataColumnMajor.getNumRows(), m_dataColumnMajor.getNumCols()};
             for (uint32_t colIdx = 0; colIdx < m_dataColumnMajor.getNumCols(); colIdx++)
@@ -3487,6 +3492,45 @@ namespace Figaro
             }
             m_dataColumnMajor = std::move(MatrixDColT{0, 0});
             m_data = std::move(tmpOut);
+        }
+        else if (newMemoryLayout == MemoryLayout::CSR)
+        {
+            // TODO: compute CSR
+            uint64_t nonZeroCnt = 0;
+
+            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_data.getNumCols(); colIdx++)
+                {
+                    if (m_data(rowIdx, colIdx) != 0.0)
+                    {
+                        nonZeroCnt++;
+                    }
+                }
+            }
+            FIGARO_LOG_BENCH("Non-zero cnt", nonZeroCnt)
+            int64_t* pRows = new int64_t[m_data.getNumRows() + 1];
+            int64_t* pColInds = new int64_t[nonZeroCnt];
+            double* pVals = new double[nonZeroCnt];
+
+            uint64_t glIdx = 0;
+            pRows[0] = 0;
+            for (uint32_t rowIdx = 0; rowIdx < m_data.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < m_data.getNumCols(); colIdx++)
+                {
+                    if (m_data(rowIdx, colIdx) != 0.0)
+                    {
+                        pColInds[glIdx] = colIdx;
+                        pVals[glIdx] = m_data(rowIdx, colIdx);
+                        glIdx++;
+                    }
+                }
+                pRows[rowIdx+1] = glIdx;
+            }
+            MatrixSparseDCSR tmpOut{
+                m_data.getNumRows(), m_data.getNumCols(), pRows, pColInds, pVals, false};
+            m_dataSparseCSR = std::move(tmpOut);
         }
     }
 

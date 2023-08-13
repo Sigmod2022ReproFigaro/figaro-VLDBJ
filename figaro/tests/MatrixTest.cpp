@@ -416,6 +416,17 @@ TEST(Matrix, computeQRHouseholderRRowMajor)
     EXPECT_NEAR(std::abs(matrix(1, 1)), 1.732050807568877, GIVENS_TEST_PRECISION_ERROR);
 }
 
+TEST(MatrixSparse, computeQR)
+{
+    static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;
+    std::vector<double> vVals = {1, 2, 3, 4, 4, 3};
+    std::vector<int64_t> rowStartPos = {0, 2, 4, 6};
+    std::vector<int64_t> vColIndcs = {0, 1, 0, 1, 0, 1};
+    Figaro::MatrixSparse<double> matrix{NUM_ROWS, NUM_COLS, rowStartPos.data(),  vColIndcs.data(), vVals.data()};
+
+    matrix.computeQR();
+}
+
 TEST(Matrix, computeQRHouseholderRColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 3, NUM_COLS = 2;

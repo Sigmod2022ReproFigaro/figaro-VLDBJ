@@ -12,35 +12,94 @@
 
 namespace Figaro
 {
-    template <typename T, SparseMemoryLayout Layout = SparseMemoryLayout::CSR>
+    template <typename T, MemoryLayout Layout = MemoryLayout::CSR>
     class MatrixSparse
     {
-        sparse_matrix_t m_pMatrix;
+        sparse_matrix_t m_pMatrix = nullptr;
         using MatrixType = MatrixSparse<T, Layout>;
         uint32_t m_numRows;
         uint32_t m_numCols;
+
+        void destroyData(void)
+        {
+            m_numRows = 0;
+            m_numCols = 0;
+            if (nullptr != m_pMatrix)
+            {
+                mkl_sparse_destroy(m_pMatrix);
+                m_pMatrix = nullptr;
+            }
+        }
     public:
+        MatrixSparse()
+        {
+            m_numRows = 0;
+            m_numCols = 0;
+            m_pMatrix = nullptr;
+        }
         MatrixSparse(uint32_t numRows, uint32_t numCols,
             int64_t* pRows,
             int64_t* pColInds,
-            double* pVals)
+            double* pVals,
+            bool copy = true)
         {
-            sparse_matrix_t pMatrixCopy;
-            matrix_descr mDescr;
-            mkl_sparse_d_create_csr(&pMatrixCopy,
-                sparse_index_base_t::SPARSE_INDEX_BASE_ZERO,
-                numRows,  numCols, (long long int*)pRows, (long long int*)(pRows + 1),
-                (long long int*)pColInds, pVals);
-            mDescr.type = SPARSE_MATRIX_TYPE_GENERAL;
-            // Create a copy of data, since the data might be lost
-            mkl_sparse_copy(pMatrixCopy, mDescr, &m_pMatrix);
+            if (copy)
+            {
+                sparse_matrix_t pMatrixCopy;
+                matrix_descr mDescr;
+                mkl_sparse_d_create_csr(&pMatrixCopy,
+                    sparse_index_base_t::SPARSE_INDEX_BASE_ZERO,
+                    numRows,  numCols, (long long int*)pRows, (long long int*)(pRows + 1),
+                    (long long int*)pColInds, pVals);
+                mDescr.type = SPARSE_MATRIX_TYPE_GENERAL;
+                // Create a copy of data, since the data might be lost
+
+                mkl_sparse_copy(pMatrixCopy, mDescr, &m_pMatrix);
+            }
+            else
+            {
+                mkl_sparse_d_create_csr(&m_pMatrix,
+                    sparse_index_base_t::SPARSE_INDEX_BASE_ZERO,
+                    numRows,  numCols, (long long int*)pRows, (long long int*)(pRows + 1),
+                    (long long int*)pColInds, pVals);
+            }
             m_numRows = numRows;
             m_numCols = numCols;
         }
 
+        MatrixSparse(const MatrixSparse&) = delete;
+        MatrixSparse& operator=(const MatrixSparse&) = delete;
+
+        MatrixSparse(MatrixSparse&& other)
+        {
+            m_pMatrix = other.m_pMatrix;
+            m_numRows = other.m_numRows;
+            m_numCols = other.m_numCols;
+
+            other.m_pMatrix = nullptr;
+            other.m_numCols = 0;
+            other.m_numRows = 0;
+        }
+
+        MatrixSparse& operator=(MatrixSparse&& other)
+        {
+            if (this != &other)
+            {
+                destroyData();
+                m_pMatrix = other.m_pMatrix;
+                m_numRows = other.m_numRows;
+                m_numCols = other.m_numCols;
+
+                other.m_pMatrix = nullptr;
+                other.m_numCols = 0;
+                other.m_numRows = 0;
+            }
+            return *this;
+        }
+
         ~MatrixSparse()
         {
-            mkl_sparse_destroy(m_pMatrix);
+            destroyData();
         }
 
         uint32_t getNumRows(void) const

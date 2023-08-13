@@ -48,7 +48,7 @@ namespace Figaro
         // key: PK values -> value: corresponding aggregate
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> MatrixDColT;
         typedef Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> MatrixDRowT;
-        typedef Figaro::MatrixSparse<double, Figaro::SparseMemoryLayout::CSR> MatrixSparseDCSR;
+        typedef Figaro::MatrixSparse<double, Figaro::MemoryLayout::CSR> MatrixSparseDCSR;
         typedef Figaro::Matrix<uint32_t> MatrixUI32T;
         typedef std::tuple<uint32_t, tbb::atomic<uint32_t> > DownUpCntT;
 
@@ -150,6 +150,7 @@ namespace Figaro
         ErrorCode initializationErrorCode = ErrorCode::NO_ERROR;
         std::vector<Attribute> m_attributes;
         std::string m_dataPath;
+        MatrixSparseDCSR m_dataSparseCSR;
         MatrixDColT m_dataColumnMajor;
         MatrixDRowT m_data;
 

@@ -82,6 +82,7 @@ class DecompConf:
         EIGEN_DECOMP_QR_ITER = 7
         EIGEN_DECOMP_RRR = 8
         QR = 9
+        SPARSE_QR = 10
 
 
     class SparsityMode(IntEnum):
@@ -92,11 +93,13 @@ class DecompConf:
     class MemoryLayout(IntEnum):
         ROW_MAJOR = 1
         COL_MAJOR = 2
+        CSR = 3
 
 
     map_memory_layout_to_str = {
         MemoryLayout.ROW_MAJOR : "ROW_MAJOR",
-        MemoryLayout.COL_MAJOR : "COL_MAJOR"
+        MemoryLayout.COL_MAJOR : "COL_MAJOR",
+        MemoryLayout.CSR: "CSR"
     }
 
     map_method_to_enum = {
@@ -108,7 +111,8 @@ class DecompConf:
         'eigen_decomp_div_and_conq': Method.EIGEN_DECOMP_DIV_AND_CONQ,
         'eigen_decomp_qr_iter': Method.EIGEN_DECOMP_QR_ITER,
         'eigen_decomp_rrr': Method.EIGEN_DECOMP_RRR,
-        'qr': Method.QR
+        'qr': Method.QR,
+        'qr_sparse': Method.SPARSE_QR
     }
 
     map_sub_method_to_enum = {
@@ -125,7 +129,8 @@ class DecompConf:
         Method.EIGEN_DECOMP_DIV_AND_CONQ: 'eigen_decomp_div_and_conq',
         Method.EIGEN_DECOMP_QR_ITER: 'eigen_decomp_qr_iter',
         Method.EIGEN_DECOMP_RRR: 'eigen_decomp_rrr',
-        Method.QR: 'qr'
+        Method.QR: 'qr',
+        Method.SPARSE_QR: 'qr_sparse'
     }
 
     map_sub_method_to_str = {
@@ -148,7 +153,8 @@ class DecompConf:
 
     map_memory_layout_to_enum = {
         'row_major': MemoryLayout.ROW_MAJOR,
-        'col_major': MemoryLayout.COL_MAJOR
+        'col_major': MemoryLayout.COL_MAJOR,
+        'csr': MemoryLayout.CSR
     }
 
 

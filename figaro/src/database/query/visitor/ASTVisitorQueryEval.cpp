@@ -157,16 +157,16 @@ namespace Figaro
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
         m_pDatabase->oneHotEncodeRelations();
-        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        if (m_memoryLayout != Figaro::MemoryLayout::ROW_MAJOR)
         {
-            m_pDatabase->changeMemoryLayout();
+            m_pDatabase->changeMemoryLayout(m_memoryLayout);
         }
 
         //double condA = m_pDatabase->estimateConditionNumber(pElement->getRelationOrder().at(0), {});
         //double normA = m_pDatabase->getNorm(pElement->getRelationOrder().at(0), {});
         //FIGARO_LOG_MIC_BEN("Norm A", normA);
         //FIGARO_LOG_MIC_BEN("Condition number A", condA);
-
+        FIGARO_LOG_BENCH("On the right place", "HEHE")
         FIGARO_BENCH_INIT(qrPostprocEval)
         FIGARO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =
@@ -309,7 +309,7 @@ namespace Figaro
         m_pDatabase->oneHotEncodeRelations();
         if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
         {
-            m_pDatabase->changeMemoryLayout();
+            m_pDatabase->changeMemoryLayout(m_memoryLayout);
         }
 
         FIGARO_BENCH_INIT(luLapackEval)
@@ -391,9 +391,9 @@ namespace Figaro
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
         m_pDatabase->oneHotEncodeRelations();
-        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        if (m_memoryLayout != Figaro::MemoryLayout::ROW_MAJOR)
         {
-            m_pDatabase->changeMemoryLayout();
+            m_pDatabase->changeMemoryLayout(m_memoryLayout);
         }
 
         if (m_mIntOpts.contains("numSingVals"))
@@ -460,9 +460,9 @@ namespace Figaro
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
         m_pDatabase->oneHotEncodeRelations();
-        if (m_memoryLayout == Figaro::MemoryLayout::COL_MAJOR)
+        if (m_memoryLayout != Figaro::MemoryLayout::ROW_MAJOR)
         {
-            m_pDatabase->changeMemoryLayout();
+            m_pDatabase->changeMemoryLayout(m_memoryLayout);
         }
         if (m_mIntOpts.contains("numSingVals"))
         {
