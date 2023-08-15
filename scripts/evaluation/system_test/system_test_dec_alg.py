@@ -23,7 +23,9 @@ class SystemTestDecompAlg(SystemTestCompetitor):
 
 
     def run_microbenchmark(self):
-        pass
+        for rep in range(self.conf_perf.num_reps):
+            logging.info("Run {} / {}".format(rep + 1, self.conf_perf.num_reps))
+            self.eval()
 
 
     def get_database_json(self):

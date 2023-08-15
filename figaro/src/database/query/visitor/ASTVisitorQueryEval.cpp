@@ -166,7 +166,6 @@ namespace Figaro
         //double normA = m_pDatabase->getNorm(pElement->getRelationOrder().at(0), {});
         //FIGARO_LOG_MIC_BEN("Norm A", normA);
         //FIGARO_LOG_MIC_BEN("Condition number A", condA);
-        FIGARO_LOG_BENCH("On the right place", "HEHE")
         FIGARO_BENCH_INIT(qrPostprocEval)
         FIGARO_BENCH_START(qrPostprocEval)
         auto [rName, qName] =

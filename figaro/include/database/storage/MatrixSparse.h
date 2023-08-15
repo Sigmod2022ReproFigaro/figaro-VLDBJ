@@ -131,10 +131,27 @@ namespace Figaro
             matrix_descr mDescr;
             mDescr.type = SPARSE_MATRIX_TYPE_GENERAL;
             sparse_status_t status;
+            FIGARO_MIC_BEN_INIT(reorder)
+            FIGARO_MIC_BEN_START(reorder)
             status = mkl_sparse_qr_reorder(m_pMatrix, mDescr);
+            FIGARO_MIC_BEN_STOP(reorder)
+            FIGARO_LOG_MIC_BEN("Reorder", FIGARO_MIC_BEN_GET_TIMER_LAP(reorder));
             FIGARO_LOG_ASSERT(status == SPARSE_STATUS_SUCCESS)
+            if (status != SPARSE_STATUS_SUCCESS)
+            {
+                FIGARO_LOG_MIC_BEN("HOHOHO", "HOHOHIO")
+            }
+
+            FIGARO_MIC_BEN_INIT(sparseQr)
+            FIGARO_MIC_BEN_START(sparseQr)
             status = mkl_sparse_d_qr_factorize(m_pMatrix, nullptr);
+            FIGARO_MIC_BEN_STOP(sparseQr)
+            FIGARO_LOG_MIC_BEN("SparseQR", FIGARO_MIC_BEN_GET_TIMER_LAP(sparseQr));
             FIGARO_LOG_ASSERT(status == SPARSE_STATUS_SUCCESS)
+            if (status != SPARSE_STATUS_SUCCESS)
+            {
+                FIGARO_LOG_MIC_BEN("HOHOHO", "HOHOHIO")
+            }
         }
         /*
         T& operator()(uint32_t rowIdx, uint32_t colIdx)

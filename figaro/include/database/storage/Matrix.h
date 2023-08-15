@@ -160,12 +160,32 @@ namespace Figaro
             const double* pX = getArrPt();
             const double* pY = second.getArrPt();
             MatrixType outMat {M, N};
-            outMat.setToZeros();
             uint32_t ldOut = outMat.getLeadingDimension();
             double* pOut = outMat.getArrPt();
             CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
 
-            cblas_dger(cBlasMemLayout, M, N, 1.0, pX, 1, pY, 1, pOut, ldOut);
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
+            {
+                #pragma omp parallel for schedule(static)
+                for (uint32_t rowIdx = 0; rowIdx < M; rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < N; colIdx++)
+                    {
+                        outMat(rowIdx, colIdx) = pX[rowIdx] * pY[colIdx];
+                    }
+                }
+            }
+            else if (Layout == MemoryLayout::COL_MAJOR)
+            {
+                #pragma omp parallel for schedule(static)
+                for (uint32_t colIdx = 0; colIdx < N; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < M; rowIdx++)
+                    {
+                        outMat(rowIdx, colIdx) = pX[rowIdx] * pY[colIdx];
+                    }
+                }
+            }
             return outMat;
         }
 
@@ -247,21 +267,46 @@ namespace Figaro
             uint32_t m = getNumRows();
             uint32_t n = getNumCols() - numJoinAttr1;
             MatrixType matC{m, numJoinAttr1 + n };
-            for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
+
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
-                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                #pragma omp parallel for schedule(static)
+                for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
                 {
-                    if (colIdx < numJoinAttr1)
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                     {
-                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx];
-                    }
-                    else
-                    {
-                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] +
-                        second[rowIdx][colIdx - numJoinAttr1 + numJoinAttr2];
+                        if (colIdx < numJoinAttr1)
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                        }
+                        else
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx) +
+                            second(rowIdx, colIdx - numJoinAttr1 + numJoinAttr2);
+                        }
                     }
                 }
             }
+            else if constexpr (Layout == MemoryLayout::COL_MAJOR)
+            {
+                #pragma omp parallel for schedule(static)
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
+                    {
+                        if (colIdx < numJoinAttr1)
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                        }
+                        else
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx) +
+                            second(rowIdx, colIdx - numJoinAttr1 + numJoinAttr2);
+                        }
+                    }
+                }
+            }
+
             return matC;
         }
 
@@ -273,18 +318,42 @@ namespace Figaro
             uint32_t m = getNumRows();
             uint32_t n = getNumCols() - numJoinAttr1;
             MatrixType matC{m, numJoinAttr1 + n };
-            for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
+
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
             {
-                for (uint32_t colIdx = 0; colIdx < getNumCols(); colIdx++)
+                #pragma omp parallel for schedule(static)
+                for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
                 {
-                    if (colIdx < numJoinAttr1)
+                    for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
                     {
-                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx];
+                        if (colIdx < numJoinAttr1)
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                        }
+                        else
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx) -
+                            second(rowIdx, colIdx - numJoinAttr1 + numJoinAttr2);
+                        }
                     }
-                    else
+                }
+            }
+            else if constexpr (Layout == MemoryLayout::COL_MAJOR)
+            {
+                #pragma omp parallel for schedule(static)
+                for (uint32_t colIdx = 0; colIdx < m_numCols; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < m; rowIdx++)
                     {
-                        matC[rowIdx][colIdx] = matA[rowIdx][colIdx] -
-                        second[rowIdx][colIdx - numJoinAttr1 + numJoinAttr2];
+                        if (colIdx < numJoinAttr1)
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                        }
+                        else
+                        {
+                            matC(rowIdx, colIdx) = matA(rowIdx, colIdx) -
+                            second(rowIdx, colIdx - numJoinAttr1 + numJoinAttr2);
+                        }
                     }
                 }
             }
@@ -1903,7 +1972,7 @@ namespace Figaro
 
         void powerIteration(MatrixType& vectV, double& sigma)
         {
-            constexpr uint32_t NUM_ITERATIONS = 10;
+            constexpr uint32_t NUM_ITERATIONS = 10000;
             std::random_device randDev{};
             std::mt19937 intGen{randDev()};
             std::normal_distribution<double> normDistr{0, 1};
@@ -1987,15 +2056,40 @@ namespace Figaro
 
             for (int diagIdx = 0; diagIdx < m_numCols; diagIdx++)
             {
+                FIGARO_MIC_BEN_INIT(selfMatMultiply)
+                FIGARO_MIC_BEN_START(selfMatMultiply)
                 MatrixType matT = matA.selfMatrixMultiply(0);
-
+                FIGARO_MIC_BEN_STOP(selfMatMultiply)
+                FIGARO_LOG_MIC_BEN("Self matrix Multiply", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(selfMatMultiply));
+                FIGARO_MIC_BEN_INIT(powerIteration)
+                FIGARO_MIC_BEN_START(powerIteration)
                 matT.powerIteration(v, sigma);
+                FIGARO_MIC_BEN_STOP(powerIteration)
+                FIGARO_LOG_MIC_BEN("Power Iteration", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(powerIteration));
+                FIGARO_MIC_BEN_INIT(matMul1)
+                FIGARO_MIC_BEN_START(matMul1)
                 MatrixType u = matA * v;
+                FIGARO_MIC_BEN_STOP(matMul1)
+                FIGARO_LOG_MIC_BEN("Matrix Multiply 1", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(matMul1));
                 u.scale(1 / sigma);
+                FIGARO_MIC_BEN_INIT(outProd)
+                FIGARO_MIC_BEN_START(outProd)
                 MatrixType matOut = u.outerProduct(v);
-                matOut.scale(sigma);
+                FIGARO_MIC_BEN_STOP(outProd)
+                FIGARO_LOG_MIC_BEN("Outter Product", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(outProd));
 
+                FIGARO_MIC_BEN_INIT(scale2)
+                FIGARO_MIC_BEN_START(scale2)
+                matOut.scale(sigma);
+                FIGARO_MIC_BEN_STOP(scale2)
+                FIGARO_LOG_MIC_BEN("Scale", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(scale2));
+
+                FIGARO_MIC_BEN_INIT(matSub)
+                FIGARO_MIC_BEN_START(matSub)
                 matA = matA.subtract(matOut, 0, 0);
+                 FIGARO_MIC_BEN_STOP(matSub)
+                FIGARO_LOG_MIC_BEN("Subtract", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(matSub));
+                matOut.scale(sigma);
                 matS(diagIdx, 0) = sigma;
 
                 for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
@@ -2223,6 +2317,36 @@ namespace Figaro
             return condition2;
         }
 
+        void computeLeastSquares(MatrixType& matB)
+        {
+            uint32_t memLayout = getLapackMajorOrder();
+            uint32_t M = m_numRows;
+            uint32_t N = m_numCols;
+            double* pA = getArrPt();
+            uint32_t ldA = getLeadingDimension();
+            double* pB = matB.getArrPt();
+            uint32_t ldB = matB.getLeadingDimension();
+            uint32_t nrhs = matB.getNumCols();
+
+            LAPACKE_dgels(memLayout, 'N', M, N, nrhs, pA, ldA, pB, ldB);
+        }
+
+
+        void computeLeastSquares(uint32_t numThreads = 1, bool useHint = false,
+            Figaro::LLSHintType llsHintType = Figaro::LLSHintType::QR,
+            bool saveResult = false,
+            const MatrixType* pMatB = nullptr,
+            MatrixType* pMatX = nullptr)
+        {
+            uint32_t nrhs = pMatB->getNumCols();
+            uint32_t N = m_numCols;
+            MatrixType matrixX{N, nrhs};
+
+            if (llsHintType = Figaro::LLSHintType::QR)
+            {
+                    computeLeastSquares(*pMatB);
+            }
+        }
 
         void computePCA(uint32_t numThreads = 1, bool useHint = false,
             Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,

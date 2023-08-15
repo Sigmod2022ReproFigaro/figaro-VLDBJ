@@ -783,6 +783,93 @@ TEST(Matrix, computeEigenValueDecompositionDivAndConqRowMajor)
 */
 }
 
+
+TEST(Matrix, computeLeastSquaresRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 4, NUM_COLS = 4, NUM_RHS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixXEx{NUM_COLS, NUM_RHS};
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixB{NUM_ROWS, NUM_RHS};
+
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(0, 2) = 3; matrix(0, 3) = 4;
+
+    matrix(1, 0) = 2; matrix(1, 1) = 5;
+    matrix(1, 2) = 6; matrix(1, 3) = 7;
+
+    matrix(2, 0) = 3; matrix(2, 1) = 6;
+    matrix(2, 2) = 9; matrix(2, 3) = 10;
+
+    matrix(3, 0) = 4; matrix(3, 1) = 7;
+    matrix(3, 2) = 10; matrix(3, 3) = 11;
+
+    matrixXEx(0, 0) = 1; matrixXEx(0, 1) = 2;
+    matrixXEx(1, 0) = 2; matrixXEx(1, 1) = 3;
+    matrixXEx(2, 0) = 3; matrixXEx(2, 1) = 4;
+    matrixXEx(3, 0) = 4; matrixXEx(3, 1) = 5;
+
+
+    matrixB(0, 0) = 30; matrixB(0, 1) = 40;
+    matrixB(1, 0) = 58; matrixB(1, 1) = 78;
+    matrixB(2, 0) = 82; matrixB(2, 1) = 110;
+    matrixB(3, 0) = 92; matrixB(3, 1) = 124;
+
+    matrix.computeLeastSquares(matrixB);
+
+    FIGARO_LOG_DBG(matrixXEx)
+    for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx++)
+    {
+        for (uint32_t colIdx = 0; colIdx < NUM_RHS; colIdx++)
+        {
+            EXPECT_NEAR(matrixB(rowIdx, colIdx), matrixXEx(rowIdx, colIdx), RELAX_GIVENS_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+TEST(Matrix, computeLeastSquaresColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 4, NUM_COLS = 4, NUM_RHS = 2;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixXEx{NUM_COLS, NUM_RHS};
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixB{NUM_ROWS, NUM_RHS};
+
+
+    matrix(0, 0) = 1; matrix(0, 1) = 2;
+    matrix(0, 2) = 3; matrix(0, 3) = 4;
+
+    matrix(1, 0) = 2; matrix(1, 1) = 5;
+    matrix(1, 2) = 6; matrix(1, 3) = 7;
+
+    matrix(2, 0) = 3; matrix(2, 1) = 6;
+    matrix(2, 2) = 9; matrix(2, 3) = 10;
+
+    matrix(3, 0) = 4; matrix(3, 1) = 7;
+    matrix(3, 2) = 10; matrix(3, 3) = 11;
+
+    matrixXEx(0, 0) = 1; matrixXEx(0, 1) = 2;
+    matrixXEx(1, 0) = 2; matrixXEx(1, 1) = 3;
+    matrixXEx(2, 0) = 3; matrixXEx(2, 1) = 4;
+    matrixXEx(3, 0) = 4; matrixXEx(3, 1) = 5;
+
+
+    matrixB(0, 0) = 30; matrixB(0, 1) = 40;
+    matrixB(1, 0) = 58; matrixB(1, 1) = 78;
+    matrixB(2, 0) = 82; matrixB(2, 1) = 110;
+    matrixB(3, 0) = 92; matrixB(3, 1) = 124;
+
+    matrix.computeLeastSquares(matrixB);
+
+    FIGARO_LOG_DBG(matrixXEx)
+    for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx++)
+    {
+        for (uint32_t colIdx = 0; colIdx < NUM_RHS; colIdx++)
+        {
+            EXPECT_NEAR(matrixB(rowIdx, colIdx), matrixXEx(rowIdx, colIdx), RELAX_GIVENS_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
 TEST(Matrix, computeSVDDivAndConqRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
