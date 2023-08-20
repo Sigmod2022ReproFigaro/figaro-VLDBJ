@@ -505,6 +505,7 @@ namespace Figaro
         FIGARO_LOG_INFO("VISITING LIN REG NODE")
         std::string rRelName;
         std::string qRelName;
+        std::string linRegVec;
 
         ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
         ASTVisitorJoin astVisitorJoin(m_pDatabase);
@@ -523,6 +524,8 @@ namespace Figaro
             rRelName = pQrResult->getRRelationName();
             qRelName = pQrResult->getQRelationName();
             delete pQrResult;
+            linRegVec = m_pDatabase->linearRegression(rRelName,
+            pElement->getLabelName());
         }
         else
         {
@@ -539,8 +542,81 @@ namespace Figaro
             delete pQrResult;
         }
 
-        std::string linRegVec = m_pDatabase->linearRegression(rRelName,
-            pElement->getLabelName());
+        return new ASTVisitorResultJoin(linRegVec);
+    }
+
+        ASTVisitorResultJoin* ASTVisitorQueryEval::visitNodeLeastSquares(ASTNodeLeastSquares* pElement)
+    {
+        FIGARO_LOG_INFO("VISITING LIN REG NODE")
+        std::string rRelName;
+        std::string qRelName;
+        std::string linRegVec;
+
+        ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+        ASTVisitorJoin astVisitorJoin(m_pDatabase);
+
+        omp_set_num_threads(pElement->getNumThreads());
+        if (pElement->isFigaro())
+        {
+
+
+            // computation of R
+            ASTNodeQRFigaro astQRGivens(
+                pElement->getOperand()->copy(),
+                pElement->getRelationOrder(),
+                pElement->getDropAttributes(),
+                pElement->getNumThreads(), true,
+                QRHintType::GIV_THIN_DIAG);
+            ASTVisitorResultQR* pQrResult = (ASTVisitorResultQR*)astQRGivens.accept(this);
+            rRelName = pQrResult->getRRelationName();
+            qRelName = pQrResult->getQRelationName();
+
+            delete pQrResult;
+            uint32_t qNumRows = m_pDatabase->getNumberOfRows(qRelName);
+
+            FIGARO_BENCH_INIT(llsFigaro)
+            FIGARO_BENCH_START(llsFigaro)
+
+            FIGARO_MIC_BEN_INIT(generateRel)
+            FIGARO_MIC_BEN_START(generateRel)
+            std::string bRel = m_pDatabase->generateRelation(qNumRows, 1, m_memoryLayout);
+            FIGARO_MIC_BEN_STOP(generateRel)
+            FIGARO_LOG_MIC_BEN("Figaro", "GEneration",  FIGARO_BENCH_GET_TIMER_LAP(generateRel));
+
+            FIGARO_MIC_BEN_INIT(mulQ)
+            FIGARO_MIC_BEN_START(mulQ)
+            std::string strSol = m_pDatabase->multiply(qRelName, bRel, {}, {}, 0);
+            // TODO: Update this
+            //std::string bSol = m_pDatabase->leastSquareQR(pElement->getRelationOrder().at(0),
+            //    pElement->getLabelName());
+            FIGARO_MIC_BEN_STOP(mulQ)
+            FIGARO_LOG_MIC_BEN("Figaro", "MULQ",  FIGARO_BENCH_GET_TIMER_LAP(mulQ));
+            FIGARO_BENCH_STOP(llsFigaro)
+            FIGARO_LOG_BENCH("Figaro", "Computation of Least squares",  FIGARO_BENCH_GET_TIMER_LAP(llsFigaro));
+        }
+        else
+        {
+            FIGARO_LOG_INFO("VISITING LLQ QR DEC ALG NODE")
+            ASTVisitorComputeJoinAttributes joinAttrVisitor(m_pDatabase, false, m_memoryLayout);
+            omp_set_num_threads(pElement->getNumThreads());
+            m_pDatabase->dropAttributesFromRelations(
+                pElement->getDropAttributes());
+            pElement->accept(&joinAttrVisitor);
+            m_pDatabase->oneHotEncodeRelations();
+            if (m_memoryLayout != Figaro::MemoryLayout::ROW_MAJOR)
+            {
+                m_pDatabase->changeMemoryLayout(m_memoryLayout);
+            }
+            FIGARO_BENCH_INIT(llsQRLapackEval)
+            FIGARO_BENCH_START(llsQRLapackEval)
+            std::string relName = pElement->getRelationOrder().at(0);
+            uint32_t qNumRows = m_pDatabase->getNumberOfRows(relName);
+            std::string bRelName = m_pDatabase->generateRelation(qNumRows, 1, m_memoryLayout);
+            std::string labName = m_pDatabase->leastSquareQR(relName, bRelName);
+            FIGARO_BENCH_STOP(llsQRLapackEval)
+            FIGARO_LOG_BENCH("Figaro", "LL QR Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(llsQRLapackEval))
+            }
+
         return new ASTVisitorResultJoin(linRegVec);
     }
 

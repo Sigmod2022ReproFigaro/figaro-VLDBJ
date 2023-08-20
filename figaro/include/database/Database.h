@@ -112,6 +112,8 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2);
 
+        uint32_t getNumberOfRows(const std::string& relationName) const;
+
         std::string selfMatrixMultiply(
             const std::string& relationName,
             const std::vector<std::string>& vJoinAttrNames);
@@ -121,9 +123,16 @@ namespace Figaro
             const std::string& relationDiagName
         );
 
+        std::string generateRelation(uint32_t numRows, uint32_t numCols, MemoryLayout memLayout);
+
         std::string linearRegression(
             const std::string& relationRName,
             const std::string& labelName
+        );
+
+        std::string leastSquareQR(
+            const std::string& relationAName,
+            const std::string& relationBName
         );
 
         std::string computeSVDSigmaVTranInverse(

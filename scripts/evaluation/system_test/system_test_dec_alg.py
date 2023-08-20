@@ -183,6 +183,31 @@ class SystemTestDecompAlg(SystemTestCompetitor):
                 }}
             }}
             """.format(command=command)
+        elif self.query.get_root_operator() == "LIN_REG_FIGARO":
+            command = "LLS_QR"
+            query_json_s = """
+            {{
+                "query":
+                {{
+                    "name": "FullJoin",
+                    "expression": "{command}(JoinTable)",
+                    "evaluation_hint":
+                    {{
+                        "operator": "{command}",
+                        "operands":
+                        [
+                            {{
+                                "operator": "relation",
+                                "relation": "JoinTable"
+                            }}
+                        ],
+                        "relation_order": ["JoinTable"],
+                        "num_threads": 48,
+                        "figaro": {isFigaro}
+                    }}
+                }}
+            }}
+            """.format(command=command, isFigaro="false")
 
         query_json = json.loads(query_json_s)
         query_json["query"]["evaluation_hint"]["compute_all"] = \

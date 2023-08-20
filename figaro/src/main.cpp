@@ -137,6 +137,11 @@ int main(int argc, char *argv[])
                 memoryLayout, dump);
                 break;
         }
+        case Figaro::Query::OpType::DECOMP_LLS:
+        {
+            query.evaluateQuery(true, {{"headsAndTails", true}, {"generalizedHeadsAndTails", true}, {"postProcessing", true}}, {}, memoryLayout, dump);
+            break;
+        }
     }
     Figaro::ASTVisitorResultAbs* pResult = query.getResult();
     if (dump)

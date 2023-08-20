@@ -153,6 +153,7 @@ namespace Figaro
         MatrixSparseDCSR m_dataSparseCSR;
         MatrixDColT m_dataColumnMajor;
         MatrixDRowT m_data;
+        MemoryLayout m_memLayout;
 
         MatrixDRowT m_scales;
         MatrixDRowT m_dataScales;
@@ -402,6 +403,8 @@ namespace Figaro
         Relation(json jsonRelationSchema);
         Relation(const std::string& name,
             MatrixDRowT&& data, const std::vector<Attribute>& attributes);
+        Relation(const std::string& name,
+            MatrixDColT&& data, const std::vector<Attribute>& attributes);
 
         void resetComputations(void);
 
@@ -419,11 +422,31 @@ namespace Figaro
 
         const std::string& getName(void) const { return m_name; }
 
-
+        uint32_t getNumberOfRows(void) const
+        {
+            switch (m_memLayout)
+            {
+                case MemoryLayout::ROW_MAJOR:
+                    return m_data.getNumRows();
+                    break;
+                case MemoryLayout::COL_MAJOR:
+                    return m_dataColumnMajor.getNumRows();
+                    break;
+                case MemoryLayout::CSR:
+                    FIGARO_LOG_ERROR("No layout");
+                    return -1;
+                    break;
+                default:
+                    return -1;
+                FIGARO_LOG_ERROR("No layout")
+            }
+        }
         uint32_t getNumberOfAttributes() const
         {
             return m_attributes.size();
         }
+
+        static Relation generateRelation(uint32_t numRows, uint32_t numCols, MemoryLayout memLayout);
 
         const std::string& getAttributeName(uint32_t attributedIdx) const
         {
@@ -505,6 +528,8 @@ namespace Figaro
 
         Relation linearRegression(
             const std::string& labelName) const;
+
+        Relation computeLeastSquaresQR(Relation& relationB);
 
         double norm(
             const std::vector<std::string>& vJoinAttrNames) const;

@@ -54,11 +54,12 @@ namespace Figaro
         ASTVisitorResultSVD* visitNodeSVDFigaro(ASTNodeSVDFigaro* pElement) override;
         ASTVisitorResultSVD* visitNodePCAFigaro(ASTNodePCAFigaro* pElement) override;
         ASTVisitorResultJoin* visitNodeLinReg(ASTNodeLinReg* pElement) override;
+        ASTVisitorResultJoin* visitNodeLeastSquares(ASTNodeLeastSquares* pElement) override;
         ASTVisitorResultAbs* visitNodeAssign([[maybe_unused]] ASTNodeAssign* pElement) override { return nullptr; }
         ASTVisitorResultJoin* visitNodeEvalJoin(ASTNodeEvalJoin* pElement) override;
         ASTVisitorResultJoin* visitNodeRightMultiply(ASTNodeRightMultiply* pElement) override;
         ASTVisitorResultJoin* visitNodeInverse(ASTNodeInverse* pElement) override;
-         ASTVisitorResultJoin* visitNodeSVDSVTInverse(ASTNodeSVDSVTInverse* pElement) override;
+        ASTVisitorResultJoin* visitNodeSVDSVTInverse(ASTNodeSVDSVTInverse* pElement) override;
 
         virtual ~ASTVisitorQueryEval() override {}
     };

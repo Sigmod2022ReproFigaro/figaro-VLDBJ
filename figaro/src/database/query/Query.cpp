@@ -27,7 +27,7 @@ namespace Figaro
         || (operatorName == "QR_GIV_THIN_DIAG") ||
         (operatorName == "QR_SPARSE") ||
         (operatorName == "eval_join")
-        || (operatorName == "LIN_REG")
+        || (operatorName == "LIN_REG") || (operatorName == "LIN_REG_FIGARO")
         || (operatorName == "LU_FIGARO") || (operatorName == "LU_LAPACK") ||(operatorName == "LU_THIN")
         || (operatorName == "SVD_FIGARO") || (operatorName == "SVD_DIV_AND_CONQ")
         || (operatorName == "SVD_QR_ITER") || (operatorName == "SVD_QR")
@@ -38,9 +38,10 @@ namespace Figaro
         || (operatorName == "PCA_FIGARO") || (operatorName == "PCA_DIV_AND_CONQ")
         || (operatorName == "PCA_QR_ITER") || (operatorName == "PCA_QR")
         || (operatorName == "PCA_POWER_ITER") || (operatorName == "PCA_EIGEN_DECOMP")
-        || (operatorName == ("PCA_EIGEN_DECOMP_DIV_AND_CONQ")
+        || (operatorName == "PCA_EIGEN_DECOMP_DIV_AND_CONQ")
         || (operatorName == "PCA_EIGEN_DECOMP_QR_ITER") ||
-        (operatorName == "PCA_EIGEN_DECOMP_RRR")))
+        (operatorName == "PCA_EIGEN_DECOMP_RRR") ||
+        (operatorName == "LLS_QR"))
         {
             const json& operand = jsonQueryConfig["operands"][0];
             std::vector<std::string> vRelationOrder;
@@ -362,6 +363,22 @@ namespace Figaro
                 pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
                 labelName, isFigaro);
                 FIGARO_LOG_INFO("CREATE LIN_REG NODE")
+            }
+            else if (operatorName == "LIN_REG_FIGARO")
+            {
+                m_opType = Query::OpType::DECOMP_LLS;
+                pCreatedNode = new ASTNodeLeastSquares(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                labelName, isFigaro);
+                FIGARO_LOG_INFO("CREATE LIN_REG_FIGARO NODE")
+            }
+            else if (operatorName == "LLS_QR")
+            {
+                m_opType = Query::OpType::DECOMP_LLS;
+                pCreatedNode = new ASTNodeLeastSquares(
+                pCreatedOperandNode, vRelationOrder, vDropAttrNames, numThreads,
+                labelName, isFigaro);
+                FIGARO_LOG_INFO("CREATE LLS_QR NODE")
             }
             else
             {

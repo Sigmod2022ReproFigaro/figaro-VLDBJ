@@ -127,6 +127,19 @@ namespace Figaro
         m_countsJoinAttrs(0, 0)
     {
         m_isTmp = true;
+        m_memLayout = MemoryLayout::ROW_MAJOR;
+    }
+
+    Relation::Relation(const std::string& name,
+        MatrixDColT&& data, const std::vector<Attribute>& attributes):
+        m_name(name), m_data(0, 0),
+        m_attributes(attributes), m_dataColumnMajor(std::move(data)),
+         m_dataScales(0, 0),
+        m_scales(0, 0),
+        m_countsJoinAttrs(0, 0)
+    {
+        m_isTmp = true;
+        m_memLayout = MemoryLayout::COL_MAJOR;
     }
 
     Relation::Relation(json jsonRelationSchema):
@@ -221,6 +234,7 @@ namespace Figaro
                 m_data[row][col] = val;
             }
         }
+        m_memLayout = MemoryLayout::ROW_MAJOR;
         return ErrorCode::NO_ERROR;
     }
 
@@ -362,7 +376,7 @@ namespace Figaro
             }
         }
         m_attributes = vOneHotEncAttrs;
-        FIGARO_LOG_INFO("One hot encoded", m_attributes)
+        //FIGARO_LOG_BENCH("One hot encoded", m_attributes)
     }
 
     void Relation::dropAttributes(const std::vector<std::string>& vDropAttrNames)
@@ -1318,6 +1332,50 @@ namespace Figaro
             m_attributes);
     }
 
+    Relation Relation::generateRelation(uint32_t numRows, uint32_t numCols, MemoryLayout memLayout)
+    {
+        std::random_device randDev{};
+        std::mt19937 intGen{randDev()};
+        std::normal_distribution<double> normDistr{0, 1};
+        std::vector<Attribute> vAttrs;
+
+        for (uint32_t idx = 0; idx < numCols; idx++)
+        {
+            vAttrs.push_back(Attribute("A" + std::to_string(idx),
+                Relation::AttributeType::FLOAT, false));
+        }
+
+        if (memLayout == MemoryLayout::ROW_MAJOR)
+        {
+            MatrixDRowT outSol{numRows, numCols};
+
+            for (uint32_t rowIdx = 0; rowIdx < outSol.getNumRows(); rowIdx++)
+            {
+                for (uint32_t colIdx = 0; colIdx < outSol.getNumCols(); colIdx++)
+                {
+                    outSol(rowIdx, colIdx) = normDistr(intGen);
+                }
+            }
+
+
+            return Relation("REL_GEN", std::move(outSol), vAttrs);
+        }
+        else if (memLayout == MemoryLayout::COL_MAJOR)
+        {
+            MatrixDColT outSol{numRows, numCols};
+            for (uint32_t colIdx = 0; colIdx < outSol.getNumCols(); colIdx++)
+            {
+                for (uint32_t rowIdx = 0; rowIdx < outSol.getNumRows(); rowIdx++)
+                {
+                    outSol(rowIdx, colIdx) = normDistr(intGen);
+                }
+            }
+            return Relation("REL_GEN", std::move(outSol), vAttrs);
+        }
+    }
+
+
+
     Relation Relation::linearRegression(
             const std::string& labelName) const
     {
@@ -1375,6 +1433,21 @@ namespace Figaro
             {Attribute()});
 
 
+    }
+
+    Relation Relation::computeLeastSquaresQR(Relation& relationB)
+    {
+        if (m_memLayout == MemoryLayout::ROW_MAJOR)
+        {
+            m_data.computeLeastSquares(relationB.m_data);
+            return Relation("LLS_QR" + getName(), std::move(relationB.m_data), relationB.m_attributes);
+        }
+        else if (m_memLayout == MemoryLayout::COL_MAJOR)
+        {
+            m_dataColumnMajor.computeLeastSquares(relationB.m_dataColumnMajor);
+            return Relation("LLS_QR" + getName(), std::move(relationB.m_dataColumnMajor),
+            relationB.m_attributes);
+        }
     }
 
     double Relation::norm(
@@ -3465,6 +3538,7 @@ namespace Figaro
 
     void Relation::changeMemoryLayout(const Figaro::MemoryLayout& newMemoryLayout)
     {
+        m_memLayout = newMemoryLayout;
         if (newMemoryLayout == MemoryLayout::COL_MAJOR)
         {
             MatrixDColT tmpOut{m_data.getNumRows(), m_data.getNumCols()};
@@ -3521,12 +3595,17 @@ namespace Figaro
                 {
                     if (m_data(rowIdx, colIdx) != 0.0)
                     {
+                        if (rowIdx < 100)
+                        {
+                            FIGARO_LOG_MIC_BEN("Here", rowIdx, colIdx, glIdx, m_data(rowIdx, colIdx))
+                        }
                         pColInds[glIdx] = colIdx;
                         pVals[glIdx] = m_data(rowIdx, colIdx);
                         glIdx++;
                     }
                 }
                 pRows[rowIdx+1] = glIdx;
+
             }
             MatrixSparseDCSR tmpOut{
                 m_data.getNumRows(), m_data.getNumCols(), pRows, pColInds, pVals, false};

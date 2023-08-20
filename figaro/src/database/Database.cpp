@@ -136,6 +136,7 @@ namespace Figaro
     void Database::sortRelation(const std::string& relationName, const std::vector<std::string>&  vSortAttributeNames)
     {
         Relation& relation = m_relations.at(relationName);
+        //FIGARO_LOG_BENCH("Sort Attributes", vSortAttributeNames)
         relation.sortData(vSortAttributeNames);
     }
 
@@ -341,6 +342,12 @@ namespace Figaro
         return relJoinName;
     }
 
+    uint32_t Database::getNumberOfRows(const std::string& relationName) const
+    {
+        const Relation& rel = m_relations.at(relationName);
+        return rel.getNumberOfRows();
+    }
+
 
     std::string Database::multiply(const std::string& relationName1,
             const std::string& relationName2,
@@ -357,6 +364,14 @@ namespace Figaro
         std::string mulRelName = mulRel.getName();
         m_relations.emplace(mulRel.getName(), std::move(mulRel));
         return mulRelName;
+    }
+
+    std::string Database::generateRelation(uint32_t numRows, uint32_t numCols, MemoryLayout memLayout)
+    {
+        Relation relation = Relation::generateRelation(numRows, numCols, memLayout);
+        std::string relationName = relation.getName();
+        m_relations.emplace(relationName, std::move(relation));
+        return relationName;
     }
 
     std::string Database::selfMatrixMultiply(
@@ -402,6 +417,21 @@ namespace Figaro
         m_relations.emplace(linRegRelName, std::move(linRegRel));
         return linRegRelName;
     }
+
+    std::string Database::leastSquareQR(
+            const std::string& relationAName,
+            const std::string& relationBName)
+    {
+        Relation& relA = m_relations.at(relationAName);
+        Relation& relB = m_relations.at(relationBName);
+
+        Relation linRegRel = relA.computeLeastSquaresQR(relB);
+
+        std::string linRegRelName = linRegRel.getName();
+        m_relations.emplace(linRegRelName, std::move(linRegRel));
+        return linRegRelName;
+    }
+
 
     std::string Database::computeSVDSigmaVTranInverse(
         const std::string& relationSigmaName,

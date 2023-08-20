@@ -70,6 +70,7 @@ class DecompConf:
         LU = 2
         SVD = 3
         PCA = 4
+        LLS = 5
 
 
     class Method(IntEnum):
@@ -83,6 +84,7 @@ class DecompConf:
         EIGEN_DECOMP_RRR = 8
         QR = 9
         SPARSE_QR = 10
+        LLS = 11
 
 
     class SparsityMode(IntEnum):
@@ -142,7 +144,8 @@ class DecompConf:
         'qr': Name.QR,
         'lu': Name.LU,
         'svd': Name.SVD,
-        'pca': Name.PCA
+        'pca': Name.PCA,
+        'lls': Name.LLS
     }
 
 
@@ -332,6 +335,9 @@ class SystemTest(ABC):
         elif (self.conf_decomp.name == DecompConf.Name.PCA):
             txt = "RedDim, Sigma and V " if (self.conf_decomp.compute_all) else "Sigma and V"
             decomp_str = txt + " in an SVD decomposition"
+        elif (self.conf_decomp.name == DecompConf.Name.LLS):
+            txt = "Linear regression"
+            decomp_str = txt
         info_str = "Run {{mode}} for database {db_name} and query {query_name} and {decomp_str}".format(
             db_name=self.database.get_name(), query_name=self.query.get_name(),
             decomp_str=decomp_str)
