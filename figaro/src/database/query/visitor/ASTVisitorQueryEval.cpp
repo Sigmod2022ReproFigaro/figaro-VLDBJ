@@ -585,10 +585,8 @@ namespace Figaro
 
             FIGARO_MIC_BEN_INIT(mulQ)
             FIGARO_MIC_BEN_START(mulQ)
-            std::string strSol = m_pDatabase->multiply(qRelName, bRel, {}, {}, 0);
-            // TODO: Update this
-            //std::string bSol = m_pDatabase->leastSquareQR(pElement->getRelationOrder().at(0),
-            //    pElement->getLabelName());
+            std::string strSol = m_pDatabase->multiplyTranspose(qRelName, bRel);
+            std::string bSol = m_pDatabase->leastSquareQR(strSol, bRel);
             FIGARO_MIC_BEN_STOP(mulQ)
             FIGARO_LOG_MIC_BEN("Figaro", "MULQ",  FIGARO_BENCH_GET_TIMER_LAP(mulQ));
             FIGARO_BENCH_STOP(llsFigaro)

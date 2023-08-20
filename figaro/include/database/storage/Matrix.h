@@ -363,31 +363,74 @@ namespace Figaro
 
         MatrixType multiply(const MatrixType& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2,
-            uint32_t startRowIdx1 = 0) const
+            uint32_t startRowIdx1 = 0, bool transposeA = false) const
         {
-            // TODO: Based on type generate different code
             uint32_t m = getNumRows();
             uint32_t n = second.getNumCols() - numJoinAttr2;
             uint32_t k = getNumCols() - numJoinAttr1;
-            MatrixType matC{m, n + numJoinAttr1};
+            CBLAS_LAYOUT cBlasMemLayout = getCblasMajorOrder();
+            MatrixType matC{0, 0};
+            CBLAS_TRANSPOSE transA;
+
+            if (!transposeA)
+            {
+                matC = std::move(MatrixType{m, n + numJoinAttr1});
+                transA = CblasNoTrans;
+            }
+            else
+            {
+                matC = std::move(MatrixType{k, n});
+                transA = CblasTrans;
+            }
             double* pC = matC.getArrPt() + numJoinAttr1;
             auto& matA = *this;
 
-            uint32_t ldA = getNumCols();
-            uint32_t ldB = second.getNumCols();
-            uint32_t ldC = n + numJoinAttr1;
+            uint32_t ldA = getLeadingDimension();
+            uint32_t ldB = second.getLeadingDimension();
+            uint32_t ldC;
+
+            // TODO: Add this case to be handled as a part of the global case.
+            if ((numJoinAttr1 != 0) || (numJoinAttr2 != 0))
+            {
+                ldC = second.getLeadingDimension() + numJoinAttr1 - numJoinAttr2;
+            }
+            else
+            {
+                ldC = matC.getLeadingDimension() + numJoinAttr1;
+            }
 
             const double* pA = getArrPt() + numJoinAttr1;
             const double* pB = second.getArrPt() + startRowIdx1 * ldB + numJoinAttr2;
 
-            cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CblasNoTrans, CblasNoTrans,
-                m, n, k, 1.0, pA, ldA, pB, ldB, 0.0,
-                    pC, ldC);
-            for (uint32_t rowIdx = 0; rowIdx < getNumRows(); rowIdx++)
+            if (!transposeA)
+            {
+                cblas_dgemm(cBlasMemLayout, transA, CblasNoTrans,
+                    m, n, k, 1.0, pA, ldA, pB, ldB, 0.0, pC, ldC);
+            }
+            else
+            {
+                cblas_dgemm(cBlasMemLayout, transA, CblasNoTrans,
+                    k, n, m, 1.0, pA, ldA, pB, ldB, 0.0, pC, ldC);
+            }
+
+            if constexpr (Layout == MemoryLayout::ROW_MAJOR)
+            {
+                for (uint32_t rowIdx = 0; rowIdx < getNumRows(); rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < numJoinAttr1; colIdx++)
+                    {
+                        matC(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                    }
+                }
+            }
+            else
             {
                 for (uint32_t colIdx = 0; colIdx < numJoinAttr1; colIdx++)
                 {
-                    matC[rowIdx][colIdx] = matA[rowIdx][colIdx];
+                    for (uint32_t rowIdx = 0; rowIdx < getNumRows(); rowIdx++)
+                    {
+                        matC(rowIdx, colIdx) = matA(rowIdx, colIdx);
+                    }
                 }
             }
             return matC;
@@ -1498,9 +1541,9 @@ namespace Figaro
             }
             //FIGARO_MIC_BEN_INIT(computeRLapack)
             //FIGARO_MIC_BEN_START(computeRLapack)
-            // LAPACKE_dgeqrf(memLayout, m_numRows, m_numCols,
-            //    pMat /* *a */, ldA,/*lda*/ tau/* tau */);
-            LAPACKE_dgeqr2(memLayout, m_numRows, m_numCols, pMat, ldA, tau);
+            LAPACKE_dgeqrf(memLayout, m_numRows, m_numCols,
+                pMat /* *a */, ldA,/*lda*/ tau/* tau */);
+            //LAPACKE_dgeqr2(memLayout, m_numRows, m_numCols, pMat, ldA, tau);
             //FIGARO_MIC_BEN_STOP(computeRLapack)
             //FIGARO_LOG_MIC_BEN("Compute R",  //FIGARO_MIC_BEN_GET_TIMER_LAP(computeRLapack));
 

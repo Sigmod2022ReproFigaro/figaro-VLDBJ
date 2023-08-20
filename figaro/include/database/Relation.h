@@ -521,6 +521,8 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2 = 0) const;
 
+        Relation multiplyTranspose(const Relation& second) const;
+
         Relation selfMatrixMultiply(
         const std::vector<std::string>& vJoinAttrNames) const;
 

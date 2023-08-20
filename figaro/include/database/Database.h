@@ -112,6 +112,9 @@ namespace Figaro
             const std::vector<std::string>& vJoinAttrNames2,
             uint32_t startRowIdx2);
 
+        std::string multiplyTranspose(const std::string& relationName1,
+            const std::string& relationName2);
+
         uint32_t getNumberOfRows(const std::string& relationName) const;
 
         std::string selfMatrixMultiply(

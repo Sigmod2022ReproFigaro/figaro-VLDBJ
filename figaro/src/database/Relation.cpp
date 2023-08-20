@@ -1312,6 +1312,21 @@ namespace Figaro
             newAttributes);
     }
 
+    Relation Relation::multiplyTranspose(const Relation& second) const
+    {
+        std::vector<Attribute> newAttributes;
+
+        auto result = m_data.multiply(second.m_data, 0, 0, 0, true);
+        for (uint32_t attrIdx = 0; attrIdx < second.m_attributes.size(); attrIdx++)
+        {
+            newAttributes.push_back(Attribute("A" + std::to_string(attrIdx),
+                AttributeType::FLOAT, false));
+        }
+        return Relation("MUL_" + getName() + second.getName(), std::move(result),
+            newAttributes);
+    }
+
+
 
     Relation Relation::selfMatrixMultiply(
         const std::vector<std::string>& vJoinAttrNames) const

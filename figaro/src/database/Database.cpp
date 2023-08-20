@@ -366,6 +366,22 @@ namespace Figaro
         return mulRelName;
     }
 
+
+    std::string Database::multiplyTranspose(
+        const std::string& relationName1,
+        const std::string& relationName2)
+    {
+        Relation& rel1 = m_relations.at(relationName1);
+        Relation& rel2 = m_relations.at(relationName2);
+
+        Relation mulRel = rel1.multiplyTranspose(rel2);
+
+        std::string mulRelName = mulRel.getName();
+        m_relations.emplace(mulRel.getName(), std::move(mulRel));
+        return mulRelName;
+    }
+
+
     std::string Database::generateRelation(uint32_t numRows, uint32_t numCols, MemoryLayout memLayout)
     {
         Relation relation = Relation::generateRelation(numRows, numCols, memLayout);
