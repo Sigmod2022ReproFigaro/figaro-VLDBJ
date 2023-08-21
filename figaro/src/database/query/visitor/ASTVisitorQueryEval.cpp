@@ -513,6 +513,7 @@ namespace Figaro
         omp_set_num_threads(pElement->getNumThreads());
         if (pElement->isFigaro())
         {
+            // TODO: change helper algorithm
             // computation of R
             ASTNodeQRFigaro astQRGivens(
                 pElement->getOperand()->copy(),
