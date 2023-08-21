@@ -242,6 +242,7 @@ class SystemTestDecompAlg(SystemTestCompetitor):
                 "--decomp_alg={}".format(decomp_alg),
                 "--compute_all={}".format(compute_all),
                 "--num_sing_vals={}".format(self.conf_decomp.num_sing_vals),
+                "--num_iterations={}".format(self.conf_decomp.num_iterations),
                 "--precision={}".format(self.conf_accur.precision),
                 "--test_mode={}".format
                 (SystemTest.test_mode_to_str(self.test_mode))]

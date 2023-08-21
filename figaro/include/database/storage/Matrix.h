@@ -2013,9 +2013,9 @@ namespace Figaro
             delete [] pSuperb;
         }
 
-        void powerIteration(MatrixType& vectV, double& sigma)
+        void powerIteration(MatrixType& vectV, double& sigma, uint32_t numIter)
         {
-            constexpr uint32_t NUM_ITERATIONS = 10000;
+            //constexpr uint32_t NUM_ITERATIONS = 1;
             std::random_device randDev{};
             std::mt19937 intGen{randDev()};
             std::normal_distribution<double> normDistr{0, 1};
@@ -2030,7 +2030,7 @@ namespace Figaro
             }
 
             vectV.normalizeVector();
-            for (uint32_t numIt = 0; numIt < NUM_ITERATIONS; numIt++)
+            for (uint32_t numIt = 0; numIt < numIter; numIt++)
             {
                 vectV = matA * vectV;
                 vectV.normalizeVector();
@@ -2081,6 +2081,7 @@ namespace Figaro
         }
 
         void computeSVDPowerIter(uint32_t numThreads,
+            uint32_t numIter,
             bool saveResult,
             MatrixType* pMatU, MatrixType* pMatS,
             MatrixType* pMatVT)
@@ -2096,6 +2097,7 @@ namespace Figaro
             matVT = std::move(MatrixType{rank, m_numCols});
             MatrixType v = std::move(MatrixType{rank, 1});
             double sigma;
+            FIGARO_LOG_BENCH("Num iterations", numIter)
 
             for (int diagIdx = 0; diagIdx < m_numCols; diagIdx++)
             {
@@ -2106,7 +2108,7 @@ namespace Figaro
                 FIGARO_LOG_MIC_BEN("Self matrix Multiply", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(selfMatMultiply));
                 FIGARO_MIC_BEN_INIT(powerIteration)
                 FIGARO_MIC_BEN_START(powerIteration)
-                matT.powerIteration(v, sigma);
+                matT.powerIteration(v, sigma, numIter);
                 FIGARO_MIC_BEN_STOP(powerIteration)
                 FIGARO_LOG_MIC_BEN("Power Iteration", diagIdx, FIGARO_MIC_BEN_GET_TIMER_LAP(powerIteration));
                 FIGARO_MIC_BEN_INIT(matMul1)
@@ -2268,6 +2270,7 @@ namespace Figaro
             Figaro::SVDHintType sVDHintType = Figaro::SVDHintType::DIV_AND_CONQ,
             bool computeUAndV = false, bool saveResult = false,
             uint32_t perSingVals = 100,
+            uint32_t numIter = 100,
             bool isPercent = true,
             MatrixType* pMatU = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
@@ -2305,7 +2308,7 @@ namespace Figaro
             else if (svdType == Figaro::SVDHintType::POWER_ITER)
             {
                 FIGARO_LOG_BENCH("Algorithm is", "Power iteration")
-                computeSVDPowerIter(numThreads, saveResult, pMatU, pMatS, pMatVT);
+                computeSVDPowerIter(numThreads, numIter, saveResult, pMatU, pMatS, pMatVT);
             }
             else if ((svdType == Figaro::SVDHintType::EIGEN_DECOMP_DIV_AND_CONQ) ||
             (svdType == Figaro::SVDHintType::EIGEN_DECOMP_QR_ITER)
@@ -2393,7 +2396,9 @@ namespace Figaro
 
         void computePCA(uint32_t numThreads = 1, bool useHint = false,
             Figaro::PCAHintType pcaHintType = Figaro::PCAHintType::DIV_AND_CONQ,
-            bool computeRed = false, bool saveResult = false, uint32_t redDim = 1,
+            bool computeRed = false, bool saveResult = false,
+            uint32_t redDim = 1,
+            uint32_t numiters = 10000,
             bool isPercent = true,
             MatrixType* pRed = nullptr, MatrixType* pMatS = nullptr,
             MatrixType* pMatVT = nullptr)
@@ -2408,7 +2413,7 @@ namespace Figaro
             */
 
             computeSVD(numThreads, true, svdType, true, true,
-                redDim, isPercent, &matRed, pMatS, pMatVT);
+                redDim, numiters, isPercent, &matRed, pMatS, pMatVT);
             FIGARO_BENCH_INIT(uRed)
             FIGARO_BENCH_START(uRed)
 

@@ -947,12 +947,13 @@ namespace Figaro
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
             uint32_t perSingVals,
+            uint32_t numIter,
             bool computeUAndV,
             bool saveResult)
     {
         Relation& rel = m_relations.at(relName);
         auto svdResult = rel.computeSVD(svdHintType,
-            memoryLayout, perSingVals, computeUAndV, saveResult);
+            memoryLayout, perSingVals, numIter, computeUAndV, saveResult);
         return saveSVDResult(svdResult);
     }
 

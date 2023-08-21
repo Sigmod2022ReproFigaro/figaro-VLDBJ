@@ -3319,7 +3319,7 @@ namespace Figaro
         else if (memoryLayout == MemoryLayout::CSR)
         {
             FIGARO_LOG_BENCH("On the right place", "On the right place")
-            m_dataSparseCSR.computeQR();
+            //m_dataSparseCSR.computeQR();
         }
         return std::make_tuple(pR, pQ);
     }
@@ -3377,6 +3377,7 @@ namespace Figaro
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
             uint32_t perSingVals,
+            uint32_t numIter,
             bool computeUAndV,
             bool saveResult)
     {
@@ -3391,7 +3392,7 @@ namespace Figaro
             MatrixDRowT matVT = MatrixDRowT{0, 0};
 
             m_data.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, perSingVals, true,
+                computeUAndV, saveResult, perSingVals, numIter, true,
                 &matU, &matS, &matVT);
 
             if (saveResult)
@@ -3410,7 +3411,7 @@ namespace Figaro
             MatrixDColT matVT = MatrixDColT{0, 0};
 
             m_dataColumnMajor.computeSVD(getNumberOfThreads(), true, svdHintType,
-                computeUAndV, saveResult, perSingVals, true, &matU, &matS, &matVT);
+                computeUAndV, saveResult, perSingVals, numIter, true, &matU, &matS, &matVT);
 
             if (saveResult)
             {

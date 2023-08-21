@@ -274,6 +274,7 @@ namespace Figaro
             Figaro::SVDHintType svdHintType,
             Figaro::MemoryLayout memoryLayout,
             uint32_t perSingVals,
+            uint32_t numIter,
             bool computeUAndV,
             bool saveResult);
 

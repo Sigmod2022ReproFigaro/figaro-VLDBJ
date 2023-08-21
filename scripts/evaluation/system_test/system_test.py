@@ -177,7 +177,7 @@ class DecompConf:
 
     def __init__(self, sparsity: str,
         memory_layout: str, compute_all: bool,
-        name: str, method: str, sub_method: str, num_sing_vals: int):
+        name: str, method: str, sub_method: str, num_sing_vals: int, num_iterations: int):
         self.sparsity = DecompConf.map_sparsity_to_enum[sparsity]
         self.memory_layout = DecompConf.map_memory_layout_to_enum[memory_layout]
         self.compute_all = compute_all
@@ -185,6 +185,7 @@ class DecompConf:
         self.sub_method  = DecompConf.map_sub_method_to_enum[sub_method]
         self.name = DecompConf.map_name_to_enum[name]
         self.num_sing_vals = num_sing_vals
+        self.num_iterations = num_iterations
 
 
 
@@ -303,6 +304,7 @@ class SystemTest(ABC):
         sparsity = decomp_json.get("sparsity", "dense")
         compute_all = bool(decomp_json.get("compute_all", False))
         num_sing_vals = decomp_json.get("number_singular_values", 100)
+        num_iterations = decomp_json.get("number_iterations", 10000)
 
         executable_json = system_json["system"].get("executable", {})
         interpreter = executable_json.get("interpreter", "")
@@ -316,7 +318,7 @@ class SystemTest(ABC):
             AccuracyConf(path_accuracy, path_r_comp_file, path_errors_file, precision, generate_xlsx),
             DecompConf(sparsity,
                 memory_layout, compute_all, decomp_name, method, sub_method,
-                num_sing_vals),
+                num_sing_vals, num_iterations),
             ExcecutableConf(interpreter),
             database, query, test_mode,
             *args, **kwargs)
