@@ -14,6 +14,7 @@ function init_global_paths()
     FIGARO_DECOMP_ALG="HOUSEHOLDER"
     FIGARO_SUB_METHOD="HOUSEHOLDER"
     FIGARO_NUM_SING_VALS=1
+    FIGARO_NUM_ITERATIONS=1
     FIGARO_COMPUTE_ALL=false
     FIGARO_PROFILER_DUMP_PATH="..."
     FIGARO_HELP_SHOW=false
@@ -77,9 +78,13 @@ function get_str_args()
             EXTENSION="${option#*=}"
             FIGARO_COMPUTE_ALL=$EXTENSION
         ;;
-         --num_sing_vals=*)
+        --num_sing_vals=*)
             EXTENSION="${option#*=}"
             FIGARO_NUM_SING_VALS=$EXTENSION
+        ;;
+        --num_iterations=*)
+            EXTENSION="${option#*=}"
+            FIGARO_NUM_ITERATIONS=$EXTENSION
         ;;
         --profiler_dump_path=*)
             EXTENSION="${option#*=}"
@@ -150,6 +155,7 @@ function main()
     ARGS+="--compute_all ${FIGARO_COMPUTE_ALL} "
     ARGS+="--decomposition_algorithm ${FIGARO_DECOMP_ALG} "
     ARGS+="--num_sing_vals ${FIGARO_NUM_SING_VALS} "
+    ARGS+="--num_iterations ${FIGARO_NUM_ITERATIONS} "
     ARGS+="--sub_method ${FIGARO_SUB_METHOD} "
 
     echo $ARGS
@@ -190,7 +196,7 @@ function main()
     "UNIT_TEST")
         echo "*****************Running unit tests*****************"
         #vtune -collect performance-snapshot
-        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*computeLeastSquares* > "${FIGARO_LOG_FILE_PATH}" 2>&1
+        ./figaro_test ${FIGARO_DATA_PATH} --gtest_filter=*Matrix* > "${FIGARO_LOG_FILE_PATH}" 2>&1
         #valgrind --leak-check=yes --leak-check=full --show-leak-kinds=all ./figaro_test  ${FIGARO_DATA_PATH} \
         #>   "${FIGARO_LOG_FILE_PATH}" 2>&1
         #./figaro_test \

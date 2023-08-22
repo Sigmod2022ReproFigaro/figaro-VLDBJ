@@ -28,6 +28,8 @@ namespace Figaro
 
         template <typename U, MemoryLayout V>
         friend class Matrix;
+        template <typename ST, MemoryLayout SL>
+        friend class MatrixSparse;
 
         void destroyData(void)
         {

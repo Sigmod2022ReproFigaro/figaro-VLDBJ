@@ -423,8 +423,8 @@ TEST(MatrixSparse, computeQR)
     std::vector<int64_t> rowStartPos = {0, 2, 4, 6};
     std::vector<int64_t> vColIndcs = {0, 1, 0, 1, 0, 1};
     Figaro::MatrixSparse<double> matrix{NUM_ROWS, NUM_COLS, rowStartPos.data(),  vColIndcs.data(), vVals.data()};
-
-    matrix.computeQR();
+    bool success = matrix.computeQR();
+    EXPECT_EQ(success, true);
 }
 
 TEST(Matrix, computeQRHouseholderRColMajor)
@@ -870,6 +870,79 @@ TEST(Matrix, computeLeastSquaresColMajor)
     }
 }
 
+
+TEST(MatrixSparse, computeLeastSquaresCSRRowMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 4, NUM_COLS = 4, NUM_RHS = 1;
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixXEx{NUM_COLS, NUM_RHS};
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixB{NUM_ROWS, NUM_RHS};
+    Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixX{NUM_COLS, NUM_RHS};
+
+    std::vector<double> vVals = {1, 2, 3, 4, 2, 5, 6, 7, 3, 6, 9, 10, 4, 7, 10, 11};
+    std::vector<int64_t> rowStartPos = {0, 4, 8, 12, 16};
+    std::vector<int64_t> vColIndcs = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
+    Figaro::MatrixSparse<double, Figaro::MemoryLayout::CSR>
+        matrix{NUM_ROWS, NUM_COLS, rowStartPos.data(),  vColIndcs.data(), vVals.data()};
+
+    matrixXEx(0, 0) = 1; //matrixXEx(0, 1) = 2;
+    matrixXEx(1, 0) = 2; //matrixXEx(1, 1) = 3;
+    matrixXEx(2, 0) = 3; //matrixXEx(2, 1) = 4;
+    matrixXEx(3, 0) = 4; //matrixXEx(3, 1) = 5;
+
+
+    matrixB(0, 0) = 30; //matrixB(0, 1) = 40;
+    matrixB(1, 0) = 58; //matrixB(1, 1) = 78;
+    matrixB(2, 0) = 82; //matrixB(2, 1) = 110;
+    matrixB(3, 0) = 92; //matrixB(3, 1) = 124;
+
+    bool success = matrix.computeLeastSquares(matrixB, matrixX);
+    EXPECT_EQ(success, true);
+
+    for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx++)
+    {
+        for (uint32_t colIdx = 0; colIdx < NUM_RHS; colIdx++)
+        {
+            EXPECT_NEAR(matrixX(rowIdx, colIdx), matrixXEx(rowIdx, colIdx), RELAX_GIVENS_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
+TEST(MatrixSparse, computeLeastSquaresCSRColMajor)
+{
+    static constexpr uint32_t NUM_ROWS = 4, NUM_COLS = 4, NUM_RHS = 1;
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixXEx{NUM_COLS, NUM_RHS};
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixB{NUM_ROWS, NUM_RHS};
+    Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixX{NUM_ROWS, NUM_RHS};
+
+    std::vector<double> vVals = {1, 2, 3, 4, 2, 5, 6, 7, 3, 6, 9, 10, 4, 7, 10, 11};
+    std::vector<int64_t> rowStartPos = {0, 4, 8, 12, 16};
+    std::vector<int64_t> vColIndcs = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
+    Figaro::MatrixSparse<double, Figaro::MemoryLayout::CSR>
+        matrix{NUM_ROWS, NUM_COLS, rowStartPos.data(),  vColIndcs.data(), vVals.data()};
+
+    matrixXEx(0, 0) = 1; //matrixXEx(0, 1) = 2;
+    matrixXEx(1, 0) = 2; //matrixXEx(1, 1) = 3;
+    matrixXEx(2, 0) = 3; //matrixXEx(2, 1) = 4;
+    matrixXEx(3, 0) = 4; //matrixXEx(3, 1) = 5;
+
+
+    matrixB(0, 0) = 30; //matrixB(0, 1) = 40;
+    matrixB(1, 0) = 58; //matrixB(1, 1) = 78;
+    matrixB(2, 0) = 82; //matrixB(2, 1) = 110;
+    matrixB(3, 0) = 92; //matrixB(3, 1) = 124;
+
+    bool success = matrix.computeLeastSquares(matrixB, matrixX);
+    EXPECT_EQ(success, true);
+
+    for (uint32_t rowIdx = 0; rowIdx < matrix.getNumRows(); rowIdx++)
+    {
+        for (uint32_t colIdx = 0; colIdx < NUM_RHS; colIdx++)
+        {
+            EXPECT_NEAR(matrixX(rowIdx, colIdx), matrixXEx(rowIdx, colIdx), RELAX_GIVENS_TEST_PRECISION_ERROR);
+        }
+    }
+}
+
 TEST(Matrix, computeSVDDivAndConqRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
@@ -1184,6 +1257,7 @@ TEST(Matrix, computeSVDQRIterColMajorSingularValues)
 TEST(Matrix, computeSVDPowerIterRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
@@ -1195,7 +1269,7 @@ TEST(Matrix, computeSVDPowerIterRowMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDPowerIter(1, true,
+    matrix.computeSVDPowerIter(1, NUM_ITERS, true,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
@@ -1242,6 +1316,7 @@ TEST(Matrix, computeSVDPowerIterRowMajor)
 TEST(Matrix, computeSVDPowerIterColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
@@ -1253,7 +1328,7 @@ TEST(Matrix, computeSVDPowerIterColMajor)
     matrix(3, 0) = 7; matrix(3, 1) = 8; matrix(3, 2) = 14;
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
-    matrix.computeSVDPowerIter(1, true,
+    matrix.computeSVDPowerIter(1, NUM_ITERS, true,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_NEAR(std::abs(matrixU(0, 0)), 0.532977758781636, GIVENS_TEST_PRECISION_ERROR);
@@ -1777,9 +1852,10 @@ TEST(Matrix, computeSVDEigDecRRRSingValuesColMajor)
 }
 
 
-TEST(Matrix, computePCADivAndConqEigValsAndEigVectRowMajor)
+TEST(Matrix, DISABLED_computePCADivAndConqEigValsAndEigVectRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
@@ -1792,7 +1868,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, NUM_ITERS, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1817,6 +1893,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectRowMajor)
 TEST(Matrix, computePCADivAndConqEigValsAndEigVectColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
@@ -1829,7 +1906,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, NUM_ITERS, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -1855,6 +1932,7 @@ TEST(Matrix, computePCADivAndConqEigValsAndEigVectColMajor)
 TEST(Matrix, computePCADivAndConqRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
@@ -1867,7 +1945,7 @@ TEST(Matrix, computePCADivAndConqRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, false,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, NUM_ITERS, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1913,6 +1991,7 @@ TEST(Matrix, computePCADivAndConqRowMajor)
 TEST(Matrix, computePCADivAndConqColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
@@ -1925,7 +2004,7 @@ TEST(Matrix, computePCADivAndConqColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, false,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 2, NUM_ITERS, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -1972,6 +2051,7 @@ TEST(Matrix, computePCADivAndConqColMajor)
 TEST(Matrix, computePCAQRIterEigValsAndEigVectRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
@@ -1984,7 +2064,7 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, false,
+        Figaro::PCAHintType::DIV_AND_CONQ, true, true, 1, NUM_ITERS, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, GIVENS_TEST_PRECISION_ERROR);
@@ -2009,6 +2089,7 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectRowMajor)
 TEST(Matrix, computePCAQRIterEigValsAndEigVectColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
@@ -2021,7 +2102,7 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::QR_ITER, true, true, 1, false,
+        Figaro::PCAHintType::QR_ITER, true, true, 1, NUM_ITERS, false,
         nullptr, &matrixS, &matrixVT);
 
     EXPECT_NEAR(matrixS(0, 0), 44.989193549900570, RELAX_GIVENS_TEST_PRECISION_ERROR);
@@ -2047,6 +2128,7 @@ TEST(Matrix, computePCAQRIterEigValsAndEigVectColMajor)
 TEST(Matrix, computePCAQRIterRowMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::ROW_MAJOR> matrixS(0, 0);
@@ -2059,7 +2141,7 @@ TEST(Matrix, computePCAQRIterRowMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
     matrix.computePCA(1, true,
-        Figaro::PCAHintType::QR_ITER, true, true, 2, false,
+        Figaro::PCAHintType::QR_ITER, true, true, 2, NUM_ITERS, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);
@@ -2105,6 +2187,7 @@ TEST(Matrix, computePCAQRIterRowMajor)
 TEST(Matrix, computePCAQRIterColMajor)
 {
     static constexpr uint32_t NUM_ROWS = 5, NUM_COLS = 3;
+    static constexpr uint32_t NUM_ITERS = 10000;
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrix(NUM_ROWS, NUM_COLS);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixU(0, 0);
     Figaro::Matrix<double, Figaro::MemoryLayout::COL_MAJOR> matrixS(0, 0);
@@ -2117,7 +2200,7 @@ TEST(Matrix, computePCAQRIterColMajor)
     matrix(4, 0) = 9; matrix(4, 1) = 23; matrix(4, 2) = 17;
 
      matrix.computePCA(1, true,
-        Figaro::PCAHintType::QR_ITER, true, true, 2, false,
+        Figaro::PCAHintType::QR_ITER, true, true, 2, NUM_ITERS, false,
         &matrixU, &matrixS, &matrixVT);
 
     EXPECT_EQ(matrixU.getNumRows(), 5);

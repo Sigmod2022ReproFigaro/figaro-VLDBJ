@@ -2,12 +2,8 @@
 #define _FIGARO_MATRIX_SPARSE_H_
 
 #include "utils/Logger.h"
-#include "ArrayStorage.h"
-#include "utils/Performance.h"
-#include <cmath>
-#include <mkl.h>
+#include "Matrix.h"
 #include <mkl_spblas.h>
-#include <random>
 #include "utils/Types.h"
 
 namespace Figaro
@@ -126,7 +122,7 @@ namespace Figaro
         /*
         * https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2023-0/mkl-sparse-qr.html
         **/
-        void computeQR(void)
+        bool computeQR(void)
         {
             matrix_descr mDescr;
             mDescr.type = SPARSE_MATRIX_TYPE_GENERAL;
@@ -139,7 +135,8 @@ namespace Figaro
             FIGARO_LOG_ASSERT(status == SPARSE_STATUS_SUCCESS)
             if (status != SPARSE_STATUS_SUCCESS)
             {
-                FIGARO_LOG_MIC_BEN("HOHOHO", "HOHOHIO")
+                FIGARO_LOG_ERROR("Sit and cry")
+                return false;
             }
 
             FIGARO_MIC_BEN_INIT(sparseQr)
@@ -150,8 +147,77 @@ namespace Figaro
             FIGARO_LOG_ASSERT(status == SPARSE_STATUS_SUCCESS)
             if (status != SPARSE_STATUS_SUCCESS)
             {
-                FIGARO_LOG_MIC_BEN("HOHOHO", "HOHOHIO")
+                FIGARO_LOG_ERROR("Sit and cry")
+                return false;
             }
+            return true;
+        }
+
+
+        template <typename SolMemType, MemoryLayout SolMemLayout>
+        bool computeLeastSquares(
+            Figaro::Matrix<SolMemType, SolMemLayout>& matB,
+            Figaro::Matrix<SolMemType, SolMemLayout>& matX)
+        {
+            /* computeQR*/
+            sparse_status_t status;
+            double* pMatB = matB.getArrPt();
+            double* pMatX = matX.getArrPt();
+            uint32_t ldB = matB.getLeadingDimension();
+            uint32_t ldX = matX.getLeadingDimension();
+            sparse_layout_t sparseLayout;
+            FIGARO_LOG_DBG("ldB", ldB)
+            FIGARO_LOG_DBG("ldX", ldX)
+            FIGARO_LOG_DBG("numCols", matB.getNumCols())
+            if constexpr (SolMemLayout == MemoryLayout::ROW_MAJOR)
+            {
+                sparseLayout = SPARSE_LAYOUT_ROW_MAJOR;
+                FIGARO_LOG_DBG("Row major layout")
+            }
+            else
+            {
+                sparseLayout = SPARSE_LAYOUT_COLUMN_MAJOR;
+                FIGARO_LOG_DBG("Column major layout")
+            }
+
+            bool success = computeQR();
+            if (!success)
+            {
+                FIGARO_LOG_ERROR("DAmn")
+                return false;
+            }
+
+            /*  ( sparse_operation_t operation, sparse_matrix_t A, double *alt_values, sparse_layout_t layout, MKL_INT columns, double *x, MKL_INT ldx, const double *b, MKL_INT ldb );*/
+            status = mkl_sparse_d_qr_solve(SPARSE_OPERATION_NON_TRANSPOSE, m_pMatrix, nullptr,
+                                    sparseLayout, matB.getNumCols(), pMatX, ldX, pMatB, ldB);
+            if (status != SPARSE_STATUS_SUCCESS)
+            {
+                if (status == SPARSE_STATUS_NOT_INITIALIZED)
+                {
+                    FIGARO_LOG_ERROR("Not initialized")
+                }
+                if (status == SPARSE_STATUS_ALLOC_FAILED)
+                {
+                    FIGARO_LOG_ERROR("Allocation failed")
+                }
+                if (status == SPARSE_STATUS_INVALID_VALUE)
+                {
+                    FIGARO_LOG_ERROR("Invalid value")
+                }
+                if (status == SPARSE_STATUS_INTERNAL_ERROR)
+                {
+                    FIGARO_LOG_ERROR("Interanl error")
+                }
+
+                if (status == SPARSE_STATUS_NOT_SUPPORTED)
+                {
+                    FIGARO_LOG_ERROR("Not supported")
+                }
+
+
+                return false;
+            }
+            return true;
         }
         /*
         T& operator()(uint32_t rowIdx, uint32_t colIdx)
