@@ -15,9 +15,9 @@ namespace Figaro
         using MatrixType = MatrixSparse<T, Layout>;
         uint32_t m_numRows;
         uint32_t m_numCols;
-        int64_t* m_pRows;
-        int64_t* m_pColInds;
-        double* m_pVals;
+        int64_t* m_pRows = nullptr;
+        int64_t* m_pColInds = nullptr;
+        double* m_pVals = nullptr;
 
         void destroyData(void)
         {
@@ -93,10 +93,16 @@ namespace Figaro
             m_pMatrix = other.m_pMatrix;
             m_numRows = other.m_numRows;
             m_numCols = other.m_numCols;
+            m_pRows = other.m_pRows;
+            m_pColInds = other.m_pColInds;
+            m_pVals = other.m_pVals;
 
             other.m_pMatrix = nullptr;
             other.m_numCols = 0;
             other.m_numRows = 0;
+            other.m_pRows = nullptr;
+            other.m_pColInds = nullptr;
+            other.m_pVals = nullptr;
         }
 
         MatrixSparse& operator=(MatrixSparse&& other)
@@ -107,10 +113,16 @@ namespace Figaro
                 m_pMatrix = other.m_pMatrix;
                 m_numRows = other.m_numRows;
                 m_numCols = other.m_numCols;
+                m_pRows = other.m_pRows;
+                m_pColInds = other.m_pColInds;
+                m_pVals = other.m_pVals;
 
                 other.m_pMatrix = nullptr;
                 other.m_numCols = 0;
                 other.m_numRows = 0;
+                other.m_pRows = nullptr;
+                other.m_pColInds = nullptr;
+                other.m_pVals = nullptr;
             }
             return *this;
         }
@@ -148,34 +160,54 @@ namespace Figaro
             const Matrix<SolMemType, SolMemLayout>& first,
             const Matrix<SolMemType, SolMemLayout>& second,
             uint32_t numJoinAttr1, uint32_t numJoinAttr2,
-            uint32_t startRowIdx1 = 0)
+            uint32_t startRowIdx = 0) const
         {
+            FIGARO_LOG_DBG("numJoinAttr1", numJoinAttr1)
+            FIGARO_LOG_DBG("numJoinAttr2", numJoinAttr2)
+            FIGARO_LOG_DBG("startRowIdx", startRowIdx)
             Matrix<SolMemType, SolMemLayout> matC{0, 0};
-
             matC = std::move(Matrix<SolMemType, SolMemLayout>{getNumRows(),
-                second.getNumCols() - numJoinAttr2 + numJoinAttr1});
+            second.getNumCols() - numJoinAttr2 + numJoinAttr1});
             matC.setToZeros();
-
-            FIGARO_LOG_DBG("MatC", matC)
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 int64_t offsetStartIdx = m_pRows[rowIdx];
                 int64_t offestEndIdx = m_pRows[rowIdx+1];
-
-                for (uint32_t offsetIdx = offsetStartIdx; offsetIdx < offestEndIdx; offsetIdx++)
+                for (uint32_t offsetIdx = offsetStartIdx + numJoinAttr1;
+                    offsetIdx < offestEndIdx; offsetIdx++)
                 {
                     int64_t colIdx = m_pColInds[offsetIdx];
                     int64_t val = m_pVals[offsetIdx];
-                    FIGARO_LOG_DBG(offsetStartIdx, offestEndIdx, colIdx, val)
-                    for (uint32_t colIdxOut = 0; colIdxOut < matC.getNumCols(); colIdxOut++)
+                    for (uint32_t colIdxOut = 0;
+                        colIdxOut < second.getNumCols() - numJoinAttr2; colIdxOut++)
                     {
-                        matC(rowIdx, colIdxOut + numJoinAttr1) +=
-                            val * second(colIdx, colIdxOut + numJoinAttr2);
+                        int64_t rowIdxIn = startRowIdx + colIdx - numJoinAttr1;
+                        int64_t colIdxIn = colIdxOut + numJoinAttr2;
+                        if (rowIdx >= matC.getNumRows())
+                        {
+                            FIGARO_LOG_ERROR("Number of rows incorrect", rowIdx, matC.getNumRows())
+                        }
+                        if (colIdxOut + numJoinAttr1 >= matC.getNumCols())
+                        {
+                            FIGARO_LOG_ERROR("Number of colulmns incorrect", colIdxOut + numJoinAttr1, matC.getNumCols())
+                        }
+                        // FIGARO_LOG_DBG(startRowIdx + colIdx, colIdxOut + numJoinAttr2)
+                        if (rowIdxIn >= second.getNumRows())
+                        {
+                            FIGARO_LOG_ERROR("Number of Rows incorrect", startRowIdx + colIdx)
+                        }
+                        if (colIdxIn >= second.getNumCols())
+                        {
+                            FIGARO_LOG_ERROR("Number of Rows incorrect")
+                        }
+                        FIGARO_LOG_DBG("matC", matC)
+                        FIGARO_LOG_DBG("r", rowIdx, "c", colIdxOut + numJoinAttr1, "rIn", rowIdxIn, "cIn", colIdxIn)
+                        matC(rowIdx, colIdxOut + numJoinAttr1) += val * second(rowIdxIn, colIdxIn);
                     }
+
+
                 }
             }
-            FIGARO_LOG_DBG("Passed", matC)
-
             if constexpr (SolMemLayout == MemoryLayout::ROW_MAJOR)
             {
                 for (uint32_t rowIdx = 0; rowIdx < matC.getNumRows(); rowIdx++)
