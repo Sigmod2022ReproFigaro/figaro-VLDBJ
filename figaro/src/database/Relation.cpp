@@ -1463,6 +1463,14 @@ namespace Figaro
             return Relation("LLS_QR" + getName(), std::move(relationB.m_dataColumnMajor),
             relationB.m_attributes);
         }
+        else if (m_memLayout == MemoryLayout::CSR)
+        {
+            MatrixDRowT& matB = relationB.m_data;
+            MatrixDRowT matX{m_dataSparseCSR.getNumCols(), matB.getNumCols()};
+            m_dataSparseCSR.computeLeastSquares(matB, matX);
+            // TODO: Covert m_dataSparse
+            return Relation("LLS_QR" + getName(), std::move(relationB.m_data), relationB.m_attributes);
+        }
     }
 
     double Relation::norm(
@@ -3319,7 +3327,7 @@ namespace Figaro
         else if (memoryLayout == MemoryLayout::CSR)
         {
             FIGARO_LOG_BENCH("On the right place", "On the right place")
-            //m_dataSparseCSR.computeQR();
+            m_dataSparseCSR.computeQR();
         }
         return std::make_tuple(pR, pQ);
     }
@@ -3611,10 +3619,12 @@ namespace Figaro
                 {
                     if (m_data(rowIdx, colIdx) != 0.0)
                     {
+                        /*
                         if (rowIdx < 100)
                         {
                             FIGARO_LOG_MIC_BEN("Here", rowIdx, colIdx, glIdx, m_data(rowIdx, colIdx))
                         }
+                        */
                         pColInds[glIdx] = colIdx;
                         pVals[glIdx] = m_data(rowIdx, colIdx);
                         glIdx++;

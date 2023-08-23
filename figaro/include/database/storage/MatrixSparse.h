@@ -188,8 +188,13 @@ namespace Figaro
             }
 
             /*  ( sparse_operation_t operation, sparse_matrix_t A, double *alt_values, sparse_layout_t layout, MKL_INT columns, double *x, MKL_INT ldx, const double *b, MKL_INT ldb );*/
+
+            FIGARO_MIC_BEN_INIT(llSparseQR)
+            FIGARO_MIC_BEN_START(llSparseQR)
             status = mkl_sparse_d_qr_solve(SPARSE_OPERATION_NON_TRANSPOSE, m_pMatrix, nullptr,
                                     sparseLayout, matB.getNumCols(), pMatX, ldX, pMatB, ldB);
+            FIGARO_MIC_BEN_STOP(llSparseQR)
+            FIGARO_LOG_MIC_BEN("LLS Sparse QR", FIGARO_MIC_BEN_GET_TIMER_LAP(llSparseQR));
             if (status != SPARSE_STATUS_SUCCESS)
             {
                 if (status == SPARSE_STATUS_NOT_INITIALIZED)
@@ -217,6 +222,7 @@ namespace Figaro
 
                 return false;
             }
+            //FIGARO_LOG_MIC_BEN("Out matrix", matX)
             return true;
         }
         /*

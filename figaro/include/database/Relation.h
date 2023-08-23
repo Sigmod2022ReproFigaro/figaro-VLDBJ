@@ -433,12 +433,11 @@ namespace Figaro
                     return m_dataColumnMajor.getNumRows();
                     break;
                 case MemoryLayout::CSR:
-                    FIGARO_LOG_ERROR("No layout");
-                    return -1;
+                    return m_dataSparseCSR.getNumRows();
                     break;
                 default:
                     return -1;
-                FIGARO_LOG_ERROR("No layout")
+                    FIGARO_LOG_ERROR("No layout")
             }
         }
         uint32_t getNumberOfAttributes() const

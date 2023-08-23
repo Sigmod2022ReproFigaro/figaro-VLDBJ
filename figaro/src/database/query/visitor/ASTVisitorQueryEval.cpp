@@ -620,11 +620,20 @@ namespace Figaro
             FIGARO_BENCH_START(llsQRLapackEval)
             std::string relName = pElement->getRelationOrder().at(0);
             uint32_t qNumRows = m_pDatabase->getNumberOfRows(relName);
-            std::string bRelName = m_pDatabase->generateRelation(qNumRows, 1, m_memoryLayout);
+            std::string bRelName;
+            if (m_memoryLayout != Figaro::MemoryLayout::CSR)
+            {
+                bRelName = m_pDatabase->generateRelation(qNumRows, 1, m_memoryLayout);
+            }
+            else
+            {
+                bRelName = m_pDatabase->generateRelation(qNumRows, 1, Figaro::MemoryLayout::ROW_MAJOR);
+            }
+
             std::string labName = m_pDatabase->leastSquareQR(relName, bRelName);
             FIGARO_BENCH_STOP(llsQRLapackEval)
             FIGARO_LOG_BENCH("Figaro", "LL QR Algorithm evaluation", FIGARO_BENCH_GET_TIMER_LAP(llsQRLapackEval))
-            }
+        }
 
         return new ASTVisitorResultJoin(linRegVec);
     }
