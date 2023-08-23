@@ -15,6 +15,9 @@ namespace Figaro
         using MatrixType = MatrixSparse<T, Layout>;
         uint32_t m_numRows;
         uint32_t m_numCols;
+        int64_t* m_pRows;
+        int64_t* m_pColInds;
+        double* m_pVals;
 
         void destroyData(void)
         {
@@ -51,6 +54,22 @@ namespace Figaro
                 // Create a copy of data, since the data might be lost
 
                 mkl_sparse_copy(pMatrixCopy, mDescr, &m_pMatrix);
+
+                long long int numRowsCopy;
+                long long int numColsCopy;
+                sparse_index_base_t base;
+                long long int* pRowsCopy;
+                long long int* pRowsCopyEnd;
+                long long int* pColIndsCopy;
+                double* pValsCopy;
+                long long int* pRowsEnd;
+
+                mkl_sparse_d_export_csr(m_pMatrix, &base,
+                    &numRowsCopy,  &numColsCopy, &pRowsCopy, &pRowsCopyEnd,
+                    &pColIndsCopy, &pValsCopy);
+                m_pRows = (int64_t*)pRowsCopy;
+                m_pColInds = (int64_t*)pColIndsCopy;
+                m_pVals = (double*)pValsCopy;
             }
             else
             {
@@ -58,6 +77,9 @@ namespace Figaro
                     sparse_index_base_t::SPARSE_INDEX_BASE_ZERO,
                     numRows,  numCols, (long long int*)pRows, (long long int*)(pRows + 1),
                     (long long int*)pColInds, pVals);
+                m_pRows = pRows;
+                m_pColInds = pColInds;
+                m_pVals = pVals;
             }
             m_numRows = numRows;
             m_numCols = numCols;
@@ -119,6 +141,64 @@ namespace Figaro
                 &numRows,  &numCols, &pRows, &pRowsEnd,
                 &pColInds, &pVals);
         }
+
+        template <typename SolMemType, MemoryLayout SolMemLayout>
+        Matrix<SolMemType, SolMemLayout>
+        multiply(
+            const Matrix<SolMemType, SolMemLayout>& first,
+            const Matrix<SolMemType, SolMemLayout>& second,
+            uint32_t numJoinAttr1, uint32_t numJoinAttr2,
+            uint32_t startRowIdx1 = 0)
+        {
+            Matrix<SolMemType, SolMemLayout> matC{0, 0};
+
+            matC = std::move(Matrix<SolMemType, SolMemLayout>{getNumRows(),
+                second.getNumCols() - numJoinAttr2 + numJoinAttr1});
+            matC.setToZeros();
+
+            FIGARO_LOG_DBG("MatC", matC)
+            for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
+            {
+                int64_t offsetStartIdx = m_pRows[rowIdx];
+                int64_t offestEndIdx = m_pRows[rowIdx+1];
+
+                for (uint32_t offsetIdx = offsetStartIdx; offsetIdx < offestEndIdx; offsetIdx++)
+                {
+                    int64_t colIdx = m_pColInds[offsetIdx];
+                    int64_t val = m_pVals[offsetIdx];
+                    FIGARO_LOG_DBG(offsetStartIdx, offestEndIdx, colIdx, val)
+                    for (uint32_t colIdxOut = 0; colIdxOut < matC.getNumCols(); colIdxOut++)
+                    {
+                        matC(rowIdx, colIdxOut + numJoinAttr1) +=
+                            val * second(colIdx, colIdxOut + numJoinAttr2);
+                    }
+                }
+            }
+            FIGARO_LOG_DBG("Passed", matC)
+
+            if constexpr (SolMemLayout == MemoryLayout::ROW_MAJOR)
+            {
+                for (uint32_t rowIdx = 0; rowIdx < matC.getNumRows(); rowIdx++)
+                {
+                    for (uint32_t colIdx = 0; colIdx < numJoinAttr1; colIdx++)
+                    {
+                        matC(rowIdx, colIdx) = first(rowIdx, colIdx);
+                    }
+                }
+            }
+            else
+            {
+                for (uint32_t colIdx = 0; colIdx < numJoinAttr1; colIdx++)
+                {
+                    for (uint32_t rowIdx = 0; rowIdx < matC.getNumRows(); rowIdx++)
+                    {
+                        matC(rowIdx, colIdx) = first(rowIdx, colIdx);
+                    }
+                }
+            }
+            return matC;
+        }
+
         /*
         * https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2023-0/mkl-sparse-qr.html
         **/
