@@ -476,7 +476,7 @@ namespace Figaro
 
         void oneHotEncode(void);
 
-        void changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout);
+        void changeMemoryLayout(const Figaro::MemoryLayout& memoryLayout, bool keepOldLayout = false);
 
         Relation joinRelations(const std::vector<Relation*>& vpChildRels,
             const std::vector<std::string>& vJoinAttrNames,
@@ -518,7 +518,8 @@ namespace Figaro
         Relation multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
             const std::vector<std::string>& vJoinAttrNames2,
-            uint32_t startRowIdx2 = 0) const;
+            uint32_t startRowIdx2 = 0,
+            bool useSparseDenseMultiplication = false) const;
 
         Relation multiplyTranspose(const Relation& second) const;
 

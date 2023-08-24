@@ -162,50 +162,33 @@ namespace Figaro
             uint32_t numJoinAttr1, uint32_t numJoinAttr2,
             uint32_t startRowIdx = 0) const
         {
-            FIGARO_LOG_DBG("numJoinAttr1", numJoinAttr1)
-            FIGARO_LOG_DBG("numJoinAttr2", numJoinAttr2)
-            FIGARO_LOG_DBG("startRowIdx", startRowIdx)
-            Matrix<SolMemType, SolMemLayout> matC{0, 0};
-            matC = std::move(Matrix<SolMemType, SolMemLayout>{getNumRows(),
-            second.getNumCols() - numJoinAttr2 + numJoinAttr1});
+            Matrix<SolMemType, SolMemLayout> matC{getNumRows(),
+                second.getNumCols() - numJoinAttr2 + numJoinAttr1};
             matC.setToZeros();
+
+            #pragma omp parallel for schedule(static)
             for (uint32_t rowIdx = 0; rowIdx < m_numRows; rowIdx++)
             {
                 int64_t offsetStartIdx = m_pRows[rowIdx];
                 int64_t offestEndIdx = m_pRows[rowIdx+1];
-                for (uint32_t offsetIdx = offsetStartIdx + numJoinAttr1;
+                for (uint32_t offsetIdx = offsetStartIdx;
                     offsetIdx < offestEndIdx; offsetIdx++)
                 {
                     int64_t colIdx = m_pColInds[offsetIdx];
-                    int64_t val = m_pVals[offsetIdx];
+                    if (colIdx < numJoinAttr1)
+                    {
+                        continue;
+                    }
+
+                    double val = m_pVals[offsetIdx];
                     for (uint32_t colIdxOut = 0;
                         colIdxOut < second.getNumCols() - numJoinAttr2; colIdxOut++)
                     {
                         int64_t rowIdxIn = startRowIdx + colIdx - numJoinAttr1;
                         int64_t colIdxIn = colIdxOut + numJoinAttr2;
-                        if (rowIdx >= matC.getNumRows())
-                        {
-                            FIGARO_LOG_ERROR("Number of rows incorrect", rowIdx, matC.getNumRows())
-                        }
-                        if (colIdxOut + numJoinAttr1 >= matC.getNumCols())
-                        {
-                            FIGARO_LOG_ERROR("Number of colulmns incorrect", colIdxOut + numJoinAttr1, matC.getNumCols())
-                        }
-                        // FIGARO_LOG_DBG(startRowIdx + colIdx, colIdxOut + numJoinAttr2)
-                        if (rowIdxIn >= second.getNumRows())
-                        {
-                            FIGARO_LOG_ERROR("Number of Rows incorrect", startRowIdx + colIdx)
-                        }
-                        if (colIdxIn >= second.getNumCols())
-                        {
-                            FIGARO_LOG_ERROR("Number of Rows incorrect")
-                        }
-                        FIGARO_LOG_DBG("matC", matC)
-                        FIGARO_LOG_DBG("r", rowIdx, "c", colIdxOut + numJoinAttr1, "rIn", rowIdxIn, "cIn", colIdxIn)
+
                         matC(rowIdx, colIdxOut + numJoinAttr1) += val * second(rowIdxIn, colIdxIn);
                     }
-
-
                 }
             }
             if constexpr (SolMemLayout == MemoryLayout::ROW_MAJOR)
@@ -299,8 +282,6 @@ namespace Figaro
                 return false;
             }
 
-            /*  ( sparse_operation_t operation, sparse_matrix_t A, double *alt_values, sparse_layout_t layout, MKL_INT columns, double *x, MKL_INT ldx, const double *b, MKL_INT ldb );*/
-
             FIGARO_MIC_BEN_INIT(llSparseQR)
             FIGARO_MIC_BEN_START(llSparseQR)
             status = mkl_sparse_d_qr_solve(SPARSE_OPERATION_NON_TRANSPOSE, m_pMatrix, nullptr,
@@ -334,7 +315,6 @@ namespace Figaro
 
                 return false;
             }
-            //FIGARO_LOG_MIC_BEN("Out matrix", matX)
             return true;
         }
         /*

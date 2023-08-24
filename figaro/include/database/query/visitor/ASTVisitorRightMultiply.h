@@ -9,7 +9,7 @@ namespace Figaro
     class ASTVisitorRightMultiply: public ASTVisitor
     {
         std::string m_relName;
-        uint32_t startRowIdx = 0;
+        uint32_t m_startRowIdx = 0;
         bool m_useLFTJoin;
         std::vector<std::string> m_vRelNames;
         std::vector<std::string> m_vParRelNames;

@@ -35,6 +35,7 @@ namespace Figaro
             pElement->getDropAttributes());
         pElement->accept(&joinAttrVisitor);
 
+
         FIGARO_MIC_BEN_INIT(rIndicesComp)
         FIGARO_MIC_BEN_INIT(rDownCntComp)
         FIGARO_MIC_BEN_INIT(rUpCntCompt)
@@ -53,6 +54,11 @@ namespace Figaro
         }
         FIGARO_LOG_INFO("ONE HOT ENCODING")
         m_pDatabase->oneHotEncodeRelations();
+
+        if (m_memoryLayout == Figaro::MemoryLayout::ROW_MAJOR)
+        {
+            m_pDatabase->changeMemoryLayout(Figaro::MemoryLayout::CSR, true);
+        }
 
         /************* R COMPUTATION START ***********/
         FIGARO_BENCH_INIT(rComp)

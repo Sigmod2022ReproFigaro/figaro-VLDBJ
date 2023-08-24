@@ -1290,7 +1290,8 @@ namespace Figaro
     Relation Relation::multiply(const Relation& second,
             const std::vector<std::string>& vJoinAttrNames1,
             const std::vector<std::string>& vJoinAttrNames2,
-            uint32_t startRowIdx2) const
+            uint32_t startRowIdx2,
+            bool useSparseDenseMultiplication) const
     {
         uint32_t joinAttrSize1;
         uint32_t joinAttrSize2;
@@ -1299,8 +1300,18 @@ namespace Figaro
         joinAttrSize1 = vJoinAttrNames1.size();
         joinAttrSize2 = vJoinAttrNames2.size();
 
-        auto result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2,
+        MatrixDRowT result{0, 0};
+        if (!useSparseDenseMultiplication)
+        {
+              result = m_data.multiply(second.m_data, joinAttrSize1, joinAttrSize2,
              startRowIdx2);
+
+        }
+        else
+        {
+            result = m_dataSparseCSR.multiply(
+                m_data, second.m_data, joinAttrSize1, joinAttrSize2, startRowIdx2);
+        }
         // TODO: Refactor
         for (uint32_t attrIdx = 0; attrIdx < vJoinAttrNames1.size(); attrIdx++)
         {
@@ -3560,7 +3571,7 @@ namespace Figaro
         return m_dataScales;
     }
 
-    void Relation::changeMemoryLayout(const Figaro::MemoryLayout& newMemoryLayout)
+    void Relation::changeMemoryLayout(const Figaro::MemoryLayout& newMemoryLayout, bool keepOldLayout)
     {
         m_memLayout = newMemoryLayout;
         if (newMemoryLayout == MemoryLayout::COL_MAJOR)
@@ -3573,8 +3584,11 @@ namespace Figaro
                     tmpOut(rowIdx, colIdx) = m_data(rowIdx, colIdx);
                 }
             }
+            if (!keepOldLayout)
+            {
+                m_data = std::move(MatrixDRowT{0, 0});
+            }
             m_dataColumnMajor = std::move(tmpOut);
-            m_data = std::move(MatrixDRowT{0, 0});
         }
         else if (newMemoryLayout == MemoryLayout::ROW_MAJOR)
         {
@@ -3588,7 +3602,10 @@ namespace Figaro
                     tmpOut(rowIdx, colIdx) = m_dataColumnMajor(rowIdx, colIdx);
                 }
             }
-            m_dataColumnMajor = std::move(MatrixDColT{0, 0});
+            if (!keepOldLayout)
+            {
+                m_dataColumnMajor = std::move(MatrixDColT{0, 0});
+            }
             m_data = std::move(tmpOut);
         }
         else if (newMemoryLayout == MemoryLayout::CSR)
@@ -3619,12 +3636,6 @@ namespace Figaro
                 {
                     if (m_data(rowIdx, colIdx) != 0.0)
                     {
-                        /*
-                        if (rowIdx < 100)
-                        {
-                            FIGARO_LOG_MIC_BEN("Here", rowIdx, colIdx, glIdx, m_data(rowIdx, colIdx))
-                        }
-                        */
                         pColInds[glIdx] = colIdx;
                         pVals[glIdx] = m_data(rowIdx, colIdx);
                         glIdx++;
@@ -3635,6 +3646,10 @@ namespace Figaro
             }
             MatrixSparseDCSR tmpOut{
                 m_data.getNumRows(), m_data.getNumCols(), pRows, pColInds, pVals, false};
+            if (!keepOldLayout)
+            {
+                m_data = std::move(MatrixDRowT{0, 0});
+            }
             m_dataSparseCSR = std::move(tmpOut);
         }
     }

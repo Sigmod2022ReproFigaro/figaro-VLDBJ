@@ -353,13 +353,14 @@ namespace Figaro
             const std::string& relationName2,
             const std::vector<std::string>& vJoinAttrNames1,
             const std::vector<std::string>& vJoinAttrNames2,
-            uint32_t startRowIdx2)
+            uint32_t startRowIdx2,
+            bool useSparseDenseMultiplication)
     {
         Relation& rel1 = m_relations.at(relationName1);
         Relation& rel2 = m_relations.at(relationName2);
 
         Relation mulRel = rel1.multiply(rel2, vJoinAttrNames1, vJoinAttrNames2,
-            startRowIdx2);
+            startRowIdx2, useSparseDenseMultiplication);
 
         std::string mulRelName = mulRel.getName();
         m_relations.emplace(mulRel.getName(), std::move(mulRel));
@@ -909,11 +910,11 @@ namespace Figaro
         return permName;
     }
 
-    void Database::changeMemoryLayout(const MemoryLayout& newMemoryLayout)
+    void Database::changeMemoryLayout(const MemoryLayout& newMemoryLayout, bool keepOldLayout)
     {
         for (auto& [relName, relation]: m_relations)
         {
-            relation.changeMemoryLayout(newMemoryLayout);
+            relation.changeMemoryLayout(newMemoryLayout, keepOldLayout);
         }
     }
 

@@ -110,7 +110,7 @@ namespace Figaro
             const std::string& relationName2,
             const std::vector<std::string>& vJoinAttrNames1,
             const std::vector<std::string>& vJoinAttrNames2,
-            uint32_t startRowIdx2);
+            uint32_t startRowIdx2, bool useSparseDenseMultiplication = false);
 
         std::string multiplyTranspose(const std::string& relationName1,
             const std::string& relationName2);
@@ -255,7 +255,7 @@ namespace Figaro
 
         std::string extractLUPermutationMatrix(const std::string& relName);
 
-        void changeMemoryLayout(const MemoryLayout& newMemoryLayout);
+        void changeMemoryLayout(const MemoryLayout& newMemoryLayout, bool keepOldLayout = false);
 
         std::tuple<std::string, std::string> evalQRDecAlg(
             const std::string& relName,
