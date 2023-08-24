@@ -7,19 +7,21 @@ namespace Figaro
     {
         FIGARO_LOG_INFO("Right multiply visiting NODE RELATION", pElement->getRelationName())
         uint32_t numNonJoinAttrs;
+        bool useSparseDenseMultiplication = false;
         numNonJoinAttrs = m_pDatabase->
             getRelationAttributeNames(pElement->getRelationName()).size()
             - pElement->getJoinAttributeNames().size();
         FIGARO_MIC_BEN_INIT(rightMultiply)
         FIGARO_MIC_BEN_START(rightMultiply)
+        // Multiply only with the respective part.
         std::string mulRelName = m_pDatabase->multiply(pElement->getRelationName(), m_relName,
-        pElement->getJoinAttributeNames(), {}, startRowIdx);
+        pElement->getJoinAttributeNames(), {}, m_startRowIdx, useSparseDenseMultiplication);
         if (m_useLFTJoin)
         {
             m_vRelNames.push_back(mulRelName);
         }
 
-        startRowIdx += numNonJoinAttrs;
+        m_startRowIdx += numNonJoinAttrs;
         FIGARO_LOG_INFO("Finished visiting NODE RELATION", pElement->getRelationName(), mulRelName)
         FIGARO_LOG_INFO("JOIN_ATTRS", pElement->getJoinAttributeNames())
         FIGARO_MIC_BEN_STOP(rightMultiply)
